@@ -76,9 +76,11 @@ export function chunkDiffByFile(
 }
 
 export function buildUserPrompt(diff: ParsedDiff, prContext: PRContext): string {
+  const title = prContext.title.trim();
+  const description = prContext.description.trim();
   return [
-    `PR title: ${prContext.title}`,
-    prContext.description ? `PR description:\n${prContext.description}` : "PR description: (none provided)",
+    title ? `PR title: ${title}` : "PR title: (none provided)",
+    description ? `PR description:\n${description}` : "PR description: (none provided)",
     prContext.baseRef && prContext.headRef
       ? `Merging ${prContext.headRef} into ${prContext.baseRef}.`
       : "",

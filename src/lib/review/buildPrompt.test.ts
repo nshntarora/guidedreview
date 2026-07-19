@@ -116,6 +116,20 @@ describe("buildUserPrompt", () => {
     expect(prompt).toContain("PR description: (none provided)");
   });
 
+  it("falls back to a placeholder when there is no title", () => {
+    const prompt = buildUserPrompt({ files: [] }, { ...prContext, title: "" });
+    expect(prompt).toContain("PR title: (none provided)");
+  });
+
+  it("treats whitespace-only title and description as missing", () => {
+    const prompt = buildUserPrompt(
+      { files: [] },
+      { ...prContext, title: "   ", description: "  \n  " }
+    );
+    expect(prompt).toContain("PR title: (none provided)");
+    expect(prompt).toContain("PR description: (none provided)");
+  });
+
   it("omits the merge line when either ref is missing", () => {
     const prompt = buildUserPrompt({ files: [] }, { ...prContext, baseRef: "", headRef: "" });
     expect(prompt).not.toContain("Merging");

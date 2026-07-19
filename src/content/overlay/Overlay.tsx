@@ -124,6 +124,10 @@ export function Overlay({ prUrl }: OverlayProps) {
           <div className="gr-context-pane">
             <ContextPanel
               unit={currentReviewUnit}
+              hasTitle={Boolean(prContext?.title?.trim())}
+              hasDescription={Boolean(
+                prContext?.description?.trim() || prContext?.descriptionHtml?.trim()
+              )}
               error={status === "error" ? error : null}
               loading={isLoading}
             />

@@ -179,4 +179,62 @@ describe("Overlay", () => {
     expect(document.querySelector(".gr-pr-description")).toBeNull();
     expect(document.querySelector(".gr-description-pane")).not.toBeNull();
   });
+
+  it("shows the author's-intent hint when the PR has a description", () => {
+    useReviewStore.setState({
+      isOpen: true,
+      status: "ready",
+      diff: diffFixture(),
+      plan: planFixture(),
+      prContext: prContextFixture(),
+      currentUnitIndex: 0,
+    });
+    render(<Overlay prUrl={PR_URL} />);
+    expect(
+      screen.getByText(/read the author's intent before walking the code/i)
+    ).toBeInTheDocument();
+  });
+
+  it("explains missing description and that the AI will infer intent", () => {
+    useReviewStore.setState({
+      isOpen: true,
+      status: "ready",
+      diff: diffFixture(),
+      plan: planFixture(),
+      prContext: prContextFixture({ description: "", descriptionHtml: "" }),
+      currentUnitIndex: 0,
+    });
+    render(<Overlay prUrl={PR_URL} />);
+
+    // Left pane empty state + right pane context both mention the gap.
+    expect(document.querySelector(".gr-description-pane-empty")?.textContent).toMatch(
+      /author hasn't added a PR description/i
+    );
+    expect(document.querySelector(".gr-context-panel-body")?.textContent).toMatch(
+      /rely on the AI to tell us what this PR is about/i
+    );
+    expect(
+      screen.queryByText(/read the author's intent before walking the code/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it("explains missing title and description together", () => {
+    useReviewStore.setState({
+      isOpen: true,
+      status: "loading",
+      prContext: prContextFixture({ title: "", description: "", descriptionHtml: "" }),
+      currentUnitIndex: 0,
+    });
+    render(<Overlay prUrl={PR_URL} />);
+
+    expect(document.querySelector(".gr-description-pane-empty")?.textContent).toMatch(
+      /author hasn't added a PR title or description/i
+    );
+    expect(document.querySelector(".gr-context-panel-body")?.textContent).toMatch(
+      /author hasn't added a PR title or description/i
+    );
+    expect(document.querySelector(".gr-context-panel-body")?.textContent).toMatch(
+      /rely on the AI to tell us what this PR is about from the diff/i
+    );
+  });
 });

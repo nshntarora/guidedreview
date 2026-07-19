@@ -51,18 +51,34 @@ export function scrapePRContext(pr: PRIdentity): PRContext {
     firstAttr(['.commit-ref.head-ref[title]', '.head-ref[title]'], "title") ||
     firstText([".commit-ref.head-ref", ".head-ref"]);
 
+  // Prefer a scraped title; fall back to document.title only when it looks like
+  // a real PR title (GitHub's pattern is "Title · Pull Request #N · owner/repo").
+  // Never invent a title from a generic browser tab string.
+  const resolvedTitle = title ?? prTitleFromDocumentTitle(document.title) ?? "";
+
   return {
     owner: pr.owner,
     repo: pr.repo,
     number: pr.number,
     url: window.location.href,
-    title: title ?? document.title,
+    title: resolvedTitle,
     description: description ?? "",
     descriptionHtml: descriptionHtml ?? "",
     author: author ?? "",
     baseRef: normalizeRef(baseRef) ?? "",
     headRef: normalizeRef(headRef) ?? "",
   };
+}
+
+/**
+ * Extract the PR title from GitHub's document.title pattern:
+ * "Some title · Pull Request #42 · owner/repo". Returns undefined when the
+ * tab title doesn't match (e.g. still loading, or a non-PR page).
+ */
+function prTitleFromDocumentTitle(docTitle: string): string | undefined {
+  const match = docTitle.match(/^(.*?)\s*·\s*Pull Request\s*#\d+/i);
+  const extracted = match?.[1]?.trim();
+  return extracted || undefined;
 }
 
 function firstText(selectors: string[]): string | undefined {
