@@ -2,7 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { Overlay } from "./Overlay";
 import { useReviewStore } from "./store";
-import type { ParsedDiff, ReviewPlan } from "../../lib/types";
+import { PR_DESCRIPTION_UNIT_TITLE } from "./displayUnits";
+import type { ParsedDiff, PRContext, ReviewPlan } from "../../lib/types";
 
 const PR_URL = "https://github.com/acme/widgets/pull/1";
 
@@ -42,6 +43,22 @@ function planFixture(): ReviewPlan {
   };
 }
 
+function prContextFixture(overrides: Partial<PRContext> = {}): PRContext {
+  return {
+    owner: "acme",
+    repo: "widgets",
+    number: 1,
+    url: PR_URL,
+    title: "Add feature",
+    description: "This PR adds a feature.",
+    descriptionHtml: "<p>This PR adds a feature.</p>",
+    author: "octocat",
+    baseRef: "main",
+    headRef: "feature",
+    ...overrides,
+  };
+}
+
 function resetStore(): void {
   useReviewStore.setState({
     isOpen: false,
@@ -64,35 +81,102 @@ describe("Overlay", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("shows a loading state while the review is loading", () => {
-    useReviewStore.setState({ isOpen: true, status: "loading" });
+  it("shows the full layout with the PR description unit while loading", () => {
+    useReviewStore.setState({
+      isOpen: true,
+      status: "loading",
+      prContext: prContextFixture(),
+      currentUnitIndex: 0,
+    });
     render(<Overlay prUrl={PR_URL} />);
-    expect(screen.getByText(/reading the diff/i)).toBeInTheDocument();
+
+    // Title in left pane + entry in the unit list.
+    expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
+    expect(screen.getByText(/building the rest of the walkthrough/i)).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: /building the rest of the walkthrough/i })).toBeInTheDocument();
+    // Skeleton placeholders are present (non-interactive bars in the unit list).
+    expect(document.querySelectorAll(".gr-unit-item-skeleton").length).toBeGreaterThan(0);
+    // Shortcuts are reserved for the ready state; spinner occupies that slot while loading.
+    expect(screen.queryByLabelText(/keyboard shortcuts/i)).not.toBeInTheDocument();
+    // No full-page loading spinner copy.
+    expect(screen.queryByText(/reading the diff/i)).not.toBeInTheDocument();
   });
 
-  it("shows the error message when the review failed", () => {
-    useReviewStore.setState({ isOpen: true, status: "error", error: "Network error" });
-    render(<Overlay prUrl={PR_URL} />);
-    expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
-    expect(screen.getByText("Network error")).toBeInTheDocument();
-  });
-
-  it("shows a message when the plan has no units", () => {
-    useReviewStore.setState({ isOpen: true, status: "ready", diff: diffFixture(), plan: { units: [] } });
-    render(<Overlay prUrl={PR_URL} />);
-    expect(screen.getByText(/no review units were generated/i)).toBeInTheDocument();
-  });
-
-  it("renders the current unit's title and context when ready", () => {
+  it("shows keyboard shortcuts on the description unit once the walkthrough is ready", () => {
     useReviewStore.setState({
       isOpen: true,
       status: "ready",
       diff: diffFixture(),
       plan: planFixture(),
+      prContext: prContextFixture(),
       currentUnitIndex: 0,
     });
     render(<Overlay prUrl={PR_URL} />);
+
+    expect(screen.getByLabelText(/keyboard shortcuts/i)).toBeInTheDocument();
+    expect(screen.getByText(/previous \/ next step/i)).toBeInTheDocument();
+    expect(screen.getByText(/scroll the code pane/i)).toBeInTheDocument();
+    expect(screen.getByText(/exit the review/i)).toBeInTheDocument();
+    expect(screen.queryByText(/building the rest of the walkthrough/i)).not.toBeInTheDocument();
+  });
+
+  it("shows the error in the context panel without collapsing the layout", () => {
+    useReviewStore.setState({
+      isOpen: true,
+      status: "error",
+      error: "Network error",
+      prContext: prContextFixture(),
+      currentUnitIndex: 0,
+    });
+    render(<Overlay prUrl={PR_URL} />);
+    expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
+    expect(screen.getByText("Network error")).toBeInTheDocument();
+    expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
+  });
+
+  it("still shows the PR description unit when the plan has no code units", () => {
+    useReviewStore.setState({
+      isOpen: true,
+      status: "ready",
+      diff: diffFixture(),
+      plan: { units: [] },
+      prContext: prContextFixture(),
+      currentUnitIndex: 0,
+    });
+    render(<Overlay prUrl={PR_URL} />);
+    expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText(/no review units were generated/i)).not.toBeInTheDocument();
+  });
+
+  it("renders the description unit first and the current review unit when ready", () => {
+    useReviewStore.setState({
+      isOpen: true,
+      status: "ready",
+      diff: diffFixture(),
+      plan: planFixture(),
+      prContext: prContextFixture(),
+      currentUnitIndex: 1,
+    });
+    render(<Overlay prUrl={PR_URL} />);
+    expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Update foo")).toBeInTheDocument();
     expect(screen.getByText("because it needed updating")).toBeInTheDocument();
+  });
+
+  it("does not show the PR description in the header", () => {
+    useReviewStore.setState({
+      isOpen: true,
+      status: "ready",
+      diff: diffFixture(),
+      plan: planFixture(),
+      prContext: prContextFixture(),
+      currentUnitIndex: 0,
+    });
+    render(<Overlay prUrl={PR_URL} />);
+    // Description lives in the left pane, not a header <details>.
+    expect(document.querySelector(".gr-pr-description")).toBeNull();
+    expect(document.querySelector(".gr-description-pane")).not.toBeNull();
   });
 });

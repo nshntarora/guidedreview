@@ -1,9 +1,11 @@
 import { useEffect, useRef } from "react";
 import { useReviewStore, persistSession } from "./store";
 import { resolveUnitFiles } from "./selectors";
+import { buildDisplayUnits, displayUnitCount } from "./displayUnits";
 import { ProgressHeader } from "./components/ProgressHeader";
 import { Sidebar } from "./components/Sidebar";
 import { DiffPane } from "./components/DiffPane";
+import { DescriptionPane } from "./components/DescriptionPane";
 import { ContextPanel } from "./components/ContextPanel";
 import { FooterNav } from "./components/FooterNav";
 
@@ -87,70 +89,60 @@ export function Overlay({ prUrl }: OverlayProps) {
 
   if (!isOpen) return null;
 
-  const currentUnit = plan?.units[currentUnitIndex];
-  const resolvedFiles = currentUnit && diff ? resolveUnitFiles(currentUnit, diff) : [];
+  const isLoading = status === "loading" || status === "idle";
+  const displayUnits = buildDisplayUnits(plan);
+  const total = displayUnitCount(plan);
+  const totalKnown = status === "ready";
+  const currentDisplay = displayUnits[currentUnitIndex] ?? displayUnits[0];
+  const isDescriptionUnit = !currentDisplay || currentDisplay.kind === "pr_description";
+  const currentReviewUnit =
+    currentDisplay?.kind === "review" ? currentDisplay.unit : null;
+  const resolvedFiles =
+    currentReviewUnit && diff ? resolveUnitFiles(currentReviewUnit, diff) : [];
 
   return (
     <div className="gr-root">
       <ProgressHeader
         currentIndex={currentUnitIndex}
-        total={plan?.units.length ?? 0}
+        total={total}
+        totalKnown={totalKnown}
         prContext={prContext}
         diff={diff}
         onExit={close}
       />
 
       <div className="gr-body">
-        {(status === "loading" || status === "idle") && (
-          <div className="gr-centered">
-            <div className="gr-spinner" />
-            <p>Reading the diff and building a guided walkthrough…</p>
+        <main className="gr-code-col" ref={codeColRef}>
+          {isDescriptionUnit ? (
+            <DescriptionPane prContext={prContext} />
+          ) : (
+            <DiffPane files={resolvedFiles} />
+          )}
+        </main>
+
+        <aside className="gr-review-col">
+          <div className="gr-context-pane">
+            <ContextPanel
+              unit={currentReviewUnit}
+              error={status === "error" ? error : null}
+              loading={isLoading}
+            />
           </div>
-        )}
-
-        {status === "error" && (
-          <div className="gr-centered gr-error">
-            <p>Something went wrong building the guided review:</p>
-            <pre className="gr-error-block">
-              <code>{error ?? "Unknown error."}</code>
-            </pre>
-          </div>
-        )}
-
-        {status === "ready" && plan && plan.units.length === 0 && (
-          <div className="gr-centered">
-            <p>No review units were generated for this diff.</p>
-          </div>
-        )}
-
-        {status === "ready" && plan && currentUnit && (
-          <>
-            <main className="gr-code-col" ref={codeColRef}>
-              <DiffPane files={resolvedFiles} />
-            </main>
-
-            <aside className="gr-review-col">
-              <div className="gr-context-pane">
-                <ContextPanel unit={currentUnit} />
-              </div>
-              <Sidebar
-                plan={plan}
-                currentUnitIndex={currentUnitIndex}
-                onSelectUnit={goToUnit}
-              />
-            </aside>
-          </>
-        )}
+          <Sidebar
+            plan={plan}
+            currentUnitIndex={currentUnitIndex}
+            loading={isLoading}
+            onSelectUnit={goToUnit}
+          />
+        </aside>
       </div>
 
-      {status === "ready" && plan && plan.units.length > 0 && (
-        <FooterNav
-          currentIndex={currentUnitIndex}
-          total={plan.units.length}
-          onPrev={goPrev}
-          onNext={goNext}
-        />
-      )}
+      <FooterNav
+        currentIndex={currentUnitIndex}
+        total={total}
+        onPrev={goPrev}
+        onNext={goNext}
+      />
     </div>
   );
 }

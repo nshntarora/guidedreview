@@ -4,12 +4,21 @@ import { Kbd } from "./Kbd";
 interface ProgressHeaderProps {
   currentIndex: number;
   total: number;
+  /** When false, only show "Step N" without a known total (plan still loading). */
+  totalKnown: boolean;
   prContext: PRContext | null;
   diff: ParsedDiff | null;
   onExit: () => void;
 }
 
-export function ProgressHeader({ currentIndex, total, prContext, diff, onExit }: ProgressHeaderProps) {
+export function ProgressHeader({
+  currentIndex,
+  total,
+  totalKnown,
+  prContext,
+  diff,
+  onExit,
+}: ProgressHeaderProps) {
   const stats = diff && diffStats(diff);
   const logomarkUrl = chrome.runtime.getURL("logomark.svg");
 
@@ -50,10 +59,12 @@ export function ProgressHeader({ currentIndex, total, prContext, diff, onExit }:
           </div>
         </div>
         <div className="gr-header-actions">
-          {total > 0 && (
+          {totalKnown && total > 0 ? (
             <span className="gr-header-progress">
               Step {currentIndex + 1} of {total}
             </span>
+          ) : (
+            <span className="gr-header-progress">Step {currentIndex + 1}</span>
           )}
           <button className="gr-exit-btn" onClick={onExit}>
             Exit
@@ -61,20 +72,6 @@ export function ProgressHeader({ currentIndex, total, prContext, diff, onExit }:
           </button>
         </div>
       </div>
-
-      {prContext?.description && (
-        <details className="gr-pr-description">
-          <summary>Description</summary>
-          {prContext.descriptionHtml ? (
-            <div
-              className="gr-pr-description-body markdown-body"
-              dangerouslySetInnerHTML={{ __html: prContext.descriptionHtml }}
-            />
-          ) : (
-            <div className="gr-pr-description-body">{prContext.description}</div>
-          )}
-        </details>
-      )}
     </header>
   );
 }

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { ParsedDiff, PRContext, ReviewPlan } from "../../lib/types";
+import { displayUnitCount } from "./displayUnits";
 
 export type ReviewStatus = "idle" | "loading" | "ready" | "error";
 
@@ -7,6 +8,7 @@ interface PersistedSession {
   diff: ParsedDiff;
   plan: ReviewPlan;
   prContext: PRContext | null;
+  /** Index into the display unit list (0 = PR description, then plan units). */
   currentUnitIndex: number;
 }
 
@@ -17,6 +19,7 @@ interface ReviewState {
   diff: ParsedDiff | null;
   plan: ReviewPlan | null;
   prContext: PRContext | null;
+  /** Index into the display unit list (0 = PR description, then plan units). */
   currentUnitIndex: number;
 
   open: () => void;
@@ -42,24 +45,29 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false }),
 
-  startLoading: () => set({ status: "loading", error: null }),
+  startLoading: () => set({ status: "loading", error: null, currentUnitIndex: 0, plan: null, diff: null }),
 
   setPRContext: (prContext) => set({ prContext }),
 
-  setReady: (diff, plan) => set({ status: "ready", diff, plan, currentUnitIndex: 0 }),
+  setReady: (diff, plan) =>
+    set((state) => {
+      const total = displayUnitCount(plan);
+      const index = Math.min(Math.max(state.currentUnitIndex, 0), total - 1);
+      return { status: "ready", diff, plan, currentUnitIndex: index, error: null };
+    }),
 
   setError: (message) => set({ status: "error", error: message }),
 
   goToUnit: (index) => {
-    const total = get().plan?.units.length ?? 0;
+    const total = displayUnitCount(get().plan);
     if (index < 0 || index >= total) return;
     set({ currentUnitIndex: index });
   },
 
   goNext: () => {
     const { currentUnitIndex, plan } = get();
-    if (!plan) return;
-    if (currentUnitIndex < plan.units.length - 1) {
+    const total = displayUnitCount(plan);
+    if (currentUnitIndex < total - 1) {
       set({ currentUnitIndex: currentUnitIndex + 1 });
     }
   },
@@ -108,12 +116,15 @@ export async function restoreSession(prUrl: string): Promise<boolean> {
   }
   if (!saved) return false;
 
+  const total = displayUnitCount(saved.plan);
+  const currentUnitIndex = Math.min(Math.max(saved.currentUnitIndex, 0), total - 1);
+
   useReviewStore.setState({
     status: "ready",
     diff: saved.diff,
     plan: saved.plan,
     prContext: saved.prContext ?? null,
-    currentUnitIndex: saved.currentUnitIndex,
+    currentUnitIndex,
     error: null,
   });
   return true;

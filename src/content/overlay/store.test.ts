@@ -53,17 +53,26 @@ describe("useReviewStore", () => {
     expect(useReviewStore.getState().isOpen).toBe(false);
   });
 
-  it("startLoading sets status to loading and clears any prior error", () => {
+  it("startLoading sets status to loading, clears plan/diff/error, and resets unit index", () => {
     resetStore();
-    useReviewStore.setState({ error: "boom" });
+    useReviewStore.setState({
+      error: "boom",
+      plan: planFixture(1),
+      diff: diffFixture(),
+      currentUnitIndex: 2,
+    });
     useReviewStore.getState().startLoading();
-    expect(useReviewStore.getState().status).toBe("loading");
-    expect(useReviewStore.getState().error).toBeNull();
+    const state = useReviewStore.getState();
+    expect(state.status).toBe("loading");
+    expect(state.error).toBeNull();
+    expect(state.plan).toBeNull();
+    expect(state.diff).toBeNull();
+    expect(state.currentUnitIndex).toBe(0);
   });
 
-  it("setReady sets status ready, stores diff/plan, and resets currentUnitIndex", () => {
+  it("setReady sets status ready, stores diff/plan, and clamps currentUnitIndex", () => {
     resetStore();
-    useReviewStore.setState({ currentUnitIndex: 3 });
+    useReviewStore.setState({ currentUnitIndex: 0 });
     const diff = diffFixture();
     const plan = planFixture(2);
     useReviewStore.getState().setReady(diff, plan);
@@ -72,7 +81,21 @@ describe("useReviewStore", () => {
     expect(state.status).toBe("ready");
     expect(state.diff).toBe(diff);
     expect(state.plan).toBe(plan);
+    // Display units = description + 2 plan units; stay on description (index 0).
     expect(state.currentUnitIndex).toBe(0);
+  });
+
+  it("setReady preserves a valid currentUnitIndex instead of resetting to 0", () => {
+    resetStore();
+    // While loading the user is on the description unit (index 0); after ready they stay.
+    useReviewStore.setState({ currentUnitIndex: 0 });
+    useReviewStore.getState().setReady(diffFixture(), planFixture(3));
+    expect(useReviewStore.getState().currentUnitIndex).toBe(0);
+
+    // If somehow past the end, clamp into range (display total = 1 + 2 = 3 → max index 2).
+    useReviewStore.setState({ currentUnitIndex: 99 });
+    useReviewStore.getState().setReady(diffFixture(), planFixture(2));
+    expect(useReviewStore.getState().currentUnitIndex).toBe(2);
   });
 
   it("setError sets status to error with the message", () => {
@@ -89,12 +112,15 @@ describe("useReviewStore", () => {
     expect(useReviewStore.getState().prContext).toEqual(prContext);
   });
 
-  describe("navigation", () => {
-    it("goToUnit moves to a valid index", () => {
+  describe("navigation (display units: description + plan)", () => {
+    it("goToUnit moves to a valid display index including the description unit", () => {
       resetStore();
       useReviewStore.getState().setReady(diffFixture(), planFixture(3));
-      useReviewStore.getState().goToUnit(2);
-      expect(useReviewStore.getState().currentUnitIndex).toBe(2);
+      // display: [desc, u0, u1, u2] — indices 0..3
+      useReviewStore.getState().goToUnit(3);
+      expect(useReviewStore.getState().currentUnitIndex).toBe(3);
+      useReviewStore.getState().goToUnit(0);
+      expect(useReviewStore.getState().currentUnitIndex).toBe(0);
     });
 
     it("goToUnit ignores out-of-range indices", () => {
@@ -106,16 +132,20 @@ describe("useReviewStore", () => {
       expect(useReviewStore.getState().currentUnitIndex).toBe(0);
     });
 
-    it("goNext advances but stops at the last unit", () => {
+    it("goNext advances across description then plan units, and stops at the last", () => {
       resetStore();
       useReviewStore.getState().setReady(diffFixture(), planFixture(2));
+      // total display = 3
+      expect(useReviewStore.getState().currentUnitIndex).toBe(0);
       useReviewStore.getState().goNext();
       expect(useReviewStore.getState().currentUnitIndex).toBe(1);
       useReviewStore.getState().goNext();
-      expect(useReviewStore.getState().currentUnitIndex).toBe(1);
+      expect(useReviewStore.getState().currentUnitIndex).toBe(2);
+      useReviewStore.getState().goNext();
+      expect(useReviewStore.getState().currentUnitIndex).toBe(2);
     });
 
-    it("goPrev retreats but stops at the first unit", () => {
+    it("goPrev retreats but stops at the description unit (index 0)", () => {
       resetStore();
       useReviewStore.getState().setReady(diffFixture(), planFixture(2));
       useReviewStore.getState().goToUnit(1);
@@ -125,8 +155,9 @@ describe("useReviewStore", () => {
       expect(useReviewStore.getState().currentUnitIndex).toBe(0);
     });
 
-    it("goNext/goPrev are no-ops when there is no plan", () => {
+    it("goNext is a no-op while loading (only the description unit exists)", () => {
       resetStore();
+      useReviewStore.getState().startLoading();
       useReviewStore.getState().goNext();
       useReviewStore.getState().goPrev();
       expect(useReviewStore.getState().currentUnitIndex).toBe(0);
@@ -164,6 +195,28 @@ describe("useReviewStore", () => {
       expect(state.plan).toEqual(plan);
       expect(state.prContext).toEqual(prContext);
       expect(state.currentUnitIndex).toBe(1);
+    });
+
+    it("restoreSession clamps an out-of-range saved index", async () => {
+      resetStore();
+      const plan = planFixture(1); // display total = 2
+      useReviewStore.getState().setReady(diffFixture(), plan);
+      useReviewStore.setState({ currentUnitIndex: 99 });
+      await persistSession(prUrl);
+
+      // Force-write an out-of-range index to storage.
+      await chrome.storage.session.set({
+        [`guidedReview.session.${prUrl}`]: {
+          diff: diffFixture(),
+          plan,
+          prContext: null,
+          currentUnitIndex: 99,
+        },
+      });
+
+      resetStore();
+      await restoreSession(prUrl);
+      expect(useReviewStore.getState().currentUnitIndex).toBe(1);
     });
 
     it("restoreSession returns false when nothing was persisted", async () => {

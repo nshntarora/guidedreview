@@ -66,7 +66,12 @@ test.describe("Guided review overlay", () => {
 
     // Playwright locators pierce open shadow roots by default, so these resolve inside the
     // overlay's shadow DOM without any special selector syntax.
+    // First unit is always the synthetic PR description.
+    await expect(page.getByText("PR description").first()).toBeVisible();
+
+    // After the plan loads, the AI unit is listed and reachable via Next.
     await expect(page.getByText(CANNED_PLAN.units[0].title)).toBeVisible();
+    await page.getByRole("button", { name: /next/i }).click();
     await expect(page.getByText(CANNED_PLAN.units[0].context)).toBeVisible();
   });
 });

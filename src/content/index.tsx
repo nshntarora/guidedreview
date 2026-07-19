@@ -107,20 +107,17 @@ async function onStartReview(): Promise<void> {
   const prUrl = window.location.href;
 
   ensureOverlayMounted(prUrl);
+
+  // Scrape PR metadata first so the overlay can render the full layout with the
+  // PR description unit immediately — before the diff fetch / AI plan finish.
+  const prContext = scrapePRContext(pr);
   useReviewStore.getState().open();
-  // Show a loading state immediately — everything below is async, and any of it
-  // (including session restore) can fail, so the user should never be staring at a
-  // blank overlay while we work.
+  useReviewStore.getState().setPRContext(prContext);
   useReviewStore.getState().startLoading();
 
   try {
     const restored = await restoreSession(prUrl);
     if (restored) return;
-
-    // Scrape PR metadata (title, author, branches, description) up front so the header
-    // can render it immediately, well before the diff fetch / AI plan finish.
-    const prContext = scrapePRContext(pr);
-    useReviewStore.getState().setPRContext(prContext);
 
     // The description only exists in the DOM on GitHub's "Conversation" tab
     // (e.g. missing on "Files changed"). Fetch it from there as a fallback,
@@ -129,9 +126,10 @@ async function onStartReview(): Promise<void> {
       fetchConversationDescription(pr)
         .then(({ text, html }) => {
           if (!text) return;
+          const current = useReviewStore.getState().prContext ?? prContext;
           useReviewStore
             .getState()
-            .setPRContext({ ...prContext, description: text, descriptionHtml: html });
+            .setPRContext({ ...current, description: text, descriptionHtml: html });
         })
         .catch(() => {
           // best-effort only — the review doesn't depend on the description
@@ -145,7 +143,9 @@ async function onStartReview(): Promise<void> {
     }
     const diff = diffResponse.diff;
 
-    const response = await requestReviewPlan(diff, prContext);
+    // Prefer the latest prContext (async description fetch may have filled it in).
+    const latestContext = useReviewStore.getState().prContext ?? prContext;
+    const response = await requestReviewPlan(diff, latestContext);
 
     if (!response.ok) {
       useReviewStore.getState().setError(response.error);
