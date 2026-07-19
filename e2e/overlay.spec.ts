@@ -6,6 +6,7 @@ import { expect, test } from "./fixtures";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PR_URL = "https://github.com/acme/widgets/pull/1";
 const PR_FIXTURE_PATH = path.resolve(__dirname, "fixtures/pr-page.html");
+const PR_MODERN_FIXTURE_PATH = path.resolve(__dirname, "fixtures/pr-page-modern.html");
 
 const CANNED_DIFF = [
   "diff --git a/src/foo.ts b/src/foo.ts",
@@ -93,5 +94,42 @@ test.describe("Guided review overlay", () => {
     await expect(page.getByText(CANNED_PLAN.units[0].title)).toBeVisible();
     await page.getByRole("button", { name: /next/i }).click();
     await expect(page.getByText(CANNED_PLAN.units[0].context)).toBeVisible();
+  });
+
+  test("injects Start Guided Review on the modern React PR header", async ({ context }) => {
+    await context.route(PR_URL, (route) =>
+      route.fulfill({ path: PR_MODERN_FIXTURE_PATH, contentType: "text/html" }),
+    );
+
+    const page = await context.newPage();
+    await page.goto(PR_URL);
+
+    const startButton = page.getByRole("button", { name: "Start Guided Review" });
+    await expect(startButton).toBeVisible();
+
+    // Button should land in the modern PageHeader actions slot (unhidden), not only the fallback host.
+    await expect(page.locator('[data-component="PH_Actions"] #guided-review-start-btn')).toBeVisible();
+    await expect(page.locator('[data-component="PH_Actions"]')).not.toHaveClass(/d-none/);
+  });
+
+  test("injects Start Guided Review on PR tab subpaths", async ({ context }) => {
+    const tabUrls = [
+      "https://github.com/acme/widgets/pull/1",
+      "https://github.com/acme/widgets/pull/1/files",
+      "https://github.com/acme/widgets/pull/1/commits",
+      "https://github.com/acme/widgets/pull/1/checks",
+    ];
+
+    for (const url of tabUrls) {
+      await context.route(url, (route) =>
+        route.fulfill({ path: PR_MODERN_FIXTURE_PATH, contentType: "text/html" }),
+      );
+    }
+
+    const page = await context.newPage();
+    for (const url of tabUrls) {
+      await page.goto(url);
+      await expect(page.getByRole("button", { name: "Start Guided Review" })).toBeVisible();
+    }
   });
 });
