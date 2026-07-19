@@ -1,0 +1,7 @@
+node_modules/
+dist/
+dist_chrome/
+.DS_Store
+*.local
+.vite/
+*.tsbuildinfo
