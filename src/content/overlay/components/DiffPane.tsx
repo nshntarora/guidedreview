@@ -1,5 +1,6 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import { buildPRFileDiffUrl } from "../../../lib/github/prFileDiffUrl";
 import { highlightToLines, languageForPath } from "../../../lib/highlight";
 import { cn } from "../../../lib/cn";
 import type { DiffHunk } from "../../../lib/types";
@@ -68,6 +69,10 @@ function CodeContent({
   return <span>{content}</span>;
 }
 
+/** Soft-wrap long lines (e.g. SVG paths) like GitHub — no horizontal scroll bleed. */
+const DIFF_LINE_WRAP =
+  "flex min-w-0 whitespace-pre-wrap break-all pr-3";
+
 function UnifiedHunk({
   hunk,
   language,
@@ -82,14 +87,14 @@ function UnifiedHunk({
 
   return (
     <div
-      className="overflow-x-auto font-mono text-[12px] leading-relaxed"
+      className="overflow-x-hidden font-mono text-[12px] leading-relaxed"
       data-testid="diff-view-unified"
     >
       {hunk.lines.map((line, i) => (
         <div
           key={i}
           className={cn(
-            "flex whitespace-pre pr-3",
+            DIFF_LINE_WRAP,
             line.type === "add" && "bg-gr-add-bg",
             line.type === "del" && "bg-gr-del-bg",
           )}
@@ -109,7 +114,12 @@ function UnifiedHunk({
           >
             {line.type === "add" ? "+" : line.type === "del" ? "-" : ""}
           </span>
-          <CodeContent content={line.content} highlighted={highlighted[i] ?? null} />
+          <span className="min-w-0 flex-1">
+            <CodeContent
+              content={line.content}
+              highlighted={highlighted[i] ?? null}
+            />
+          </span>
         </div>
       ))}
     </div>
@@ -127,7 +137,7 @@ function SplitCellView({
 }) {
   if (cell.kind === "empty") {
     return (
-      <div className="flex min-w-0 flex-1 whitespace-pre pr-3">
+      <div className={cn(DIFF_LINE_WRAP, "flex-1 overflow-hidden")}>
         <span className="w-10 shrink-0 select-none pr-3 text-right text-gr-faint" />
         <span className="min-w-0 flex-1" />
       </div>
@@ -137,7 +147,8 @@ function SplitCellView({
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-1 whitespace-pre pr-3",
+        DIFF_LINE_WRAP,
+        "flex-1 overflow-hidden",
         cell.type === "del" && "bg-gr-del-bg",
         cell.type === "add" && "bg-gr-add-bg",
       )}
@@ -155,7 +166,9 @@ function SplitCellView({
       >
         {cell.type === "add" ? "+" : cell.type === "del" ? "-" : " "}
       </span>
-      <CodeContent content={cell.content} highlighted={highlighted} />
+      <span className="min-w-0 flex-1">
+        <CodeContent content={cell.content} highlighted={highlighted} />
+      </span>
     </div>
   );
 }
@@ -175,11 +188,11 @@ function SplitHunk({
 
   return (
     <div
-      className="overflow-x-auto font-mono text-[12px] leading-relaxed"
+      className="overflow-x-hidden font-mono text-[12px] leading-relaxed"
       data-testid="diff-view-split"
     >
       {rows.map((row, i) => (
-        <div key={i} className="flex min-w-full border-b border-gr-border-muted last:border-b-0">
+        <div key={i} className="flex min-w-0 border-b border-gr-border-muted last:border-b-0">
           <SplitCellView
             cell={row.left}
             highlighted={
@@ -251,6 +264,61 @@ function DiffViewToggle({
   );
 }
 
+/**
+ * Empty body for files with no textual diff (binary, LFS, elided patches).
+ * Centers the message and, when PR context is available, links to that file
+ * on GitHub's Files changed tab.
+ */
+function BinaryElidedEmptyState({ filePath }: { filePath: string }) {
+  const prContext = useReviewStore((s) => s.prContext);
+  const [githubUrl, setGithubUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!prContext) {
+      setGithubUrl(null);
+      return;
+    }
+
+    let cancelled = false;
+    void buildPRFileDiffUrl(
+      {
+        owner: prContext.owner,
+        repo: prContext.repo,
+        number: prContext.number,
+      },
+      filePath,
+    ).then((url) => {
+      if (!cancelled) setGithubUrl(url);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [prContext, filePath]);
+
+  return (
+    <div
+      className="flex min-h-[8rem] flex-col items-center justify-center gap-3 px-4 py-12 text-center"
+      data-testid="binary-elided-empty"
+    >
+      <span className="font-mono text-[13px] leading-relaxed text-gr-muted">
+        (binary or elided — no textual diff available)
+      </span>
+      {githubUrl && (
+        <a
+          href={githubUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[13px] font-medium text-gr-accent underline-offset-2 hover:underline"
+          data-testid="binary-elided-github-link"
+        >
+          View file diff on GitHub
+        </a>
+      )}
+    </div>
+  );
+}
+
 export function DiffPane({ files, unitTitle }: DiffPaneProps) {
   const diffViewMode = useReviewStore((s) => s.diffViewMode);
   const setDiffViewMode = useReviewStore((s) => s.setDiffViewMode);
@@ -294,11 +362,7 @@ export function DiffPane({ files, unitTitle }: DiffPaneProps) {
               )}
             </div>
             {file.isBinaryOrElided ? (
-              <div className="overflow-x-auto font-mono text-[13px] leading-relaxed">
-                <div className="flex whitespace-pre pr-3">
-                  <span>(binary or elided — no textual diff available)</span>
-                </div>
-              </div>
+              <BinaryElidedEmptyState filePath={file.path} />
             ) : (
               hunks.map((hunk) =>
                 diffViewMode === "split" ? (

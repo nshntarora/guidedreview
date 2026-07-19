@@ -1,10 +1,27 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
-import type { DiffFile, DiffHunk } from "../../../lib/types";
+import { sha256Hex } from "../../../lib/github/prFileDiffUrl";
+import type { DiffFile, DiffHunk, PRContext } from "../../../lib/types";
 import { DEFAULT_DIFF_VIEW_MODE } from "../diffViewMode";
 import { resetDiffViewModeHydrationForTests, useReviewStore } from "../store";
 import type { ResolvedUnitFile } from "../selectors";
 import { DiffPane } from "./DiffPane";
+
+function prContextFixture(overrides: Partial<PRContext> = {}): PRContext {
+  return {
+    owner: "acme",
+    repo: "widgets",
+    number: 42,
+    url: "https://github.com/acme/widgets/pull/42",
+    title: "Add logo",
+    description: "",
+    descriptionHtml: "",
+    author: "dev",
+    baseRef: "main",
+    headRef: "feature",
+    ...overrides,
+  };
+}
 
 function hunkFixture(overrides: Partial<DiffHunk> = {}): DiffHunk {
   return {
@@ -125,12 +142,21 @@ describe("DiffPane", () => {
   });
 
   it("still shows binary/elided placeholder regardless of view mode", async () => {
-    const file = fileFixture({ isBinaryOrElided: true, hunks: [] });
+    const file = fileFixture({
+      path: "logo.png",
+      isBinaryOrElided: true,
+      hunks: [],
+    });
     renderPane([{ file, hunks: [] }]);
 
+    expect(screen.getByTestId("binary-elided-empty")).toBeInTheDocument();
     expect(
       screen.getByText("(binary or elided — no textual diff available)"),
     ).toBeInTheDocument();
+    // No PR context → no GitHub link.
+    expect(
+      screen.queryByTestId("binary-elided-github-link"),
+    ).not.toBeInTheDocument();
 
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Unified" }));
@@ -139,6 +165,33 @@ describe("DiffPane", () => {
     expect(
       screen.getByText("(binary or elided — no textual diff available)"),
     ).toBeInTheDocument();
+  });
+
+  it("links binary/elided files to the GitHub Files changed deep link", async () => {
+    const filePath = "assets/logo.png";
+    const expectedHex = await sha256Hex(filePath);
+    useReviewStore.setState({ prContext: prContextFixture() });
+    const file = fileFixture({
+      path: filePath,
+      isBinaryOrElided: true,
+      hunks: [],
+    });
+
+    // Wrap render + crypto.subtle resolve so setState is inside act.
+    await act(async () => {
+      renderPane([{ file, hunks: [] }]);
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    const link = screen.getByTestId("binary-elided-github-link");
+
+    expect(link).toHaveAttribute(
+      "href",
+      `https://github.com/acme/widgets/pull/42/files#diff-${expectedHex}`,
+    );
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    expect(link).toHaveTextContent("View file diff on GitHub");
   });
 
   it("persists the view mode to chrome.storage.local", async () => {
@@ -150,6 +203,78 @@ describe("DiffPane", () => {
     await waitFor(async () => {
       const stored = await chrome.storage.local.get("guidedReview.diffViewMode");
       expect(stored["guidedReview.diffViewMode"]).toBe("unified");
+    });
+  });
+
+  it("soft-wraps long lines in split view so panes cannot overflow sideways", async () => {
+    const longPath =
+      'd="M0,0L12.34567890123456789012345678901234567890123456789012345678901234567890123456789z"';
+    const file = fileFixture({
+      path: "icons/logo.svg",
+      hunks: [
+        hunkFixture({
+          id: "icons/logo.svg#0",
+          lines: [
+            {
+              type: "del",
+              content: longPath,
+              oldLine: 1,
+            },
+            {
+              type: "add",
+              content: longPath.replace("L12", "L99"),
+              newLine: 1,
+            },
+          ],
+        }),
+      ],
+    });
+    renderPane([{ file, hunks: file.hunks }]);
+
+    const split = screen.getByTestId("diff-view-split");
+    expect(split.className).toMatch(/overflow-x-hidden/);
+
+    const left = split.querySelector('[data-side="left"]');
+    const right = split.querySelector('[data-side="right"]');
+    expect(left).toBeTruthy();
+    expect(right).toBeTruthy();
+    expect(left!.className).toMatch(/whitespace-pre-wrap/);
+    expect(left!.className).toMatch(/break-all/);
+    expect(left!.className).toMatch(/overflow-hidden/);
+    expect(right!.className).toMatch(/whitespace-pre-wrap/);
+    expect(right!.className).toMatch(/break-all/);
+    expect(left!.textContent).toContain(longPath);
+    expect(right!.textContent).toContain("L99");
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+  });
+
+  it("soft-wraps long lines in unified view", async () => {
+    const longPath =
+      'd="M0,0L12.34567890123456789012345678901234567890123456789012345678901234567890123456789z"';
+    const file = fileFixture({
+      path: "icons/logo.svg",
+      hunks: [
+        hunkFixture({
+          id: "icons/logo.svg#0",
+          lines: [{ type: "context", content: longPath, oldLine: 1, newLine: 1 }],
+        }),
+      ],
+    });
+    useReviewStore.setState({ diffViewMode: "unified" });
+    renderPane([{ file, hunks: file.hunks }]);
+
+    const unified = screen.getByTestId("diff-view-unified");
+    expect(unified.className).toMatch(/overflow-x-hidden/);
+    const line = unified.firstElementChild;
+    expect(line?.className).toMatch(/whitespace-pre-wrap/);
+    expect(line?.className).toMatch(/break-all/);
+    expect(line?.textContent).toContain(longPath);
+
+    await act(async () => {
+      await Promise.resolve();
     });
   });
 });
