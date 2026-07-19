@@ -16,10 +16,18 @@ schema-first, then logic, then call-sites, then tests.
   fixed port 5173 configured in `vite.config.ts`).
 - `npm run build` — `tsc -b` then `vite build`, output to `dist/`. Load `dist/` as an unpacked
   extension in Chrome to test end-to-end.
-- `npm run typecheck` — `tsc -b --noEmit`, no separate lint/test scripts exist in this repo.
+- `npm run typecheck` — `tsc -b --noEmit`.
+- `npm test` — Vitest unit tests (jsdom + chrome API mock in `src/test/`).
+- `npm run test:watch` / `test:coverage` — Vitest watch mode / coverage report.
+- `npm run test:e2e` — Playwright e2e against the built extension in headless Chromium
+  (runs `npm run build` first via `pretest:e2e`). Requires `npm run test:e2e:install` once.
+- `npm run test:e2e:ui` — same e2e suite with Playwright's interactive UI mode.
 
-There is no test suite configured. Verify changes by loading `dist/` in Chrome and exercising a real
-GitHub PR page.
+Unit tests live next to source as `src/**/*.test.{ts,tsx}`; e2e specs live under `e2e/`.
+Test files are excluded from the extension `tsconfig` build (`tsconfig.test.json` covers them for
+editor/typechecking). Prefer automated tests for pure logic and component behavior; still load
+`dist/` in Chrome and exercise a real GitHub PR page for full manual smoke when changing injection
+or provider networking.
 
 **Always run `npm run build` after making code changes**, even if `npm run dev` is running. `dist/` is
 what's loaded as the unpacked extension, so a stale build means Chrome keeps serving old behavior no

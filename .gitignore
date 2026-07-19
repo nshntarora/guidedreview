@@ -5,3 +5,9 @@ dist_chrome/
 *.local
 .vite/
 *.tsbuildinfo
+
+# Test artifacts
+test-results/
+playwright-report/
+blob-report/
+coverage/
