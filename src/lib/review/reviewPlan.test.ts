@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { isCompleteReviewUnit, mergePlans, validateAndCleanPlan, validateAndCleanUnit } from "./reviewPlan";
+import {
+  isCompleteReviewUnit,
+  mergePlans,
+  prefixChunkUnitId,
+  validateAndCleanPlan,
+  validateAndCleanUnit,
+} from "./reviewPlan";
 import type { ParsedDiff, ReviewPlan, ReviewUnit } from "../types";
 
 function diffFixture(): ParsedDiff {
@@ -140,6 +146,13 @@ describe("isCompleteReviewUnit", () => {
     ).toBe(true);
     expect(isCompleteReviewUnit({ id: "u1", title: "T" })).toBe(false);
     expect(isCompleteReviewUnit(null)).toBe(false);
+  });
+});
+
+describe("prefixChunkUnitId", () => {
+  it("namespaces unit ids by chunk index", () => {
+    expect(prefixChunkUnitId(0, "u1")).toBe("c0-u1");
+    expect(prefixChunkUnitId(2, "add-field")).toBe("c2-add-field");
   });
 });
 

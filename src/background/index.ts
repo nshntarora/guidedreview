@@ -14,7 +14,7 @@ import type {
 import { fetchPRDiff } from "../lib/github/diffFetch";
 import { chunkDiffByFile } from "../lib/review/buildPrompt";
 import { StreamPlanParser } from "../lib/review/streamPlanParser";
-import { validateAndCleanUnit } from "../lib/review/reviewPlan";
+import { prefixChunkUnitId, validateAndCleanUnit } from "../lib/review/reviewPlan";
 import { getProviderSettings } from "../lib/settings";
 import { getProviderClient } from "./providers";
 import { ProviderError } from "./providers/types";
@@ -109,7 +109,6 @@ async function handleAnnotateReviewStream(
     if (signal.aborted) return;
 
     const parser = new StreamPlanParser();
-    const prefix = `c${chunkIndex}-`;
     const knownFiles = new Map(chunk.files.map((f) => [f.path, f]));
 
     for await (const event of client.annotateReviewStream(
@@ -121,14 +120,14 @@ async function handleAnnotateReviewStream(
       if (event.type === "text_delta") {
         const rawUnits = parser.push(event.text);
         for (const raw of rawUnits) {
-          emitUnit(raw, knownFiles, prefix, allUnits, port, signal);
+          emitUnit(raw, knownFiles, chunkIndex, allUnits, port, signal);
         }
       }
 
       if (event.type === "done") {
         const remaining = parser.finish();
         for (const raw of remaining) {
-          emitUnit(raw, knownFiles, prefix, allUnits, port, signal);
+          emitUnit(raw, knownFiles, chunkIndex, allUnits, port, signal);
         }
       }
     }
@@ -145,7 +144,7 @@ async function handleAnnotateReviewStream(
 function emitUnit(
   raw: ReviewUnit,
   knownFiles: Map<string, DiffFile>,
-  prefix: string,
+  chunkIndex: number,
   allUnits: ReviewUnit[],
   port: chrome.runtime.Port,
   signal: AbortSignal,
@@ -155,7 +154,7 @@ function emitUnit(
   const cleaned = validateAndCleanUnit(raw, knownFiles);
   if (!cleaned) return;
 
-  const unit: ReviewUnit = { ...cleaned, id: `${prefix}${cleaned.id}` };
+  const unit: ReviewUnit = { ...cleaned, id: prefixChunkUnitId(chunkIndex, cleaned.id) };
   allUnits.push(unit);
   postEvent(port, { type: "UNIT", unit });
 }

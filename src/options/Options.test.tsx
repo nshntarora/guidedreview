@@ -80,4 +80,20 @@ describe("Options", () => {
 
     await waitFor(() => expect(screen.getByText("Invalid API key")).toBeInTheDocument());
   });
+
+  it("shows an error when the connection test throws", async () => {
+    const user = userEvent.setup();
+    vi.mocked(chrome.runtime.sendMessage).mockRejectedValueOnce(new Error("Extension context invalidated"));
+    render(<Options />);
+
+    await screen.findByLabelText(/provider/i);
+    await user.type(screen.getByLabelText(/api key/i), "sk-test");
+    await user.click(screen.getByRole("button", { name: /test connection/i }));
+
+    await waitFor(() =>
+      expect(screen.getByText("Extension context invalidated")).toBeInTheDocument(),
+    );
+    // Must not remain stuck on "Testing…"
+    expect(screen.getByRole("button", { name: /test connection/i })).not.toBeDisabled();
+  });
 });

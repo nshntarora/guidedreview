@@ -5,8 +5,6 @@ import { useReviewStore } from "./store";
 import { PR_DESCRIPTION_UNIT_TITLE } from "./displayUnits";
 import type { ParsedDiff, PRContext, ReviewPlan } from "../../lib/types";
 
-const PR_URL = "https://github.com/acme/widgets/pull/1";
-
 function diffFixture(): ParsedDiff {
   return {
     files: [
@@ -48,7 +46,7 @@ function prContextFixture(overrides: Partial<PRContext> = {}): PRContext {
     owner: "acme",
     repo: "widgets",
     number: 1,
-    url: PR_URL,
+    url: "https://github.com/acme/widgets/pull/1",
     title: "Add feature",
     description: "This PR adds a feature.",
     descriptionHtml: "<p>This PR adds a feature.</p>",
@@ -69,6 +67,7 @@ function resetStore(): void {
     prContext: null,
     currentUnitIndex: 0,
     streamGeneration: 0,
+    sessionKey: null,
   });
 }
 
@@ -80,7 +79,7 @@ describe("Overlay", () => {
   });
 
   it("renders nothing when the review isn't open", () => {
-    const { container } = render(<Overlay prUrl={PR_URL} />);
+    const { container } = render(<Overlay />);
     expect(container).toBeEmptyDOMElement();
   });
 
@@ -91,7 +90,7 @@ describe("Overlay", () => {
       prContext: prContextFixture(),
       currentUnitIndex: 0,
     });
-    render(<Overlay prUrl={PR_URL} />);
+    render(<Overlay />);
 
     // Title in left pane + entry in the unit list.
     expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
@@ -116,7 +115,7 @@ describe("Overlay", () => {
       prContext: prContextFixture(),
       currentUnitIndex: 0,
     });
-    render(<Overlay prUrl={PR_URL} />);
+    render(<Overlay />);
 
     expect(screen.getByLabelText(/diff summary/i)).toBeInTheDocument();
     expect(screen.getByText("src/foo.ts")).toBeInTheDocument();
@@ -134,7 +133,7 @@ describe("Overlay", () => {
       prContext: prContextFixture(),
       currentUnitIndex: 0,
     });
-    render(<Overlay prUrl={PR_URL} />);
+    render(<Overlay />);
 
     expect(screen.getByText("Update foo")).toBeInTheDocument();
     expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
@@ -150,7 +149,7 @@ describe("Overlay", () => {
       prContext: prContextFixture(),
       currentUnitIndex: 1,
     });
-    render(<Overlay prUrl={PR_URL} />);
+    render(<Overlay />);
 
     expect(screen.getByText("because it needed updating")).toBeInTheDocument();
     expect(screen.queryByText(/building the rest of the walkthrough/i)).not.toBeInTheDocument();
@@ -165,7 +164,7 @@ describe("Overlay", () => {
       prContext: prContextFixture(),
       currentUnitIndex: 0,
     });
-    render(<Overlay prUrl={PR_URL} />);
+    render(<Overlay />);
 
     expect(screen.getByLabelText(/keyboard shortcuts/i)).toBeInTheDocument();
     expect(screen.getByText(/previous \/ next step/i)).toBeInTheDocument();
@@ -182,7 +181,7 @@ describe("Overlay", () => {
       prContext: prContextFixture(),
       currentUnitIndex: 0,
     });
-    render(<Overlay prUrl={PR_URL} />);
+    render(<Overlay />);
     expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
     expect(screen.getByText("Network error")).toBeInTheDocument();
     expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
@@ -198,7 +197,7 @@ describe("Overlay", () => {
       prContext: prContextFixture(),
       currentUnitIndex: 0,
     });
-    render(<Overlay prUrl={PR_URL} />);
+    render(<Overlay />);
     expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText(/no review units were generated/i)).not.toBeInTheDocument();
   });
@@ -212,7 +211,7 @@ describe("Overlay", () => {
       prContext: prContextFixture(),
       currentUnitIndex: 1,
     });
-    render(<Overlay prUrl={PR_URL} />);
+    render(<Overlay />);
     expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Update foo")).toBeInTheDocument();
     expect(screen.getByText("because it needed updating")).toBeInTheDocument();
@@ -227,7 +226,7 @@ describe("Overlay", () => {
       prContext: prContextFixture(),
       currentUnitIndex: 0,
     });
-    render(<Overlay prUrl={PR_URL} />);
+    render(<Overlay />);
     // Description lives in the left pane, not a header <details>.
     expect(screen.queryByRole("heading", { name: /pr description/i })).toBeInTheDocument();
     expect(screen.getByTestId("description-pane")).toBeInTheDocument();
@@ -242,7 +241,7 @@ describe("Overlay", () => {
       prContext: prContextFixture(),
       currentUnitIndex: 0,
     });
-    render(<Overlay prUrl={PR_URL} />);
+    render(<Overlay />);
     expect(
       screen.getByText(/read the author's intent before walking the code/i)
     ).toBeInTheDocument();
@@ -257,7 +256,7 @@ describe("Overlay", () => {
       prContext: prContextFixture({ description: "", descriptionHtml: "" }),
       currentUnitIndex: 0,
     });
-    render(<Overlay prUrl={PR_URL} />);
+    render(<Overlay />);
 
     // Left pane empty state + right pane context both mention the gap.
     expect(screen.getByTestId("description-pane-empty").textContent).toMatch(
@@ -278,7 +277,7 @@ describe("Overlay", () => {
       prContext: prContextFixture({ title: "", description: "", descriptionHtml: "" }),
       currentUnitIndex: 0,
     });
-    render(<Overlay prUrl={PR_URL} />);
+    render(<Overlay />);
 
     expect(screen.getByTestId("description-pane-empty").textContent).toMatch(
       /author hasn't added a PR title or description/i
@@ -300,7 +299,7 @@ describe("Overlay", () => {
       prContext: prContextFixture(),
       currentUnitIndex: 0,
     });
-    render(<Overlay prUrl={PR_URL} />);
+    render(<Overlay />);
 
     expect(screen.getByTestId("code-col")).toBeInTheDocument();
     expect(screen.getByTestId("context-pane")).toBeInTheDocument();

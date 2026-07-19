@@ -1,6 +1,7 @@
 import type { FileChangeStatus, ParsedDiff, PRContext } from "../../../lib/types";
 import { summarizeDiff, type FileDiffSummary } from "../../../lib/github/diffSummary";
 import { cn } from "../../../lib/cn";
+import { emptyDescriptionCopy } from "../missingMetadata";
 
 interface DescriptionPaneProps {
   prContext: PRContext | null;
@@ -137,11 +138,4 @@ function DiffSummaryFileRow({ file }: { file: FileDiffSummary }) {
 
 function fileKey(file: FileDiffSummary): string {
   return file.previousPath ? `${file.previousPath}→${file.path}` : file.path;
-}
-
-function emptyDescriptionCopy(hasTitle: boolean): string {
-  if (!hasTitle) {
-    return "The author hasn't added a PR title or description. The AI will infer what this PR is about from the diff.";
-  }
-  return "The author hasn't added a PR description. The AI will infer what this PR is about from the diff.";
 }

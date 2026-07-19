@@ -118,18 +118,6 @@ export type AnnotateReviewStreamEvent =
   | { type: "DONE"; plan: ReviewPlan }
   | { type: "ERROR"; error: string };
 
-/** @deprecated Prefer stream events; kept for type compatibility in older tests. */
-export interface AnnotateReviewResponse {
-  ok: true;
-  plan: ReviewPlan;
-}
-
-/** @deprecated Prefer stream events; kept for type compatibility in older tests. */
-export interface AnnotateReviewError {
-  ok: false;
-  error: string;
-}
-
 export interface TestConnectionRequest {
   type: "TEST_CONNECTION";
   settings: ProviderSettings;

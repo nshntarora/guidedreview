@@ -4,7 +4,7 @@ import { fetchConversationDescription, scrapePRContext } from "../lib/github/prC
 import { requestPRDiff, streamReviewPlan } from "../lib/messaging";
 import { Overlay } from "./overlay/Overlay";
 import overlayStyles from "./overlay/styles/overlay.css?inline";
-import { useReviewStore, restoreSession } from "./overlay/store";
+import { useReviewStore, restoreSession, buildSessionKey } from "./overlay/store";
 
 const BUTTON_ID = "guided-review-start-btn";
 const HOST_ID = "guided-review-overlay-host";
@@ -113,9 +113,9 @@ function cancelActiveStream(): void {
 async function onStartReview(): Promise<void> {
   if (!currentPR) return;
   const pr = currentPR;
-  const prUrl = window.location.href;
+  const sessionKey = buildSessionKey(pr);
 
-  ensureOverlayMounted(prUrl);
+  ensureOverlayMounted();
   cancelActiveStream();
 
   // Scrape PR metadata first so the overlay can render the full layout with the
@@ -123,11 +123,11 @@ async function onStartReview(): Promise<void> {
   const prContext = scrapePRContext(pr);
   useReviewStore.getState().open();
   useReviewStore.getState().setPRContext(prContext);
-  useReviewStore.getState().startLoading();
+  useReviewStore.getState().startLoading(sessionKey);
   const streamGeneration = useReviewStore.getState().streamGeneration;
 
   try {
-    const restored = await restoreSession(prUrl);
+    const restored = await restoreSession(sessionKey);
     if (restored) return;
 
     // The description only exists in the DOM on GitHub's "Conversation" tab
@@ -180,7 +180,7 @@ async function onStartReview(): Promise<void> {
 
 let overlayMounted = false;
 
-function ensureOverlayMounted(prUrl: string): void {
+function ensureOverlayMounted(): void {
   if (overlayMounted) return;
   overlayMounted = true;
 
@@ -197,5 +197,7 @@ function ensureOverlayMounted(prUrl: string): void {
   const appRoot = document.createElement("div");
   shadowRoot.appendChild(appRoot);
 
-  createRoot(appRoot).render(<Overlay prUrl={prUrl} onRequestClose={cancelActiveStream} />);
+  // Overlay reads the active session key from the store, so SPA navigation to
+  // another PR never leaves a stale prUrl prop from the first mount.
+  createRoot(appRoot).render(<Overlay onRequestClose={cancelActiveStream} />);
 }

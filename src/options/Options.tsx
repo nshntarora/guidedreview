@@ -60,12 +60,18 @@ export function Options() {
 
   const onTestConnection = async () => {
     setConnection({ kind: "testing" });
-    await setProviderSettings(settings); // test against what's on screen, not last-saved
-    const result = await testConnection(settings);
-    if (result.ok) {
-      setConnection({ kind: "ok" });
-    } else {
-      setConnection({ kind: "error", message: result.error ?? "Connection failed." });
+    try {
+      await setProviderSettings(settings); // test against what's on screen, not last-saved
+      const result = await testConnection(settings);
+      if (result.ok) {
+        setConnection({ kind: "ok" });
+      } else {
+        setConnection({ kind: "error", message: result.error ?? "Connection failed." });
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Connection test failed unexpectedly.";
+      setConnection({ kind: "error", message });
     }
   };
 

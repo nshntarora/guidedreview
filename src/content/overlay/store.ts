@@ -4,6 +4,13 @@ import { displayUnitCount } from "./displayUnits";
 
 export type ReviewStatus = "idle" | "loading" | "streaming" | "ready" | "error";
 
+/** Stable identity for a PR, independent of which GitHub tab/URL the user is on. */
+export interface SessionPRIdentity {
+  owner: string;
+  repo: string;
+  number: number;
+}
+
 interface PersistedSession {
   diff: ParsedDiff;
   plan: ReviewPlan;
@@ -26,10 +33,15 @@ interface ReviewState {
    * startLoading so stale port events from a cancelled stream are ignored.
    */
   streamGeneration: number;
+  /**
+   * Canonical key for the PR whose session is in flight / restored.
+   * Derived from owner/repo/number — never the full browser URL.
+   */
+  sessionKey: string | null;
 
   open: () => void;
   close: () => void;
-  startLoading: () => void;
+  startLoading: (sessionKey: string) => void;
   setPRContext: (prContext: PRContext) => void;
   setDiff: (diff: ParsedDiff) => void;
   beginStreaming: (generation: number) => void;
@@ -41,6 +53,18 @@ interface ReviewState {
   goPrev: () => void;
 }
 
+/**
+ * Build a stable session key for a PR. Same PR on Conversation vs Files changed
+ * (or any other tab URL) must map to the same key so resume works.
+ */
+export function buildSessionKey(pr: SessionPRIdentity): string {
+  return `${pr.owner}/${pr.repo}#${pr.number}`;
+}
+
+function storageKey(sessionKey: string): string {
+  return `guidedReview.session.${sessionKey}`;
+}
+
 export const useReviewStore = create<ReviewState>((set, get) => ({
   isOpen: false,
   status: "idle",
@@ -50,17 +74,19 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   prContext: null,
   currentUnitIndex: 0,
   streamGeneration: 0,
+  sessionKey: null,
 
   open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false }),
 
-  startLoading: () =>
+  startLoading: (sessionKey) =>
     set((state) => ({
       status: "loading",
       error: null,
       currentUnitIndex: 0,
       plan: null,
       diff: null,
+      sessionKey,
       streamGeneration: state.streamGeneration + 1,
     })),
 
@@ -122,23 +148,19 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   },
 }));
 
-function sessionKey(prUrl: string): string {
-  return `guidedReview.session.${prUrl}`;
-}
-
 /**
  * Persist the current review session so reopening the overlay on the same PR resumes
  * without a fresh AI call. This is an optimization only — if storage access fails (e.g.
  * the access grant hasn't propagated yet), we log and move on rather than breaking the
  * review flow.
  */
-export async function persistSession(prUrl: string): Promise<void> {
-  const { status, diff, plan, prContext, currentUnitIndex } = useReviewStore.getState();
-  if (status !== "ready" || !diff || !plan) return;
+export async function persistSession(): Promise<void> {
+  const { status, diff, plan, prContext, currentUnitIndex, sessionKey } = useReviewStore.getState();
+  if (status !== "ready" || !diff || !plan || !sessionKey) return;
 
   const payload: PersistedSession = { diff, plan, prContext, currentUnitIndex };
   try {
-    await chrome.storage.session.set({ [sessionKey(prUrl)]: payload });
+    await chrome.storage.session.set({ [storageKey(sessionKey)]: payload });
   } catch (error) {
     console.warn("Guided Review: failed to persist session", error);
   }
@@ -149,11 +171,11 @@ export async function persistSession(prUrl: string): Promise<void> {
  * false if there's nothing to restore or storage access failed — callers should fall back
  * to starting a fresh review in either case.
  */
-export async function restoreSession(prUrl: string): Promise<boolean> {
+export async function restoreSession(sessionKey: string): Promise<boolean> {
   let saved: PersistedSession | undefined;
   try {
-    const result = await chrome.storage.session.get(sessionKey(prUrl));
-    saved = result[sessionKey(prUrl)] as PersistedSession | undefined;
+    const result = await chrome.storage.session.get(storageKey(sessionKey));
+    saved = result[storageKey(sessionKey)] as PersistedSession | undefined;
   } catch (error) {
     console.warn("Guided Review: failed to restore session", error);
     return false;
@@ -169,6 +191,7 @@ export async function restoreSession(prUrl: string): Promise<boolean> {
     plan: saved.plan,
     prContext: saved.prContext ?? null,
     currentUnitIndex,
+    sessionKey,
     error: null,
   });
   return true;

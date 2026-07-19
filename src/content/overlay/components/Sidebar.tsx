@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { ReviewPlan } from "../../../lib/types";
 import { cn } from "../../../lib/cn";
-import { PR_DESCRIPTION_UNIT_TITLE } from "../displayUnits";
+import { buildDisplayUnits } from "../displayUnits";
 
 const SKELETON_COUNT = 4;
 
@@ -19,7 +19,7 @@ export function Sidebar({
   stillBuilding,
   onSelectUnit,
 }: SidebarProps) {
-  const reviewUnits = plan?.units ?? [];
+  const displayUnits = buildDisplayUnits(plan);
   const activeItemRef = useRef<HTMLButtonElement>(null);
 
   // Keep the active unit visible when navigating via keyboard (←/→) or footer
@@ -41,23 +41,7 @@ export function Sidebar({
         Review units
       </div>
 
-      <button
-        type="button"
-        ref={currentUnitIndex === 0 ? activeItemRef : undefined}
-        aria-current={currentUnitIndex === 0 ? "true" : undefined}
-        className={cn(
-          "mb-0.5 block w-full cursor-pointer rounded-md border-none bg-transparent p-2 text-left text-[13px] leading-snug text-gr-text hover:bg-gr-subtle",
-          currentUnitIndex === 0 &&
-            "bg-gr-accent-subtle font-semibold text-gr-accent hover:bg-gr-accent-subtle"
-        )}
-        onClick={() => onSelectUnit(0)}
-      >
-        <span className="mr-1.5 text-gr-muted">1.</span>
-        {PR_DESCRIPTION_UNIT_TITLE}
-      </button>
-
-      {reviewUnits.map((unit, planIndex) => {
-        const displayIndex = planIndex + 1;
+      {displayUnits.map((unit, displayIndex) => {
         const isActive = displayIndex === currentUnitIndex;
         return (
           <button
