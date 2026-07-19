@@ -84,20 +84,18 @@ export interface ReviewPlan {
 }
 
 // ---- Provider / settings -----------------------------------------------------
+// ProviderId and DEFAULT_MODELS live in the catalog so the options UI and
+// background clients share one registry of providers/models.
 
-export type ProviderId = "anthropic" | "openai" | "grok";
+export type { ProviderId } from "./providers/catalog";
+export { DEFAULT_MODELS } from "./providers/catalog";
+import type { ProviderId } from "./providers/catalog";
 
 export interface ProviderSettings {
   provider: ProviderId;
   model: string;
   apiKey: string;
 }
-
-export const DEFAULT_MODELS: Record<ProviderId, string> = {
-  anthropic: "claude-opus-4-8",
-  openai: "gpt-4.1",
-  grok: "grok-4",
-};
 
 // ---- Messaging protocol (content <-> background) -----------------------------
 

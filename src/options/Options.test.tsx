@@ -1,26 +1,47 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { Options } from "./Options";
+import { DEFAULT_MODELS } from "../lib/types";
+
+async function chooseOption(
+  user: ReturnType<typeof userEvent.setup>,
+  label: RegExp | string,
+  optionName: string | RegExp,
+) {
+  await user.click(screen.getByRole("combobox", { name: label }));
+  const listbox = screen.getByRole("listbox");
+  await user.click(within(listbox).getByRole("option", { name: optionName }));
+}
 
 describe("Options", () => {
   it("hydrates the form from stored settings", async () => {
     await chrome.storage.local.set({
-      "guidedReview.providerSettings": { provider: "openai", model: "gpt-4.1", apiKey: "sk-existing" },
+      "guidedReview.providerSettings": {
+        provider: "openai",
+        model: "gpt-4.1",
+        apiKey: "sk-existing",
+      },
     });
 
     render(<Options />);
 
-    expect(await screen.findByDisplayValue("gpt-4.1")).toBeInTheDocument();
-    expect(screen.getByLabelText(/provider/i)).toHaveValue("openai");
+    expect(await screen.findByRole("combobox", { name: /provider/i })).toHaveTextContent(
+      "OpenAI",
+    );
+    expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent("GPT-4.1");
     expect(screen.getByLabelText(/api key/i)).toHaveValue("sk-existing");
   });
 
   it("falls back to anthropic defaults when nothing is stored", async () => {
     render(<Options />);
 
-    expect(await screen.findByLabelText(/provider/i)).toHaveValue("anthropic");
-    expect(screen.getByLabelText(/model/i)).toHaveValue("claude-opus-4-8");
+    expect(await screen.findByRole("combobox", { name: /provider/i })).toHaveTextContent(
+      "Claude (Anthropic)",
+    );
+    expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent(
+      "Claude Opus 4.8",
+    );
     expect(screen.getByLabelText(/api key/i)).toHaveValue("");
   });
 
@@ -28,32 +49,45 @@ describe("Options", () => {
     const user = userEvent.setup();
     render(<Options />);
 
-    await screen.findByLabelText(/provider/i);
-    await user.selectOptions(screen.getByLabelText(/provider/i), "grok");
+    await screen.findByRole("combobox", { name: /provider/i });
+    await chooseOption(user, /provider/i, /Grok/);
 
-    expect(screen.getByLabelText(/model/i)).toHaveValue("grok-4");
+    expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent("Grok 4");
   });
 
   it("saves the on-screen settings to chrome.storage.local and shows Saved", async () => {
     const user = userEvent.setup();
     render(<Options />);
 
-    await screen.findByLabelText(/provider/i);
+    await screen.findByRole("combobox", { name: /provider/i });
     await user.type(screen.getByLabelText(/api key/i), "sk-new-key");
     await user.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(screen.getByText("Saved")).toBeInTheDocument();
+    expect(await screen.findByText("Saved")).toBeInTheDocument();
     const stored = await chrome.storage.local.get("guidedReview.providerSettings");
     expect(stored["guidedReview.providerSettings"]).toEqual({
       provider: "anthropic",
-      model: "claude-opus-4-8",
+      model: DEFAULT_MODELS.anthropic,
       apiKey: "sk-new-key",
     });
   });
 
+  it("shows an error when save fails", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(chrome.storage.local, "set").mockRejectedValueOnce(new Error("Quota exceeded"));
+    render(<Options />);
+
+    await screen.findByRole("combobox", { name: /provider/i });
+    await user.type(screen.getByLabelText(/api key/i), "sk-x");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Quota exceeded")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).not.toBeDisabled();
+  });
+
   it("disables Test connection until an API key is present", async () => {
     render(<Options />);
-    await screen.findByLabelText(/provider/i);
+    await screen.findByRole("combobox", { name: /provider/i });
     expect(screen.getByRole("button", { name: /test connection/i })).toBeDisabled();
   });
 
@@ -62,7 +96,7 @@ describe("Options", () => {
     vi.mocked(chrome.runtime.sendMessage).mockResolvedValueOnce({ ok: true });
     render(<Options />);
 
-    await screen.findByLabelText(/provider/i);
+    await screen.findByRole("combobox", { name: /provider/i });
     await user.type(screen.getByLabelText(/api key/i), "sk-test");
     await user.click(screen.getByRole("button", { name: /test connection/i }));
 
@@ -71,10 +105,13 @@ describe("Options", () => {
 
   it("shows the error message when the connection test fails", async () => {
     const user = userEvent.setup();
-    vi.mocked(chrome.runtime.sendMessage).mockResolvedValueOnce({ ok: false, error: "Invalid API key" });
+    vi.mocked(chrome.runtime.sendMessage).mockResolvedValueOnce({
+      ok: false,
+      error: "Invalid API key",
+    });
     render(<Options />);
 
-    await screen.findByLabelText(/provider/i);
+    await screen.findByRole("combobox", { name: /provider/i });
     await user.type(screen.getByLabelText(/api key/i), "sk-bad");
     await user.click(screen.getByRole("button", { name: /test connection/i }));
 
@@ -83,10 +120,12 @@ describe("Options", () => {
 
   it("shows an error when the connection test throws", async () => {
     const user = userEvent.setup();
-    vi.mocked(chrome.runtime.sendMessage).mockRejectedValueOnce(new Error("Extension context invalidated"));
+    vi.mocked(chrome.runtime.sendMessage).mockRejectedValueOnce(
+      new Error("Extension context invalidated"),
+    );
     render(<Options />);
 
-    await screen.findByLabelText(/provider/i);
+    await screen.findByRole("combobox", { name: /provider/i });
     await user.type(screen.getByLabelText(/api key/i), "sk-test");
     await user.click(screen.getByRole("button", { name: /test connection/i }));
 
@@ -95,5 +134,17 @@ describe("Options", () => {
     );
     // Must not remain stuck on "Testing…"
     expect(screen.getByRole("button", { name: /test connection/i })).not.toBeDisabled();
+  });
+
+  it("lists expanded model options for the selected provider", async () => {
+    const user = userEvent.setup();
+    render(<Options />);
+
+    await screen.findByRole("combobox", { name: /model/i });
+    await user.click(screen.getByRole("combobox", { name: /model/i }));
+
+    const listbox = screen.getByRole("listbox");
+    expect(within(listbox).getByRole("option", { name: /Claude Sonnet 5/i })).toBeInTheDocument();
+    expect(within(listbox).getByRole("option", { name: /Claude Haiku 4\.5/i })).toBeInTheDocument();
   });
 });
