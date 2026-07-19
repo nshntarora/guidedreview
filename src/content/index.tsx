@@ -3,7 +3,7 @@ import { parsePRUrl, type PRIdentity } from "../lib/github/diffFetch";
 import { fetchConversationDescription, scrapePRContext } from "../lib/github/prContext";
 import { requestPRDiff, streamReviewPlan } from "../lib/messaging";
 import { Overlay } from "./overlay/Overlay";
-import { OVERLAY_CSS } from "./overlay/styles";
+import overlayStyles from "./overlay/styles/overlay.css?inline";
 import { useReviewStore, restoreSession } from "./overlay/store";
 
 const BUTTON_ID = "guided-review-start-btn";
@@ -191,7 +191,7 @@ function ensureOverlayMounted(prUrl: string): void {
   const shadowRoot = host.attachShadow({ mode: "open" });
 
   const style = document.createElement("style");
-  style.textContent = OVERLAY_CSS;
+  style.textContent = overlayStyles;
   shadowRoot.appendChild(style);
 
   const appRoot = document.createElement("div");

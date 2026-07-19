@@ -53,9 +53,9 @@ describe("Sidebar", () => {
     expect(lastCall?.[0]).toEqual({ block: "nearest", behavior: "smooth" });
 
     // The active item after the jump is unit 2 (display index 2 → "3. Unit 2").
-    const active = document.querySelector(".gr-unit-item.gr-active");
+    const active = screen.getByRole("button", { current: true });
     expect(active).not.toBeNull();
-    expect(active?.textContent).toMatch(/Unit 2/);
+    expect(active.textContent).toMatch(/Unit 2/);
   });
 
   it("marks the PR description unit active at index 0", () => {
@@ -67,8 +67,8 @@ describe("Sidebar", () => {
         onSelectUnit={() => {}}
       />
     );
-    const active = document.querySelector(".gr-unit-item.gr-active");
-    expect(active?.textContent).toMatch(/PR description/i);
+    const active = screen.getByRole("button", { current: true });
+    expect(active.textContent).toMatch(/PR description/i);
     expect(screen.getByRole("navigation", { name: /review units/i })).toBeInTheDocument();
   });
 
@@ -84,7 +84,7 @@ describe("Sidebar", () => {
 
     expect(screen.getByText("Unit 1")).toBeInTheDocument();
     expect(screen.getByText("Unit 2")).toBeInTheDocument();
-    expect(document.querySelectorAll(".gr-unit-item-skeleton")).toHaveLength(4);
+    expect(screen.getAllByTestId("unit-skeleton")).toHaveLength(4);
   });
 
   it("hides skeletons when not still building", () => {
@@ -97,6 +97,6 @@ describe("Sidebar", () => {
       />
     );
 
-    expect(document.querySelectorAll(".gr-unit-item-skeleton")).toHaveLength(0);
+    expect(screen.queryAllByTestId("unit-skeleton")).toHaveLength(0);
   });
 });

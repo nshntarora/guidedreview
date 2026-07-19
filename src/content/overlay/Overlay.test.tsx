@@ -99,7 +99,7 @@ describe("Overlay", () => {
     expect(screen.getByText(/building the rest of the walkthrough/i)).toBeInTheDocument();
     expect(screen.getByRole("status", { name: /building the rest of the walkthrough/i })).toBeInTheDocument();
     // Skeleton placeholders are present (non-interactive bars in the unit list).
-    expect(document.querySelectorAll(".gr-unit-item-skeleton").length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
     // Shortcuts are reserved for the ready state; spinner occupies that slot while loading.
     expect(screen.queryByLabelText(/keyboard shortcuts/i)).not.toBeInTheDocument();
     // No full-page loading spinner copy.
@@ -122,7 +122,7 @@ describe("Overlay", () => {
     expect(screen.getByText("src/foo.ts")).toBeInTheDocument();
     // Plan still loading — skeleton + status copy remain.
     expect(screen.getByText(/building the rest of the walkthrough/i)).toBeInTheDocument();
-    expect(document.querySelectorAll(".gr-unit-item-skeleton").length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
   });
 
   it("shows completed units alongside skeletons while streaming", () => {
@@ -137,7 +137,7 @@ describe("Overlay", () => {
     render(<Overlay prUrl={PR_URL} />);
 
     expect(screen.getByText("Update foo")).toBeInTheDocument();
-    expect(document.querySelectorAll(".gr-unit-item-skeleton").length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
     expect(screen.getByText(/building the rest of the walkthrough/i)).toBeInTheDocument();
   });
 
@@ -229,8 +229,8 @@ describe("Overlay", () => {
     });
     render(<Overlay prUrl={PR_URL} />);
     // Description lives in the left pane, not a header <details>.
-    expect(document.querySelector(".gr-pr-description")).toBeNull();
-    expect(document.querySelector(".gr-description-pane")).not.toBeNull();
+    expect(screen.queryByRole("heading", { name: /pr description/i })).toBeInTheDocument();
+    expect(screen.getByTestId("description-pane")).toBeInTheDocument();
   });
 
   it("shows the author's-intent hint when the PR has a description", () => {
@@ -260,10 +260,10 @@ describe("Overlay", () => {
     render(<Overlay prUrl={PR_URL} />);
 
     // Left pane empty state + right pane context both mention the gap.
-    expect(document.querySelector(".gr-description-pane-empty")?.textContent).toMatch(
+    expect(screen.getByTestId("description-pane-empty").textContent).toMatch(
       /author hasn't added a PR description/i
     );
-    expect(document.querySelector(".gr-context-panel-body")?.textContent).toMatch(
+    expect(screen.getByTestId("context-panel-body").textContent).toMatch(
       /rely on the AI to tell us what this PR is about/i
     );
     expect(
@@ -280,13 +280,13 @@ describe("Overlay", () => {
     });
     render(<Overlay prUrl={PR_URL} />);
 
-    expect(document.querySelector(".gr-description-pane-empty")?.textContent).toMatch(
+    expect(screen.getByTestId("description-pane-empty").textContent).toMatch(
       /author hasn't added a PR title or description/i
     );
-    expect(document.querySelector(".gr-context-panel-body")?.textContent).toMatch(
+    expect(screen.getByTestId("context-panel-body").textContent).toMatch(
       /author hasn't added a PR title or description/i
     );
-    expect(document.querySelector(".gr-context-panel-body")?.textContent).toMatch(
+    expect(screen.getByTestId("context-panel-body").textContent).toMatch(
       /rely on the AI to tell us what this PR is about from the diff/i
     );
   });
@@ -302,10 +302,8 @@ describe("Overlay", () => {
     });
     render(<Overlay prUrl={PR_URL} />);
 
-    const codeCol = document.querySelector(".gr-code-col") as HTMLElement;
-    const contextPane = document.querySelector(".gr-context-pane") as HTMLElement;
-    expect(codeCol).not.toBeNull();
-    expect(contextPane).not.toBeNull();
+    expect(screen.getByTestId("code-col")).toBeInTheDocument();
+    expect(screen.getByTestId("context-pane")).toBeInTheDocument();
 
     const scrollToMock = Element.prototype.scrollTo as ReturnType<typeof vi.fn>;
     const scrollIntoViewMock = Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>;
@@ -317,7 +315,7 @@ describe("Overlay", () => {
     expect(useReviewStore.getState().currentUnitIndex).toBe(1);
     expect(scrollToMock).toHaveBeenCalledWith({ top: 0 });
     expect(scrollIntoViewMock).toHaveBeenCalledWith({ block: "nearest", behavior: "smooth" });
-    expect(document.querySelector(".gr-unit-item.gr-active")?.textContent).toMatch(/Update foo/);
+    expect(screen.getByRole("button", { current: true }).textContent).toMatch(/Update foo/);
   });
 });
 

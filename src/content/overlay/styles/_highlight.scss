@@ -1,0 +1,78 @@
+/* highlight.js token colors — classes are emitted on HTML strings we don't own. */
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--color-gr-syntax-comment);
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst,
+.hljs-operator {
+  color: var(--color-gr-syntax-keyword);
+}
+
+.hljs-title,
+.hljs-title.function_,
+.hljs-title.class_,
+.hljs-section,
+.hljs-selector-class,
+.hljs-selector-id,
+.hljs-doctag {
+  color: var(--color-gr-syntax-entity);
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link {
+  color: var(--color-gr-syntax-string);
+}
+
+.hljs-variable,
+.hljs-template-variable,
+.hljs-selector-attr,
+.hljs-selector-pseudo,
+.hljs-attr {
+  color: var(--color-gr-syntax-variable);
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-type,
+.hljs-built_in,
+.hljs-class .hljs-title {
+  color: var(--color-gr-syntax-constant);
+}
+
+.hljs-tag,
+.hljs-name {
+  color: var(--color-gr-syntax-tag);
+}
+
+.hljs-attribute {
+  color: var(--color-gr-syntax-attr);
+}
+
+.hljs-meta,
+.hljs-meta .hljs-keyword {
+  color: var(--color-gr-syntax-meta);
+}
+
+.hljs-deletion {
+  color: var(--color-gr-syntax-deleted);
+}
+
+.hljs-addition {
+  color: var(--color-gr-syntax-inserted);
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: 600;
+}

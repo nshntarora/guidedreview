@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import { highlightToLines, languageForPath } from "../../../lib/highlight";
+import { cn } from "../../../lib/cn";
 import type { DiffHunk } from "../../../lib/types";
 import type { ResolvedUnitFile } from "../selectors";
 
@@ -49,15 +50,29 @@ function HunkBlock({ hunk, language }: { hunk: DiffHunk; language: string | unde
   const highlighted = useMemo(() => highlightHunkLines(hunk, language), [hunk, language]);
 
   return (
-    <div className="gr-diff-hunk">
+    <div className="overflow-x-auto font-mono text-[13px] leading-relaxed">
       {hunk.lines.map((line, i) => (
         <div
           key={i}
-          className={`gr-diff-line${line.type === "add" ? " gr-add" : line.type === "del" ? " gr-del" : ""}`}
+          className={cn(
+            "flex whitespace-pre pr-3",
+            line.type === "add" && "bg-gr-add-bg",
+            line.type === "del" && "bg-gr-del-bg"
+          )}
         >
-          <span className="gr-diff-gutter">{line.oldLine ?? ""}</span>
-          <span className="gr-diff-gutter">{line.newLine ?? ""}</span>
-          <span className="gr-diff-marker">
+          <span className="w-10 shrink-0 select-none pr-3 text-right text-gr-faint">
+            {line.oldLine ?? ""}
+          </span>
+          <span className="w-10 shrink-0 select-none pr-3 text-right text-gr-faint">
+            {line.newLine ?? ""}
+          </span>
+          <span
+            className={cn(
+              "w-4 shrink-0 opacity-70",
+              line.type === "add" && "text-gr-add-text",
+              line.type === "del" && "text-gr-del-text"
+            )}
+          >
             {line.type === "add" ? "+" : line.type === "del" ? "-" : ""}
           </span>
           {highlighted[i] != null ? (
@@ -78,18 +93,21 @@ export function DiffPane({ files }: DiffPaneProps) {
         const language = languageForPath(file.path);
         const extension = file.path.includes(".") ? file.path.split(".").pop() : undefined;
         return (
-          <div className="gr-file-block" key={file.path}>
-            <div className="gr-file-block-header">
+          <div
+            className="mb-7 overflow-hidden rounded-lg border border-gr-border bg-gr-canvas"
+            key={file.path}
+          >
+            <div className="flex items-baseline gap-2.5 border-b border-gr-border bg-gr-chrome px-3 py-2 font-mono text-[12.5px]">
               {file.previousPath ? `${file.previousPath} → ${file.path}` : file.path}
               {!language && !file.isBinaryOrElided && (
-                <span className="gr-file-block-header-note">
+                <span className="font-normal text-gr-muted italic">
                   {extension ? `no syntax highlighting for .${extension}` : "no syntax highlighting"}
                 </span>
               )}
             </div>
             {file.isBinaryOrElided ? (
-              <div className="gr-diff-hunk">
-                <div className="gr-diff-line gr-context">
+              <div className="overflow-x-auto font-mono text-[13px] leading-relaxed">
+                <div className="flex whitespace-pre pr-3">
                   <span>(binary or elided — no textual diff available)</span>
                 </div>
               </div>

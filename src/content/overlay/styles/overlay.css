@@ -1,0 +1,28 @@
+/*
+ * Overlay stylesheet injected into the review Shadow DOM (?inline).
+ * Layout/colors live as Tailwind utilities on components; SCSS holds only
+ * styles that cannot be applied to markup we own.
+ *
+ * Layer order: `reset` must precede `theme` so `:host { all: initial }` does
+ * not clobber Tailwind design tokens (unlayered rules beat @layer theme).
+ * Host reset is pure CSS in this file (not SCSS): Sass was dropping nested
+ * @layer contents when the reset lived only in a partial.
+ */
+@layer reset, theme, base, components, utilities;
+
+@layer reset {
+  :host {
+    all: initial;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+}
+
+@import "../../../styles/theme.css";
+@import "./_highlight.scss";
+@import "./_markdown.scss";
+@import "./_animations.scss";

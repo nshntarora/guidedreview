@@ -1,0 +1,17 @@
+/*
+ * Skeleton bar width variants (uniform placeholders look artificial).
+ * Shimmer animation is registered in theme.css as --animate-gr-skeleton.
+ */
+
+[data-skeleton-index="0"] {
+  width: 72%;
+}
+[data-skeleton-index="1"] {
+  width: 58%;
+}
+[data-skeleton-index="2"] {
+  width: 80%;
+}
+[data-skeleton-index="3"] {
+  width: 45%;
+}
