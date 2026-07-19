@@ -15,7 +15,9 @@ test.describe("Options page", () => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/src/options/index.html`);
 
-    await expect(page.getByLabel("Provider")).toHaveValue("anthropic");
+    await expect(page.getByRole("combobox", { name: "Provider" })).toContainText(
+      "Claude (Anthropic)",
+    );
 
     await page.getByLabel("API key").fill("sk-e2e-test-key");
     await page.getByRole("button", { name: "Save" }).click();
@@ -28,16 +30,22 @@ test.describe("Options page", () => {
     // not just in-memory component state.
     await page.reload();
     await expect(page.getByLabel("API key")).toHaveValue("sk-e2e-test-key");
-    await expect(page.getByLabel("Provider")).toHaveValue("anthropic");
+    await expect(page.getByRole("combobox", { name: "Provider" })).toContainText(
+      "Claude (Anthropic)",
+    );
   });
 
   test("switching provider resets the model to that provider's default", async ({ context, extensionId }) => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/src/options/index.html`);
 
-    await expect(page.getByLabel("Provider")).toHaveValue("anthropic");
-    await page.getByLabel("Provider").selectOption("grok");
+    await expect(page.getByRole("combobox", { name: "Provider" })).toContainText(
+      "Claude (Anthropic)",
+    );
 
-    await expect(page.getByLabel("Model")).toHaveValue("grok-4");
+    await page.getByRole("combobox", { name: "Provider" }).click();
+    await page.getByRole("option", { name: /Grok/ }).click();
+
+    await expect(page.getByRole("combobox", { name: "Model" })).toContainText("Grok 4");
   });
 });
