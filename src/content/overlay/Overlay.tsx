@@ -142,7 +142,10 @@ export function Overlay({ onRequestClose }: OverlayProps) {
           {isDescriptionUnit ? (
             <DescriptionPane prContext={prContext} diff={diff} />
           ) : (
-            <DiffPane files={resolvedFiles} />
+            <DiffPane
+              files={resolvedFiles}
+              unitTitle={currentReviewUnit?.title ?? ""}
+            />
           )}
         </main>
 

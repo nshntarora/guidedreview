@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Overlay } from "./Overlay";
+import { DEFAULT_DIFF_VIEW_MODE } from "./diffViewMode";
 import { useReviewStore } from "./store";
 import { PR_DESCRIPTION_UNIT_TITLE } from "./displayUnits";
 import type { ParsedDiff, PRContext, ReviewPlan } from "../../lib/types";
@@ -68,6 +69,7 @@ function resetStore(): void {
     currentUnitIndex: 0,
     streamGeneration: 0,
     sessionKey: null,
+    diffViewMode: DEFAULT_DIFF_VIEW_MODE,
   });
 }
 
@@ -213,7 +215,7 @@ describe("Overlay", () => {
     });
     render(<Overlay />);
     expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Update foo")).toBeInTheDocument();
+    expect(screen.getByTestId("diff-unit-title")).toHaveTextContent("Update foo");
     expect(screen.getByText("because it needed updating")).toBeInTheDocument();
   });
 

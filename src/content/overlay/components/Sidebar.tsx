@@ -50,13 +50,20 @@ export function Sidebar({
             ref={isActive ? activeItemRef : undefined}
             aria-current={isActive ? "true" : undefined}
             className={cn(
-              "mb-0.5 block w-full cursor-pointer rounded-md border-none bg-transparent p-2 text-left text-[13px] leading-snug text-gr-text hover:bg-gr-subtle",
+              "mb-0.5 block w-full cursor-pointer rounded-md border-none bg-transparent p-2 text-left text-[13px] leading-snug text-gr-text",
               isActive &&
-                "bg-gr-accent-subtle font-semibold text-gr-accent hover:bg-gr-accent-subtle"
+                "bg-gr-accent-subtle text-gr-accent! hover:bg-gr-accent-subtle",
             )}
             onClick={() => onSelectUnit(displayIndex)}
           >
-            <span className="mr-1.5 text-gr-muted">{displayIndex + 1}.</span>
+            <span
+              className={cn(
+                "mr-1.5",
+                isActive ? "text-gr-accent" : "text-gr-muted",
+              )}
+            >
+              {displayIndex + 1}.
+            </span>
             {unit.title}
           </button>
         );

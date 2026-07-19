@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_DIFF_VIEW_MODE } from "./diffViewMode";
 import {
   useReviewStore,
   persistSession,
@@ -51,6 +52,7 @@ function resetStore(): void {
     currentUnitIndex: 0,
     streamGeneration: 0,
     sessionKey: null,
+    diffViewMode: DEFAULT_DIFF_VIEW_MODE,
   });
 }
 
@@ -71,6 +73,15 @@ describe("useReviewStore", () => {
     expect(useReviewStore.getState().isOpen).toBe(true);
     useReviewStore.getState().close();
     expect(useReviewStore.getState().isOpen).toBe(false);
+  });
+
+  it("defaults diffViewMode to split and setDiffViewMode updates it", () => {
+    resetStore();
+    expect(useReviewStore.getState().diffViewMode).toBe("split");
+    useReviewStore.getState().setDiffViewMode("unified");
+    expect(useReviewStore.getState().diffViewMode).toBe("unified");
+    useReviewStore.getState().setDiffViewMode("split");
+    expect(useReviewStore.getState().diffViewMode).toBe("split");
   });
 
   it("startLoading sets status to loading, stores sessionKey, clears plan/diff/error, and resets unit index", () => {
