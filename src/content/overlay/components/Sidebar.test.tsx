@@ -24,7 +24,12 @@ describe("Sidebar", () => {
   it("scrolls the active unit into view when currentUnitIndex changes", () => {
     const plan = planWithUnits(3);
     const { rerender } = render(
-      <Sidebar plan={plan} currentUnitIndex={0} loading={false} onSelectUnit={() => {}} />
+      <Sidebar
+        plan={plan}
+        currentUnitIndex={0}
+        stillBuilding={false}
+        onSelectUnit={() => {}}
+      />
     );
 
     // Initial mount scrolls the description unit into view.
@@ -33,7 +38,12 @@ describe("Sidebar", () => {
       .calls.length;
 
     rerender(
-      <Sidebar plan={plan} currentUnitIndex={2} loading={false} onSelectUnit={() => {}} />
+      <Sidebar
+        plan={plan}
+        currentUnitIndex={2}
+        stillBuilding={false}
+        onSelectUnit={() => {}}
+      />
     );
 
     expect(Element.prototype.scrollIntoView).toHaveBeenCalledTimes(firstCallCount + 1);
@@ -53,12 +63,40 @@ describe("Sidebar", () => {
       <Sidebar
         plan={planWithUnits(1)}
         currentUnitIndex={0}
-        loading={false}
+        stillBuilding={false}
         onSelectUnit={() => {}}
       />
     );
     const active = document.querySelector(".gr-unit-item.gr-active");
     expect(active?.textContent).toMatch(/PR description/i);
     expect(screen.getByRole("navigation", { name: /review units/i })).toBeInTheDocument();
+  });
+
+  it("shows completed units and trailing skeletons while still building", () => {
+    render(
+      <Sidebar
+        plan={planWithUnits(2)}
+        currentUnitIndex={1}
+        stillBuilding={true}
+        onSelectUnit={() => {}}
+      />
+    );
+
+    expect(screen.getByText("Unit 1")).toBeInTheDocument();
+    expect(screen.getByText("Unit 2")).toBeInTheDocument();
+    expect(document.querySelectorAll(".gr-unit-item-skeleton")).toHaveLength(4);
+  });
+
+  it("hides skeletons when not still building", () => {
+    render(
+      <Sidebar
+        plan={planWithUnits(1)}
+        currentUnitIndex={0}
+        stillBuilding={false}
+        onSelectUnit={() => {}}
+      />
+    );
+
+    expect(document.querySelectorAll(".gr-unit-item-skeleton")).toHaveLength(0);
   });
 });

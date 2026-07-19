@@ -1,7 +1,8 @@
-import type { ProviderSettings, ReviewPlan } from "../../lib/types";
+import type { ProviderSettings } from "../../lib/types";
 import { buildUserPrompt, SYSTEM_PROMPT } from "../../lib/review/buildPrompt";
 import { REVIEW_PLAN_JSON_SCHEMA } from "../../lib/review/reviewSchema";
-import type { AnnotateReviewInput, ProviderClient } from "./types";
+import { readSseJsonStream } from "./sse";
+import type { AnnotateReviewInput, AnnotateStreamEvent, ProviderClient } from "./types";
 import { ProviderError } from "./types";
 
 /**
@@ -11,54 +12,83 @@ import { ProviderError } from "./types";
  * one client covers both providers; only the base URL and display name
  * differ.
  *
- * Not fully prompt-tuned in v1 (Claude is the wired-up default), but present
- * and selectable so adding real coverage later is a config change, not new
- * plumbing.
+ * Streams completion deltas so the overlay can surface completed units early.
  */
 export function createOpenAICompatibleProvider(baseUrl: string, displayName: string): ProviderClient {
   const chatUrl = `${baseUrl}/chat/completions`;
 
   return {
-    async annotateReview({ diff, prContext, settings }: AnnotateReviewInput): Promise<ReviewPlan> {
-      const response = await fetch(chatUrl, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          authorization: `Bearer ${settings.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: settings.model,
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: buildUserPrompt(diff, prContext) },
-          ],
-          response_format: {
-            type: "json_schema",
-            json_schema: {
-              name: "review_plan",
-              schema: REVIEW_PLAN_JSON_SCHEMA,
-              strict: true,
-            },
+    async *annotateReviewStream(
+      { diff, prContext, settings }: AnnotateReviewInput,
+      options?: { signal?: AbortSignal },
+    ): AsyncGenerator<AnnotateStreamEvent, void, unknown> {
+      let response: Response;
+      try {
+        response = await fetch(chatUrl, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${settings.apiKey}`,
           },
-        }),
-      });
+          body: JSON.stringify({
+            model: settings.model,
+            stream: true,
+            messages: [
+              { role: "system", content: SYSTEM_PROMPT },
+              { role: "user", content: buildUserPrompt(diff, prContext) },
+            ],
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "review_plan",
+                schema: REVIEW_PLAN_JSON_SCHEMA,
+                strict: true,
+              },
+            },
+          }),
+          signal: options?.signal,
+        });
+      } catch (error) {
+        if (isAbortError(error)) throw error;
+        throw new ProviderError(
+          error instanceof Error ? error.message : `Failed to reach the ${displayName} API.`,
+        );
+      }
 
       if (!response.ok) {
         const detail = await safeErrorDetail(response);
         throw new ProviderError(`${displayName} API error (${response.status}): ${detail}`);
       }
 
-      const data = await response.json();
-      const content = data?.choices?.[0]?.message?.content;
-      if (!content) {
+      if (!response.body) {
+        throw new ProviderError(`${displayName} returned an empty stream.`);
+      }
+
+      let sawContent = false;
+
+      for await (const event of readSseJsonStream(response.body, { signal: options?.signal })) {
+        if (!event || typeof event !== "object") continue;
+        const data = event as {
+          choices?: Array<{ delta?: { content?: string | null }; finish_reason?: string | null }>;
+          error?: { message?: string };
+        };
+
+        if (data.error?.message) {
+          throw new ProviderError(data.error.message);
+        }
+
+        const content = data.choices?.[0]?.delta?.content;
+        if (typeof content === "string" && content.length > 0) {
+          sawContent = true;
+          yield { type: "text_delta", text: content };
+        }
+      }
+
+      if (!sawContent) {
         throw new ProviderError(`${displayName} returned no content for this diff.`);
       }
 
-      try {
-        return JSON.parse(content) as ReviewPlan;
-      } catch {
-        throw new ProviderError(`${displayName} returned a response that wasn't valid JSON.`);
-      }
+      yield { type: "done" };
     },
 
     async testConnection(settings: ProviderSettings): Promise<void> {
@@ -90,4 +120,8 @@ async function safeErrorDetail(response: Response): Promise<string> {
   } catch {
     return response.statusText;
   }
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError";
 }

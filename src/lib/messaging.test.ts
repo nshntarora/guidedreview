@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { requestPRDiff, requestReviewPlan, testConnection } from "./messaging";
-import type { ParsedDiff, PRContext } from "./types";
+import { requestPRDiff, streamReviewPlan, testConnection } from "./messaging";
+import type { ParsedDiff, PRContext, ReviewUnit } from "./types";
+import type { MockPort } from "../test/chromeMock";
 
 describe("messaging", () => {
   it("requestPRDiff sends a typed FETCH_DIFF message", async () => {
@@ -16,20 +17,75 @@ describe("messaging", () => {
     expect(result).toEqual(response);
   });
 
-  it("requestReviewPlan sends a typed ANNOTATE_REVIEW message with the diff and PR context", async () => {
+  it("streamReviewPlan opens an annotate-review port and posts ANNOTATE_REVIEW", () => {
     const diff: ParsedDiff = { files: [] };
     const prContext = { title: "Add feature" } as PRContext;
-    const response = { ok: true, plan: { units: [] } };
-    vi.mocked(chrome.runtime.sendMessage).mockResolvedValueOnce(response);
+    const onUnit = vi.fn();
+    const onDone = vi.fn();
+    const onError = vi.fn();
 
-    const result = await requestReviewPlan(diff, prContext);
+    streamReviewPlan(diff, prContext, { onUnit, onDone, onError });
 
-    expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({
+    expect(chrome.runtime.connect).toHaveBeenCalledWith({ name: "annotate-review" });
+    const port = vi.mocked(chrome.runtime.connect).mock.results[0].value as MockPort;
+    expect(port.postMessage).toHaveBeenCalledWith({
       type: "ANNOTATE_REVIEW",
       diff,
       prContext,
     });
-    expect(result).toEqual(response);
+  });
+
+  it("streamReviewPlan delivers UNIT and DONE events to handlers", () => {
+    const unit: ReviewUnit = {
+      id: "c0-u1",
+      title: "Update foo",
+      context: "because",
+      files: [{ fileId: "src/foo.ts", hunkIds: [], role: "core_logic" }],
+    };
+    const plan = { units: [unit] };
+    const onUnit = vi.fn();
+    const onDone = vi.fn();
+    const onError = vi.fn();
+
+    streamReviewPlan({ files: [] }, { title: "t" } as PRContext, { onUnit, onDone, onError });
+    const port = vi.mocked(chrome.runtime.connect).mock.results[0].value as MockPort;
+
+    port.__emitMessage({ type: "UNIT", unit });
+    port.__emitMessage({ type: "DONE", plan });
+
+    expect(onUnit).toHaveBeenCalledWith(unit);
+    expect(onDone).toHaveBeenCalledWith(plan);
+    expect(onError).not.toHaveBeenCalled();
+    expect(port.disconnect).toHaveBeenCalled();
+  });
+
+  it("streamReviewPlan delivers ERROR events", () => {
+    const onUnit = vi.fn();
+    const onDone = vi.fn();
+    const onError = vi.fn();
+
+    streamReviewPlan({ files: [] }, { title: "t" } as PRContext, { onUnit, onDone, onError });
+    const port = vi.mocked(chrome.runtime.connect).mock.results[0].value as MockPort;
+
+    port.__emitMessage({ type: "ERROR", error: "No API key configured." });
+
+    expect(onError).toHaveBeenCalledWith("No API key configured.");
+    expect(onDone).not.toHaveBeenCalled();
+  });
+
+  it("streamReviewPlan cancel disconnects the port without erroring", () => {
+    const onError = vi.fn();
+    const { cancel } = streamReviewPlan({ files: [] }, { title: "t" } as PRContext, {
+      onUnit: vi.fn(),
+      onDone: vi.fn(),
+      onError,
+    });
+    const port = vi.mocked(chrome.runtime.connect).mock.results[0].value as MockPort;
+
+    cancel();
+    // disconnect fires onDisconnect; cancel marks settled so onError is not called
+    expect(port.disconnect).toHaveBeenCalled();
+    expect(onError).not.toHaveBeenCalled();
   });
 
   it("testConnection sends a typed TEST_CONNECTION message", async () => {

@@ -68,6 +68,7 @@ function resetStore(): void {
     plan: null,
     prContext: null,
     currentUnitIndex: 0,
+    streamGeneration: 0,
   });
 }
 
@@ -122,6 +123,37 @@ describe("Overlay", () => {
     // Plan still loading — skeleton + status copy remain.
     expect(screen.getByText(/building the rest of the walkthrough/i)).toBeInTheDocument();
     expect(document.querySelectorAll(".gr-unit-item-skeleton").length).toBeGreaterThan(0);
+  });
+
+  it("shows completed units alongside skeletons while streaming", () => {
+    useReviewStore.setState({
+      isOpen: true,
+      status: "streaming",
+      diff: diffFixture(),
+      plan: planFixture(),
+      prContext: prContextFixture(),
+      currentUnitIndex: 0,
+    });
+    render(<Overlay prUrl={PR_URL} />);
+
+    expect(screen.getByText("Update foo")).toBeInTheDocument();
+    expect(document.querySelectorAll(".gr-unit-item-skeleton").length).toBeGreaterThan(0);
+    expect(screen.getByText(/building the rest of the walkthrough/i)).toBeInTheDocument();
+  });
+
+  it("shows unit context without the building spinner when viewing a streamed unit", () => {
+    useReviewStore.setState({
+      isOpen: true,
+      status: "streaming",
+      diff: diffFixture(),
+      plan: planFixture(),
+      prContext: prContextFixture(),
+      currentUnitIndex: 1,
+    });
+    render(<Overlay prUrl={PR_URL} />);
+
+    expect(screen.getByText("because it needed updating")).toBeInTheDocument();
+    expect(screen.queryByText(/building the rest of the walkthrough/i)).not.toBeInTheDocument();
   });
 
   it("shows keyboard shortcuts on the description unit once the walkthrough is ready", () => {

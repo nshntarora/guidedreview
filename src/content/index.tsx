@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { parsePRUrl, type PRIdentity } from "../lib/github/diffFetch";
 import { fetchConversationDescription, scrapePRContext } from "../lib/github/prContext";
-import { requestPRDiff, requestReviewPlan } from "../lib/messaging";
+import { requestPRDiff, streamReviewPlan } from "../lib/messaging";
 import { Overlay } from "./overlay/Overlay";
 import { OVERLAY_CSS } from "./overlay/styles";
 import { useReviewStore, restoreSession } from "./overlay/store";
@@ -10,6 +10,8 @@ const BUTTON_ID = "guided-review-start-btn";
 const HOST_ID = "guided-review-overlay-host";
 
 let currentPR: PRIdentity | null = null;
+/** Active stream cancel handle so restart / close can abort the worker. */
+let activeStreamCancel: (() => void) | null = null;
 
 init();
 
@@ -101,12 +103,20 @@ function findButtonAnchor(): HTMLElement | null {
   return null;
 }
 
+function cancelActiveStream(): void {
+  if (activeStreamCancel) {
+    activeStreamCancel();
+    activeStreamCancel = null;
+  }
+}
+
 async function onStartReview(): Promise<void> {
   if (!currentPR) return;
   const pr = currentPR;
   const prUrl = window.location.href;
 
   ensureOverlayMounted(prUrl);
+  cancelActiveStream();
 
   // Scrape PR metadata first so the overlay can render the full layout with the
   // PR description unit immediately — before the diff fetch / AI plan finish.
@@ -114,6 +124,7 @@ async function onStartReview(): Promise<void> {
   useReviewStore.getState().open();
   useReviewStore.getState().setPRContext(prContext);
   useReviewStore.getState().startLoading();
+  const streamGeneration = useReviewStore.getState().streamGeneration;
 
   try {
     const restored = await restoreSession(prUrl);
@@ -138,28 +149,32 @@ async function onStartReview(): Promise<void> {
 
     const diffResponse = await requestPRDiff(pr);
     if (!diffResponse.ok) {
-      useReviewStore.getState().setError(diffResponse.error);
+      useReviewStore.getState().setError(diffResponse.error, streamGeneration);
       return;
     }
     const diff = diffResponse.diff;
-    // Diff summary (additions/deletions/file list) does not need the LLM —
-    // surface it immediately so the description unit can show Changes while
-    // the plan is still being built.
+
+    // Store the diff early so header stats and unit resolution work while the
+    // plan is still streaming in.
     useReviewStore.getState().setDiff(diff);
+    useReviewStore.getState().beginStreaming(streamGeneration);
 
-    // Prefer the latest prContext (async description fetch may have filled it in).
     const latestContext = useReviewStore.getState().prContext ?? prContext;
-    const response = await requestReviewPlan(diff, latestContext);
-
-    if (!response.ok) {
-      useReviewStore.getState().setError(response.error);
-      return;
-    }
-
-    useReviewStore.getState().setReady(diff, response.plan);
+    const { cancel } = streamReviewPlan(diff, latestContext, {
+      onUnit: (unit) => useReviewStore.getState().appendUnit(unit, streamGeneration),
+      onDone: (plan) => {
+        activeStreamCancel = null;
+        useReviewStore.getState().setReady(diff, plan, streamGeneration);
+      },
+      onError: (error) => {
+        activeStreamCancel = null;
+        useReviewStore.getState().setError(error, streamGeneration);
+      },
+    });
+    activeStreamCancel = cancel;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to build the guided review.";
-    useReviewStore.getState().setError(message);
+    useReviewStore.getState().setError(message, streamGeneration);
   }
 }
 
@@ -182,5 +197,5 @@ function ensureOverlayMounted(prUrl: string): void {
   const appRoot = document.createElement("div");
   shadowRoot.appendChild(appRoot);
 
-  createRoot(appRoot).render(<Overlay prUrl={prUrl} />);
+  createRoot(appRoot).render(<Overlay prUrl={prUrl} onRequestClose={cancelActiveStream} />);
 }

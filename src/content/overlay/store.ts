@@ -1,8 +1,8 @@
 import { create } from "zustand";
-import type { ParsedDiff, PRContext, ReviewPlan } from "../../lib/types";
+import type { ParsedDiff, PRContext, ReviewPlan, ReviewUnit } from "../../lib/types";
 import { displayUnitCount } from "./displayUnits";
 
-export type ReviewStatus = "idle" | "loading" | "ready" | "error";
+export type ReviewStatus = "idle" | "loading" | "streaming" | "ready" | "error";
 
 interface PersistedSession {
   diff: ParsedDiff;
@@ -21,18 +21,21 @@ interface ReviewState {
   prContext: PRContext | null;
   /** Index into the display unit list (0 = PR description, then plan units). */
   currentUnitIndex: number;
+  /**
+   * Monotonic generation for the active annotation stream. Bumped on
+   * startLoading so stale port events from a cancelled stream are ignored.
+   */
+  streamGeneration: number;
 
   open: () => void;
   close: () => void;
   startLoading: () => void;
   setPRContext: (prContext: PRContext) => void;
-  /**
-   * Store the parsed diff as soon as it is fetched, before the LLM plan is
-   * ready. Lets the description pane show file stats without waiting on AI.
-   */
   setDiff: (diff: ParsedDiff) => void;
-  setReady: (diff: ParsedDiff, plan: ReviewPlan) => void;
-  setError: (message: string) => void;
+  beginStreaming: (generation: number) => void;
+  appendUnit: (unit: ReviewUnit, generation: number) => void;
+  setReady: (diff: ParsedDiff, plan: ReviewPlan, generation?: number) => void;
+  setError: (message: string, generation?: number) => void;
   goToUnit: (index: number) => void;
   goNext: () => void;
   goPrev: () => void;
@@ -46,24 +49,58 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   plan: null,
   prContext: null,
   currentUnitIndex: 0,
+  streamGeneration: 0,
 
   open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false }),
 
-  startLoading: () => set({ status: "loading", error: null, currentUnitIndex: 0, plan: null, diff: null }),
+  startLoading: () =>
+    set((state) => ({
+      status: "loading",
+      error: null,
+      currentUnitIndex: 0,
+      plan: null,
+      diff: null,
+      streamGeneration: state.streamGeneration + 1,
+    })),
 
   setPRContext: (prContext) => set({ prContext }),
 
   setDiff: (diff) => set({ diff }),
 
-  setReady: (diff, plan) =>
+  beginStreaming: (generation) => {
+    if (get().streamGeneration !== generation) return;
+    set({ status: "streaming", plan: { units: [] }, error: null });
+  },
+
+  appendUnit: (unit, generation) => {
+    if (get().streamGeneration !== generation) return;
+    set((state) => {
+      const existing = state.plan?.units ?? [];
+      if (existing.some((u) => u.id === unit.id)) {
+        return state;
+      }
+      return {
+        status: "streaming",
+        plan: { units: [...existing, unit] },
+        error: null,
+      };
+    });
+  },
+
+  setReady: (diff, plan, generation) => {
+    if (generation !== undefined && get().streamGeneration !== generation) return;
     set((state) => {
       const total = displayUnitCount(plan);
       const index = Math.min(Math.max(state.currentUnitIndex, 0), total - 1);
       return { status: "ready", diff, plan, currentUnitIndex: index, error: null };
-    }),
+    });
+  },
 
-  setError: (message) => set({ status: "error", error: message }),
+  setError: (message, generation) => {
+    if (generation !== undefined && get().streamGeneration !== generation) return;
+    set({ status: "error", error: message });
+  },
 
   goToUnit: (index) => {
     const total = displayUnitCount(get().plan);

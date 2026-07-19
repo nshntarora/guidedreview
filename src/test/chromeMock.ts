@@ -40,6 +40,53 @@ export function createChromeMock() {
     (message: unknown, sender: unknown, sendResponse: (response?: unknown) => void) => boolean | void
   >();
 
+  const onConnectListeners = new Set<(port: MockPort) => void>();
+
+  function createPort(name: string): MockPort {
+    const onMessage = new Set<(message: unknown) => void>();
+    const onDisconnect = new Set<() => void>();
+    let disconnected = false;
+
+    const port: MockPort = {
+      name,
+      // Outbound only — does not fan into local onMessage listeners (those are remote events).
+      postMessage: vi.fn((_message: unknown) => {}),
+      disconnect: vi.fn(() => {
+        if (disconnected) return;
+        disconnected = true;
+        for (const listener of onDisconnect) listener();
+      }),
+      onMessage: {
+        addListener: vi.fn((listener: (message: unknown) => void) => {
+          onMessage.add(listener);
+        }),
+        removeListener: vi.fn((listener: (message: unknown) => void) => {
+          onMessage.delete(listener);
+        }),
+      },
+      onDisconnect: {
+        addListener: vi.fn((listener: () => void) => {
+          onDisconnect.add(listener);
+        }),
+        removeListener: vi.fn((listener: () => void) => {
+          onDisconnect.delete(listener);
+        }),
+      },
+      /** Test helper: deliver a remote message to this port's onMessage listeners. */
+      __emitMessage(message: unknown) {
+        for (const listener of onMessage) listener(message);
+      },
+      /** Test helper: fire disconnect listeners. */
+      __emitDisconnect() {
+        if (disconnected) return;
+        disconnected = true;
+        for (const listener of onDisconnect) listener();
+      },
+    };
+
+    return port;
+  }
+
   return {
     storage: {
       local: createStorageArea(),
@@ -47,8 +94,14 @@ export function createChromeMock() {
     },
     runtime: {
       sendMessage: vi.fn(async (_message: unknown) => undefined),
+      connect: vi.fn((info?: { name?: string }) => {
+        const port = createPort(info?.name ?? "");
+        for (const listener of onConnectListeners) listener(port);
+        return port;
+      }),
       getURL: vi.fn((path: string) => path),
       openOptionsPage: vi.fn(),
+      lastError: undefined as { message?: string } | undefined,
       onMessage: {
         addListener: vi.fn((listener: (typeof onMessageListeners extends Set<infer L> ? L : never)) => {
           onMessageListeners.add(listener);
@@ -58,6 +111,15 @@ export function createChromeMock() {
         }),
         __listeners: onMessageListeners,
       },
+      onConnect: {
+        addListener: vi.fn((listener: (port: MockPort) => void) => {
+          onConnectListeners.add(listener);
+        }),
+        removeListener: vi.fn((listener: (port: MockPort) => void) => {
+          onConnectListeners.delete(listener);
+        }),
+        __listeners: onConnectListeners,
+      },
     },
     action: {
       onClicked: {
@@ -65,6 +127,22 @@ export function createChromeMock() {
       },
     },
   };
+}
+
+export interface MockPort {
+  name: string;
+  postMessage: ReturnType<typeof vi.fn>;
+  disconnect: ReturnType<typeof vi.fn>;
+  onMessage: {
+    addListener: ReturnType<typeof vi.fn>;
+    removeListener: ReturnType<typeof vi.fn>;
+  };
+  onDisconnect: {
+    addListener: ReturnType<typeof vi.fn>;
+    removeListener: ReturnType<typeof vi.fn>;
+  };
+  __emitMessage: (message: unknown) => void;
+  __emitDisconnect: () => void;
 }
 
 export type ChromeMock = ReturnType<typeof createChromeMock>;

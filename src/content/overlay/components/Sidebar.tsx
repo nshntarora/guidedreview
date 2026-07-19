@@ -7,11 +7,17 @@ const SKELETON_COUNT = 4;
 interface SidebarProps {
   plan: ReviewPlan | null;
   currentUnitIndex: number;
-  loading: boolean;
+  /** When true, show trailing skeleton rows after any completed units. */
+  stillBuilding: boolean;
   onSelectUnit: (index: number) => void;
 }
 
-export function Sidebar({ plan, currentUnitIndex, loading, onSelectUnit }: SidebarProps) {
+export function Sidebar({
+  plan,
+  currentUnitIndex,
+  stillBuilding,
+  onSelectUnit,
+}: SidebarProps) {
   const reviewUnits = plan?.units ?? [];
   const activeItemRef = useRef<HTMLButtonElement>(null);
 
@@ -19,7 +25,10 @@ export function Sidebar({ plan, currentUnitIndex, loading, onSelectUnit }: Sideb
   // buttons — the sidebar is independently scrollable and can leave the
   // current step off-screen on long plans.
   useEffect(() => {
-    activeItemRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    activeItemRef.current?.scrollIntoView({
+      block: "nearest",
+      behavior: "smooth",
+    });
   }, [currentUnitIndex]);
 
   return (
@@ -36,7 +45,24 @@ export function Sidebar({ plan, currentUnitIndex, loading, onSelectUnit }: Sideb
         {PR_DESCRIPTION_UNIT_TITLE}
       </button>
 
-      {loading &&
+      {reviewUnits.map((unit, planIndex) => {
+        const displayIndex = planIndex + 1;
+        const isActive = displayIndex === currentUnitIndex;
+        return (
+          <button
+            key={unit.id}
+            type="button"
+            ref={isActive ? activeItemRef : undefined}
+            className={`gr-unit-item${isActive ? " gr-active" : ""}`}
+            onClick={() => onSelectUnit(displayIndex)}
+          >
+            <span className="gr-unit-item-index">{displayIndex + 1}.</span>
+            {unit.title}
+          </button>
+        );
+      })}
+
+      {stillBuilding &&
         Array.from({ length: SKELETON_COUNT }, (_, i) => (
           <div
             key={`skeleton-${i}`}
@@ -46,24 +72,6 @@ export function Sidebar({ plan, currentUnitIndex, loading, onSelectUnit }: Sideb
             <span className="gr-unit-item-skeleton-bar" />
           </div>
         ))}
-
-      {!loading &&
-        reviewUnits.map((unit, planIndex) => {
-          const displayIndex = planIndex + 1;
-          const isActive = displayIndex === currentUnitIndex;
-          return (
-            <button
-              key={unit.id}
-              type="button"
-              ref={isActive ? activeItemRef : undefined}
-              className={`gr-unit-item${isActive ? " gr-active" : ""}`}
-              onClick={() => onSelectUnit(displayIndex)}
-            >
-              <span className="gr-unit-item-index">{displayIndex + 1}.</span>
-              {unit.title}
-            </button>
-          );
-        })}
     </nav>
   );
 }
