@@ -340,15 +340,17 @@ export const OVERLAY_CSS = `
 }
 
 .gr-description-pane-title {
-  margin: 0 0 16px;
-  font-size: 1.125rem;
+  margin: 0 0 20px;
+  font-size: 1.375rem;
   font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
   color: var(--gr-text);
 }
 
 .gr-description-pane-body {
-  font-size: 1rem;
-  line-height: 1.65;
+  font-size: 0.9375rem;
+  line-height: 1.7;
   word-break: break-word;
   color: var(--gr-text);
 }
@@ -360,57 +362,529 @@ export const OVERLAY_CSS = `
 .gr-description-pane-empty {
   margin: 0;
   color: var(--gr-text-muted);
-  font-size: 1rem;
+  font-size: 0.9375rem;
   line-height: 1.6;
 }
 
-.gr-description-pane-body.markdown-body img {
-  max-width: 100%;
-  border-radius: 6px;
+/* ── Markdown body (scraped GitHub PR description HTML) ─────────────── */
+/* GitHub ships prettylights (.pl-*) on fenced code; Shadow DOM isolates us
+   from page CSS, so we restyle every common markdown element here. */
+
+.gr-description-pane-body.markdown-body > *:first-child {
+  margin-top: 0 !important;
+}
+
+.gr-description-pane-body.markdown-body > *:last-child {
+  margin-bottom: 0 !important;
+}
+
+.gr-description-pane-body.markdown-body h1,
+.gr-description-pane-body.markdown-body h2,
+.gr-description-pane-body.markdown-body h3,
+.gr-description-pane-body.markdown-body h4,
+.gr-description-pane-body.markdown-body h5,
+.gr-description-pane-body.markdown-body h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.6em;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--gr-text);
+}
+
+.gr-description-pane-body.markdown-body h1 {
+  font-size: 1.75em;
+  letter-spacing: -0.02em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--gr-border);
+}
+
+.gr-description-pane-body.markdown-body h2 {
+  font-size: 1.4em;
+  letter-spacing: -0.015em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--gr-border);
+}
+
+.gr-description-pane-body.markdown-body h3 {
+  font-size: 1.2em;
+}
+
+.gr-description-pane-body.markdown-body h4 {
+  font-size: 1.05em;
+}
+
+.gr-description-pane-body.markdown-body h5 {
+  font-size: 0.95em;
+}
+
+.gr-description-pane-body.markdown-body h6 {
+  font-size: 0.875em;
+  color: var(--gr-text-muted);
+}
+
+.gr-description-pane-body.markdown-body p,
+.gr-description-pane-body.markdown-body blockquote,
+.gr-description-pane-body.markdown-body ul,
+.gr-description-pane-body.markdown-body ol,
+.gr-description-pane-body.markdown-body dl,
+.gr-description-pane-body.markdown-body table,
+.gr-description-pane-body.markdown-body pre,
+.gr-description-pane-body.markdown-body details,
+.gr-description-pane-body.markdown-body .highlight {
+  margin-top: 0;
+  margin-bottom: 1em;
 }
 
 .gr-description-pane-body.markdown-body p {
-  margin: 0 0 8px;
-}
-
-.gr-description-pane-body.markdown-body p:last-child {
-  margin-bottom: 0;
+  margin-bottom: 1em;
 }
 
 .gr-description-pane-body.markdown-body a {
   color: var(--gr-accent);
+  text-decoration: none;
+}
+
+.gr-description-pane-body.markdown-body a:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.gr-description-pane-body.markdown-body a:not([href]) {
+  color: inherit;
+  text-decoration: none;
+}
+
+.gr-description-pane-body.markdown-body strong,
+.gr-description-pane-body.markdown-body b {
+  font-weight: 600;
+  color: var(--gr-text);
+}
+
+.gr-description-pane-body.markdown-body em,
+.gr-description-pane-body.markdown-body i {
+  font-style: italic;
+}
+
+.gr-description-pane-body.markdown-body del {
+  text-decoration: line-through;
+  color: var(--gr-text-muted);
+}
+
+.gr-description-pane-body.markdown-body mark {
+  background: color-mix(in srgb, var(--gr-accent) 22%, transparent);
+  color: var(--gr-text);
+  border-radius: 2px;
+  padding: 0.05em 0.2em;
+}
+
+.gr-description-pane-body.markdown-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  background: transparent;
+}
+
+.gr-description-pane-body.markdown-body hr {
+  height: 0.2em;
+  padding: 0;
+  margin: 1.5em 0;
+  background: var(--gr-border);
+  border: 0;
+  border-radius: 1px;
 }
 
 .gr-description-pane-body.markdown-body ul,
 .gr-description-pane-body.markdown-body ol {
-  padding-left: 1.5em;
-  margin: 0 0 8px;
+  padding-left: 2em;
 }
 
-.gr-description-pane-body.markdown-body code {
-  background: var(--gr-bg-subtle);
-  border-radius: 4px;
-  padding: 0.1em 0.35em;
-  font-size: 0.9em;
+.gr-description-pane-body.markdown-body ul ul,
+.gr-description-pane-body.markdown-body ul ol,
+.gr-description-pane-body.markdown-body ol ol,
+.gr-description-pane-body.markdown-body ol ul {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
-.gr-description-pane-body.markdown-body pre {
-  background: var(--gr-bg-subtle);
-  border-radius: 6px;
-  padding: 8px;
-  overflow-x: auto;
+.gr-description-pane-body.markdown-body ol ol {
+  list-style-type: lower-roman;
 }
 
-.gr-description-pane-body.markdown-body pre code {
-  background: none;
-  padding: 0;
+.gr-description-pane-body.markdown-body ul ul ol,
+.gr-description-pane-body.markdown-body ul ol ol,
+.gr-description-pane-body.markdown-body ol ul ol,
+.gr-description-pane-body.markdown-body ol ol ol {
+  list-style-type: lower-alpha;
+}
+
+.gr-description-pane-body.markdown-body li + li {
+  margin-top: 0.3em;
+}
+
+.gr-description-pane-body.markdown-body li > p {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+}
+
+.gr-description-pane-body.markdown-body li > p:first-child {
+  margin-top: 0;
+}
+
+.gr-description-pane-body.markdown-body .task-list-item {
+  list-style-type: none;
+}
+
+.gr-description-pane-body.markdown-body .task-list-item-checkbox {
+  margin: 0 0.4em 0.2em -1.4em;
+  vertical-align: middle;
+  accent-color: var(--gr-accent);
 }
 
 .gr-description-pane-body.markdown-body blockquote {
-  margin: 0 0 8px;
-  padding-left: 10px;
-  border-left: 3px solid var(--gr-border);
+  margin: 0 0 1em;
+  padding: 0 1em;
   color: var(--gr-text-muted);
+  border-left: 0.25em solid var(--gr-border);
+}
+
+.gr-description-pane-body.markdown-body blockquote > :first-child {
+  margin-top: 0;
+}
+
+.gr-description-pane-body.markdown-body blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+.gr-description-pane-body.markdown-body code,
+.gr-description-pane-body.markdown-body tt,
+.gr-description-pane-body.markdown-body samp {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.875em;
+}
+
+.gr-description-pane-body.markdown-body code,
+.gr-description-pane-body.markdown-body tt {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  white-space: break-spaces;
+  background: color-mix(in srgb, var(--gr-text) 10%, transparent);
+  border-radius: 6px;
+}
+
+.gr-description-pane-body.markdown-body h1 code,
+.gr-description-pane-body.markdown-body h2 code,
+.gr-description-pane-body.markdown-body h3 code,
+.gr-description-pane-body.markdown-body h4 code,
+.gr-description-pane-body.markdown-body h5 code,
+.gr-description-pane-body.markdown-body h6 code {
+  font-size: inherit;
+  padding: 0.1em 0.3em;
+}
+
+.gr-description-pane-body.markdown-body pre {
+  padding: 1em;
+  overflow-x: auto;
+  font-size: 0.875em;
+  line-height: 1.5;
+  color: var(--gr-text);
+  background: var(--gr-bg-canvas);
+  border: 1px solid var(--gr-border-muted);
+  border-radius: 8px;
+  word-wrap: normal;
+}
+
+.gr-description-pane-body.markdown-body .highlight {
+  margin-bottom: 1em;
+}
+
+.gr-description-pane-body.markdown-body .highlight pre {
+  margin-bottom: 0;
+  word-break: normal;
+}
+
+.gr-description-pane-body.markdown-body pre code,
+.gr-description-pane-body.markdown-body pre tt {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  line-height: inherit;
+  word-wrap: normal;
+  white-space: pre;
+  background: transparent;
+  border: 0;
+  font-size: 100%;
+  border-radius: 0;
+}
+
+.gr-description-pane-body.markdown-body kbd {
+  display: inline-block;
+  padding: 0.2em 0.4em;
+  font: 0.75em ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  line-height: 1.1;
+  color: var(--gr-text);
+  vertical-align: middle;
+  background: var(--gr-bg-subtle);
+  border: 1px solid var(--gr-border);
+  border-bottom-color: var(--gr-border);
+  border-radius: 6px;
+  box-shadow: inset 0 -1px 0 var(--gr-border);
+}
+
+.gr-description-pane-body.markdown-body table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow: auto;
+  border-spacing: 0;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.gr-description-pane-body.markdown-body table th {
+  font-weight: 600;
+}
+
+.gr-description-pane-body.markdown-body table th,
+.gr-description-pane-body.markdown-body table td {
+  padding: 7px 13px;
+  border: 1px solid var(--gr-border);
+}
+
+.gr-description-pane-body.markdown-body table tr {
+  background: var(--gr-bg);
+  border-top: 1px solid var(--gr-border);
+}
+
+.gr-description-pane-body.markdown-body table tr:nth-child(2n) {
+  background: var(--gr-bg-subtle);
+}
+
+.gr-description-pane-body.markdown-body table td > :last-child {
+  margin-bottom: 0;
+}
+
+.gr-description-pane-body.markdown-body dl {
+  padding: 0;
+}
+
+.gr-description-pane-body.markdown-body dl dt {
+  padding: 0;
+  margin-top: 1em;
+  font-size: 1em;
+  font-style: italic;
+  font-weight: 600;
+}
+
+.gr-description-pane-body.markdown-body dl dd {
+  padding: 0 1em;
+  margin-bottom: 1em;
+  margin-left: 0;
+}
+
+.gr-description-pane-body.markdown-body details {
+  margin-bottom: 1em;
+}
+
+.gr-description-pane-body.markdown-body details summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.gr-description-pane-body.markdown-body .markdown-alert {
+  padding: 0.6em 1em;
+  margin-bottom: 1em;
+  color: inherit;
+  border-left: 0.25em solid var(--gr-border);
+  border-radius: 0 6px 6px 0;
+  background: var(--gr-bg-subtle);
+}
+
+.gr-description-pane-body.markdown-body .markdown-alert > :first-child {
+  margin-top: 0;
+}
+
+.gr-description-pane-body.markdown-body .markdown-alert > :last-child {
+  margin-bottom: 0;
+}
+
+.gr-description-pane-body.markdown-body .markdown-alert .markdown-alert-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  font-weight: 600;
+  line-height: 1.25;
+  margin-bottom: 0.4em;
+}
+
+.gr-description-pane-body.markdown-body .markdown-alert-note {
+  border-left-color: #4493f8;
+}
+
+.gr-description-pane-body.markdown-body .markdown-alert-note .markdown-alert-title {
+  color: #4493f8;
+}
+
+.gr-description-pane-body.markdown-body .markdown-alert-tip {
+  border-left-color: var(--gr-add-text);
+}
+
+.gr-description-pane-body.markdown-body .markdown-alert-tip .markdown-alert-title {
+  color: var(--gr-add-text);
+}
+
+.gr-description-pane-body.markdown-body .markdown-alert-important {
+  border-left-color: #ab7df8;
+}
+
+.gr-description-pane-body.markdown-body .markdown-alert-important .markdown-alert-title {
+  color: #ab7df8;
+}
+
+.gr-description-pane-body.markdown-body .markdown-alert-warning {
+  border-left-color: #d29922;
+}
+
+.gr-description-pane-body.markdown-body .markdown-alert-warning .markdown-alert-title {
+  color: #d29922;
+}
+
+.gr-description-pane-body.markdown-body .markdown-alert-caution {
+  border-left-color: var(--gr-danger);
+}
+
+.gr-description-pane-body.markdown-body .markdown-alert-caution .markdown-alert-title {
+  color: var(--gr-danger);
+}
+
+/* GitHub prettylights (scraped fenced-code spans) */
+.gr-description-pane-body.markdown-body .pl-c {
+  color: var(--gr-syntax-comment);
+  font-style: italic;
+}
+
+.gr-description-pane-body.markdown-body .pl-c1,
+.gr-description-pane-body.markdown-body .pl-s .pl-v {
+  color: var(--gr-syntax-constant);
+}
+
+.gr-description-pane-body.markdown-body .pl-e,
+.gr-description-pane-body.markdown-body .pl-en {
+  color: var(--gr-syntax-entity);
+}
+
+.gr-description-pane-body.markdown-body .pl-smi,
+.gr-description-pane-body.markdown-body .pl-s .pl-s1 {
+  color: var(--gr-text);
+}
+
+.gr-description-pane-body.markdown-body .pl-ent {
+  color: var(--gr-syntax-tag);
+}
+
+.gr-description-pane-body.markdown-body .pl-k {
+  color: var(--gr-syntax-keyword);
+}
+
+.gr-description-pane-body.markdown-body .pl-s,
+.gr-description-pane-body.markdown-body .pl-pds,
+.gr-description-pane-body.markdown-body .pl-s .pl-pse .pl-s1,
+.gr-description-pane-body.markdown-body .pl-sr,
+.gr-description-pane-body.markdown-body .pl-sr .pl-cce,
+.gr-description-pane-body.markdown-body .pl-sr .pl-sre,
+.gr-description-pane-body.markdown-body .pl-sr .pl-sra {
+  color: var(--gr-syntax-string);
+}
+
+.gr-description-pane-body.markdown-body .pl-v,
+.gr-description-pane-body.markdown-body .pl-smw {
+  color: var(--gr-syntax-variable);
+}
+
+.gr-description-pane-body.markdown-body .pl-bu {
+  color: var(--gr-danger);
+}
+
+.gr-description-pane-body.markdown-body .pl-ii {
+  color: var(--gr-text);
+  background-color: var(--gr-danger-subtle);
+}
+
+.gr-description-pane-body.markdown-body .pl-c2 {
+  color: var(--gr-text);
+  background-color: #b62324;
+}
+
+.gr-description-pane-body.markdown-body .pl-sr .pl-cce {
+  font-weight: 600;
+  color: var(--gr-syntax-tag);
+}
+
+.gr-description-pane-body.markdown-body .pl-ml {
+  color: #f2cc60;
+}
+
+.gr-description-pane-body.markdown-body .pl-mh,
+.gr-description-pane-body.markdown-body .pl-mh .pl-en,
+.gr-description-pane-body.markdown-body .pl-ms {
+  font-weight: 600;
+  color: #79c0ff;
+}
+
+.gr-description-pane-body.markdown-body .pl-mi {
+  font-style: italic;
+  color: var(--gr-text);
+}
+
+.gr-description-pane-body.markdown-body .pl-mb {
+  font-weight: 600;
+  color: var(--gr-text);
+}
+
+.gr-description-pane-body.markdown-body .pl-md {
+  color: var(--gr-syntax-deleted);
+  background-color: var(--gr-del-bg);
+}
+
+.gr-description-pane-body.markdown-body .pl-mi1 {
+  color: var(--gr-syntax-inserted);
+  background-color: var(--gr-add-bg);
+}
+
+.gr-description-pane-body.markdown-body .pl-mc {
+  color: #ffdfb6;
+  background-color: #5a1e02;
+}
+
+.gr-description-pane-body.markdown-body .pl-mi2 {
+  color: var(--gr-text);
+  background-color: #1158c7;
+}
+
+.gr-description-pane-body.markdown-body .pl-mdr {
+  font-weight: 600;
+  color: var(--gr-syntax-entity);
+}
+
+.gr-description-pane-body.markdown-body .pl-ba {
+  color: var(--gr-text-muted);
+}
+
+.gr-description-pane-body.markdown-body .pl-sg {
+  color: var(--gr-border);
+}
+
+.gr-description-pane-body.markdown-body .pl-corl {
+  text-decoration: underline;
+  color: var(--gr-syntax-string);
+}
+
+/* Hide GitHub clipboard / anchor chrome that doesn't belong in the overlay */
+.gr-description-pane-body.markdown-body .zeroclipboard-container,
+.gr-description-pane-body.markdown-body .clipboard-copy,
+.gr-description-pane-body.markdown-body .anchor,
+.gr-description-pane-body.markdown-body a.heading-link {
+  display: none !important;
 }
 
 .gr-diff-summary {
