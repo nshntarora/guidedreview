@@ -3,7 +3,7 @@ import pkg from "./package.json";
 
 export default defineManifest({
   manifest_version: 3,
-  name: "Guided PR Review",
+  name: "Guided Review",
   description:
     "Turns a GitHub pull request diff into a guided, AI-structured review: model changes first, grouped by concern, with context and risk flags.",
   version: pkg.version,
@@ -32,7 +32,11 @@ export default defineManifest({
     },
   ],
   options_page: "src/options/index.html",
-  action: {},
+  action: {
+    // With a popup, chrome.action.onClicked does not fire — the popup handles
+    // icon clicks (start review on PR pages, otherwise show a short message).
+    default_popup: "src/popup/index.html",
+  },
   web_accessible_resources: [
     {
       resources: ["logomark.svg"],

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-"Guided PR Review" is a Chrome Manifest V3 extension (built with `@crxjs/vite-plugin`) that injects a
+"Guided Review" is a Chrome Manifest V3 extension (built with `@crxjs/vite-plugin`) that injects a
 "Start Guided Review" button into GitHub PR pages. It fetches the PR's diff, sends it to an LLM
 (Anthropic/OpenAI/Grok), and turns the raw diff into an ordered sequence of "review units" — logical
 groupings of hunks with inferred context — shown in an overlay so a human can walk through the PR
@@ -81,7 +81,7 @@ calls with typed helpers.
    for tests and non-stream callers.)
 5. The overlay (`src/content/overlay/`, state in `store.ts` via Zustand) renders display units
    (`displayUnits.ts`: synthetic PR description first, then `ReviewPlan.units`) in order, resolving
-   each unit's `fileId`/`hunkId` refs back against the *real* parsed diff — the LLM plans structure
+   each unit's `fileId`/`hunkId` refs back against the _real_ parsed diff — the LLM plans structure
    and commentary only; it never supplies the code shown to the reviewer.
 
 ### Session persistence

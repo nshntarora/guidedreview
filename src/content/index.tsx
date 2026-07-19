@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { parsePRUrl, type PRIdentity } from "../lib/github/diffFetch";
 import { fetchConversationDescription, scrapePRContext } from "../lib/github/prContext";
 import { requestPRDiff, streamReviewPlan } from "../lib/messaging";
+import type { ContentRequest } from "../lib/types";
 import { ensureFallbackHost, FALLBACK_HOST_ID, findButtonAnchor } from "./buttonAnchor";
 import { Overlay } from "./overlay/Overlay";
 import overlayStyles from "./overlay/styles/overlay.css?inline";
@@ -18,6 +19,14 @@ init();
 
 function init(): void {
   tryInjectButton();
+
+  // Toolbar icon click is handled in the background worker; when the active
+  // tab is a PR page it forwards START_GUIDED_REVIEW here.
+  chrome.runtime.onMessage.addListener((message: ContentRequest) => {
+    if (message?.type === "START_GUIDED_REVIEW") {
+      void onStartReview();
+    }
+  });
 
   // GitHub is a SPA — the PR page doesn't reload between "Conversation" /
   // "Files changed" / re-renders after data loads, so watch for DOM changes
@@ -112,8 +121,11 @@ function cancelActiveStream(): void {
 }
 
 async function onStartReview(): Promise<void> {
-  if (!currentPR) return;
-  const pr = currentPR;
+  // Prefer the cached identity from button injection; re-parse the URL so a
+  // toolbar-icon click still works if the button hasn't painted yet.
+  const pr = currentPR ?? parsePRUrl(window.location.href);
+  if (!pr) return;
+  currentPR = pr;
   const sessionKey = buildSessionKey(pr);
 
   ensureOverlayMounted();

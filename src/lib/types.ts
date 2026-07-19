@@ -143,3 +143,15 @@ export interface FetchDiffError {
 
 /** One-shot request/response messages (annotate uses a port instead). */
 export type BackgroundRequest = TestConnectionRequest | FetchDiffRequest;
+
+// ---- Messaging protocol (background → content) -----------------------------
+
+/**
+ * Toolbar action click on a PR page: content should open the overlay and
+ * start (or resume) the guided review for the current PR.
+ */
+export interface StartGuidedReviewMessage {
+  type: "START_GUIDED_REVIEW";
+}
+
+export type ContentRequest = StartGuidedReviewMessage;
