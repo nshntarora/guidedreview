@@ -1,4 +1,5 @@
 import type { ParsedDiff, PRContext } from "../../../lib/types";
+import { summarizeDiff } from "../../../lib/github/diffSummary";
 import { Kbd } from "./Kbd";
 
 interface ProgressHeaderProps {
@@ -19,7 +20,7 @@ export function ProgressHeader({
   diff,
   onExit,
 }: ProgressHeaderProps) {
-  const stats = diff && diffStats(diff);
+  const stats = diff ? summarizeDiff(diff) : null;
   const logomarkUrl = chrome.runtime.getURL("logomark.svg");
 
   return (
@@ -74,18 +75,4 @@ export function ProgressHeader({
       </div>
     </header>
   );
-}
-
-function diffStats(diff: ParsedDiff): { files: number; additions: number; deletions: number } {
-  let additions = 0;
-  let deletions = 0;
-  for (const file of diff.files) {
-    for (const hunk of file.hunks) {
-      for (const line of hunk.lines) {
-        if (line.type === "add") additions += 1;
-        else if (line.type === "del") deletions += 1;
-      }
-    }
-  }
-  return { files: diff.files.length, additions, deletions };
 }

@@ -101,6 +101,25 @@ describe("Overlay", () => {
     expect(screen.queryByLabelText(/keyboard shortcuts/i)).not.toBeInTheDocument();
     // No full-page loading spinner copy.
     expect(screen.queryByText(/reading the diff/i)).not.toBeInTheDocument();
+    // Diff has not arrived yet — no Changes summary.
+    expect(screen.queryByLabelText(/diff summary/i)).not.toBeInTheDocument();
+  });
+
+  it("shows the diff summary while the plan is still loading once the diff is fetched", () => {
+    useReviewStore.setState({
+      isOpen: true,
+      status: "loading",
+      diff: diffFixture(),
+      prContext: prContextFixture(),
+      currentUnitIndex: 0,
+    });
+    render(<Overlay prUrl={PR_URL} />);
+
+    expect(screen.getByLabelText(/diff summary/i)).toBeInTheDocument();
+    expect(screen.getByText("src/foo.ts")).toBeInTheDocument();
+    // Plan still loading — skeleton + status copy remain.
+    expect(screen.getByText(/building the rest of the walkthrough/i)).toBeInTheDocument();
+    expect(document.querySelectorAll(".gr-unit-item-skeleton").length).toBeGreaterThan(0);
   });
 
   it("shows keyboard shortcuts on the description unit once the walkthrough is ready", () => {

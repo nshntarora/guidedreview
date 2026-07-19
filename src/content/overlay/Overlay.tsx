@@ -114,7 +114,7 @@ export function Overlay({ prUrl }: OverlayProps) {
       <div className="gr-body">
         <main className="gr-code-col" ref={codeColRef}>
           {isDescriptionUnit ? (
-            <DescriptionPane prContext={prContext} />
+            <DescriptionPane prContext={prContext} diff={diff} />
           ) : (
             <DiffPane files={resolvedFiles} />
           )}

@@ -320,6 +320,22 @@ export const OVERLAY_CSS = `
 }
 
 .gr-description-pane {
+  width: 100%;
+  max-width: 100%;
+}
+
+.gr-description-pane--with-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px 32px;
+  align-items: start;
+  /* Sit the changes column next to the description, not pinned to the far edge. */
+  justify-content: flex-start;
+}
+
+.gr-description-pane-main {
+  flex: 0 1 720px;
+  min-width: 0;
   max-width: 720px;
 }
 
@@ -395,6 +411,134 @@ export const OVERLAY_CSS = `
   padding-left: 10px;
   border-left: 3px solid var(--gr-border);
   color: var(--gr-text-muted);
+}
+
+.gr-diff-summary {
+  flex: 0 1 360px;
+  width: 100%;
+  max-width: 400px;
+  min-width: min(100%, 260px);
+  margin-left: 0;
+  padding: 0 0 0 24px;
+  border: none;
+  border-left: 1px solid var(--gr-border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.gr-diff-summary-title {
+  margin: 0 0 10px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gr-text);
+}
+
+.gr-diff-summary-totals {
+  margin: 0 0 14px;
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--gr-text-muted);
+}
+
+.gr-diff-summary-totals .gr-stat-add,
+.gr-diff-summary-totals .gr-stat-del {
+  margin-left: 0;
+  margin-right: 8px;
+  font-weight: 600;
+}
+
+.gr-diff-summary-file-count {
+  color: var(--gr-text-muted);
+}
+
+.gr-diff-summary-files {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: min(60vh, 520px);
+  overflow-y: auto;
+}
+
+.gr-diff-summary-file {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+.gr-diff-summary-file:hover {
+  background: var(--gr-bg-subtle);
+}
+
+.gr-diff-summary-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.gr-diff-summary-status--added {
+  color: var(--gr-add-text);
+  background: var(--gr-add-bg);
+}
+
+.gr-diff-summary-status--modified {
+  color: var(--gr-text-muted);
+  background: var(--gr-bg-subtle);
+}
+
+.gr-diff-summary-status--removed {
+  color: var(--gr-del-text);
+  background: var(--gr-del-bg);
+}
+
+.gr-diff-summary-status--renamed {
+  color: var(--gr-syntax-entity);
+  background: var(--gr-bg-subtle);
+}
+
+.gr-diff-summary-path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--gr-text);
+}
+
+.gr-diff-summary-counts {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 4.5rem;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.gr-diff-summary-counts .gr-stat-add,
+.gr-diff-summary-counts .gr-stat-del {
+  margin-left: 0;
+  font-weight: 500;
+}
+
+.gr-diff-summary-binary,
+.gr-diff-summary-unchanged {
+  color: var(--gr-text-faint);
+  font-size: 0.8125rem;
 }
 
 .gr-context-panel {

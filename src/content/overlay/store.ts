@@ -26,6 +26,11 @@ interface ReviewState {
   close: () => void;
   startLoading: () => void;
   setPRContext: (prContext: PRContext) => void;
+  /**
+   * Store the parsed diff as soon as it is fetched, before the LLM plan is
+   * ready. Lets the description pane show file stats without waiting on AI.
+   */
+  setDiff: (diff: ParsedDiff) => void;
   setReady: (diff: ParsedDiff, plan: ReviewPlan) => void;
   setError: (message: string) => void;
   goToUnit: (index: number) => void;
@@ -48,6 +53,8 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   startLoading: () => set({ status: "loading", error: null, currentUnitIndex: 0, plan: null, diff: null }),
 
   setPRContext: (prContext) => set({ prContext }),
+
+  setDiff: (diff) => set({ diff }),
 
   setReady: (diff, plan) =>
     set((state) => {

@@ -142,6 +142,10 @@ async function onStartReview(): Promise<void> {
       return;
     }
     const diff = diffResponse.diff;
+    // Diff summary (additions/deletions/file list) does not need the LLM —
+    // surface it immediately so the description unit can show Changes while
+    // the plan is still being built.
+    useReviewStore.getState().setDiff(diff);
 
     // Prefer the latest prContext (async description fetch may have filled it in).
     const latestContext = useReviewStore.getState().prContext ?? prContext;

@@ -70,6 +70,18 @@ describe("useReviewStore", () => {
     expect(state.currentUnitIndex).toBe(0);
   });
 
+  it("setDiff stores the diff without changing status or plan", () => {
+    resetStore();
+    useReviewStore.getState().startLoading();
+    const diff = diffFixture();
+    useReviewStore.getState().setDiff(diff);
+
+    const state = useReviewStore.getState();
+    expect(state.status).toBe("loading");
+    expect(state.diff).toBe(diff);
+    expect(state.plan).toBeNull();
+  });
+
   it("setReady sets status ready, stores diff/plan, and clamps currentUnitIndex", () => {
     resetStore();
     useReviewStore.setState({ currentUnitIndex: 0 });
