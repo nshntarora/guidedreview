@@ -107,7 +107,7 @@ export function Overlay({ prUrl, onRequestClose }: OverlayProps) {
 
   if (!isOpen) return null;
 
-  const stillBuilding = status === "loading" || status === "idle";
+  const stillBuilding = status === "loading" || status === "streaming" || status === "idle";
   // Spinner on the description unit only while the plan is still being built.
   const showBuildingSpinner = stillBuilding && (!plan || currentUnitIndex === 0);
   const displayUnits = buildDisplayUnits(plan);

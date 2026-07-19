@@ -41,6 +41,7 @@ function resetStore(): void {
     plan: null,
     prContext: null,
     currentUnitIndex: 0,
+    streamGeneration: 0,
   });
 }
 
@@ -80,6 +81,41 @@ describe("useReviewStore", () => {
     expect(state.status).toBe("loading");
     expect(state.diff).toBe(diff);
     expect(state.plan).toBeNull();
+  });
+
+  it("beginStreaming and appendUnit grow the plan while streaming", () => {
+    resetStore();
+    useReviewStore.getState().startLoading();
+    const gen = useReviewStore.getState().streamGeneration;
+    useReviewStore.getState().beginStreaming(gen);
+
+    expect(useReviewStore.getState().status).toBe("streaming");
+    expect(useReviewStore.getState().plan).toEqual({ units: [] });
+
+    const unit = planFixture(1).units[0];
+    useReviewStore.getState().appendUnit(unit, gen);
+    expect(useReviewStore.getState().plan?.units).toHaveLength(1);
+    expect(useReviewStore.getState().status).toBe("streaming");
+
+    // Duplicate id is ignored.
+    useReviewStore.getState().appendUnit(unit, gen);
+    expect(useReviewStore.getState().plan?.units).toHaveLength(1);
+
+    // Stale generation is ignored.
+    useReviewStore.getState().appendUnit({ ...unit, id: "stale" }, gen - 1);
+    expect(useReviewStore.getState().plan?.units).toHaveLength(1);
+  });
+
+  it("goNext works mid-stream once units have been appended", () => {
+    resetStore();
+    useReviewStore.getState().startLoading();
+    const gen = useReviewStore.getState().streamGeneration;
+    useReviewStore.getState().beginStreaming(gen);
+    useReviewStore.getState().appendUnit(planFixture(1).units[0], gen);
+
+    // display: [desc, u0]
+    useReviewStore.getState().goNext();
+    expect(useReviewStore.getState().currentUnitIndex).toBe(1);
   });
 
   it("setReady sets status ready, stores diff/plan, and clamps currentUnitIndex", () => {
