@@ -68,6 +68,7 @@ function resetStore(): void {
     currentUnitIndex: 0,
     streamGeneration: 0,
     sessionKey: null,
+    diffViewMode: "unified",
   });
 }
 
@@ -213,7 +214,7 @@ describe("Overlay", () => {
     });
     render(<Overlay />);
     expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Update foo")).toBeInTheDocument();
+    expect(screen.getByTestId("diff-unit-title")).toHaveTextContent("Update foo");
     expect(screen.getByText("because it needed updating")).toBeInTheDocument();
   });
 

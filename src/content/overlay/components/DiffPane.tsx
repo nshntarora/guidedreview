@@ -1,12 +1,17 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import { highlightToLines, languageForPath } from "../../../lib/highlight";
 import { cn } from "../../../lib/cn";
 import type { DiffHunk } from "../../../lib/types";
+import { buildSplitRows, type SplitCell } from "../buildSplitRows";
+import type { DiffViewMode } from "../diffViewMode";
+import { hydrateDiffViewMode, useReviewStore } from "../store";
 import type { ResolvedUnitFile } from "../selectors";
 
 interface DiffPaneProps {
   files: ResolvedUnitFile[];
+  /** Title of the currently active review unit. */
+  unitTitle: string;
 }
 
 /**
@@ -50,7 +55,20 @@ function highlightHunkLines(
   });
 }
 
-function HunkBlock({
+function CodeContent({
+  content,
+  highlighted,
+}: {
+  content: string;
+  highlighted: string | null;
+}) {
+  if (highlighted != null) {
+    return <span dangerouslySetInnerHTML={{ __html: highlighted }} />;
+  }
+  return <span>{content}</span>;
+}
+
+function UnifiedHunk({
   hunk,
   language,
 }: {
@@ -63,7 +81,10 @@ function HunkBlock({
   );
 
   return (
-    <div className="overflow-x-auto font-mono text-[12px] leading-relaxed">
+    <div
+      className="overflow-x-auto font-mono text-[12px] leading-relaxed"
+      data-testid="diff-view-unified"
+    >
       {hunk.lines.map((line, i) => (
         <div
           key={i}
@@ -88,22 +109,168 @@ function HunkBlock({
           >
             {line.type === "add" ? "+" : line.type === "del" ? "-" : ""}
           </span>
-          {highlighted[i] != null ? (
-            <span
-              dangerouslySetInnerHTML={{ __html: highlighted[i] as string }}
-            />
-          ) : (
-            <span>{line.content}</span>
-          )}
+          <CodeContent content={line.content} highlighted={highlighted[i] ?? null} />
         </div>
       ))}
     </div>
   );
 }
 
-export function DiffPane({ files }: DiffPaneProps) {
+function SplitCellView({
+  cell,
+  highlighted,
+  side,
+}: {
+  cell: SplitCell;
+  highlighted: string | null;
+  side: "left" | "right";
+}) {
+  if (cell.kind === "empty") {
+    return (
+      <div className="flex min-w-0 flex-1 whitespace-pre pr-3">
+        <span className="w-10 shrink-0 select-none pr-3 text-right text-gr-faint" />
+        <span className="min-w-0 flex-1" />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "flex min-w-0 flex-1 whitespace-pre pr-3",
+        cell.type === "del" && "bg-gr-del-bg",
+        cell.type === "add" && "bg-gr-add-bg",
+      )}
+      data-side={side}
+    >
+      <span className="w-10 shrink-0 select-none pr-3 text-right text-gr-faint">
+        {cell.lineNumber ?? ""}
+      </span>
+      <span
+        className={cn(
+          "w-4 shrink-0 opacity-70",
+          cell.type === "add" && "text-gr-add-text",
+          cell.type === "del" && "text-gr-del-text",
+        )}
+      >
+        {cell.type === "add" ? "+" : cell.type === "del" ? "-" : " "}
+      </span>
+      <CodeContent content={cell.content} highlighted={highlighted} />
+    </div>
+  );
+}
+
+function SplitHunk({
+  hunk,
+  language,
+}: {
+  hunk: DiffHunk;
+  language: string | undefined;
+}) {
+  const highlighted = useMemo(
+    () => highlightHunkLines(hunk, language),
+    [hunk, language],
+  );
+  const rows = useMemo(() => buildSplitRows(hunk.lines), [hunk.lines]);
+
+  return (
+    <div
+      className="overflow-x-auto font-mono text-[12px] leading-relaxed"
+      data-testid="diff-view-split"
+    >
+      {rows.map((row, i) => (
+        <div key={i} className="flex min-w-full border-b border-gr-border-muted last:border-b-0">
+          <SplitCellView
+            cell={row.left}
+            highlighted={
+              row.left.kind === "content"
+                ? (highlighted[row.left.sourceIndex] ?? null)
+                : null
+            }
+            side="left"
+          />
+          <div className="w-px shrink-0 bg-gr-border" aria-hidden="true" />
+          <SplitCellView
+            cell={row.right}
+            highlighted={
+              row.right.kind === "content"
+                ? (highlighted[row.right.sourceIndex] ?? null)
+                : null
+            }
+            side="right"
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DiffViewToggle({
+  mode,
+  onChange,
+}: {
+  mode: DiffViewMode;
+  onChange: (mode: DiffViewMode) => void;
+}) {
+  return (
+    <div
+      className="flex shrink-0 items-center"
+      role="group"
+      aria-label="Diff view"
+      data-testid="diff-view-toggle"
+    >
+      <div className="inline-flex overflow-hidden rounded-md border border-gr-border">
+        <button
+          type="button"
+          className={cn(
+            "cursor-pointer px-3 py-1.5 text-[13px] transition-colors",
+            mode === "unified"
+              ? "bg-gr-subtle text-gr-text"
+              : "bg-gr-bg text-gr-muted hover:bg-gr-subtle hover:text-gr-text",
+          )}
+          aria-pressed={mode === "unified"}
+          onClick={() => onChange("unified")}
+        >
+          Unified
+        </button>
+        <button
+          type="button"
+          className={cn(
+            "cursor-pointer border-l border-gr-border px-3 py-1.5 text-[13px] transition-colors",
+            mode === "split"
+              ? "bg-gr-subtle text-gr-text"
+              : "bg-gr-bg text-gr-muted hover:bg-gr-subtle hover:text-gr-text",
+          )}
+          aria-pressed={mode === "split"}
+          onClick={() => onChange("split")}
+        >
+          Split
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function DiffPane({ files, unitTitle }: DiffPaneProps) {
+  const diffViewMode = useReviewStore((s) => s.diffViewMode);
+  const setDiffViewMode = useReviewStore((s) => s.setDiffViewMode);
+
+  useEffect(() => {
+    void hydrateDiffViewMode();
+  }, []);
+
   return (
     <>
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <h2
+          className="min-w-0 truncate text-[15px] font-semibold text-gr-text"
+          data-testid="diff-unit-title"
+          title={unitTitle}
+        >
+          {unitTitle}
+        </h2>
+        <DiffViewToggle mode={diffViewMode} onChange={setDiffViewMode} />
+      </div>
       {files.map(({ file, hunks }) => {
         const language = languageForPath(file.path);
         const extension = file.path.includes(".")
@@ -133,9 +300,13 @@ export function DiffPane({ files }: DiffPaneProps) {
                 </div>
               </div>
             ) : (
-              hunks.map((hunk) => (
-                <HunkBlock hunk={hunk} language={language} key={hunk.id} />
-              ))
+              hunks.map((hunk) =>
+                diffViewMode === "split" ? (
+                  <SplitHunk hunk={hunk} language={language} key={hunk.id} />
+                ) : (
+                  <UnifiedHunk hunk={hunk} language={language} key={hunk.id} />
+                ),
+              )
             )}
           </div>
         );

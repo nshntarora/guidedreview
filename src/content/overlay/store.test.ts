@@ -51,6 +51,7 @@ function resetStore(): void {
     currentUnitIndex: 0,
     streamGeneration: 0,
     sessionKey: null,
+    diffViewMode: "unified",
   });
 }
 
@@ -71,6 +72,15 @@ describe("useReviewStore", () => {
     expect(useReviewStore.getState().isOpen).toBe(true);
     useReviewStore.getState().close();
     expect(useReviewStore.getState().isOpen).toBe(false);
+  });
+
+  it("defaults diffViewMode to unified and setDiffViewMode updates it", () => {
+    resetStore();
+    expect(useReviewStore.getState().diffViewMode).toBe("unified");
+    useReviewStore.getState().setDiffViewMode("split");
+    expect(useReviewStore.getState().diffViewMode).toBe("split");
+    useReviewStore.getState().setDiffViewMode("unified");
+    expect(useReviewStore.getState().diffViewMode).toBe("unified");
   });
 
   it("startLoading sets status to loading, stores sessionKey, clears plan/diff/error, and resets unit index", () => {

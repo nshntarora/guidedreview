@@ -1,4 +1,4 @@
-![Guided Review](public/logomark.svg)
+![Guided Review](public/logomark.png)
 
 # Guided Review
 

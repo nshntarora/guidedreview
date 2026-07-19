@@ -1,8 +1,15 @@
 import { create } from "zustand";
 import type { ParsedDiff, PRContext, ReviewPlan, ReviewUnit } from "../../lib/types";
 import { displayUnitCount } from "./displayUnits";
+import {
+  DEFAULT_DIFF_VIEW_MODE,
+  getStoredDiffViewMode,
+  setStoredDiffViewMode,
+  type DiffViewMode,
+} from "./diffViewMode";
 
 export type ReviewStatus = "idle" | "loading" | "streaming" | "ready" | "error";
+export type { DiffViewMode };
 
 /** Stable identity for a PR, independent of which GitHub tab/URL the user is on. */
 export interface SessionPRIdentity {
@@ -38,6 +45,8 @@ interface ReviewState {
    * Derived from owner/repo/number — never the full browser URL.
    */
   sessionKey: string | null;
+  /** Unified vs side-by-side code view (UI preference, not session data). */
+  diffViewMode: DiffViewMode;
 
   open: () => void;
   close: () => void;
@@ -51,6 +60,7 @@ interface ReviewState {
   goToUnit: (index: number) => void;
   goNext: () => void;
   goPrev: () => void;
+  setDiffViewMode: (mode: DiffViewMode) => void;
 }
 
 /**
@@ -75,6 +85,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   currentUnitIndex: 0,
   streamGeneration: 0,
   sessionKey: null,
+  diffViewMode: DEFAULT_DIFF_VIEW_MODE,
 
   open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false }),
@@ -146,7 +157,51 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
     const { currentUnitIndex } = get();
     if (currentUnitIndex > 0) set({ currentUnitIndex: currentUnitIndex - 1 });
   },
+
+  setDiffViewMode: (mode) => {
+    // Invalidate any in-flight hydrate so it cannot clobber a user choice.
+    diffViewModeHydrateEpoch += 1;
+    diffViewModeHydrated = true;
+    set({ diffViewMode: mode });
+    void setStoredDiffViewMode(mode);
+  },
 }));
+
+/** Bumped when the user sets a mode so pending storage reads are dropped. */
+let diffViewModeHydrateEpoch = 0;
+let diffViewModeHydrated = false;
+let diffViewModeHydrateInFlight: Promise<void> | null = null;
+
+/**
+ * Hydrate the diff view mode preference from chrome.storage.local.
+ * Safe to call multiple times; runs at most once unless reset for tests.
+ * In-flight reads are discarded if the user changes mode first.
+ */
+export async function hydrateDiffViewMode(): Promise<void> {
+  if (diffViewModeHydrated) return;
+  if (diffViewModeHydrateInFlight) return diffViewModeHydrateInFlight;
+
+  const epoch = diffViewModeHydrateEpoch;
+  diffViewModeHydrateInFlight = (async () => {
+    try {
+      const mode = await getStoredDiffViewMode();
+      if (epoch !== diffViewModeHydrateEpoch) return;
+      useReviewStore.setState({ diffViewMode: mode });
+      diffViewModeHydrated = true;
+    } finally {
+      diffViewModeHydrateInFlight = null;
+    }
+  })();
+
+  return diffViewModeHydrateInFlight;
+}
+
+/** Test helper: allow hydrateDiffViewMode to run again after store resets. */
+export function resetDiffViewModeHydrationForTests(): void {
+  diffViewModeHydrateEpoch = 0;
+  diffViewModeHydrated = false;
+  diffViewModeHydrateInFlight = null;
+}
 
 /**
  * Persist the current review session so reopening the overlay on the same PR resumes
