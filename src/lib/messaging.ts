@@ -1,7 +1,6 @@
 import type {
   AnnotateReviewRequest,
-  AnnotateReviewResponse,
-  AnnotateReviewError,
+  AnnotateReviewStreamEvent,
   TestConnectionRequest,
   TestConnectionResponse,
   FetchDiffRequest,
@@ -10,15 +9,87 @@ import type {
   ParsedDiff,
   PRContext,
   ProviderSettings,
+  ReviewPlan,
+  ReviewUnit,
 } from "./types";
 
-/** Content-script-side helper: ask the background worker to annotate a diff. */
-export async function requestReviewPlan(
+const ANNOTATE_PORT_NAME = "annotate-review";
+
+export interface StreamReviewPlanHandlers {
+  onUnit: (unit: ReviewUnit) => void;
+  onDone: (plan: ReviewPlan) => void;
+  onError: (error: string) => void;
+}
+
+/**
+ * Open a long-lived port to the background worker and stream a structured
+ * review plan. Completed units arrive via `onUnit` as they validate; `onDone`
+ * receives the final merged plan. Call `cancel()` to abort (disconnects the
+ * port, which aborts the in-flight provider request).
+ */
+export function streamReviewPlan(
   diff: ParsedDiff,
   prContext: PRContext,
-): Promise<AnnotateReviewResponse | AnnotateReviewError> {
+  handlers: StreamReviewPlanHandlers,
+): { cancel: () => void } {
+  const port = chrome.runtime.connect({ name: ANNOTATE_PORT_NAME });
+  let settled = false;
+
+  const finish = (fn: () => void): void => {
+    if (settled) return;
+    settled = true;
+    fn();
+  };
+
+  port.onMessage.addListener((message: AnnotateReviewStreamEvent) => {
+    if (!message || typeof message !== "object" || !("type" in message)) return;
+
+    switch (message.type) {
+      case "UNIT":
+        handlers.onUnit(message.unit);
+        return;
+      case "DONE":
+        finish(() => handlers.onDone(message.plan));
+        try {
+          port.disconnect();
+        } catch {
+          // already disconnected
+        }
+        return;
+      case "ERROR":
+        finish(() => handlers.onError(message.error));
+        try {
+          port.disconnect();
+        } catch {
+          // already disconnected
+        }
+        return;
+      default:
+        return;
+    }
+  });
+
+  port.onDisconnect.addListener(() => {
+    // If the background dies or the port drops without DONE/ERROR, surface it.
+    finish(() => {
+      const err = chrome.runtime.lastError?.message;
+      handlers.onError(err ?? "Lost connection to the review worker before the plan finished.");
+    });
+  });
+
   const request: AnnotateReviewRequest = { type: "ANNOTATE_REVIEW", diff, prContext };
-  return chrome.runtime.sendMessage(request);
+  port.postMessage(request);
+
+  return {
+    cancel: () => {
+      settled = true;
+      try {
+        port.disconnect();
+      } catch {
+        // already disconnected
+      }
+    },
+  };
 }
 
 /** Options-page-side helper: ask the background worker to test a provider config. */

@@ -1,4 +1,4 @@
-import type { ParsedDiff, PRContext, ProviderSettings, ReviewPlan } from "../../lib/types";
+import type { ParsedDiff, PRContext, ProviderSettings } from "../../lib/types";
 
 export interface AnnotateReviewInput {
   diff: ParsedDiff;
@@ -6,9 +6,20 @@ export interface AnnotateReviewInput {
   settings: ProviderSettings;
 }
 
+export type AnnotateStreamEvent =
+  | { type: "text_delta"; text: string }
+  | { type: "done" };
+
 export interface ProviderClient {
-  /** Send one diff chunk + PR context, get back a schema-valid ReviewPlan. */
-  annotateReview(input: AnnotateReviewInput): Promise<ReviewPlan>;
+  /**
+   * Stream structured ReviewPlan JSON as text deltas. Schema is still enforced
+   * server-side; callers assemble/parse the deltas into units.
+   */
+  annotateReviewStream(
+    input: AnnotateReviewInput,
+    options?: { signal?: AbortSignal },
+  ): AsyncGenerator<AnnotateStreamEvent, void, unknown>;
+
   /** Minimal request to confirm the API key/model combination actually works. */
   testConnection(settings: ProviderSettings): Promise<void>;
 }

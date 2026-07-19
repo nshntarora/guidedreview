@@ -101,17 +101,30 @@ export const DEFAULT_MODELS: Record<ProviderId, string> = {
 
 // ---- Messaging protocol (content <-> background) -----------------------------
 
+/** First message on the `annotate-review` port from content → background. */
 export interface AnnotateReviewRequest {
   type: "ANNOTATE_REVIEW";
   diff: ParsedDiff;
   prContext: PRContext;
 }
 
+/**
+ * Progressive events on the `annotate-review` port from background → content.
+ * Complete, validated units are pushed as they become available; DONE carries
+ * the final merged plan; ERROR ends the stream with a user-safe message.
+ */
+export type AnnotateReviewStreamEvent =
+  | { type: "UNIT"; unit: ReviewUnit }
+  | { type: "DONE"; plan: ReviewPlan }
+  | { type: "ERROR"; error: string };
+
+/** @deprecated Prefer stream events; kept for type compatibility in older tests. */
 export interface AnnotateReviewResponse {
   ok: true;
   plan: ReviewPlan;
 }
 
+/** @deprecated Prefer stream events; kept for type compatibility in older tests. */
 export interface AnnotateReviewError {
   ok: false;
   error: string;
@@ -142,4 +155,5 @@ export interface FetchDiffError {
   error: string;
 }
 
-export type BackgroundRequest = AnnotateReviewRequest | TestConnectionRequest | FetchDiffRequest;
+/** One-shot request/response messages (annotate uses a port instead). */
+export type BackgroundRequest = TestConnectionRequest | FetchDiffRequest;

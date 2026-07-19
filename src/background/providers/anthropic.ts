@@ -1,7 +1,8 @@
-import type { ProviderSettings, ReviewPlan } from "../../lib/types";
+import type { ProviderSettings } from "../../lib/types";
 import { buildUserPrompt, SYSTEM_PROMPT } from "../../lib/review/buildPrompt";
 import { REVIEW_PLAN_JSON_SCHEMA } from "../../lib/review/reviewSchema";
-import type { AnnotateReviewInput, ProviderClient } from "./types";
+import { readSseJsonStream } from "./sse";
+import type { AnnotateReviewInput, AnnotateStreamEvent, ProviderClient } from "./types";
 import { ProviderError } from "./types";
 
 const API_URL = "https://api.anthropic.com/v1/messages";
@@ -12,13 +13,17 @@ const ANTHROPIC_VERSION = "2023-06-01";
  * call the Messages API directly from the extension's background worker
  * (this is the documented "bring your own API key" browser-CORS opt-in) and
  * `output_config.format` to force a schema-valid ReviewPlan rather than
- * parsing free text.
+ * parsing free text. Streams text deltas so the UI can surface units early.
  */
 export const anthropicProvider: ProviderClient = {
-  async annotateReview({ diff, prContext, settings }: AnnotateReviewInput): Promise<ReviewPlan> {
+  async *annotateReviewStream(
+    { diff, prContext, settings }: AnnotateReviewInput,
+    options?: { signal?: AbortSignal },
+  ): AsyncGenerator<AnnotateStreamEvent, void, unknown> {
     const body = {
       model: settings.model,
       max_tokens: 8000,
+      stream: true,
       system: SYSTEM_PROMPT,
       output_config: {
         effort: "medium",
@@ -27,38 +32,57 @@ export const anthropicProvider: ProviderClient = {
       messages: [{ role: "user", content: buildUserPrompt(diff, prContext) }],
     };
 
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": settings.apiKey,
-        "anthropic-version": ANTHROPIC_VERSION,
-        "anthropic-dangerous-direct-browser-access": "true",
-      },
-      body: JSON.stringify(body),
-    });
+    let response: Response;
+    try {
+      response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": settings.apiKey,
+          "anthropic-version": ANTHROPIC_VERSION,
+          "anthropic-dangerous-direct-browser-access": "true",
+        },
+        body: JSON.stringify(body),
+        signal: options?.signal,
+      });
+    } catch (error) {
+      if (isAbortError(error)) throw error;
+      throw new ProviderError(
+        error instanceof Error ? error.message : "Failed to reach the Claude API.",
+      );
+    }
 
     if (!response.ok) {
       const detail = await safeErrorDetail(response);
       throw new ProviderError(`Claude API error (${response.status}): ${detail}`);
     }
 
-    const data = await response.json();
-
-    if (data.stop_reason === "refusal") {
-      throw new ProviderError("Claude declined to annotate this diff.");
+    if (!response.body) {
+      throw new ProviderError("Claude returned an empty stream.");
     }
 
-    const textBlock = (data.content ?? []).find((b: { type: string }) => b.type === "text");
-    if (!textBlock) {
-      throw new ProviderError("Claude returned no content for this diff.");
+    for await (const event of readSseJsonStream(response.body, { signal: options?.signal })) {
+      if (!event || typeof event !== "object") continue;
+      const ev = event as {
+        type?: string;
+        delta?: { type?: string; text?: string; stop_reason?: string };
+        error?: { message?: string };
+      };
+
+      if (ev.type === "error") {
+        throw new ProviderError(ev.error?.message ?? "Claude stream error.");
+      }
+
+      if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta" && ev.delta.text) {
+        yield { type: "text_delta", text: ev.delta.text };
+      }
+
+      if (ev.type === "message_delta" && ev.delta?.stop_reason === "refusal") {
+        throw new ProviderError("Claude declined to annotate this diff.");
+      }
     }
 
-    try {
-      return JSON.parse(textBlock.text) as ReviewPlan;
-    } catch {
-      throw new ProviderError("Claude returned a response that wasn't valid JSON.");
-    }
+    yield { type: "done" };
   },
 
   async testConnection(settings: ProviderSettings): Promise<void> {
@@ -91,4 +115,8 @@ async function safeErrorDetail(response: Response): Promise<string> {
   } catch {
     return response.statusText;
   }
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError";
 }

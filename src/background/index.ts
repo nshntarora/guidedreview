@@ -1,21 +1,25 @@
 import type {
-  AnnotateReviewError,
   AnnotateReviewRequest,
-  AnnotateReviewResponse,
+  AnnotateReviewStreamEvent,
   BackgroundRequest,
+  DiffFile,
   FetchDiffError,
   FetchDiffRequest,
   FetchDiffResponse,
   ReviewPlan,
+  ReviewUnit,
   TestConnectionRequest,
   TestConnectionResponse,
 } from "../lib/types";
 import { fetchPRDiff } from "../lib/github/diffFetch";
 import { chunkDiffByFile } from "../lib/review/buildPrompt";
-import { mergePlans, validateAndCleanPlan } from "../lib/review/reviewPlan";
+import { StreamPlanParser } from "../lib/review/streamPlanParser";
+import { validateAndCleanUnit } from "../lib/review/reviewPlan";
 import { getProviderSettings } from "../lib/settings";
 import { getProviderClient } from "./providers";
 import { ProviderError } from "./providers/types";
+
+const ANNOTATE_PORT_NAME = "annotate-review";
 
 chrome.action.onClicked.addListener(() => {
   chrome.runtime.openOptionsPage();
@@ -29,16 +33,6 @@ chrome.storage.session
   .catch((error) => console.error("Failed to set storage.session access level:", error));
 
 chrome.runtime.onMessage.addListener((message: BackgroundRequest, _sender, sendResponse) => {
-  if (message.type === "ANNOTATE_REVIEW") {
-    handleAnnotateReview(message)
-      .then(sendResponse)
-      .catch((error: unknown) => {
-        const response: AnnotateReviewError = { ok: false, error: describeError(error) };
-        sendResponse(response);
-      });
-    return true; // keep the message channel open for the async response
-  }
-
   if (message.type === "TEST_CONNECTION") {
     handleTestConnection(message)
       .then(sendResponse)
@@ -62,31 +56,116 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, _sender, sendR
   return false;
 });
 
-async function handleAnnotateReview(
+/**
+ * Long-lived port for streaming annotate results. Content opens the port,
+ * posts ANNOTATE_REVIEW, and receives UNIT / DONE / ERROR events.
+ */
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name !== ANNOTATE_PORT_NAME) return;
+
+  const abort = new AbortController();
+  let started = false;
+
+  port.onDisconnect.addListener(() => {
+    abort.abort();
+  });
+
+  port.onMessage.addListener((message: AnnotateReviewRequest) => {
+    if (message?.type !== "ANNOTATE_REVIEW") return;
+    if (started) return;
+    started = true;
+
+    void handleAnnotateReviewStream(message, port, abort.signal).catch((error: unknown) => {
+      if (abort.signal.aborted) return;
+      postEvent(port, { type: "ERROR", error: describeError(error) });
+    });
+  });
+});
+
+async function handleAnnotateReviewStream(
   request: AnnotateReviewRequest,
-): Promise<AnnotateReviewResponse | AnnotateReviewError> {
+  port: chrome.runtime.Port,
+  signal: AbortSignal,
+): Promise<void> {
   const settings = await getProviderSettings();
 
   if (!settings.apiKey) {
-    return { ok: false, error: "No API key configured. Open the extension settings to add one." };
+    postEvent(port, {
+      type: "ERROR",
+      error: "No API key configured. Open the extension settings to add one.",
+    });
+    return;
   }
+
+  if (signal.aborted) return;
 
   const client = getProviderClient(settings.provider);
   const chunks = chunkDiffByFile(request.diff);
+  const allUnits: ReviewUnit[] = [];
 
-  const plans: ReviewPlan[] = [];
+  let chunkIndex = 0;
   for (const chunk of chunks) {
     if (chunk.files.length === 0) continue;
-    const rawPlan = await client.annotateReview({
-      diff: chunk,
-      prContext: request.prContext,
-      settings,
-    });
-    plans.push(validateAndCleanPlan(rawPlan, chunk));
+    if (signal.aborted) return;
+
+    const parser = new StreamPlanParser();
+    const prefix = `c${chunkIndex}-`;
+    const knownFiles = new Map(chunk.files.map((f) => [f.path, f]));
+
+    for await (const event of client.annotateReviewStream(
+      { diff: chunk, prContext: request.prContext, settings },
+      { signal },
+    )) {
+      if (signal.aborted) return;
+
+      if (event.type === "text_delta") {
+        const rawUnits = parser.push(event.text);
+        for (const raw of rawUnits) {
+          emitUnit(raw, knownFiles, prefix, allUnits, port, signal);
+        }
+      }
+
+      if (event.type === "done") {
+        const remaining = parser.finish();
+        for (const raw of remaining) {
+          emitUnit(raw, knownFiles, prefix, allUnits, port, signal);
+        }
+      }
+    }
+
+    chunkIndex++;
   }
 
-  const merged = mergePlans(plans);
-  return { ok: true, plan: merged };
+  if (signal.aborted) return;
+
+  const plan: ReviewPlan = { units: allUnits };
+  postEvent(port, { type: "DONE", plan });
+}
+
+function emitUnit(
+  raw: ReviewUnit,
+  knownFiles: Map<string, DiffFile>,
+  prefix: string,
+  allUnits: ReviewUnit[],
+  port: chrome.runtime.Port,
+  signal: AbortSignal,
+): void {
+  if (signal.aborted) return;
+
+  const cleaned = validateAndCleanUnit(raw, knownFiles);
+  if (!cleaned) return;
+
+  const unit: ReviewUnit = { ...cleaned, id: `${prefix}${cleaned.id}` };
+  allUnits.push(unit);
+  postEvent(port, { type: "UNIT", unit });
+}
+
+function postEvent(port: chrome.runtime.Port, event: AnnotateReviewStreamEvent): void {
+  try {
+    port.postMessage(event);
+  } catch {
+    // Port already disconnected — nothing to do.
+  }
 }
 
 async function handleTestConnection(request: TestConnectionRequest): Promise<TestConnectionResponse> {
@@ -108,6 +187,9 @@ async function handleFetchDiff(request: FetchDiffRequest): Promise<FetchDiffResp
 
 function describeError(error: unknown): string {
   if (error instanceof ProviderError) return error.message;
+  if (error instanceof DOMException && error.name === "AbortError") {
+    return "Review annotation was cancelled.";
+  }
   if (error instanceof Error) return error.message;
   return "Something went wrong talking to the AI provider.";
 }

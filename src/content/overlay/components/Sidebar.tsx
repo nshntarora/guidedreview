@@ -6,11 +6,12 @@ const SKELETON_COUNT = 4;
 interface SidebarProps {
   plan: ReviewPlan | null;
   currentUnitIndex: number;
-  loading: boolean;
+  /** When true, show trailing skeleton rows after any completed units. */
+  stillBuilding: boolean;
   onSelectUnit: (index: number) => void;
 }
 
-export function Sidebar({ plan, currentUnitIndex, loading, onSelectUnit }: SidebarProps) {
+export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }: SidebarProps) {
   const reviewUnits = plan?.units ?? [];
 
   return (
@@ -26,7 +27,22 @@ export function Sidebar({ plan, currentUnitIndex, loading, onSelectUnit }: Sideb
         {PR_DESCRIPTION_UNIT_TITLE}
       </button>
 
-      {loading &&
+      {reviewUnits.map((unit, planIndex) => {
+        const displayIndex = planIndex + 1;
+        return (
+          <button
+            key={unit.id}
+            type="button"
+            className={`gr-unit-item${displayIndex === currentUnitIndex ? " gr-active" : ""}`}
+            onClick={() => onSelectUnit(displayIndex)}
+          >
+            <span className="gr-unit-item-index">{displayIndex + 1}.</span>
+            {unit.title}
+          </button>
+        );
+      })}
+
+      {stillBuilding &&
         Array.from({ length: SKELETON_COUNT }, (_, i) => (
           <div
             key={`skeleton-${i}`}
@@ -36,22 +52,6 @@ export function Sidebar({ plan, currentUnitIndex, loading, onSelectUnit }: Sideb
             <span className="gr-unit-item-skeleton-bar" />
           </div>
         ))}
-
-      {!loading &&
-        reviewUnits.map((unit, planIndex) => {
-          const displayIndex = planIndex + 1;
-          return (
-            <button
-              key={unit.id}
-              type="button"
-              className={`gr-unit-item${displayIndex === currentUnitIndex ? " gr-active" : ""}`}
-              onClick={() => onSelectUnit(displayIndex)}
-            >
-              <span className="gr-unit-item-index">{displayIndex + 1}.</span>
-              {unit.title}
-            </button>
-          );
-        })}
     </nav>
   );
 }

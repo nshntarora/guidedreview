@@ -32,6 +32,26 @@ const CANNED_PLAN: ReviewPlan = {
   ],
 };
 
+/** Build a minimal Anthropic SSE stream that yields structured plan JSON as text deltas. */
+function anthropicSseForPlan(plan: ReviewPlan): string {
+  const text = JSON.stringify(plan);
+  // Split so the stream exercises partial JSON handling across multiple events.
+  const mid = Math.ceil(text.length / 2);
+  const chunk1 = text.slice(0, mid);
+  const chunk2 = text.slice(mid);
+
+  const events = [
+    `event: message_start\ndata: ${JSON.stringify({ type: "message_start", message: { id: "msg_e2e", type: "message", role: "assistant", content: [], model: "claude-opus-4-8" } })}\n\n`,
+    `event: content_block_start\ndata: ${JSON.stringify({ type: "content_block_start", index: 0, content_block: { type: "text", text: "" } })}\n\n`,
+    `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: 0, delta: { type: "text_delta", text: chunk1 } })}\n\n`,
+    `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: 0, delta: { type: "text_delta", text: chunk2 } })}\n\n`,
+    `event: content_block_stop\ndata: ${JSON.stringify({ type: "content_block_stop", index: 0 })}\n\n`,
+    `event: message_delta\ndata: ${JSON.stringify({ type: "message_delta", delta: { stop_reason: "end_turn" }, usage: { output_tokens: 10 } })}\n\n`,
+    `event: message_stop\ndata: ${JSON.stringify({ type: "message_stop" })}\n\n`,
+  ];
+  return events.join("");
+}
+
 test.describe("Guided review overlay", () => {
   test("clicking Start Guided Review builds and shows a review plan", async ({ context, extensionId }) => {
     // Seed provider settings via the real options page (real chrome.storage.local), the same
@@ -44,7 +64,7 @@ test.describe("Guided review overlay", () => {
     await optionsPage.close();
 
     // Stub every external call the extension makes for this PR: the page itself, the raw
-    // diff, and the AI provider's completion — nothing here touches the real internet.
+    // diff, and the AI provider's streaming completion — nothing here touches the real internet.
     await context.route(PR_URL, (route) => route.fulfill({ path: PR_FIXTURE_PATH, contentType: "text/html" }));
     await context.route(`${PR_URL}.diff`, (route) =>
       route.fulfill({ status: 200, contentType: "text/plain", body: CANNED_DIFF }),
@@ -52,8 +72,8 @@ test.describe("Guided review overlay", () => {
     await context.route("https://api.anthropic.com/v1/messages", (route) =>
       route.fulfill({
         status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ content: [{ type: "text", text: JSON.stringify(CANNED_PLAN) }] }),
+        contentType: "text/event-stream",
+        body: anthropicSseForPlan(CANNED_PLAN),
       }),
     );
 
@@ -69,7 +89,7 @@ test.describe("Guided review overlay", () => {
     // First unit is always the synthetic PR description.
     await expect(page.getByText("PR description").first()).toBeVisible();
 
-    // After the plan loads, the AI unit is listed and reachable via Next.
+    // After the plan streams in, the AI unit is listed and reachable via Next.
     await expect(page.getByText(CANNED_PLAN.units[0].title)).toBeVisible();
     await page.getByRole("button", { name: /next/i }).click();
     await expect(page.getByText(CANNED_PLAN.units[0].context)).toBeVisible();
