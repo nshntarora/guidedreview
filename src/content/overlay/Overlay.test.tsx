@@ -96,7 +96,7 @@ describe("Overlay", () => {
     expect(screen.getByText(/building the rest of the walkthrough/i)).toBeInTheDocument();
     expect(screen.getByRole("status", { name: /building the rest of the walkthrough/i })).toBeInTheDocument();
     // Skeleton placeholders are present (non-interactive bars in the unit list).
-    expect(document.querySelectorAll(".gr-unit-item-skeleton").length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
     // Shortcuts are reserved for the ready state; spinner occupies that slot while loading.
     expect(screen.queryByLabelText(/keyboard shortcuts/i)).not.toBeInTheDocument();
     // No full-page loading spinner copy.
@@ -119,7 +119,7 @@ describe("Overlay", () => {
     expect(screen.getByText("src/foo.ts")).toBeInTheDocument();
     // Plan still loading — skeleton + status copy remain.
     expect(screen.getByText(/building the rest of the walkthrough/i)).toBeInTheDocument();
-    expect(document.querySelectorAll(".gr-unit-item-skeleton").length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
   });
 
   it("shows keyboard shortcuts on the description unit once the walkthrough is ready", () => {
@@ -195,8 +195,8 @@ describe("Overlay", () => {
     });
     render(<Overlay prUrl={PR_URL} />);
     // Description lives in the left pane, not a header <details>.
-    expect(document.querySelector(".gr-pr-description")).toBeNull();
-    expect(document.querySelector(".gr-description-pane")).not.toBeNull();
+    expect(screen.queryByRole("heading", { name: /pr description/i })).toBeInTheDocument();
+    expect(screen.getByTestId("description-pane")).toBeInTheDocument();
   });
 
   it("shows the author's-intent hint when the PR has a description", () => {
@@ -226,10 +226,10 @@ describe("Overlay", () => {
     render(<Overlay prUrl={PR_URL} />);
 
     // Left pane empty state + right pane context both mention the gap.
-    expect(document.querySelector(".gr-description-pane-empty")?.textContent).toMatch(
+    expect(screen.getByTestId("description-pane-empty").textContent).toMatch(
       /author hasn't added a PR description/i
     );
-    expect(document.querySelector(".gr-context-panel-body")?.textContent).toMatch(
+    expect(screen.getByTestId("context-panel-body").textContent).toMatch(
       /rely on the AI to tell us what this PR is about/i
     );
     expect(
@@ -246,13 +246,13 @@ describe("Overlay", () => {
     });
     render(<Overlay prUrl={PR_URL} />);
 
-    expect(document.querySelector(".gr-description-pane-empty")?.textContent).toMatch(
+    expect(screen.getByTestId("description-pane-empty").textContent).toMatch(
       /author hasn't added a PR title or description/i
     );
-    expect(document.querySelector(".gr-context-panel-body")?.textContent).toMatch(
+    expect(screen.getByTestId("context-panel-body").textContent).toMatch(
       /author hasn't added a PR title or description/i
     );
-    expect(document.querySelector(".gr-context-panel-body")?.textContent).toMatch(
+    expect(screen.getByTestId("context-panel-body").textContent).toMatch(
       /rely on the AI to tell us what this PR is about from the diff/i
     );
   });

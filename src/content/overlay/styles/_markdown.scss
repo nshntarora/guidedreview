@@ -1,0 +1,55 @@
+/*
+ * Styles for sanitized PR description HTML (GitHub .markdown-body structure).
+ * We cannot put Tailwind classes on these descendants.
+ */
+
+.markdown-body {
+  img {
+    max-width: 100%;
+    border-radius: 6px;
+  }
+
+  p {
+    margin: 0 0 8px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  a {
+    color: var(--color-gr-accent);
+  }
+
+  ul,
+  ol {
+    padding-left: 1.5em;
+    margin: 0 0 8px;
+  }
+
+  code {
+    background: var(--color-gr-subtle);
+    border-radius: 4px;
+    padding: 0.1em 0.35em;
+    font-size: 0.9em;
+  }
+
+  pre {
+    background: var(--color-gr-subtle);
+    border-radius: 6px;
+    padding: 8px;
+    overflow-x: auto;
+
+    code {
+      background: none;
+      padding: 0;
+    }
+  }
+
+  blockquote {
+    margin: 0 0 8px;
+    padding-left: 10px;
+    border-left: 3px solid var(--color-gr-border);
+    color: var(--color-gr-muted);
+  }
+}

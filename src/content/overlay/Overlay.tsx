@@ -11,9 +11,11 @@ import { FooterNav } from "./components/FooterNav";
 
 interface OverlayProps {
   prUrl: string;
+  /** Invoked when the user exits so any in-flight stream can be cancelled. */
+  onRequestClose?: () => void;
 }
 
-export function Overlay({ prUrl }: OverlayProps) {
+export function Overlay({ prUrl, onRequestClose }: OverlayProps) {
   const isOpen = useReviewStore((s) => s.isOpen);
   const status = useReviewStore((s) => s.status);
   const error = useReviewStore((s) => s.error);
@@ -26,6 +28,11 @@ export function Overlay({ prUrl }: OverlayProps) {
   const goNext = useReviewStore((s) => s.goNext);
   const goPrev = useReviewStore((s) => s.goPrev);
   const codeColRef = useRef<HTMLElement>(null);
+
+  const handleExit = () => {
+    onRequestClose?.();
+    close();
+  };
 
   useEffect(() => {
     if (status === "ready") void persistSession(prUrl);
@@ -56,6 +63,7 @@ export function Overlay({ prUrl }: OverlayProps) {
         case "Escape":
           event.preventDefault();
           event.stopPropagation();
+          onRequestClose?.();
           useReviewStore.getState().close();
           return;
         case "ArrowRight":
@@ -85,11 +93,13 @@ export function Overlay({ prUrl }: OverlayProps) {
 
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [isOpen]);
+  }, [isOpen, onRequestClose]);
 
   if (!isOpen) return null;
 
-  const isLoading = status === "loading" || status === "idle";
+  const stillBuilding = status === "loading" || status === "idle";
+  // Spinner on the description unit only while the plan is still being built.
+  const showBuildingSpinner = stillBuilding && (!plan || currentUnitIndex === 0);
   const displayUnits = buildDisplayUnits(plan);
   const total = displayUnitCount(plan);
   const totalKnown = status === "ready";
@@ -101,18 +111,20 @@ export function Overlay({ prUrl }: OverlayProps) {
     currentReviewUnit && diff ? resolveUnitFiles(currentReviewUnit, diff) : [];
 
   return (
-    <div className="gr-root">
+    <div
+      className="fixed inset-0 z-[2147483000] flex flex-col bg-gr-bg font-sans text-sm text-gr-text antialiased [color-scheme:dark] [text-rendering:optimizeLegibility]"
+    >
       <ProgressHeader
         currentIndex={currentUnitIndex}
         total={total}
         totalKnown={totalKnown}
         prContext={prContext}
         diff={diff}
-        onExit={close}
+        onExit={handleExit}
       />
 
-      <div className="gr-body">
-        <main className="gr-code-col" ref={codeColRef}>
+      <div className="flex min-h-0 flex-1">
+        <main className="min-w-0 flex-[1_1_68%] overflow-y-auto border-r border-gr-border bg-gr-bg px-8 py-6" ref={codeColRef}>
           {isDescriptionUnit ? (
             <DescriptionPane prContext={prContext} diff={diff} />
           ) : (
@@ -120,8 +132,8 @@ export function Overlay({ prUrl }: OverlayProps) {
           )}
         </main>
 
-        <aside className="gr-review-col">
-          <div className="gr-context-pane">
+        <aside className="flex max-w-[420px] min-w-[300px] flex-[1_1_32%] flex-col overflow-hidden bg-gr-chrome px-5 py-6">
+          <div className="min-h-0 flex-[1_1_50%] overflow-y-auto">
             <ContextPanel
               unit={currentReviewUnit}
               hasTitle={Boolean(prContext?.title?.trim())}
@@ -129,13 +141,13 @@ export function Overlay({ prUrl }: OverlayProps) {
                 prContext?.description?.trim() || prContext?.descriptionHtml?.trim()
               )}
               error={status === "error" ? error : null}
-              loading={isLoading}
+              loading={showBuildingSpinner && isDescriptionUnit}
             />
           </div>
           <Sidebar
             plan={plan}
             currentUnitIndex={currentUnitIndex}
-            loading={isLoading}
+            stillBuilding={stillBuilding}
             onSelectUnit={goToUnit}
           />
         </aside>

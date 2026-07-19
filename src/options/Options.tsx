@@ -22,6 +22,9 @@ const MODEL_OPTIONS: Record<ProviderId, string[]> = {
 
 type ConnectionStatus = { kind: "idle" } | { kind: "testing" } | { kind: "ok" } | { kind: "error"; message: string };
 
+const fieldControl =
+  "w-full rounded-md border border-opt-border bg-opt-subtle px-2.5 py-2 text-[13px] text-opt-text";
+
 export function Options() {
   const [settings, setSettings] = useState<ProviderSettings | null>(null);
   const [saved, setSaved] = useState(false);
@@ -67,29 +70,29 @@ export function Options() {
   };
 
   return (
-    <div className="opt-container">
-      <div className="opt-brand">
+    <div className="mx-auto max-w-[480px] px-6 py-8">
+      <div className="mb-2 flex items-center gap-3">
         <img
-          className="opt-brand-mark"
+          className="h-10 w-10 shrink-0 rounded-lg"
           src={chrome.runtime.getURL("icon.png")}
           alt=""
           width={40}
           height={40}
         />
-        <h1 className="opt-title">Guided Review</h1>
+        <h1 className="m-0 text-lg font-bold">Guided Review</h1>
       </div>
-      <p className="opt-subtitle">
+      <p className="mb-6 text-[13px] text-opt-muted">
         Choose an AI provider and paste your own API key. The key is stored only in this
         browser and is used solely to annotate PR diffs you open.
       </p>
 
-      <div className="opt-field">
-        <label className="opt-label" htmlFor="provider">
+      <div className="mb-4">
+        <label className="mb-1.5 block text-[13px] font-semibold" htmlFor="provider">
           Provider
         </label>
         <select
           id="provider"
-          className="opt-select"
+          className={fieldControl}
           value={settings.provider}
           onChange={(e) => onProviderChange(e.target.value as ProviderId)}
         >
@@ -101,13 +104,13 @@ export function Options() {
         </select>
       </div>
 
-      <div className="opt-field">
-        <label className="opt-label" htmlFor="model">
+      <div className="mb-4">
+        <label className="mb-1.5 block text-[13px] font-semibold" htmlFor="model">
           Model
         </label>
         <select
           id="model"
-          className="opt-select"
+          className={fieldControl}
           value={settings.model}
           onChange={(e) => onModelChange(e.target.value)}
         >
@@ -119,36 +122,49 @@ export function Options() {
         </select>
       </div>
 
-      <div className="opt-field">
-        <label className="opt-label" htmlFor="apiKey">
+      <div className="mb-4">
+        <label className="mb-1.5 block text-[13px] font-semibold" htmlFor="apiKey">
           API key
         </label>
         <input
           id="apiKey"
-          className="opt-input"
+          className={fieldControl}
           type="password"
           autoComplete="off"
           placeholder="sk-..."
           value={settings.apiKey}
           onChange={(e) => onApiKeyChange(e.target.value)}
         />
-        <p className="opt-hint">Stored locally on this device via chrome.storage.local — never synced.</p>
+        <p className="mt-1 text-xs text-opt-muted">
+          Stored locally on this device via chrome.storage.local — never synced.
+        </p>
       </div>
 
-      <div className="opt-actions">
-        <button className="opt-btn" onClick={onSave}>
+      <div className="mt-6 flex items-center gap-2.5">
+        <button
+          type="button"
+          className="cursor-pointer rounded-md border border-opt-accent bg-opt-accent px-4 py-2 text-[13px] font-semibold text-opt-accent-on disabled:cursor-default disabled:opacity-60"
+          onClick={onSave}
+        >
           Save
         </button>
         <button
-          className="opt-btn opt-secondary"
+          type="button"
+          className="cursor-pointer rounded-md border border-opt-border bg-opt-subtle px-4 py-2 text-[13px] font-semibold text-opt-text disabled:cursor-default disabled:opacity-60"
           onClick={onTestConnection}
           disabled={!settings.apiKey || connection.kind === "testing"}
         >
           {connection.kind === "testing" ? "Testing…" : "Test connection"}
         </button>
-        {saved && connection.kind === "idle" && <span className="opt-status opt-ok">Saved</span>}
-        {connection.kind === "ok" && <span className="opt-status opt-ok">Connection works</span>}
-        {connection.kind === "error" && <span className="opt-status opt-error">{connection.message}</span>}
+        {saved && connection.kind === "idle" && (
+          <span className="text-[13px] text-opt-ok">Saved</span>
+        )}
+        {connection.kind === "ok" && (
+          <span className="text-[13px] text-opt-ok">Connection works</span>
+        )}
+        {connection.kind === "error" && (
+          <span className="text-[13px] text-opt-error">{connection.message}</span>
+        )}
       </div>
     </div>
   );

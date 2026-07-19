@@ -24,50 +24,58 @@ export function ProgressHeader({
   const logomarkUrl = chrome.runtime.getURL("logomark.svg");
 
   return (
-    <header className="gr-header">
-      <div className="gr-header-row">
-        <div className="gr-header-brand">
+    <header className="flex shrink-0 flex-col gap-1.5 border-b border-gr-border bg-gr-chrome px-5 py-3.5">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-1 items-center gap-3.5">
           <img
-            className="gr-header-logomark"
+            className="block h-4 w-8 shrink-0"
             src={logomarkUrl}
             alt=""
             width={32}
             height={16}
             aria-hidden="true"
           />
-          <div className="gr-header-titles">
-            <div className="gr-header-identity">
-              <span className="gr-header-pr-title">{prContext?.title || "Guided Review"}</span>
-              {prContext && <span className="gr-header-pr-number">#{prContext.number}</span>}
+          <div className="flex min-w-0 flex-col gap-1">
+            <div className="flex min-w-0 items-baseline gap-2">
+              <span className="truncate text-[15px] font-semibold">
+                {prContext?.title || "Guided Review"}
+              </span>
+              {prContext && (
+                <span className="shrink-0 text-[13px] text-gr-muted">#{prContext.number}</span>
+              )}
             </div>
             {prContext && (prContext.author || prContext.baseRef || prContext.headRef || stats) && (
-              <div className="gr-header-meta">
-                {prContext.author && <span className="gr-author">@{prContext.author}</span>}
+              <div className="flex items-center gap-2.5 text-[12.5px] text-gr-muted">
+                {prContext.author && <span>@{prContext.author}</span>}
                 {(prContext.baseRef || prContext.headRef) && (
-                  <span className="gr-branch-chip">
+                  <span className="inline-block rounded-full border border-gr-border bg-gr-bg px-2.5 py-px font-mono text-xs text-gr-text">
                     {prContext.baseRef || "?"} ← {prContext.headRef || "?"}
                   </span>
                 )}
                 {stats && (
-                  <span className="gr-pr-stats">
+                  <span>
                     {stats.files} file{stats.files === 1 ? "" : "s"} changed
-                    <span className="gr-stat-add"> +{stats.additions}</span>
-                    <span className="gr-stat-del"> −{stats.deletions}</span>
+                    <span className="ml-1 text-gr-add-text"> +{stats.additions}</span>
+                    <span className="ml-1 text-gr-del-text"> −{stats.deletions}</span>
                   </span>
                 )}
               </div>
             )}
           </div>
         </div>
-        <div className="gr-header-actions">
+        <div className="flex shrink-0 items-center gap-3">
           {totalKnown && total > 0 ? (
-            <span className="gr-header-progress">
+            <span className="text-[13px] text-gr-muted">
               Step {currentIndex + 1} of {total}
             </span>
           ) : (
-            <span className="gr-header-progress">Step {currentIndex + 1}</span>
+            <span className="text-[13px] text-gr-muted">Step {currentIndex + 1}</span>
           )}
-          <button className="gr-exit-btn" onClick={onExit}>
+          <button
+            type="button"
+            className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-[13px] text-gr-text hover:bg-gr-subtle"
+            onClick={onExit}
+          >
             Exit
             <Kbd>Esc</Kbd>
           </button>
