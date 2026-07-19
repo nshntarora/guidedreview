@@ -126,6 +126,10 @@ export function createChromeMock() {
         addListener: vi.fn(),
       },
     },
+    tabs: {
+      sendMessage: vi.fn(async (_tabId: number, _message: unknown) => undefined),
+      query: vi.fn(async (_query: unknown) => []),
+    },
   };
 }
 

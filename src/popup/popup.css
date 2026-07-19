@@ -1,0 +1,65 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Helvetica,
+    Arial,
+    sans-serif;
+  color: #fefefe;
+  background: #110e0b;
+}
+
+.popup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: 280px;
+  padding: 16px;
+}
+
+.popup[hidden] {
+  display: none;
+}
+
+.popup__mark {
+  width: 28px;
+  height: 14px;
+  flex-shrink: 0;
+  background-color: #caff57;
+  -webkit-mask: var(--mark-url) center / contain no-repeat;
+  mask: var(--mark-url) center / contain no-repeat;
+}
+
+.popup__message {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: #fefefe;
+}
+
+.popup__link {
+  font-size: 12px;
+  font-weight: 600;
+  color: #caff57;
+  text-decoration: none;
+}
+
+.popup__link:hover {
+  text-decoration: underline;
+}

@@ -21,9 +21,8 @@ import { ProviderError } from "./providers/types";
 
 const ANNOTATE_PORT_NAME = "annotate-review";
 
-chrome.action.onClicked.addListener(() => {
-  chrome.runtime.openOptionsPage();
-});
+// Toolbar icon opens the action popup (`src/popup/`), which starts a guided
+// review on PR pages or explains that the extension only works there.
 
 // Content scripts run in an "untrusted" context and are blocked from
 // chrome.storage.session by default. The overlay persists/restores review
