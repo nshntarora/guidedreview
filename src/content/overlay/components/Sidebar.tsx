@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { ReviewPlan } from "../../../lib/types";
 import { PR_DESCRIPTION_UNIT_TITLE } from "../displayUnits";
 
@@ -11,8 +12,24 @@ interface SidebarProps {
   onSelectUnit: (index: number) => void;
 }
 
-export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }: SidebarProps) {
+export function Sidebar({
+  plan,
+  currentUnitIndex,
+  stillBuilding,
+  onSelectUnit,
+}: SidebarProps) {
   const reviewUnits = plan?.units ?? [];
+  const activeItemRef = useRef<HTMLButtonElement>(null);
+
+  // Keep the active unit visible when navigating via keyboard (←/→) or footer
+  // buttons — the sidebar is independently scrollable and can leave the
+  // current step off-screen on long plans.
+  useEffect(() => {
+    activeItemRef.current?.scrollIntoView({
+      block: "nearest",
+      behavior: "smooth",
+    });
+  }, [currentUnitIndex]);
 
   return (
     <nav className="gr-sidebar" aria-label="Review units">
@@ -20,6 +37,7 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
 
       <button
         type="button"
+        ref={currentUnitIndex === 0 ? activeItemRef : undefined}
         className={`gr-unit-item${currentUnitIndex === 0 ? " gr-active" : ""}`}
         onClick={() => onSelectUnit(0)}
       >
@@ -29,11 +47,13 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
 
       {reviewUnits.map((unit, planIndex) => {
         const displayIndex = planIndex + 1;
+        const isActive = displayIndex === currentUnitIndex;
         return (
           <button
             key={unit.id}
             type="button"
-            className={`gr-unit-item${displayIndex === currentUnitIndex ? " gr-active" : ""}`}
+            ref={isActive ? activeItemRef : undefined}
+            className={`gr-unit-item${isActive ? " gr-active" : ""}`}
             onClick={() => onSelectUnit(displayIndex)}
           >
             <span className="gr-unit-item-index">{displayIndex + 1}.</span>
