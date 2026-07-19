@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { parsePRUrl, type PRIdentity } from "../lib/github/diffFetch";
 import { fetchConversationDescription, scrapePRContext } from "../lib/github/prContext";
 import { requestPRDiff, streamReviewPlan } from "../lib/messaging";
+import { ensureFallbackHost, FALLBACK_HOST_ID, findButtonAnchor } from "./buttonAnchor";
 import { Overlay } from "./overlay/Overlay";
 import overlayStyles from "./overlay/styles/overlay.css?inline";
 import { useReviewStore, restoreSession, buildSessionKey } from "./overlay/store";
@@ -31,10 +32,21 @@ function tryInjectButton(): void {
 
   currentPR = pr;
 
-  if (document.getElementById(BUTTON_ID)) return;
+  // Prefer a real header action slot; fall back to a fixed host so the button
+  // still appears on beta / partially-rendered PR shells. If a better anchor
+  // appears later (SPA paint), re-parent the existing button into it.
+  const preferred = findButtonAnchor();
+  const anchor = preferred ?? ensureFallbackHost();
 
-  const anchor = findButtonAnchor();
-  if (!anchor) return;
+  const existing = document.getElementById(BUTTON_ID);
+  if (existing?.isConnected) {
+    if (!anchor.contains(existing)) {
+      anchor.appendChild(existing);
+      removeFallbackHostIfEmpty();
+    }
+    return;
+  }
+  existing?.remove();
 
   const button = document.createElement("button");
   button.id = BUTTON_ID;
@@ -82,25 +94,14 @@ function tryInjectButton(): void {
   button.addEventListener("click", onStartReview);
 
   anchor.appendChild(button);
+  removeFallbackHostIfEmpty();
 }
 
-/**
- * GitHub's PR header markup shifts across redesigns; try a few reasonably
- * stable anchors near the PR title / action bar before giving up for this
- * pass (the mutation observer will retry on the next DOM change).
- */
-function findButtonAnchor(): HTMLElement | null {
-  const candidates = [
-    ".gh-header-actions",
-    ".gh-header-meta",
-    '[data-testid="issue-viewer-header-actions"]',
-    ".gh-header-show",
-  ];
-  for (const selector of candidates) {
-    const el = document.querySelector<HTMLElement>(selector);
-    if (el) return el;
+function removeFallbackHostIfEmpty(): void {
+  const host = document.getElementById(FALLBACK_HOST_ID);
+  if (host && host.childElementCount === 0) {
+    host.remove();
   }
-  return null;
 }
 
 function cancelActiveStream(): void {
