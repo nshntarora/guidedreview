@@ -14,13 +14,14 @@ export const OVERLAY_CSS = `
 }
 
 .gr-root {
-  /* Dark-only surface hierarchy: chrome (darkest) < bg < canvas (lifted, code lives here) */
-  --gr-bg-chrome: #0a0c10;
-  --gr-bg: #0d1117;
-  --gr-bg-canvas: #12161f;
-  --gr-bg-subtle: #161b22;
-  --gr-border: #262c36;
-  --gr-border-muted: #1c222b;
+  /* Brand surface hierarchy (matches options page dark theme):
+     chrome (darkest brand bg) < bg < canvas (lifted, code lives here) < subtle */
+  --gr-bg-chrome: #0d0806;
+  --gr-bg: #110e0b;
+  --gr-bg-canvas: #16120f;
+  --gr-bg-subtle: #1c1814;
+  --gr-border: #2a2420;
+  --gr-border-muted: #211c18;
   --gr-text: #fefefe;
   --gr-text-muted: #8b949e;
   --gr-text-faint: #6e7781;
@@ -53,8 +54,12 @@ export const OVERLAY_CSS = `
   z-index: 2147483000;
   background: var(--gr-bg);
   color: var(--gr-text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  /* system-ui → SF Pro on macOS; antialiased for native-looking dark UI */
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   display: flex;
   flex-direction: column;
 }
@@ -74,6 +79,28 @@ export const OVERLAY_CSS = `
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+}
+
+.gr-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1;
+}
+
+.gr-header-logomark {
+  width: 32px;
+  height: 16px;
+  flex-shrink: 0;
+  display: block;
+}
+
+.gr-header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 .gr-header-identity {
@@ -269,7 +296,7 @@ export const OVERLAY_CSS = `
 .gr-pr-description summary {
   cursor: pointer;
   padding: 8px 12px;
-  font-size: 12.5px;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--gr-text-muted);
   list-style: none;
