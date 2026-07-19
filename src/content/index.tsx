@@ -101,9 +101,11 @@ async function onStartReview(): Promise<void> {
     // in parallel with the diff/plan work below rather than blocking on it.
     if (!prContext.description) {
       fetchConversationDescription(pr)
-        .then((description) => {
-          if (!description) return;
-          useReviewStore.getState().setPRContext({ ...prContext, description });
+        .then(({ text, html }) => {
+          if (!text) return;
+          useReviewStore
+            .getState()
+            .setPRContext({ ...prContext, description: text, descriptionHtml: html });
         })
         .catch(() => {
           // best-effort only — the review doesn't depend on the description

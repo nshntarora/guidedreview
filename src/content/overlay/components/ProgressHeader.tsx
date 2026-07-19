@@ -51,7 +51,14 @@ export function ProgressHeader({ currentIndex, total, prContext, diff, onExit }:
       {prContext?.description && (
         <details className="gr-pr-description">
           <summary>Description</summary>
-          <div className="gr-pr-description-body">{prContext.description}</div>
+          {prContext.descriptionHtml ? (
+            <div
+              className="gr-pr-description-body markdown-body"
+              dangerouslySetInnerHTML={{ __html: prContext.descriptionHtml }}
+            />
+          ) : (
+            <div className="gr-pr-description-body">{prContext.description}</div>
+          )}
         </details>
       )}
     </header>

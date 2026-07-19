@@ -48,6 +48,7 @@ export interface PRContext {
   url: string;
   title: string;
   description: string;
+  descriptionHtml: string;
   author: string;
   baseRef: string;
   headRef: string;

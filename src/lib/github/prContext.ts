@@ -1,5 +1,16 @@
+import DOMPurify from "dompurify";
 import type { PRContext } from "../types";
 import type { PRIdentity } from "./diffFetch";
+
+// Open links from the PR description in a new tab instead of navigating the
+// review away from GitHub, and strip anything DOMPurify's default config
+// wouldn't already catch on the `rel` front.
+DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+  if (node.tagName === "A") {
+    node.setAttribute("target", "_blank");
+    node.setAttribute("rel", "noopener noreferrer");
+  }
+});
 
 /**
  * Best-effort scrape of PR title/description/branch refs from the rendered
@@ -22,7 +33,9 @@ export function scrapePRContext(pr: PRIdentity): PRContext {
     "h1.gh-header-title bdi",
   ]);
 
-  const description = firstDescriptionText(DESCRIPTION_SELECTORS, document);
+  const descriptionEl = firstDescriptionElement(DESCRIPTION_SELECTORS, document);
+  const description = descriptionEl?.textContent?.trim();
+  const descriptionHtml = descriptionEl && DOMPurify.sanitize(descriptionEl.innerHTML);
 
   const author = firstText([
     ".gh-header-meta .author",
@@ -45,6 +58,7 @@ export function scrapePRContext(pr: PRIdentity): PRContext {
     url: window.location.href,
     title: title ?? document.title,
     description: description ?? "",
+    descriptionHtml: descriptionHtml ?? "",
     author: author ?? "",
     baseRef: normalizeRef(baseRef) ?? "",
     headRef: normalizeRef(headRef) ?? "",
@@ -74,12 +88,12 @@ function firstText(selectors: string[]): string | undefined {
  * (Files changed, Commits, ...) where it has to be parsed out of a separately
  * fetched document instead of the live `document`.
  */
-function firstDescriptionText(selectors: string[], root: ParentNode): string | undefined {
+function firstDescriptionElement(selectors: string[], root: ParentNode): Element | undefined {
   for (const selector of selectors) {
     for (const el of root.querySelectorAll(selector)) {
       if (el.classList.contains("js-preview-body")) continue;
       const text = el.textContent?.trim();
-      if (text && text !== "Nothing to preview") return text;
+      if (text && text !== "Nothing to preview") return el;
     }
   }
   return undefined;
@@ -94,20 +108,25 @@ function firstDescriptionText(selectors: string[], root: ParentNode): string | u
  * page, so no CORS/background-worker hop is needed like fetchPRDiff requires
  * — and parse the description out of that instead.
  */
-export async function fetchConversationDescription(pr: PRIdentity): Promise<string> {
+export async function fetchConversationDescription(
+  pr: PRIdentity
+): Promise<{ text: string; html: string }> {
+  const empty = { text: "", html: "" };
   const url = `https://github.com/${pr.owner}/${pr.repo}/pull/${pr.number}`;
 
   let response: Response;
   try {
     response = await fetch(url, { credentials: "include", headers: { Accept: "text/html" } });
   } catch {
-    return "";
+    return empty;
   }
-  if (!response.ok) return "";
+  if (!response.ok) return empty;
 
   const html = await response.text();
   const conversationDoc = new DOMParser().parseFromString(html, "text/html");
-  return firstDescriptionText(DESCRIPTION_SELECTORS, conversationDoc) ?? "";
+  const el = firstDescriptionElement(DESCRIPTION_SELECTORS, conversationDoc);
+  if (!el) return empty;
+  return { text: el.textContent?.trim() ?? "", html: DOMPurify.sanitize(el.innerHTML) };
 }
 
 function firstAttr(selectors: string[], attr: string): string | undefined {

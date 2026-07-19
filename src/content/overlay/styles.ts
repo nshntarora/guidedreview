@@ -152,6 +152,9 @@ export const OVERLAY_CSS = `
 }
 
 .gr-sidebar {
+  flex: 1 1 50%;
+  min-height: 0;
+  overflow-y: auto;
   padding: 16px 0 0;
   margin-top: 24px;
   border-top: 1px solid var(--gr-border-muted);
@@ -205,19 +208,20 @@ export const OVERLAY_CSS = `
 }
 
 .gr-review-col {
+  display: flex;
+  flex-direction: column;
   flex: 1 1 32%;
   min-width: 300px;
   max-width: 420px;
-  overflow-y: auto;
+  overflow: hidden;
   padding: 24px 20px;
   background: var(--gr-bg-chrome);
 }
 
-.gr-unit-title {
-  font-size: 15px;
-  font-weight: 600;
-  margin: 0 0 8px;
-  color: var(--gr-text);
+.gr-context-pane {
+  flex: 1 1 50%;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .gr-pr-stats {
@@ -266,33 +270,74 @@ export const OVERLAY_CSS = `
   padding: 0 12px 12px;
   font-size: 13px;
   line-height: 1.6;
-  white-space: pre-wrap;
   word-break: break-word;
   color: var(--gr-text);
 }
 
-.gr-context-eyebrow {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--gr-text-faint);
-  margin-bottom: 6px;
+.gr-pr-description-body:not(.markdown-body) {
+  white-space: pre-wrap;
+}
+
+.gr-pr-description-body.markdown-body img {
+  max-width: 100%;
+  border-radius: 6px;
+}
+
+.gr-pr-description-body.markdown-body p {
+  margin: 0 0 8px;
+}
+
+.gr-pr-description-body.markdown-body p:last-child {
+  margin-bottom: 0;
+}
+
+.gr-pr-description-body.markdown-body a {
+  color: var(--gr-accent, #4493f8);
+}
+
+.gr-pr-description-body.markdown-body ul,
+.gr-pr-description-body.markdown-body ol {
+  padding-left: 1.5em;
+  margin: 0 0 8px;
+}
+
+.gr-pr-description-body.markdown-body code {
+  background: var(--gr-bg);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  font-size: 0.9em;
+}
+
+.gr-pr-description-body.markdown-body pre {
+  background: var(--gr-bg);
+  border-radius: 6px;
+  padding: 8px;
+  overflow-x: auto;
+}
+
+.gr-pr-description-body.markdown-body pre code {
+  background: none;
+  padding: 0;
+}
+
+.gr-pr-description-body.markdown-body blockquote {
+  margin: 0 0 8px;
+  padding-left: 10px;
+  border-left: 3px solid var(--gr-border);
+  color: var(--gr-text-muted);
 }
 
 .gr-context-panel {
-  position: sticky;
-  top: 0;
   background: transparent;
   border: none;
-  border-left: 2px solid var(--gr-border);
   border-radius: 0;
-  padding: 2px 0 4px 16px;
+  padding: 2px 0 4px;
 }
 
 .gr-context-panel-body {
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.7;
-  color: var(--gr-text-muted);
+  color: var(--gr-text);
 }
 
 .gr-file-block {

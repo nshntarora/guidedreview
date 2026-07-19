@@ -83,7 +83,9 @@ export function Overlay({ prUrl }: OverlayProps) {
             </main>
 
             <aside className="gr-review-col">
-              <ContextPanel unit={currentUnit} />
+              <div className="gr-context-pane">
+                <ContextPanel unit={currentUnit} />
+              </div>
               <Sidebar
                 plan={plan}
                 currentUnitIndex={currentUnitIndex}
