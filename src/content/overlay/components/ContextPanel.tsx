@@ -1,9 +1,9 @@
 import type { ReviewUnit } from "../../../lib/types";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { Spinner } from "./Spinner";
+import { missingMetadataHint, PR_DESCRIPTION_HINT } from "../missingMetadata";
 
-const PR_DESCRIPTION_HINT =
-  "Read the author's intent before walking the code. This is always the first step of a guided review.";
+export { missingMetadataHint, PR_DESCRIPTION_HINT } from "../missingMetadata";
 
 interface ContextPanelProps {
   /** When null, the synthetic PR-description unit is active. */
@@ -14,23 +14,6 @@ interface ContextPanelProps {
   hasDescription?: boolean;
   error?: string | null;
   loading?: boolean;
-}
-
-/**
- * Right-pane copy for the synthetic PR-description unit when the author left
- * title and/or description blank — the AI has to infer intent from the diff.
- */
-export function missingMetadataHint(hasTitle: boolean, hasDescription: boolean): string {
-  if (!hasTitle && !hasDescription) {
-    return "The author hasn't added a PR title or description. We'll rely on the AI to tell us what this PR is about from the diff.";
-  }
-  if (!hasDescription) {
-    return "The author hasn't added a PR description. We'll rely on the AI to tell us what this PR is about from the diff.";
-  }
-  if (!hasTitle) {
-    return "The author hasn't added a PR title. We'll rely on the AI to fill in the intent from the description and the diff.";
-  }
-  return PR_DESCRIPTION_HINT;
 }
 
 export function ContextPanel({

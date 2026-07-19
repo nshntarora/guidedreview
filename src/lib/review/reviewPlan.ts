@@ -9,6 +9,14 @@ const FILE_ROLES: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Namespace a unit id by chunk index so units from different `chunkDiffByFile`
+ * chunks never collide when stitched into one plan.
+ */
+export function prefixChunkUnitId(chunkIndex: number, unitId: string): string {
+  return `c${chunkIndex}-${unitId}`;
+}
+
+/**
  * The LLM plans structure and writes commentary, but the actual code shown
  * to the reviewer must always come from the real diff. This validates every
  * fileId/hunkId the model referenced against the diff it was given, dropping
@@ -50,6 +58,9 @@ export function validateAndCleanUnit(
     const file = knownFiles.get(ref.fileId);
     if (!file) continue;
 
+    // Empty hunkIds means "whole file". If the model listed only invalid ids,
+    // treat the ref as whole-file rather than dropping a real file path —
+    // better to show more of a real file than hide a unit step.
     const hunkIds =
       ref.hunkIds.length === 0
         ? []
@@ -96,17 +107,17 @@ export function isCompleteReviewUnit(value: unknown): value is ReviewUnit {
 }
 
 /**
- * Stitch together per-chunk plans (from `chunkDiffByFile`) into one plan,
- * namespacing ids per chunk so units from different chunks never collide.
+ * Stitch together per-chunk plans into one plan, namespacing ids per chunk so
+ * units from different chunks never collide. Used by tests and any non-stream
+ * batch path; the live stream path prefixes via `prefixChunkUnitId` as units
+ * arrive.
  */
 export function mergePlans(plans: ReviewPlan[]): ReviewPlan {
   const units: ReviewUnit[] = [];
 
   plans.forEach((plan, chunkIndex) => {
-    const prefix = `c${chunkIndex}-`;
-
     for (const unit of plan.units) {
-      units.push({ ...unit, id: `${prefix}${unit.id}` });
+      units.push({ ...unit, id: prefixChunkUnitId(chunkIndex, unit.id) });
     }
   });
 

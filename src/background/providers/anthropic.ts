@@ -1,6 +1,7 @@
 import type { ProviderSettings } from "../../lib/types";
 import { buildUserPrompt, SYSTEM_PROMPT } from "../../lib/review/buildPrompt";
 import { REVIEW_PLAN_JSON_SCHEMA } from "../../lib/review/reviewSchema";
+import { isAbortError, safeErrorDetail } from "./http";
 import { readSseJsonStream } from "./sse";
 import type { AnnotateReviewInput, AnnotateStreamEvent, ProviderClient } from "./types";
 import { ProviderError } from "./types";
@@ -61,6 +62,8 @@ export const anthropicProvider: ProviderClient = {
       throw new ProviderError("Claude returned an empty stream.");
     }
 
+    let sawContent = false;
+
     for await (const event of readSseJsonStream(response.body, { signal: options?.signal })) {
       if (!event || typeof event !== "object") continue;
       const ev = event as {
@@ -74,12 +77,17 @@ export const anthropicProvider: ProviderClient = {
       }
 
       if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta" && ev.delta.text) {
+        sawContent = true;
         yield { type: "text_delta", text: ev.delta.text };
       }
 
       if (ev.type === "message_delta" && ev.delta?.stop_reason === "refusal") {
         throw new ProviderError("Claude declined to annotate this diff.");
       }
+    }
+
+    if (!sawContent) {
+      throw new ProviderError("Claude returned no content for this diff.");
     }
 
     yield { type: "done" };
@@ -107,16 +115,3 @@ export const anthropicProvider: ProviderClient = {
     }
   },
 };
-
-async function safeErrorDetail(response: Response): Promise<string> {
-  try {
-    const data = await response.json();
-    return data?.error?.message ?? response.statusText;
-  } catch {
-    return response.statusText;
-  }
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === "AbortError";
-}

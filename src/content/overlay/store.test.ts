@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { useReviewStore, persistSession, restoreSession } from "./store";
+import {
+  useReviewStore,
+  persistSession,
+  restoreSession,
+  buildSessionKey,
+} from "./store";
 import type { ParsedDiff, PRContext, ReviewPlan } from "../../lib/types";
 
 function diffFixture(): ParsedDiff {
@@ -32,6 +37,9 @@ function prContextFixture(): PRContext {
   };
 }
 
+const SESSION_KEY = buildSessionKey({ owner: "acme", repo: "widgets", number: 1 });
+const STORAGE_KEY = `guidedReview.session.${SESSION_KEY}`;
+
 function resetStore(): void {
   useReviewStore.setState({
     isOpen: false,
@@ -42,8 +50,19 @@ function resetStore(): void {
     prContext: null,
     currentUnitIndex: 0,
     streamGeneration: 0,
+    sessionKey: null,
   });
 }
+
+describe("buildSessionKey", () => {
+  it("uses owner/repo#number and is independent of tab path", () => {
+    expect(buildSessionKey({ owner: "acme", repo: "widgets", number: 42 })).toBe(
+      "acme/widgets#42",
+    );
+    // Same identity whether the user is on Conversation or Files changed.
+    expect(buildSessionKey({ owner: "acme", repo: "widgets", number: 1 })).toBe(SESSION_KEY);
+  });
+});
 
 describe("useReviewStore", () => {
   it("open/close toggle isOpen", () => {
@@ -54,7 +73,7 @@ describe("useReviewStore", () => {
     expect(useReviewStore.getState().isOpen).toBe(false);
   });
 
-  it("startLoading sets status to loading, clears plan/diff/error, and resets unit index", () => {
+  it("startLoading sets status to loading, stores sessionKey, clears plan/diff/error, and resets unit index", () => {
     resetStore();
     useReviewStore.setState({
       error: "boom",
@@ -62,18 +81,19 @@ describe("useReviewStore", () => {
       diff: diffFixture(),
       currentUnitIndex: 2,
     });
-    useReviewStore.getState().startLoading();
+    useReviewStore.getState().startLoading(SESSION_KEY);
     const state = useReviewStore.getState();
     expect(state.status).toBe("loading");
     expect(state.error).toBeNull();
     expect(state.plan).toBeNull();
     expect(state.diff).toBeNull();
     expect(state.currentUnitIndex).toBe(0);
+    expect(state.sessionKey).toBe(SESSION_KEY);
   });
 
   it("setDiff stores the diff without changing status or plan", () => {
     resetStore();
-    useReviewStore.getState().startLoading();
+    useReviewStore.getState().startLoading(SESSION_KEY);
     const diff = diffFixture();
     useReviewStore.getState().setDiff(diff);
 
@@ -85,7 +105,7 @@ describe("useReviewStore", () => {
 
   it("beginStreaming and appendUnit grow the plan while streaming", () => {
     resetStore();
-    useReviewStore.getState().startLoading();
+    useReviewStore.getState().startLoading(SESSION_KEY);
     const gen = useReviewStore.getState().streamGeneration;
     useReviewStore.getState().beginStreaming(gen);
 
@@ -108,7 +128,7 @@ describe("useReviewStore", () => {
 
   it("goNext works mid-stream once units have been appended", () => {
     resetStore();
-    useReviewStore.getState().startLoading();
+    useReviewStore.getState().startLoading(SESSION_KEY);
     const gen = useReviewStore.getState().streamGeneration;
     useReviewStore.getState().beginStreaming(gen);
     useReviewStore.getState().appendUnit(planFixture(1).units[0], gen);
@@ -205,7 +225,7 @@ describe("useReviewStore", () => {
 
     it("goNext is a no-op while loading (only the description unit exists)", () => {
       resetStore();
-      useReviewStore.getState().startLoading();
+      useReviewStore.getState().startLoading(SESSION_KEY);
       useReviewStore.getState().goNext();
       useReviewStore.getState().goPrev();
       expect(useReviewStore.getState().currentUnitIndex).toBe(0);
@@ -213,28 +233,37 @@ describe("useReviewStore", () => {
   });
 
   describe("persistSession / restoreSession", () => {
-    const prUrl = "https://github.com/acme/widgets/pull/1";
-
     it("persistSession is a no-op when the review isn't ready", async () => {
       resetStore();
-      await persistSession(prUrl);
-      const stored = await chrome.storage.session.get(`guidedReview.session.${prUrl}`);
-      expect(stored[`guidedReview.session.${prUrl}`]).toBeUndefined();
+      useReviewStore.getState().startLoading(SESSION_KEY);
+      await persistSession();
+      const stored = await chrome.storage.session.get(STORAGE_KEY);
+      expect(stored[STORAGE_KEY]).toBeUndefined();
     });
 
-    it("persistSession stores the ready session, and restoreSession restores it", async () => {
+    it("persistSession is a no-op without a sessionKey", async () => {
+      resetStore();
+      useReviewStore.getState().setReady(diffFixture(), planFixture(1));
+      // ready but no sessionKey
+      await persistSession();
+      const stored = await chrome.storage.session.get(STORAGE_KEY);
+      expect(stored[STORAGE_KEY]).toBeUndefined();
+    });
+
+    it("persistSession stores the ready session under the canonical key, and restoreSession restores it", async () => {
       resetStore();
       const diff = diffFixture();
       const plan = planFixture(2);
       const prContext = prContextFixture();
+      useReviewStore.getState().startLoading(SESSION_KEY);
       useReviewStore.getState().setPRContext(prContext);
       useReviewStore.getState().setReady(diff, plan);
       useReviewStore.getState().goToUnit(1);
 
-      await persistSession(prUrl);
+      await persistSession();
 
       resetStore();
-      const restored = await restoreSession(prUrl);
+      const restored = await restoreSession(SESSION_KEY);
 
       expect(restored).toBe(true);
       const state = useReviewStore.getState();
@@ -243,18 +272,20 @@ describe("useReviewStore", () => {
       expect(state.plan).toEqual(plan);
       expect(state.prContext).toEqual(prContext);
       expect(state.currentUnitIndex).toBe(1);
+      expect(state.sessionKey).toBe(SESSION_KEY);
     });
 
     it("restoreSession clamps an out-of-range saved index", async () => {
       resetStore();
       const plan = planFixture(1); // display total = 2
+      useReviewStore.getState().startLoading(SESSION_KEY);
       useReviewStore.getState().setReady(diffFixture(), plan);
       useReviewStore.setState({ currentUnitIndex: 99 });
-      await persistSession(prUrl);
+      await persistSession();
 
       // Force-write an out-of-range index to storage.
       await chrome.storage.session.set({
-        [`guidedReview.session.${prUrl}`]: {
+        [STORAGE_KEY]: {
           diff: diffFixture(),
           plan,
           prContext: null,
@@ -263,13 +294,15 @@ describe("useReviewStore", () => {
       });
 
       resetStore();
-      await restoreSession(prUrl);
+      await restoreSession(SESSION_KEY);
       expect(useReviewStore.getState().currentUnitIndex).toBe(1);
     });
 
     it("restoreSession returns false when nothing was persisted", async () => {
       resetStore();
-      const restored = await restoreSession("https://github.com/acme/widgets/pull/999");
+      const restored = await restoreSession(
+        buildSessionKey({ owner: "acme", repo: "widgets", number: 999 }),
+      );
       expect(restored).toBe(false);
       expect(useReviewStore.getState().status).toBe("idle");
     });

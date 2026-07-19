@@ -10,12 +10,11 @@ import { ContextPanel } from "./components/ContextPanel";
 import { FooterNav } from "./components/FooterNav";
 
 interface OverlayProps {
-  prUrl: string;
   /** Invoked when the user exits so any in-flight stream can be cancelled. */
   onRequestClose?: () => void;
 }
 
-export function Overlay({ prUrl, onRequestClose }: OverlayProps) {
+export function Overlay({ onRequestClose }: OverlayProps) {
   const isOpen = useReviewStore((s) => s.isOpen);
   const status = useReviewStore((s) => s.status);
   const error = useReviewStore((s) => s.error);
@@ -23,6 +22,7 @@ export function Overlay({ prUrl, onRequestClose }: OverlayProps) {
   const plan = useReviewStore((s) => s.plan);
   const prContext = useReviewStore((s) => s.prContext);
   const currentUnitIndex = useReviewStore((s) => s.currentUnitIndex);
+  const sessionKey = useReviewStore((s) => s.sessionKey);
   const close = useReviewStore((s) => s.close);
   const goToUnit = useReviewStore((s) => s.goToUnit);
   const goNext = useReviewStore((s) => s.goNext);
@@ -36,8 +36,8 @@ export function Overlay({ prUrl, onRequestClose }: OverlayProps) {
   };
 
   useEffect(() => {
-    if (status === "ready") void persistSession(prUrl);
-  }, [prUrl, status, currentUnitIndex]);
+    if (status === "ready") void persistSession();
+  }, [status, currentUnitIndex, sessionKey]);
 
   // When the active unit changes (keyboard ←/→, footer nav, or sidebar click),
   // reset the code and context panes so the new step starts at the top rather
@@ -107,9 +107,9 @@ export function Overlay({ prUrl, onRequestClose }: OverlayProps) {
 
   if (!isOpen) return null;
 
-  const stillBuilding = status === "loading" || status === "streaming" || status === "idle";
+  const planStillBuilding = status === "loading" || status === "streaming";
   // Spinner on the description unit only while the plan is still being built.
-  const showBuildingSpinner = stillBuilding && (!plan || currentUnitIndex === 0);
+  const showBuildingSpinner = planStillBuilding && (!plan || currentUnitIndex === 0);
   const displayUnits = buildDisplayUnits(plan);
   const total = displayUnitCount(plan);
   const totalKnown = status === "ready";
@@ -165,7 +165,7 @@ export function Overlay({ prUrl, onRequestClose }: OverlayProps) {
           <Sidebar
             plan={plan}
             currentUnitIndex={currentUnitIndex}
-            stillBuilding={stillBuilding}
+            stillBuilding={planStillBuilding}
             onSelectUnit={goToUnit}
           />
         </aside>

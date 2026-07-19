@@ -66,30 +66,37 @@ calls with typed helpers.
 2. `src/lib/review/buildPrompt.ts` — renders a `ParsedDiff` into LLM-readable text with hunk ids annotated,
    and chunks large diffs by file (`chunkDiffByFile`, ~60k chars/chunk, never splits a file's hunks across
    chunks) so no single call blows the model's context.
-3. `src/background/providers/*` — one call to `annotateReview` per chunk, against whichever provider is
-   configured. All providers share `REVIEW_PLAN_JSON_SCHEMA` (`src/lib/review/reviewSchema.ts`) so
-   structured-output behavior is identical across Anthropic/OpenAI-compatible backends.
-   `providers/openaiCompatible.ts` is a factory used for both OpenAI and Grok since they share the same
-   API shape; `providers/anthropic.ts` is bespoke.
-4. `src/lib/review/reviewPlan.ts` — **never trust the model's output as-is**. `validateAndCleanPlan`
-   strips any `fileId`/`hunkId` the model referenced that doesn't actually exist in the diff it was given
-   (a hallucinated reference must never surface as a broken step in the UI); `mergePlans` stitches
-   per-chunk plans back together with chunk-prefixed ids so units never collide.
-5. The overlay (`src/content/overlay/`, state in `store.ts` via Zustand) renders `ReviewPlan.units` in
-   order, resolving each unit's `fileId`/`hunkId` refs back against the *real* parsed diff — the LLM plans
-   structure and commentary only; it never supplies the code shown to the reviewer.
+3. `src/background/providers/*` — one streaming call to `annotateReviewStream` per chunk, against
+   whichever provider is configured. All providers share `REVIEW_PLAN_JSON_SCHEMA`
+   (`src/lib/review/reviewSchema.ts`) so structured-output behavior is identical across
+   Anthropic/OpenAI-compatible backends. `providers/openaiCompatible.ts` is a factory used for both
+   OpenAI and Grok since they share the same API shape; `providers/anthropic.ts` is bespoke.
+   Shared HTTP helpers live in `providers/http.ts`.
+4. Streaming assembly (`src/background/index.ts` + `src/lib/review/streamPlanParser.ts` +
+   `src/lib/review/reviewPlan.ts`) — as text deltas arrive, `StreamPlanParser` extracts complete
+   units; each is validated with `validateAndCleanUnit` against the chunk's real file/hunk ids
+   (hallucinated refs are dropped, never shown). Unit ids are namespaced with `prefixChunkUnitId`
+   so multi-chunk plans never collide. Progressive `UNIT` events go to the content script; `DONE`
+   carries the final merged plan. (`validateAndCleanPlan` / `mergePlans` remain as batch helpers
+   for tests and non-stream callers.)
+5. The overlay (`src/content/overlay/`, state in `store.ts` via Zustand) renders display units
+   (`displayUnits.ts`: synthetic PR description first, then `ReviewPlan.units`) in order, resolving
+   each unit's `fileId`/`hunkId` refs back against the *real* parsed diff — the LLM plans structure
+   and commentary only; it never supplies the code shown to the reviewer.
 
 ### Session persistence
 
 Review sessions (diff + plan + PR context + current step) are persisted to `chrome.storage.session`,
-keyed by PR URL, so reopening the overlay on the same PR resumes without a new AI call
-(`persistSession`/`restoreSession` in `store.ts`). Content scripts are normally blocked from
+keyed by a **canonical PR identity** (`owner/repo#number` via `buildSessionKey` in `store.ts`) —
+not the full browser URL — so resume works across Conversation / Files changed / Commits tabs.
+`persistSession` reads the active `sessionKey` from the store (set on `startLoading`), so SPA
+navigation to another PR cannot write under a stale key. Content scripts are normally blocked from
 `chrome.storage.session`; the background worker explicitly grants
 `TRUSTED_AND_UNTRUSTED_CONTEXTS` access on startup for this to work.
 
 ### Provider abstraction
 
-`src/background/providers/types.ts` defines the `ProviderClient` interface (`annotateReview`,
+`src/background/providers/types.ts` defines the `ProviderClient` interface (`annotateReviewStream`,
 `testConnection`) and `ProviderError` (message is safe to show directly to the user).
 `src/background/providers/index.ts` is the factory keyed by `ProviderId` (`"anthropic" | "openai" |
 "grok"`). Adding a new provider means implementing `ProviderClient` and registering it there — everything

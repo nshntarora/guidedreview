@@ -1,6 +1,7 @@
 import type { ProviderSettings } from "../../lib/types";
 import { buildUserPrompt, SYSTEM_PROMPT } from "../../lib/review/buildPrompt";
 import { REVIEW_PLAN_JSON_SCHEMA } from "../../lib/review/reviewSchema";
+import { isAbortError, safeErrorDetail } from "./http";
 import { readSseJsonStream } from "./sse";
 import type { AnnotateReviewInput, AnnotateStreamEvent, ProviderClient } from "./types";
 import { ProviderError } from "./types";
@@ -111,17 +112,4 @@ export function createOpenAICompatibleProvider(baseUrl: string, displayName: str
       }
     },
   };
-}
-
-async function safeErrorDetail(response: Response): Promise<string> {
-  try {
-    const data = await response.json();
-    return data?.error?.message ?? response.statusText;
-  } catch {
-    return response.statusText;
-  }
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === "AbortError";
 }
