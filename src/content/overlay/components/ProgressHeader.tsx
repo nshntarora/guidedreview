@@ -1,4 +1,5 @@
 import type { ParsedDiff, PRContext } from "../../../lib/types";
+import { Kbd } from "./Kbd";
 
 interface ProgressHeaderProps {
   currentIndex: number;
@@ -26,6 +27,7 @@ export function ProgressHeader({ currentIndex, total, prContext, diff, onExit }:
           )}
           <button className="gr-exit-btn" onClick={onExit}>
             Exit
+            <Kbd>Esc</Kbd>
           </button>
         </div>
       </div>

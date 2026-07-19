@@ -132,6 +132,9 @@ export const OVERLAY_CSS = `
 }
 
 .gr-exit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   border: 1px solid var(--gr-border);
   background: var(--gr-bg);
   color: var(--gr-text);
@@ -143,6 +146,23 @@ export const OVERLAY_CSS = `
 
 .gr-exit-btn:hover {
   background: var(--gr-bg-subtle);
+}
+
+.gr-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 4px;
+  border: 1px solid var(--gr-border);
+  border-bottom-width: 2px;
+  background: var(--gr-bg-subtle);
+  color: var(--gr-text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1;
 }
 
 .gr-body {
@@ -498,6 +518,9 @@ export const OVERLAY_CSS = `
 }
 
 .gr-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   border: 1px solid var(--gr-border);
   background: var(--gr-accent);
   color: white;
@@ -506,6 +529,12 @@ export const OVERLAY_CSS = `
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
+}
+
+.gr-nav-btn .gr-kbd {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit;
 }
 
 .gr-nav-btn:disabled {

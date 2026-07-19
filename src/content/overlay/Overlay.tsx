@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useReviewStore, persistSession } from "./store";
 import { resolveUnitFiles } from "./selectors";
 import { ProgressHeader } from "./components/ProgressHeader";
@@ -23,6 +23,7 @@ export function Overlay({ prUrl }: OverlayProps) {
   const goToUnit = useReviewStore((s) => s.goToUnit);
   const goNext = useReviewStore((s) => s.goNext);
   const goPrev = useReviewStore((s) => s.goPrev);
+  const codeColRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (status === "ready") void persistSession(prUrl);
@@ -36,6 +37,52 @@ export function Overlay({ prUrl }: OverlayProps) {
     return () => {
       document.body.style.overflow = overflow;
     };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const SCROLL_STEP = 120;
+
+    // Listen on window in the capture phase so these shortcuts fire before
+    // any listener GitHub itself has registered (including its own keyboard
+    // shortcut handling), and regardless of which element currently has
+    // focus. stopPropagation/preventDefault keep the keystroke from ever
+    // reaching the underlying GitHub page.
+    function onKeyDown(event: KeyboardEvent): void {
+      switch (event.key) {
+        case "Escape":
+          event.preventDefault();
+          event.stopPropagation();
+          useReviewStore.getState().close();
+          return;
+        case "ArrowRight":
+          event.preventDefault();
+          event.stopPropagation();
+          useReviewStore.getState().goNext();
+          return;
+        case "ArrowLeft":
+          event.preventDefault();
+          event.stopPropagation();
+          useReviewStore.getState().goPrev();
+          return;
+        case "ArrowUp":
+          event.preventDefault();
+          event.stopPropagation();
+          codeColRef.current?.scrollBy({ top: -SCROLL_STEP, behavior: "smooth" });
+          return;
+        case "ArrowDown":
+          event.preventDefault();
+          event.stopPropagation();
+          codeColRef.current?.scrollBy({ top: SCROLL_STEP, behavior: "smooth" });
+          return;
+        default:
+          return;
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -78,7 +125,7 @@ export function Overlay({ prUrl }: OverlayProps) {
 
         {status === "ready" && plan && currentUnit && (
           <>
-            <main className="gr-code-col">
+            <main className="gr-code-col" ref={codeColRef}>
               <DiffPane files={resolvedFiles} />
             </main>
 

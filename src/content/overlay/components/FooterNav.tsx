@@ -1,3 +1,5 @@
+import { Kbd } from "./Kbd";
+
 interface FooterNavProps {
   currentIndex: number;
   total: number;
@@ -9,10 +11,12 @@ export function FooterNav({ currentIndex, total, onPrev, onNext }: FooterNavProp
   return (
     <footer className="gr-footer-nav">
       <button className="gr-nav-btn gr-secondary" onClick={onPrev} disabled={currentIndex === 0}>
-        ← Previous
+        Previous
+        <Kbd>←</Kbd>
       </button>
       <button className="gr-nav-btn" onClick={onNext} disabled={currentIndex >= total - 1}>
-        Next →
+        Next
+        <Kbd>→</Kbd>
       </button>
     </footer>
   );
