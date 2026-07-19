@@ -147,4 +147,13 @@ describe("Options", () => {
     expect(within(listbox).getByRole("option", { name: /Claude Sonnet 5/i })).toBeInTheDocument();
     expect(within(listbox).getByRole("option", { name: /Claude Haiku 4\.5/i })).toBeInTheDocument();
   });
+
+  it("links to the about page", async () => {
+    render(<Options />);
+
+    await screen.findByRole("combobox", { name: /provider/i });
+    const about = screen.getByRole("link", { name: /about guided review/i });
+    expect(about).toHaveAttribute("href", "#about");
+  });
 });
+

@@ -48,4 +48,19 @@ test.describe("Options page", () => {
 
     await expect(page.getByRole("combobox", { name: "Model" })).toContainText("Grok 4");
   });
+
+  test("navigates to About from Settings and back", async ({ context, extensionId }) => {
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/src/options/index.html`);
+
+    await page.getByRole("link", { name: /about guided review/i }).click();
+    await expect(page.getByRole("heading", { name: "What it does" })).toBeVisible();
+    await expect(page).toHaveURL(/#about$/);
+    await expect(page).toHaveTitle(/About/);
+
+    await page.getByRole("link", { name: /settings/i }).click();
+    await expect(page.getByRole("combobox", { name: "Provider" })).toBeVisible();
+    await expect(page).toHaveURL(/#settings$/);
+  });
 });
+

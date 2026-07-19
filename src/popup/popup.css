@@ -53,6 +53,13 @@ body {
   color: #fefefe;
 }
 
+.popup__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
 .popup__link {
   font-size: 12px;
   font-weight: 600;
