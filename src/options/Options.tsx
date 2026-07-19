@@ -68,7 +68,16 @@ export function Options() {
 
   return (
     <div className="opt-container">
-      <h1 className="opt-title">Guided Review</h1>
+      <div className="opt-brand">
+        <img
+          className="opt-brand-mark"
+          src={chrome.runtime.getURL("icon.png")}
+          alt=""
+          width={40}
+          height={40}
+        />
+        <h1 className="opt-title">Guided Review</h1>
+      </div>
       <p className="opt-subtitle">
         Choose an AI provider and paste your own API key. The key is stored only in this
         browser and is used solely to annotate PR diffs you open.

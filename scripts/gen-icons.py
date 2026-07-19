@@ -1,13 +1,27 @@
-"""Generate simple solid-color placeholder PNG icons (no external deps)."""
-import struct
-import zlib
-import os
+"""Generate Chrome extension PNG icons from the brand mark in public/icon.png.
 
-def make_png(path, size, rgb):
+Requires ImageMagick (`magick` or `convert`) on PATH. Falls back to a solid
+primary-color square if the source mark is missing.
+"""
+import os
+import shutil
+import struct
+import subprocess
+import zlib
+
+ROOT = os.path.join(os.path.dirname(__file__), "..")
+OUT_DIR = os.path.join(ROOT, "public", "icons")
+SOURCE = os.path.join(ROOT, "public", "icon.png")
+
+# Brand primary — used only for the solid-color fallback
+PRIMARY = (0xCA, 0xFF, 0x57)  # #CAFF57
+
+
+def make_png(path: str, size: int, rgb: tuple[int, int, int]) -> None:
     width = height = size
     r, g, b = rgb
 
-    def chunk(tag, data):
+    def chunk(tag: bytes, data: bytes) -> bytes:
         return (
             struct.pack(">I", len(data))
             + tag
@@ -31,13 +45,32 @@ def make_png(path, size, rgb):
         f.write(png)
 
 
-out_dir = os.path.join(os.path.dirname(__file__), "..", "public", "icons")
-os.makedirs(out_dir, exist_ok=True)
+def find_magick() -> list[str] | None:
+    for name in ("magick", "convert"):
+        path = shutil.which(name)
+        if path:
+            return [path]
+    return None
 
-# A calm indigo square as the placeholder mark
-COLOR = (79, 70, 229)  # #4F46E5
 
-for size in (16, 48, 128):
-    make_png(os.path.join(out_dir, f"icon{size}.png"), size, COLOR)
+def resize_with_magick(magick: list[str], size: int, dest: str) -> None:
+    cmd = magick + [SOURCE, "-resize", f"{size}x{size}", dest]
+    subprocess.check_call(cmd)
 
-print("wrote icons to", out_dir)
+
+def main() -> None:
+    os.makedirs(OUT_DIR, exist_ok=True)
+    magick = find_magick() if os.path.isfile(SOURCE) else None
+
+    for size in (16, 48, 128):
+        dest = os.path.join(OUT_DIR, f"icon{size}.png")
+        if magick:
+            resize_with_magick(magick, size, dest)
+        else:
+            make_png(dest, size, PRIMARY)
+
+    print("wrote icons to", OUT_DIR)
+
+
+if __name__ == "__main__":
+    main()

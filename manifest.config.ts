@@ -33,4 +33,10 @@ export default defineManifest({
   ],
   options_page: "src/options/index.html",
   action: {},
+  web_accessible_resources: [
+    {
+      resources: ["logomark.svg"],
+      matches: ["https://github.com/*"],
+    },
+  ],
 });

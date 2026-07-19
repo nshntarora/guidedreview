@@ -36,21 +36,47 @@ function tryInjectButton(): void {
 
   const button = document.createElement("button");
   button.id = BUTTON_ID;
-  button.textContent = "Start Guided Review";
+  button.type = "button";
   button.setAttribute(
     "style",
     [
+      "display: inline-flex",
+      "align-items: center",
+      "gap: 8px",
       "margin-left: 8px",
       "padding: 5px 12px",
       "border-radius: 6px",
-      "border: 1px solid rgba(79,70,229,0.5)",
-      "background: #4F46E5",
-      "color: #fff",
+      "border: 1px solid #CAFF57",
+      "background: #CAFF57",
+      "color: #0D0806",
       "font-size: 12px",
       "font-weight: 600",
       "cursor: pointer",
+      "line-height: 1.2",
     ].join(";"),
   );
+
+  // Tint the lime logomark to brand black so it reads on the primary background.
+  const markUrl = chrome.runtime.getURL("logomark.svg");
+  const mark = document.createElement("span");
+  mark.setAttribute("aria-hidden", "true");
+  mark.setAttribute(
+    "style",
+    [
+      "display: block",
+      "width: 22px",
+      "height: 11px",
+      "flex-shrink: 0",
+      "background-color: #0D0806",
+      `-webkit-mask: url("${markUrl}") center / contain no-repeat`,
+      `mask: url("${markUrl}") center / contain no-repeat`,
+    ].join(";"),
+  );
+
+  const label = document.createElement("span");
+  label.textContent = "Start Guided Review";
+
+  button.append(mark, label);
   button.addEventListener("click", onStartReview);
 
   anchor.appendChild(button);

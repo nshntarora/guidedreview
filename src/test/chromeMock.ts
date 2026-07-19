@@ -47,6 +47,7 @@ export function createChromeMock() {
     },
     runtime: {
       sendMessage: vi.fn(async (_message: unknown) => undefined),
+      getURL: vi.fn((path: string) => path),
       openOptionsPage: vi.fn(),
       onMessage: {
         addListener: vi.fn((listener: (typeof onMessageListeners extends Set<infer L> ? L : never)) => {

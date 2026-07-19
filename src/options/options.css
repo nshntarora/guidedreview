@@ -1,21 +1,23 @@
 :root {
   color-scheme: light dark;
-  --bg: #ffffff;
+  --bg: #fefefe;
   --bg-subtle: #f6f8fa;
   --border: #d0d7de;
-  --text: #1f2328;
+  --text: #0d0806;
   --text-muted: #59636e;
-  --accent: #4f46e5;
+  --accent: #caff57;
+  --accent-on: #0d0806;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0d1117;
-    --bg-subtle: #161b22;
-    --border: #30363d;
-    --text: #e6edf3;
+    --bg: #0d0806;
+    --bg-subtle: #16120f;
+    --border: #2a2420;
+    --text: #fefefe;
     --text-muted: #8b949e;
-    --accent: #818cf8;
+    --accent: #caff57;
+    --accent-on: #0d0806;
   }
 }
 
@@ -36,10 +38,24 @@ body {
   padding: 32px 24px;
 }
 
+.opt-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.opt-brand-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
 .opt-title {
   font-size: 18px;
   font-weight: 700;
-  margin: 0 0 4px;
+  margin: 0;
 }
 
 .opt-subtitle {
@@ -86,15 +102,16 @@ body {
 .opt-btn {
   padding: 8px 16px;
   border-radius: 6px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--accent);
   background: var(--accent);
-  color: white;
+  color: var(--accent-on);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .opt-btn.opt-secondary {
+  border-color: var(--border);
   background: var(--bg-subtle);
   color: var(--text);
 }

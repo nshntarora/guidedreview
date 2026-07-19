@@ -21,11 +21,12 @@ export const OVERLAY_CSS = `
   --gr-bg-subtle: #161b22;
   --gr-border: #262c36;
   --gr-border-muted: #1c222b;
-  --gr-text: #e6edf3;
+  --gr-text: #fefefe;
   --gr-text-muted: #8b949e;
   --gr-text-faint: #6e7781;
-  --gr-accent: #818cf8;
-  --gr-accent-subtle: #1e1b4b;
+  --gr-accent: #caff57;
+  --gr-accent-on: #0d0806;
+  --gr-accent-subtle: #1a2408;
   --gr-danger: #ff7b72;
   --gr-danger-subtle: #3d0f0f;
   --gr-add-bg: #0f2c1d;
@@ -312,7 +313,7 @@ export const OVERLAY_CSS = `
 }
 
 .gr-pr-description-body.markdown-body a {
-  color: var(--gr-accent, #4493f8);
+  color: var(--gr-accent);
 }
 
 .gr-pr-description-body.markdown-body ul,
@@ -521,9 +522,9 @@ export const OVERLAY_CSS = `
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid var(--gr-border);
+  border: 1px solid var(--gr-accent);
   background: var(--gr-accent);
-  color: white;
+  color: var(--gr-accent-on);
   border-radius: 6px;
   padding: 7px 16px;
   font-size: 13px;
@@ -532,8 +533,8 @@ export const OVERLAY_CSS = `
 }
 
 .gr-nav-btn .gr-kbd {
-  border-color: rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(13, 8, 6, 0.25);
+  background: rgba(13, 8, 6, 0.08);
   color: inherit;
 }
 
@@ -543,6 +544,7 @@ export const OVERLAY_CSS = `
 }
 
 .gr-nav-btn.gr-secondary {
+  border-color: var(--gr-border);
   background: var(--gr-bg);
   color: var(--gr-text);
 }
