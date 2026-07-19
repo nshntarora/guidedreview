@@ -73,54 +73,55 @@ describe("DiffPane", () => {
       "Wire up the new auth path",
     );
     expect(screen.getByTestId("diff-view-toggle")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Unified" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Split" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    expect(screen.getByRole("button", { name: "Split" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Unified" })).toHaveAttribute(
       "aria-pressed",
       "false",
     );
-    expect(screen.getByTestId("diff-view-unified")).toBeInTheDocument();
-    expect(screen.queryByTestId("diff-view-split")).not.toBeInTheDocument();
-    // Syntax highlighting splits tokens across child spans.
+    expect(screen.getByTestId("diff-view-split")).toBeInTheDocument();
+    expect(screen.queryByTestId("diff-view-unified")).not.toBeInTheDocument();
+    // Syntax highlighting splits tokens across child spans. Context lines
+    // appear on both sides of split view, so the same content may match twice.
     expect(
-      screen.getByText((_, el) => el?.textContent === "const a = 1;"),
-    ).toBeInTheDocument();
+      screen.getAllByText((_, el) => el?.textContent === "const a = 1;").length,
+    ).toBeGreaterThan(0);
     // Let hydrateDiffViewMode settle so it does not leak into later tests.
     await act(async () => {
       await Promise.resolve();
     });
   });
 
-  it("switches to split view when Split is pressed", async () => {
+  it("switches to unified view when Unified is pressed", async () => {
     renderPane();
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Split" }));
-    });
-
-    expect(screen.getByRole("button", { name: "Split" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    expect(screen.getByTestId("diff-view-split")).toBeInTheDocument();
-    expect(screen.queryByTestId("diff-view-unified")).not.toBeInTheDocument();
-    expect(useReviewStore.getState().diffViewMode).toBe("split");
-  });
-
-  it("switches back to unified view", async () => {
-    useReviewStore.setState({ diffViewMode: "split" });
-    renderPane();
-
-    expect(screen.getByTestId("diff-view-split")).toBeInTheDocument();
 
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Unified" }));
     });
 
+    expect(screen.getByRole("button", { name: "Unified" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
     expect(screen.getByTestId("diff-view-unified")).toBeInTheDocument();
+    expect(screen.queryByTestId("diff-view-split")).not.toBeInTheDocument();
     expect(useReviewStore.getState().diffViewMode).toBe("unified");
+  });
+
+  it("switches back to split view", async () => {
+    useReviewStore.setState({ diffViewMode: "unified" });
+    renderPane();
+
+    expect(screen.getByTestId("diff-view-unified")).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Split" }));
+    });
+
+    expect(screen.getByTestId("diff-view-split")).toBeInTheDocument();
+    expect(useReviewStore.getState().diffViewMode).toBe("split");
   });
 
   it("still shows binary/elided placeholder regardless of view mode", async () => {
@@ -132,7 +133,7 @@ describe("DiffPane", () => {
     ).toBeInTheDocument();
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Split" }));
+      fireEvent.click(screen.getByRole("button", { name: "Unified" }));
     });
 
     expect(
@@ -143,12 +144,12 @@ describe("DiffPane", () => {
   it("persists the view mode to chrome.storage.local", async () => {
     renderPane();
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Split" }));
+      fireEvent.click(screen.getByRole("button", { name: "Unified" }));
     });
 
     await waitFor(async () => {
       const stored = await chrome.storage.local.get("guidedReview.diffViewMode");
-      expect(stored["guidedReview.diffViewMode"]).toBe("split");
+      expect(stored["guidedReview.diffViewMode"]).toBe("unified");
     });
   });
 });

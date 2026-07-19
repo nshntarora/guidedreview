@@ -1,6 +1,6 @@
 export type DiffViewMode = "unified" | "split";
 
-export const DEFAULT_DIFF_VIEW_MODE: DiffViewMode = "unified";
+export const DEFAULT_DIFF_VIEW_MODE: DiffViewMode = "split";
 
 const STORAGE_KEY = "guidedReview.diffViewMode";
 
