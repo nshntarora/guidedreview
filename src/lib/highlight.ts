@@ -39,6 +39,7 @@ import swift from "highlight.js/lib/languages/swift";
 import typescript from "highlight.js/lib/languages/typescript";
 import xml from "highlight.js/lib/languages/xml";
 import yaml from "highlight.js/lib/languages/yaml";
+import zig from "highlightjs-zig";
 
 hljs.registerLanguage("bash", bash);
 hljs.registerLanguage("c", c);
@@ -66,6 +67,7 @@ hljs.registerLanguage("swift", swift);
 hljs.registerLanguage("typescript", typescript);
 hljs.registerLanguage("xml", xml);
 hljs.registerLanguage("yaml", yaml);
+hljs.registerLanguage("zig", zig);
 
 const EXTENSION_TO_LANGUAGE: Record<string, string> = {
   js: "javascript",
@@ -115,6 +117,7 @@ const EXTENSION_TO_LANGUAGE: Record<string, string> = {
   graphql: "graphql",
   gql: "graphql",
   lua: "lua",
+  zig: "zig",
 };
 
 /** Map a file path to a registered highlight.js language id, or undefined if unknown. */

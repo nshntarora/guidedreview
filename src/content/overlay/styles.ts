@@ -14,33 +14,39 @@ export const OVERLAY_CSS = `
 }
 
 .gr-root {
-  --gr-bg: #ffffff;
-  --gr-bg-subtle: #f6f8fa;
-  --gr-border: #d0d7de;
-  --gr-text: #1f2328;
-  --gr-text-muted: #59636e;
-  --gr-accent: #4f46e5;
-  --gr-accent-subtle: #eef2ff;
-  --gr-danger: #cf222e;
-  --gr-danger-subtle: #fff1f0;
-  --gr-add-bg: #e6ffec;
-  --gr-add-text: #1a7f37;
-  --gr-del-bg: #ffebe9;
-  --gr-del-text: #cf222e;
+  /* Dark-only surface hierarchy: chrome (darkest) < bg < canvas (lifted, code lives here) */
+  --gr-bg-chrome: #0a0c10;
+  --gr-bg: #0d1117;
+  --gr-bg-canvas: #12161f;
+  --gr-bg-subtle: #161b22;
+  --gr-border: #262c36;
+  --gr-border-muted: #1c222b;
+  --gr-text: #e6edf3;
+  --gr-text-muted: #8b949e;
+  --gr-text-faint: #6e7781;
+  --gr-accent: #818cf8;
+  --gr-accent-subtle: #1e1b4b;
+  --gr-danger: #ff7b72;
+  --gr-danger-subtle: #3d0f0f;
+  --gr-add-bg: #0f2c1d;
+  --gr-add-text: #56d364;
+  --gr-del-bg: #2d1416;
+  --gr-del-text: #ff7b72;
 
-  /* GitHub github-light syntax palette */
-  --gr-syntax-comment: #6e7781;
-  --gr-syntax-keyword: #cf222e;
-  --gr-syntax-entity: #8250df;
-  --gr-syntax-string: #0a3069;
-  --gr-syntax-variable: #953800;
-  --gr-syntax-constant: #0550ae;
-  --gr-syntax-tag: #116329;
-  --gr-syntax-attr: #0550ae;
-  --gr-syntax-meta: #6e7781;
-  --gr-syntax-deleted: #82071e;
-  --gr-syntax-inserted: #116329;
+  /* GitHub github-dark syntax palette */
+  --gr-syntax-comment: #8b949e;
+  --gr-syntax-keyword: #ff7b72;
+  --gr-syntax-entity: #d2a8ff;
+  --gr-syntax-string: #a5d6ff;
+  --gr-syntax-variable: #ffa657;
+  --gr-syntax-constant: #79c0ff;
+  --gr-syntax-tag: #7ee787;
+  --gr-syntax-attr: #79c0ff;
+  --gr-syntax-meta: #8b949e;
+  --gr-syntax-deleted: #ffdcd7;
+  --gr-syntax-inserted: #aff5b4;
 
+  color-scheme: dark;
   position: fixed;
   inset: 0;
   z-index: 2147483000;
@@ -52,44 +58,13 @@ export const OVERLAY_CSS = `
   flex-direction: column;
 }
 
-@media (prefers-color-scheme: dark) {
-  .gr-root {
-    --gr-bg: #0d1117;
-    --gr-bg-subtle: #161b22;
-    --gr-border: #30363d;
-    --gr-text: #e6edf3;
-    --gr-text-muted: #8b949e;
-    --gr-accent: #818cf8;
-    --gr-accent-subtle: #1e1b4b;
-    --gr-danger: #ff7b72;
-    --gr-danger-subtle: #3d0f0f;
-    --gr-add-bg: #0f2c1d;
-    --gr-add-text: #56d364;
-    --gr-del-bg: #3a0f0f;
-    --gr-del-text: #ff7b72;
-
-    /* GitHub github-dark syntax palette */
-    --gr-syntax-comment: #8b949e;
-    --gr-syntax-keyword: #ff7b72;
-    --gr-syntax-entity: #d2a8ff;
-    --gr-syntax-string: #a5d6ff;
-    --gr-syntax-variable: #ffa657;
-    --gr-syntax-constant: #79c0ff;
-    --gr-syntax-tag: #7ee787;
-    --gr-syntax-attr: #79c0ff;
-    --gr-syntax-meta: #8b949e;
-    --gr-syntax-deleted: #ffdcd7;
-    --gr-syntax-inserted: #aff5b4;
-  }
-}
-
 .gr-header {
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 14px 20px;
   border-bottom: 1px solid var(--gr-border);
-  background: var(--gr-bg-subtle);
+  background: var(--gr-bg-chrome);
   flex-shrink: 0;
 }
 
@@ -177,9 +152,9 @@ export const OVERLAY_CSS = `
 }
 
 .gr-sidebar {
-  padding: 0 0 8px;
-  margin-bottom: 12px;
-  border-bottom: 1px solid var(--gr-border);
+  padding: 16px 0 0;
+  margin-top: 24px;
+  border-top: 1px solid var(--gr-border-muted);
 }
 
 .gr-sidebar-section-title {
@@ -221,25 +196,28 @@ export const OVERLAY_CSS = `
 }
 
 .gr-code-col {
-  flex: 1 1 60%;
+  flex: 1 1 68%;
   min-width: 0;
   overflow-y: auto;
-  padding: 20px 28px;
+  padding: 24px 32px;
+  background: var(--gr-bg);
   border-right: 1px solid var(--gr-border);
 }
 
 .gr-review-col {
-  flex: 1 1 40%;
-  min-width: 320px;
-  max-width: 480px;
+  flex: 1 1 32%;
+  min-width: 300px;
+  max-width: 420px;
   overflow-y: auto;
-  padding: 20px 24px;
+  padding: 24px 20px;
+  background: var(--gr-bg-chrome);
 }
 
 .gr-unit-title {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 600;
   margin: 0 0 8px;
+  color: var(--gr-text);
 }
 
 .gr-pr-stats {
@@ -260,7 +238,7 @@ export const OVERLAY_CSS = `
   margin-top: 4px;
   border: 1px solid var(--gr-border);
   border-radius: 8px;
-  background: var(--gr-bg);
+  background: var(--gr-bg-subtle);
 }
 
 .gr-pr-description summary {
@@ -293,41 +271,66 @@ export const OVERLAY_CSS = `
   color: var(--gr-text);
 }
 
+.gr-context-eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--gr-text-faint);
+  margin-bottom: 6px;
+}
+
 .gr-context-panel {
-  background: var(--gr-bg-subtle);
-  border: 1px solid var(--gr-border);
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 20px;
-  line-height: 1.5;
+  position: sticky;
+  top: 0;
+  background: transparent;
+  border: none;
+  border-left: 2px solid var(--gr-border);
+  border-radius: 0;
+  padding: 2px 0 4px 16px;
+}
+
+.gr-context-panel-body {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--gr-text-muted);
 }
 
 .gr-file-block {
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   border: 1px solid var(--gr-border);
   border-radius: 8px;
+  background: var(--gr-bg-canvas);
   overflow: hidden;
 }
 
 .gr-file-block-header {
-  background: var(--gr-bg-subtle);
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  background: var(--gr-bg-chrome);
   padding: 8px 12px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12.5px;
   border-bottom: 1px solid var(--gr-border);
 }
 
+.gr-file-block-header-note {
+  color: var(--gr-text-muted);
+  font-weight: 400;
+  font-style: italic;
+}
+
 .gr-diff-hunk {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12.5px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.6;
   overflow-x: auto;
 }
 
 .gr-diff-line {
   display: flex;
   white-space: pre;
-  padding: 0 12px;
+  padding: 0 12px 0 0;
 }
 
 .gr-diff-line.gr-add {
@@ -344,6 +347,16 @@ export const OVERLAY_CSS = `
 
 .gr-diff-line.gr-del > .gr-diff-marker {
   color: var(--gr-del-text);
+}
+
+.gr-diff-gutter {
+  width: 40px;
+  flex-shrink: 0;
+  text-align: right;
+  padding-right: 12px;
+  color: var(--gr-text-faint);
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .gr-diff-marker {
@@ -434,6 +447,7 @@ export const OVERLAY_CSS = `
   display: flex;
   justify-content: space-between;
   border-top: 1px solid var(--gr-border);
+  background: var(--gr-bg-chrome);
   padding: 12px 20px;
   flex-shrink: 0;
 }

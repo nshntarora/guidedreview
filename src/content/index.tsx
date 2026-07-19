@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { parsePRUrl, type PRIdentity } from "../lib/github/diffFetch";
-import { scrapePRContext } from "../lib/github/prContext";
+import { fetchConversationDescription, scrapePRContext } from "../lib/github/prContext";
 import { requestPRDiff, requestReviewPlan } from "../lib/messaging";
 import { Overlay } from "./overlay/Overlay";
 import { OVERLAY_CSS } from "./overlay/styles";
@@ -95,6 +95,20 @@ async function onStartReview(): Promise<void> {
     // can render it immediately, well before the diff fetch / AI plan finish.
     const prContext = scrapePRContext(pr);
     useReviewStore.getState().setPRContext(prContext);
+
+    // The description only exists in the DOM on GitHub's "Conversation" tab
+    // (e.g. missing on "Files changed"). Fetch it from there as a fallback,
+    // in parallel with the diff/plan work below rather than blocking on it.
+    if (!prContext.description) {
+      fetchConversationDescription(pr)
+        .then((description) => {
+          if (!description) return;
+          useReviewStore.getState().setPRContext({ ...prContext, description });
+        })
+        .catch(() => {
+          // best-effort only — the review doesn't depend on the description
+        });
+    }
 
     const diffResponse = await requestPRDiff(pr);
     if (!diffResponse.ok) {

@@ -8,6 +8,12 @@ import type { PRIdentity } from "./diffFetch";
  * changes over time, so every selector here degrades to an empty string
  * rather than throwing.
  */
+const DESCRIPTION_SELECTORS = [
+  '[data-testid="issue-body"] .markdown-body',
+  ".comment-body.markdown-body",
+  "td.comment-body.markdown-body",
+];
+
 export function scrapePRContext(pr: PRIdentity): PRContext {
   const title = firstText([
     'bdi.js-issue-title',
@@ -16,11 +22,7 @@ export function scrapePRContext(pr: PRIdentity): PRContext {
     "h1.gh-header-title bdi",
   ]);
 
-  const description = firstDescriptionText([
-    '[data-testid="issue-body"] .markdown-body',
-    ".comment-body.markdown-body",
-    "td.comment-body.markdown-body",
-  ]);
+  const description = firstDescriptionText(DESCRIPTION_SELECTORS, document);
 
   const author = firstText([
     ".gh-header-meta .author",
@@ -66,16 +68,46 @@ function firstText(selectors: string[]): string | undefined {
  * the same selectors used for the real issue body. Without filtering these
  * out, a page with an empty/collapsed issue-body match can end up "finding"
  * a preview pane instead and reporting that placeholder as the description.
+ *
+ * Takes an explicit root because the description is only rendered on GitHub's
+ * "Conversation" tab — see fetchConversationDescription below for the tabs
+ * (Files changed, Commits, ...) where it has to be parsed out of a separately
+ * fetched document instead of the live `document`.
  */
-function firstDescriptionText(selectors: string[]): string | undefined {
+function firstDescriptionText(selectors: string[], root: ParentNode): string | undefined {
   for (const selector of selectors) {
-    for (const el of document.querySelectorAll(selector)) {
+    for (const el of root.querySelectorAll(selector)) {
       if (el.classList.contains("js-preview-body")) continue;
       const text = el.textContent?.trim();
       if (text && text !== "Nothing to preview") return text;
     }
   }
   return undefined;
+}
+
+/**
+ * The PR description only lives in the DOM on the "Conversation" tab — GitHub
+ * doesn't render the issue-body timeline on "Files changed"/"Commits"/etc, so
+ * scrapePRContext() correctly returns "" for description there. As a
+ * best-effort fallback (used when the live scrape comes back empty), fetch
+ * the Conversation tab's HTML directly — it's the same origin as the current
+ * page, so no CORS/background-worker hop is needed like fetchPRDiff requires
+ * — and parse the description out of that instead.
+ */
+export async function fetchConversationDescription(pr: PRIdentity): Promise<string> {
+  const url = `https://github.com/${pr.owner}/${pr.repo}/pull/${pr.number}`;
+
+  let response: Response;
+  try {
+    response = await fetch(url, { credentials: "include", headers: { Accept: "text/html" } });
+  } catch {
+    return "";
+  }
+  if (!response.ok) return "";
+
+  const html = await response.text();
+  const conversationDoc = new DOMParser().parseFromString(html, "text/html");
+  return firstDescriptionText(DESCRIPTION_SELECTORS, conversationDoc) ?? "";
 }
 
 function firstAttr(selectors: string[], attr: string): string | undefined {

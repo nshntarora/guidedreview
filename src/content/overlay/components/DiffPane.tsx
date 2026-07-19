@@ -55,6 +55,8 @@ function HunkBlock({ hunk, language }: { hunk: DiffHunk; language: string | unde
           key={i}
           className={`gr-diff-line${line.type === "add" ? " gr-add" : line.type === "del" ? " gr-del" : ""}`}
         >
+          <span className="gr-diff-gutter">{line.oldLine ?? ""}</span>
+          <span className="gr-diff-gutter">{line.newLine ?? ""}</span>
           <span className="gr-diff-marker">
             {line.type === "add" ? "+" : line.type === "del" ? "-" : ""}
           </span>
@@ -74,10 +76,16 @@ export function DiffPane({ files }: DiffPaneProps) {
     <>
       {files.map(({ file, hunks }) => {
         const language = languageForPath(file.path);
+        const extension = file.path.includes(".") ? file.path.split(".").pop() : undefined;
         return (
           <div className="gr-file-block" key={file.path}>
             <div className="gr-file-block-header">
               {file.previousPath ? `${file.previousPath} → ${file.path}` : file.path}
+              {!language && !file.isBinaryOrElided && (
+                <span className="gr-file-block-header-note">
+                  {extension ? `no syntax highlighting for .${extension}` : "no syntax highlighting"}
+                </span>
+              )}
             </div>
             {file.isBinaryOrElided ? (
               <div className="gr-diff-hunk">
