@@ -458,8 +458,6 @@ export const OVERLAY_CSS = `
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: min(60vh, 520px);
-  overflow-y: auto;
 }
 
 .gr-diff-summary-file {
