@@ -11,6 +11,7 @@ import { testConnection } from "../lib/messaging";
 import { Select, type SelectOption } from "./components/Select";
 import { ProviderIcon } from "./components/ProviderIcon";
 import { ActionSpinner } from "./components/ActionSpinner";
+import { BrandHeader } from "./BrandHeader";
 import { cn } from "../lib/cn";
 
 type ActionStatus =
@@ -125,16 +126,7 @@ export function Options() {
 
   return (
     <div className="mx-auto max-w-[480px] px-6 py-8">
-      <div className="mb-2 flex items-center gap-3">
-        <img
-          className="h-10 w-10 shrink-0 rounded-lg"
-          src={chrome.runtime.getURL("icon.png")}
-          alt=""
-          width={40}
-          height={40}
-        />
-        <h1 className="m-0 text-lg font-bold">Guided Review</h1>
-      </div>
+      <BrandHeader />
       <p className="mb-6 text-[13px] text-opt-muted">
         Choose an AI provider and paste your own API key. The key is stored only in this
         browser and is used solely to annotate PR diffs you open.
@@ -226,6 +218,15 @@ export function Options() {
           </span>
         )}
       </div>
+
+      <nav className="mt-8 border-t border-opt-border pt-6">
+        <a
+          href="#about"
+          className="text-[13px] font-semibold text-opt-muted no-underline hover:text-opt-text hover:underline"
+        >
+          About Guided Review
+        </a>
+      </nav>
     </div>
   );
 }

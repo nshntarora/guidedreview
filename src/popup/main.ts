@@ -7,12 +7,16 @@ const NOT_ON_PR =
 const RELOAD_PR =
   "Open a GitHub pull request and reload the page, then try again.";
 
+/** Path registered as `options_page` in the manifest (stable across builds). */
+const OPTIONS_PAGE = "src/options/index.html";
+
 init();
 
 async function init(): Promise<void> {
   const root = document.getElementById("root");
   const messageEl = document.getElementById("message");
   const settingsLink = document.getElementById("settings");
+  const aboutLink = document.getElementById("about");
   if (!(root instanceof HTMLElement) || !(messageEl instanceof HTMLElement))
     return;
 
@@ -22,6 +26,14 @@ async function init(): Promise<void> {
   settingsLink?.addEventListener("click", (event) => {
     event.preventDefault();
     chrome.runtime.openOptionsPage();
+  });
+
+  // openOptionsPage() cannot take a hash; open the options URL with #about.
+  aboutLink?.addEventListener("click", (event) => {
+    event.preventDefault();
+    void chrome.tabs.create({
+      url: chrome.runtime.getURL(`${OPTIONS_PAGE}#about`),
+    });
   });
 
   const tab = await getActiveTab();

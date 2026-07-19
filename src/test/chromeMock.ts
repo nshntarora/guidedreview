@@ -100,6 +100,11 @@ export function createChromeMock() {
         return port;
       }),
       getURL: vi.fn((path: string) => path),
+      getManifest: vi.fn(() => ({
+        manifest_version: 3,
+        name: "Guided Review",
+        version: "0.1.0",
+      })),
       openOptionsPage: vi.fn(),
       lastError: undefined as { message?: string } | undefined,
       onMessage: {
@@ -129,6 +134,7 @@ export function createChromeMock() {
     tabs: {
       sendMessage: vi.fn(async (_tabId: number, _message: unknown) => undefined),
       query: vi.fn(async (_query: unknown) => []),
+      create: vi.fn(async (_createProperties: unknown) => ({ id: 1 })),
     },
   };
 }
