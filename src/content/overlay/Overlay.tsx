@@ -26,10 +26,20 @@ export function Overlay({ prUrl }: OverlayProps) {
   const goNext = useReviewStore((s) => s.goNext);
   const goPrev = useReviewStore((s) => s.goPrev);
   const codeColRef = useRef<HTMLElement>(null);
+  const contextPaneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (status === "ready") void persistSession(prUrl);
   }, [prUrl, status, currentUnitIndex]);
+
+  // When the active unit changes (keyboard ←/→, footer nav, or sidebar click),
+  // reset the code and context panes so the new step starts at the top rather
+  // than inheriting scroll position from the previous unit.
+  useEffect(() => {
+    if (!isOpen) return;
+    codeColRef.current?.scrollTo({ top: 0 });
+    contextPaneRef.current?.scrollTo({ top: 0 });
+  }, [isOpen, currentUnitIndex]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -121,7 +131,7 @@ export function Overlay({ prUrl }: OverlayProps) {
         </main>
 
         <aside className="gr-review-col">
-          <div className="gr-context-pane">
+          <div className="gr-context-pane" ref={contextPaneRef}>
             <ContextPanel
               unit={currentReviewUnit}
               hasTitle={Boolean(prContext?.title?.trim())}
