@@ -28,6 +28,7 @@ export function Overlay({ prUrl, onRequestClose }: OverlayProps) {
   const goNext = useReviewStore((s) => s.goNext);
   const goPrev = useReviewStore((s) => s.goPrev);
   const codeColRef = useRef<HTMLElement>(null);
+  const contextPaneRef = useRef<HTMLDivElement>(null);
 
   const handleExit = () => {
     onRequestClose?.();
@@ -37,6 +38,15 @@ export function Overlay({ prUrl, onRequestClose }: OverlayProps) {
   useEffect(() => {
     if (status === "ready") void persistSession(prUrl);
   }, [prUrl, status, currentUnitIndex]);
+
+  // When the active unit changes (keyboard ←/→, footer nav, or sidebar click),
+  // reset the code and context panes so the new step starts at the top rather
+  // than inheriting scroll position from the previous unit.
+  useEffect(() => {
+    if (!isOpen) return;
+    codeColRef.current?.scrollTo({ top: 0 });
+    contextPaneRef.current?.scrollTo({ top: 0 });
+  }, [isOpen, currentUnitIndex]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -124,7 +134,11 @@ export function Overlay({ prUrl, onRequestClose }: OverlayProps) {
       />
 
       <div className="flex min-h-0 flex-1">
-        <main className="min-w-0 flex-[1_1_68%] overflow-y-auto border-r border-gr-border bg-gr-bg px-8 py-6" ref={codeColRef}>
+        <main
+          className="min-w-0 flex-[1_1_68%] overflow-y-auto border-r border-gr-border bg-gr-bg px-8 py-6"
+          ref={codeColRef}
+          data-testid="code-col"
+        >
           {isDescriptionUnit ? (
             <DescriptionPane prContext={prContext} diff={diff} />
           ) : (
@@ -133,7 +147,11 @@ export function Overlay({ prUrl, onRequestClose }: OverlayProps) {
         </main>
 
         <aside className="flex max-w-[420px] min-w-[300px] flex-[1_1_32%] flex-col overflow-hidden bg-gr-chrome px-5 py-6">
-          <div className="min-h-0 flex-[1_1_50%] overflow-y-auto">
+          <div
+            className="min-h-0 flex-[1_1_50%] overflow-y-auto"
+            ref={contextPaneRef}
+            data-testid="context-pane"
+          >
             <ContextPanel
               unit={currentReviewUnit}
               hasTitle={Boolean(prContext?.title?.trim())}

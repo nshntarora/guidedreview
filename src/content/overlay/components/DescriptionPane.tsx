@@ -46,19 +46,21 @@ export function DescriptionPane({ prContext, diff }: DescriptionPaneProps) {
       data-testid="description-pane"
     >
       <div className="min-w-0 max-w-[720px] flex-[0_1_720px]">
-        <h2 className="mb-4 text-lg font-semibold text-gr-text">PR description</h2>
+        <h2 className="mb-5 text-[1.375rem] font-semibold leading-snug tracking-[-0.01em] text-gr-text">
+          PR description
+        </h2>
         {descriptionHtml ? (
           <div
-            className="markdown-body text-base leading-[1.65] break-words text-gr-text"
+            className="markdown-body text-[0.9375rem] leading-[1.7] break-words text-gr-text"
             dangerouslySetInnerHTML={{ __html: descriptionHtml }}
           />
         ) : description ? (
-          <div className="text-base leading-[1.65] break-words whitespace-pre-wrap text-gr-text">
+          <div className="text-[0.9375rem] leading-[1.7] break-words whitespace-pre-wrap text-gr-text">
             {description}
           </div>
         ) : (
           <p
-            className="m-0 text-base leading-relaxed text-gr-muted"
+            className="m-0 text-[0.9375rem] leading-relaxed text-gr-muted"
             data-testid="description-pane-empty"
           >
             {emptyDescriptionCopy(hasTitle)}
@@ -79,7 +81,7 @@ export function DescriptionPane({ prContext, diff }: DescriptionPaneProps) {
               · {summary.files} file{summary.files === 1 ? "" : "s"}
             </span>
           </p>
-          <ul className="m-0 flex max-h-[min(60vh,520px)] list-none flex-col gap-0.5 overflow-y-auto p-0">
+          <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
             {summary.fileSummaries.map((file) => (
               <DiffSummaryFileRow key={fileKey(file)} file={file} />
             ))}

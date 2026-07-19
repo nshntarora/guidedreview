@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { ReviewPlan } from "../../../lib/types";
 import { cn } from "../../../lib/cn";
 import { PR_DESCRIPTION_UNIT_TITLE } from "../displayUnits";
@@ -13,6 +14,14 @@ interface SidebarProps {
 
 export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }: SidebarProps) {
   const reviewUnits = plan?.units ?? [];
+  const activeItemRef = useRef<HTMLButtonElement>(null);
+
+  // Keep the active unit visible when navigating via keyboard (←/→) or footer
+  // buttons — the sidebar is independently scrollable and can leave the
+  // current step off-screen on long plans.
+  useEffect(() => {
+    activeItemRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [currentUnitIndex]);
 
   return (
     <nav
@@ -25,6 +34,8 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
 
       <button
         type="button"
+        ref={currentUnitIndex === 0 ? activeItemRef : undefined}
+        aria-current={currentUnitIndex === 0 ? "true" : undefined}
         className={cn(
           "mb-0.5 block w-full cursor-pointer rounded-md border-none bg-transparent p-2 text-left text-[13px] leading-snug text-gr-text hover:bg-gr-subtle",
           currentUnitIndex === 0 && "bg-gr-accent-subtle font-semibold text-gr-accent hover:bg-gr-accent-subtle"
@@ -53,14 +64,16 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
       {!stillBuilding &&
         reviewUnits.map((unit, planIndex) => {
           const displayIndex = planIndex + 1;
+          const isActive = displayIndex === currentUnitIndex;
           return (
             <button
               key={unit.id}
               type="button"
+              ref={isActive ? activeItemRef : undefined}
+              aria-current={isActive ? "true" : undefined}
               className={cn(
                 "mb-0.5 block w-full cursor-pointer rounded-md border-none bg-transparent p-2 text-left text-[13px] leading-snug text-gr-text hover:bg-gr-subtle",
-                displayIndex === currentUnitIndex &&
-                  "bg-gr-accent-subtle font-semibold text-gr-accent hover:bg-gr-accent-subtle"
+                isActive && "bg-gr-accent-subtle font-semibold text-gr-accent hover:bg-gr-accent-subtle"
               )}
               onClick={() => onSelectUnit(displayIndex)}
             >
