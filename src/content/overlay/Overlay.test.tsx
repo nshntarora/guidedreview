@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Overlay } from "./Overlay";
 import { useReviewStore } from "./store";
 import { PR_DESCRIPTION_UNIT_TITLE } from "./displayUnits";
@@ -74,6 +74,8 @@ function resetStore(): void {
 describe("Overlay", () => {
   beforeEach(() => {
     resetStore();
+    Element.prototype.scrollIntoView = vi.fn();
+    Element.prototype.scrollTo = vi.fn();
   });
 
   it("renders nothing when the review isn't open", () => {
@@ -256,4 +258,34 @@ describe("Overlay", () => {
       /rely on the AI to tell us what this PR is about from the diff/i
     );
   });
+
+  it("resets code and context pane scroll and keeps the active sidebar unit in view on keyboard nav", () => {
+    useReviewStore.setState({
+      isOpen: true,
+      status: "ready",
+      diff: diffFixture(),
+      plan: planFixture(),
+      prContext: prContextFixture(),
+      currentUnitIndex: 0,
+    });
+    render(<Overlay prUrl={PR_URL} />);
+
+    const codeCol = document.querySelector(".gr-code-col") as HTMLElement;
+    const contextPane = document.querySelector(".gr-context-pane") as HTMLElement;
+    expect(codeCol).not.toBeNull();
+    expect(contextPane).not.toBeNull();
+
+    const scrollToMock = Element.prototype.scrollTo as ReturnType<typeof vi.fn>;
+    const scrollIntoViewMock = Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>;
+    scrollToMock.mockClear();
+    scrollIntoViewMock.mockClear();
+
+    fireEvent.keyDown(window, { key: "ArrowRight" });
+
+    expect(useReviewStore.getState().currentUnitIndex).toBe(1);
+    expect(scrollToMock).toHaveBeenCalledWith({ top: 0 });
+    expect(scrollIntoViewMock).toHaveBeenCalledWith({ block: "nearest", behavior: "smooth" });
+    expect(document.querySelector(".gr-unit-item.gr-active")?.textContent).toMatch(/Update foo/);
+  });
 });
+
