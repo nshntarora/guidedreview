@@ -35,7 +35,8 @@ interface SubmitReviewModalProps {
 }
 
 const modalBtn =
-  "inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md border px-3 py-2 text-[13px] disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-3 py-1.5 text-base disabled:cursor-not-allowed disabled:opacity-50";
+
 
 const REVIEW_EVENTS: {
   value: ReviewEvent;
@@ -247,12 +248,12 @@ export function SubmitReviewModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-3 border-b border-gr-border px-4 py-3">
-          <h2 id={titleId} className="m-0 text-[15px] font-semibold text-gr-text">
+          <h2 id={titleId} className="m-0 text-lg font-semibold text-gr-text">
             Submit Review
           </h2>
           <button
             type="button"
-            className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-md border border-gr-border bg-gr-bg p-2 text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex cursor-pointer items-center justify-center rounded-md border border-gr-border bg-gr-bg p-1.5 text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50"
             onClick={onClose}
             disabled={submitting}
             aria-label="Close"
@@ -277,7 +278,7 @@ export function SubmitReviewModal({
         {step === "choose" ? (
           <>
             <div className="flex flex-col gap-3 px-4 py-4">
-              <p className="m-0 text-[13px] text-gr-muted">
+              <p className="m-0 text-base text-gr-muted">
                 What would you like to do?
               </p>
               <div
@@ -288,7 +289,7 @@ export function SubmitReviewModal({
                 aria-label="Review type"
                 aria-activedescendant={activeOptionId}
                 data-testid="submit-review-event-list"
-                className="flex flex-col gap-2 rounded-md"
+                className="flex flex-col gap-2 rounded-md outline-none"
                 onKeyDown={handleListboxKeyDown}
               >
                 {REVIEW_EVENTS.map((opt, index) => {
@@ -309,17 +310,17 @@ export function SubmitReviewModal({
                       onClick={() => confirmMode(index)}
                       onMouseEnter={() => setHighlight(index)}
                     >
-                      <div className="text-[13px] font-semibold text-gr-text">
+                      <div className="text-base font-semibold text-gr-text">
                         {opt.label}
                       </div>
-                      <div className="mt-0.5 text-[12.5px] leading-snug text-gr-muted">
+                      <div className="mt-0.5 text-sm leading-snug text-gr-muted">
                         {opt.description}
                       </div>
                     </div>
                   );
                 })}
               </div>
-              <div className="flex items-center gap-2 text-[12px] text-gr-faint">
+              <div className="flex items-center gap-2 text-sm text-gr-faint">
                 <Kbd>↑</Kbd>
                 <Kbd>↓</Kbd>
                 <span>to choose</span>
@@ -346,7 +347,7 @@ export function SubmitReviewModal({
             <div className="flex flex-col gap-4 px-4 py-4">
               <textarea
                 ref={textareaRef}
-                className="min-h-[100px] w-full resize-y rounded-md border border-gr-border bg-gr-bg px-3 py-2 font-sans text-[14px] leading-relaxed text-gr-text outline-none placeholder:text-gr-faint focus:border-gr-accent disabled:opacity-60"
+                className="min-h-[100px] w-full resize-y rounded-md border border-gr-border bg-gr-bg px-3 py-2 font-sans text-base leading-relaxed text-gr-text outline-none placeholder:text-gr-faint focus:border-gr-accent disabled:opacity-60"
                 placeholder="Leave a comment"
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
@@ -361,17 +362,17 @@ export function SubmitReviewModal({
                 data-testid="submit-review-selected-event"
                 data-event={selectedOpt.value}
               >
-                <div className="text-[13px] font-semibold text-gr-text">
+                <div className="text-base font-semibold text-gr-text">
                   {selectedOpt.label}
                 </div>
-                <div className="mt-0.5 text-[12.5px] leading-snug text-gr-muted">
+                <div className="mt-0.5 text-sm leading-snug text-gr-muted">
                   {selectedOpt.description}
                 </div>
               </div>
 
               {error ? (
                 <p
-                  className="m-0 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-[13px] leading-snug text-red-200"
+                  className="m-0 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-base leading-snug text-red-200"
                   role="alert"
                   data-testid="submit-review-error"
                 >

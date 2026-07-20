@@ -37,7 +37,7 @@ export function Sidebar({
       className="mt-6 min-h-0 flex-[1_1_50%] overflow-y-auto border-t border-gr-border-muted pt-4"
       aria-label="Review units"
     >
-      <div className="px-2 pb-1 pt-2.5 text-[11px] tracking-[0.04em] text-gr-muted uppercase">
+      <div className="px-2 pb-1 pt-2.5 text-xs tracking-[0.04em] text-gr-muted uppercase">
         Review units
       </div>
 
@@ -50,7 +50,7 @@ export function Sidebar({
             ref={isActive ? activeItemRef : undefined}
             aria-current={isActive ? "true" : undefined}
             className={cn(
-              "mb-0.5 block min-h-11 w-full cursor-pointer rounded-md border-none bg-transparent px-2 py-2.5 text-left text-[13px] leading-snug text-gr-text",
+              "mb-0.5 block w-full cursor-pointer rounded-md border-none bg-transparent p-2 text-left text-base leading-snug text-gr-text",
               isActive &&
                 "bg-gr-accent-subtle text-gr-accent! hover:bg-gr-accent-subtle",
             )}

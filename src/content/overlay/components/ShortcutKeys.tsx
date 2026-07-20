@@ -45,7 +45,7 @@ export function ShortcutKeys({
       {keys.map((key, i) => (
         <Fragment key={`${key}-${i}`}>
           {showPlus && i > 0 ? (
-            <span className="text-[11px] opacity-70" aria-hidden="true">
+            <span className="text-xs opacity-70" aria-hidden="true">
               +
             </span>
           ) : null}

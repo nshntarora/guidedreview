@@ -52,12 +52,12 @@ export function CommentComposer({
       role="form"
       aria-label="Draft review comment"
     >
-      <div className="mb-2 font-mono text-[12px] text-gr-muted">
+      <div className="mb-2 font-mono text-sm text-gr-muted">
         {formatLineRangeLabel(filePath, startLine, endLine)}
       </div>
       <textarea
         ref={textareaRef}
-        className="min-h-[88px] w-full resize-y rounded-md border border-gr-border bg-gr-bg px-3 py-2 font-sans text-[14px] leading-relaxed text-gr-text placeholder:text-gr-faint focus:border-gr-accent"
+        className="min-h-[88px] w-full resize-y rounded-md border border-gr-border bg-gr-bg px-3 py-2 font-sans text-base leading-relaxed text-gr-text placeholder:text-gr-faint focus:border-gr-accent"
         placeholder="Leave a review comment (markdown supported)…"
         value={body}
         onChange={(e) => setBody(e.target.value)}
@@ -68,7 +68,7 @@ export function CommentComposer({
       <div className="mt-2 flex flex-wrap items-center justify-end gap-2">
         <button
           type="button"
-          className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-2 text-[13px] text-gr-muted hover:bg-gr-subtle hover:text-gr-text"
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-base text-gr-muted hover:bg-gr-subtle hover:text-gr-text"
           onClick={onCancel}
         >
           Cancel
@@ -76,7 +76,7 @@ export function CommentComposer({
         </button>
         <button
           type="button"
-          className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md border border-gr-accent bg-gr-accent px-3 py-2 text-[13px] font-medium text-gr-accent-on enabled:hover:border-gr-accent-hover enabled:hover:bg-gr-accent-hover disabled:cursor-not-allowed disabled:opacity-40 [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit"
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-base font-medium text-gr-accent-on enabled:hover:border-gr-accent-hover enabled:hover:bg-gr-accent-hover disabled:cursor-not-allowed disabled:opacity-40 [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit"
           disabled={!canSave}
           onClick={() => {
             if (canSave) onSave(body);

@@ -231,7 +231,7 @@ export function Select<T extends string = string>({
         aria-label={ariaLabel}
         disabled={disabled}
         className={cn(
-          "flex min-h-11 w-full items-center gap-2 rounded-md border border-opt-border bg-opt-subtle px-2.5 py-2 text-left text-[13px] text-opt-text",
+          "flex w-full items-center gap-2 rounded-md border border-opt-border bg-opt-subtle px-2.5 py-2 text-left text-base text-opt-text",
           "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-opt-accent",
           "disabled:cursor-not-allowed disabled:opacity-60",
         )}
@@ -285,7 +285,7 @@ export function Select<T extends string = string>({
                 aria-selected={isSelected}
                 aria-disabled={opt.disabled || undefined}
                 className={cn(
-                  "flex cursor-pointer items-center gap-2 px-2.5 py-1.5 text-[13px] text-opt-text",
+                  "flex cursor-pointer items-center gap-2 px-2.5 py-1.5 text-base text-opt-text",
                   isHighlighted && "bg-opt-subtle",
                   isSelected && "font-semibold",
                   opt.disabled && "cursor-not-allowed opacity-50",

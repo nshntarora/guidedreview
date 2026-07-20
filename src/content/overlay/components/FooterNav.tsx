@@ -9,7 +9,7 @@ interface FooterNavProps {
 }
 
 const navBtnBase =
-  "inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-md border px-4 py-2 text-[13px] font-medium disabled:cursor-default disabled:opacity-40";
+  "inline-flex cursor-pointer items-center gap-2 rounded-md border px-4 py-[7px] text-base font-medium disabled:cursor-default disabled:opacity-40";
 
 export function FooterNav({
   currentIndex,
@@ -41,7 +41,7 @@ export function FooterNav({
       </button>
 
       <p
-        className="m-0 min-w-0 text-center text-[13px] tabular-nums text-gr-muted"
+        className="m-0 min-w-0 text-center text-base tabular-nums text-gr-muted"
         role="status"
         aria-live="polite"
         aria-atomic="true"

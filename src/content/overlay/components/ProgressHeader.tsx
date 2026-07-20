@@ -16,7 +16,7 @@ interface ProgressHeaderProps {
 }
 
 const headerBtn =
-  "inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md border px-3 py-2 text-[13px] font-medium";
+  "inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-3 py-1.5 text-base font-medium";
 
 export function ProgressHeader({
   prContext,
@@ -45,12 +45,12 @@ export function ProgressHeader({
             <div className="flex min-w-0 items-baseline gap-2">
               <h1
                 id={titleId}
-                className="m-0 truncate text-[15px] font-semibold leading-snug"
+                className="m-0 truncate text-lg font-semibold leading-snug"
               >
                 {title}
               </h1>
               {prContext && (
-                <span className="shrink-0 text-[13px] text-gr-muted">
+                <span className="shrink-0 text-base text-gr-muted">
                   #{prContext.number}
                 </span>
               )}
@@ -60,7 +60,7 @@ export function ProgressHeader({
                 prContext.baseRef ||
                 prContext.headRef ||
                 stats) && (
-                <div className="flex items-center gap-2.5 text-[12.5px] text-gr-muted">
+                <div className="flex items-center gap-2.5 text-sm text-gr-muted">
                   {prContext.author && <span>@{prContext.author}</span>}
                   {(prContext.baseRef || prContext.headRef) && (
                     <span className="inline-block rounded-full border border-gr-border bg-gr-bg px-2.5 py-px font-mono text-xs text-gr-text">

@@ -197,7 +197,7 @@ function UnifiedHunk({
 
   return (
     <div
-      className="overflow-x-hidden font-mono text-[12px] leading-relaxed"
+      className="overflow-x-hidden font-mono text-sm leading-relaxed"
       data-testid="diff-view-unified"
     >
       {hunk.lines.map((line, i) => {
@@ -362,7 +362,7 @@ function SplitHunk({
 
   return (
     <div
-      className="overflow-x-hidden font-mono text-[12px] leading-relaxed"
+      className="overflow-x-hidden font-mono text-sm leading-relaxed"
       data-testid="diff-view-split"
     >
       {rows.map((row, i) => {
@@ -462,7 +462,7 @@ function DiffViewToggle({
         <button
           type="button"
           className={cn(
-            "inline-flex min-h-11 cursor-pointer items-center gap-1.5 px-3 py-2 text-[13px] transition-colors",
+            "inline-flex cursor-pointer items-center gap-1.5 px-3 py-1.5 text-base transition-colors",
             mode === "unified"
               ? "bg-gr-subtle text-gr-text"
               : "bg-transparent text-gr-muted hover:bg-gr-subtle hover:text-gr-text",
@@ -478,7 +478,7 @@ function DiffViewToggle({
         <button
           type="button"
           className={cn(
-            "inline-flex min-h-11 cursor-pointer items-center gap-1.5 border-l border-gr-border px-3 py-2 text-[13px] transition-colors",
+            "inline-flex cursor-pointer items-center gap-1.5 border-l border-gr-border px-3 py-1.5 text-base transition-colors",
             mode === "split"
               ? "bg-gr-subtle text-gr-text"
               : "bg-transparent text-gr-muted hover:bg-gr-subtle hover:text-gr-text",
@@ -499,7 +499,7 @@ function DiffViewToggle({
 function CommentModeChip() {
   return (
     <span
-      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-gr-accent/40 bg-gr-accent-subtle px-2.5 py-1 text-[12px] text-gr-accent"
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-gr-accent/40 bg-gr-accent-subtle px-2.5 py-1 text-sm text-gr-accent"
       data-testid="comment-mode-chip"
     >
       Comment mode
@@ -521,7 +521,7 @@ function AddCommentButton({
     <button
       type="button"
       className={cn(
-        "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-md border border-gr-border px-3 py-2 text-[13px] transition-colors",
+        "inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gr-border px-3 py-1.5 text-base transition-colors",
         disabled
           ? "cursor-not-allowed bg-gr-bg text-gr-faint opacity-60"
           : "cursor-pointer bg-gr-bg text-gr-text hover:bg-gr-subtle",
@@ -578,7 +578,7 @@ function BinaryElidedEmptyState({ filePath }: { filePath: string }) {
       className="flex min-h-[8rem] flex-col items-center justify-center gap-3 px-4 py-12 text-center"
       data-testid="binary-elided-empty"
     >
-      <span className="font-mono text-[13px] leading-relaxed text-gr-muted">
+      <span className="font-mono text-base leading-relaxed text-gr-muted">
         (binary or elided — no textual diff available)
       </span>
       {githubUrl && (
@@ -586,7 +586,7 @@ function BinaryElidedEmptyState({ filePath }: { filePath: string }) {
           href={githubUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[13px] font-medium text-gr-accent underline-offset-2 hover:underline"
+          className="text-base font-medium text-gr-accent underline-offset-2 hover:underline"
           data-testid="binary-elided-github-link"
         >
           View file diff on GitHub
@@ -743,7 +743,7 @@ export function DiffPane({ files, unitTitle, unitId }: DiffPaneProps) {
       </div>
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2
-          className="min-w-0 truncate text-[15px] font-semibold text-gr-text"
+          className="min-w-0 truncate text-lg font-semibold text-gr-text"
           data-testid="diff-unit-title"
           title={unitTitle}
         >
@@ -771,7 +771,7 @@ export function DiffPane({ files, unitTitle, unitId }: DiffPaneProps) {
             className="mb-7 overflow-hidden rounded-lg border border-gr-border bg-gr-canvas"
             key={file.path}
           >
-            <div className="flex items-baseline gap-2.5 border-b border-gr-border bg-gr-chrome px-3 py-2 font-mono text-[12.5px]">
+            <div className="flex items-baseline gap-2.5 border-b border-gr-border bg-gr-chrome px-3 py-2 font-mono text-sm">
               {file.previousPath
                 ? `${file.previousPath} → ${file.path}`
                 : file.path}

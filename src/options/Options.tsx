@@ -12,7 +12,6 @@ import { Select, type SelectOption } from "./components/Select";
 import { ProviderIcon } from "./components/ProviderIcon";
 import { ActionSpinner } from "./components/ActionSpinner";
 import { BrandHeader } from "./BrandHeader";
-import { GitHubAuthSection } from "./GitHubAuthSection";
 import { cn } from "../lib/cn";
 
 type ActionStatus =
@@ -22,10 +21,10 @@ type ActionStatus =
   | { kind: "error"; message: string };
 
 const fieldControl =
-  "w-full rounded-md border border-opt-border bg-opt-subtle px-2.5 py-2 text-[13px] text-opt-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-opt-accent";
+  "w-full rounded-md border border-opt-border bg-opt-subtle px-2.5 py-2 text-base text-opt-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-opt-accent";
 
 const actionBtn =
-  "inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-md border px-4 py-2 text-[13px] font-semibold disabled:cursor-default disabled:opacity-60";
+  "inline-flex cursor-pointer items-center gap-2 rounded-md border px-4 py-2 text-base font-semibold disabled:cursor-default disabled:opacity-60";
 
 function OptionRow({ icon, label }: { icon: ProviderId; label: string }) {
   return (
@@ -131,16 +130,13 @@ export function Options() {
   return (
     <main id="main-content" className="mx-auto max-w-[480px] px-6 py-8">
       <BrandHeader />
-      <p className="mb-6 text-[13px] text-opt-muted">
-        Connect GitHub and choose an AI provider. Keys and tokens stay in this browser only.
+      <p className="mb-6 text-base text-opt-muted">
+        Choose an AI provider and paste your own API key. The key is stored only in this
+        browser and is used solely to annotate PR diffs you open.
       </p>
 
-      <GitHubAuthSection />
-
-      <h2 className="mb-4 text-[13px] font-semibold text-opt-text">AI provider</h2>
-
       <div className="mb-4">
-        <label className="mb-1.5 block text-[13px] font-semibold" id="provider-label" htmlFor="provider">
+        <label className="mb-1.5 block text-base font-semibold" id="provider-label" htmlFor="provider">
           Provider
         </label>
         <Select
@@ -154,7 +150,7 @@ export function Options() {
       </div>
 
       <div className="mb-4">
-        <label className="mb-1.5 block text-[13px] font-semibold" id="model-label" htmlFor="model">
+        <label className="mb-1.5 block text-base font-semibold" id="model-label" htmlFor="model">
           Model
         </label>
         <Select
@@ -168,7 +164,7 @@ export function Options() {
       </div>
 
       <div className="mb-4">
-        <label className="mb-1.5 block text-[13px] font-semibold" htmlFor="apiKey">
+        <label className="mb-1.5 block text-base font-semibold" htmlFor="apiKey">
           API key
         </label>
         <input
@@ -182,7 +178,7 @@ export function Options() {
           disabled={busy}
           aria-describedby="apiKey-hint"
         />
-        <p id="apiKey-hint" className="mt-1 text-xs text-opt-muted">
+        <p id="apiKey-hint" className="mt-1 text-sm text-opt-muted">
           Stored locally on this device via chrome.storage.local — never synced.
         </p>
       </div>
@@ -220,7 +216,7 @@ export function Options() {
             role="status"
             aria-live="polite"
             className={cn(
-              "text-[13px]",
+              "text-base",
               statusMessage.kind === "ok" && "text-opt-ok",
               statusMessage.kind === "error" && "text-opt-error",
             )}
@@ -233,7 +229,7 @@ export function Options() {
       <nav className="mt-8 border-t border-opt-border pt-6" aria-label="About">
         <a
           href="#about"
-          className="text-[13px] font-semibold text-opt-muted no-underline hover:text-opt-text hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent"
+          className="text-base font-semibold text-opt-muted no-underline hover:text-opt-text hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent"
         >
           About Guided Review
         </a>

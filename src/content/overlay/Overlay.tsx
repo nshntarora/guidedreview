@@ -600,7 +600,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
       aria-modal="true"
       aria-labelledby={titleId}
       tabIndex={-1}
-      className="fixed inset-0 z-[2147483000] flex flex-col bg-gr-bg font-sans text-sm text-gr-text antialiased outline-none [color-scheme:dark] [text-rendering:optimizeLegibility]"
+      className="fixed inset-0 z-[2147483000] flex flex-col bg-gr-bg font-sans text-base text-gr-text antialiased outline-none [color-scheme:dark] [text-rendering:optimizeLegibility]"
       data-testid="guided-review-overlay"
     >
       <div

@@ -26,10 +26,10 @@ export interface ConnectGitHubModalProps {
 }
 
 const primaryBtn =
-  "inline-flex cursor-pointer items-center gap-2 rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-[13px] font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover disabled:cursor-not-allowed disabled:opacity-60 [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit";
+  "inline-flex cursor-pointer items-center gap-2 rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-base font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover disabled:cursor-not-allowed disabled:opacity-60 [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit";
 
 const secondaryBtn =
-  "inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-[13px] text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-base text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50";
 
 /** Official GitHub mark (Octocat) — filled via currentColor. */
 function GitHubLogo({ className }: { className?: string }) {
@@ -193,25 +193,25 @@ export function ConnectGitHubModal({
 
           <h2
             id={titleId}
-            className="m-0 w-full text-center text-[16px] font-semibold text-gr-text"
+            className="m-0 w-full text-center text-lg font-semibold text-gr-text"
           >
             Connect GitHub
           </h2>
 
           {!configured ? (
             <p
-              className="m-0 w-full text-center text-[13px] leading-relaxed text-gr-muted"
+              className="m-0 w-full text-center text-base leading-relaxed text-gr-muted"
               role="status"
             >
               GitHub connection isn’t configured in this build. Set{" "}
-              <code className="rounded bg-gr-bg px-1 py-0.5 text-[12px] text-gr-text">
+              <code className="rounded bg-gr-bg px-1 py-0.5 text-sm text-gr-text">
                 VITE_GITHUB_CLIENT_ID
               </code>{" "}
               and rebuild.
             </p>
           ) : flow.kind === "error" ? (
             <p
-              className="m-0 w-full rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-left text-[13px] leading-snug text-red-200"
+              className="m-0 w-full rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-left text-base leading-snug text-red-200"
               role="alert"
               data-testid="connect-github-error"
             >
@@ -239,13 +239,13 @@ export function ConnectGitHubModal({
                 </button>
               </div>
               <p
-                className="m-0 text-center text-[13px] leading-relaxed text-gr-muted"
+                className="m-0 text-center text-base leading-relaxed text-gr-muted"
                 data-testid="connect-github-copy-hint"
               >
                 Copy this code, then paste it on the GitHub tab.
               </p>
               <span
-                className="flex items-center justify-center gap-2 text-[13px] text-gr-muted"
+                className="flex items-center justify-center gap-2 text-base text-gr-muted"
                 role="status"
               >
                 <Spinner label="Waiting for GitHub authorization" size={16} />
@@ -254,7 +254,7 @@ export function ConnectGitHubModal({
             </div>
           ) : (
             <p
-              className="m-0 w-full text-center text-[13.5px] leading-relaxed text-gr-muted"
+              className="m-0 w-full text-center text-base leading-relaxed text-gr-muted"
               data-testid="connect-github-prompt"
             >
               You need to authenticate via GitHub to submit your reviews.
