@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Overlay } from "./Overlay";
 import { DEFAULT_DIFF_VIEW_MODE } from "./diffViewMode";
@@ -6,6 +6,11 @@ import { useReviewStore } from "./store";
 import { PR_DESCRIPTION_UNIT_TITLE } from "./displayUnits";
 import { VIEW_CHORD_WINDOW_MS } from "./viewModeChord";
 import type { ParsedDiff, PRContext, ReviewPlan } from "../../lib/types";
+import * as messaging from "../../lib/messaging";
+
+vi.mock("../../lib/messaging", () => ({
+  submitPullRequestReview: vi.fn(),
+}));
 
 function diffFixture(): ParsedDiff {
   return {
@@ -97,6 +102,12 @@ describe("Overlay", () => {
     Element.prototype.scrollTo = vi.fn();
     // jsdom does not implement scrollBy; ArrowDown scrolls the code column.
     Element.prototype.scrollBy = vi.fn();
+    vi.mocked(messaging.submitPullRequestReview).mockReset();
+    vi.mocked(messaging.submitPullRequestReview).mockResolvedValue({
+      ok: true,
+      reviewId: 1,
+      htmlUrl: "https://github.com/acme/widgets/pull/1#pullrequestreview-1",
+    });
   });
 
   it("renders nothing when the review isn't open", () => {
@@ -576,8 +587,21 @@ describe("Overlay", () => {
       expect(useReviewStore.getState().isOpen).toBe(false);
     });
 
-    it("closes the modal on submit without calling network", () => {
+    it("submits a review to GitHub and closes the modal on success", async () => {
       seedReadyReview(0);
+      useReviewStore.setState({
+        draftComments: [
+          {
+            id: "d1",
+            filePath: "src/foo.ts",
+            side: "RIGHT",
+            startLine: 1,
+            endLine: 1,
+            lineIds: ["src/foo.ts#0:0:RIGHT"],
+            body: "inline note",
+          },
+        ],
+      });
       render(<Overlay />);
 
       fireEvent.click(screen.getByTestId("submit-review-button"));
@@ -587,11 +611,65 @@ describe("Overlay", () => {
       });
       fireEvent.click(screen.getByTestId("submit-review-confirm"));
 
-      expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
+      });
+      expect(messaging.submitPullRequestReview).toHaveBeenCalledWith(
+        { owner: "acme", repo: "widgets", number: 1 },
+        "Looks good",
+        "APPROVE",
+        [
+          {
+            path: "src/foo.ts",
+            body: "inline note",
+            side: "RIGHT",
+            line: 1,
+          },
+        ],
+      );
+      expect(useReviewStore.getState().draftComments).toHaveLength(0);
       expect(useReviewStore.getState().isOpen).toBe(true);
     });
 
-    it("submits with meta+Enter via the window capture handler", () => {
+    it("keeps the modal open and shows an error when submit fails", async () => {
+      vi.mocked(messaging.submitPullRequestReview).mockResolvedValueOnce({
+        ok: false,
+        code: "not_authenticated",
+        error:
+          "Connect GitHub in the extension options before submitting a review.",
+      });
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      fireEvent.click(screen.getByTestId("submit-review-button"));
+      fireEvent.click(screen.getByTestId("submit-review-event-APPROVE"));
+      fireEvent.click(screen.getByTestId("submit-review-confirm"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("submit-review-error")).toHaveTextContent(
+          /Connect GitHub/,
+        );
+      });
+      expect(screen.getByTestId("submit-review-modal")).toBeInTheDocument();
+    });
+
+    it("blocks empty COMMENT body without calling the API", async () => {
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      fireEvent.click(screen.getByTestId("submit-review-button"));
+      fireEvent.click(screen.getByTestId("submit-review-event-COMMENT"));
+      fireEvent.click(screen.getByTestId("submit-review-confirm"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("submit-review-error")).toHaveTextContent(
+          /Add a review comment/,
+        );
+      });
+      expect(messaging.submitPullRequestReview).not.toHaveBeenCalled();
+    });
+
+    it("submits with meta+Enter via the window capture handler", async () => {
       seedReadyReview(0);
       render(<Overlay />);
 
@@ -602,19 +680,38 @@ describe("Overlay", () => {
       });
       fireEvent.keyDown(window, { key: "Enter", metaKey: true });
 
-      expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
+      });
+      expect(messaging.submitPullRequestReview).toHaveBeenCalledWith(
+        { owner: "acme", repo: "widgets", number: 1 },
+        "Approved via shortcut",
+        "APPROVE",
+        [],
+      );
       expect(useReviewStore.getState().isOpen).toBe(true);
     });
 
-    it("submits with Ctrl+Enter via the window capture handler", () => {
+    it("submits with Ctrl+Enter via the window capture handler", async () => {
       seedReadyReview(0);
       render(<Overlay />);
 
       fireEvent.click(screen.getByTestId("submit-review-button"));
       fireEvent.click(screen.getByTestId("submit-review-event-COMMENT"));
+      fireEvent.change(screen.getByTestId("submit-review-body"), {
+        target: { value: "General feedback" },
+      });
       fireEvent.keyDown(window, { key: "Enter", ctrlKey: true });
 
-      expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
+      });
+      expect(messaging.submitPullRequestReview).toHaveBeenCalledWith(
+        { owner: "acme", repo: "widgets", number: 1 },
+        "General feedback",
+        "COMMENT",
+        [],
+      );
       expect(useReviewStore.getState().isOpen).toBe(true);
     });
 

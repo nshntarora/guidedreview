@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   clearGitHubAuthSession,
   getGitHubAuthStatus,
+  submitPullRequestReview,
   pollGitHubDeviceAuth,
   requestPRDiff,
   startGitHubDeviceAuth,
@@ -146,5 +147,29 @@ describe("messaging", () => {
     vi.mocked(chrome.runtime.sendMessage).mockResolvedValueOnce({ ok: true });
     await expect(clearGitHubAuthSession()).resolves.toEqual({ ok: true });
     expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({ type: "GITHUB_AUTH_CLEAR" });
+  });
+
+  it("submitPullRequestReview sends SUBMIT_REVIEW with payload", async () => {
+    const response = {
+      ok: true as const,
+      reviewId: 1,
+      htmlUrl: "https://github.com/o/r/pull/1#pullrequestreview-1",
+    };
+    vi.mocked(chrome.runtime.sendMessage).mockResolvedValueOnce(response);
+
+    const pr = { owner: "o", repo: "r", number: 1 };
+    const comments = [
+      { path: "a.ts", body: "c", side: "RIGHT" as const, line: 3 },
+    ];
+    await expect(
+      submitPullRequestReview(pr, "Looks good", "APPROVE", comments),
+    ).resolves.toEqual(response);
+    expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({
+      type: "SUBMIT_REVIEW",
+      pr,
+      body: "Looks good",
+      event: "APPROVE",
+      comments,
+    });
   });
 });

@@ -270,6 +270,30 @@ describe("SubmitReviewModal", () => {
     expect(screen.queryByRole("radio")).not.toBeInTheDocument();
   });
 
+  it("shows an error and disables submit while submitting", () => {
+    const onSubmit = vi.fn();
+    render(
+      <SubmitReviewModal
+        open
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+        submitting
+        error="Connect GitHub first."
+      />,
+    );
+
+    selectCommentAndCompose();
+    expect(screen.getByTestId("submit-review-error")).toHaveTextContent(
+      "Connect GitHub first.",
+    );
+    expect(screen.getByTestId("submit-review-confirm")).toBeDisabled();
+    expect(screen.getByTestId("submit-review-confirm")).toHaveTextContent(
+      "Submitting…",
+    );
+    fireEvent.click(screen.getByTestId("submit-review-confirm"));
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
   it("resets to choose step when reopened", () => {
     const { rerender } = render(
       <SubmitReviewModal open onClose={vi.fn()} onSubmit={vi.fn()} />,

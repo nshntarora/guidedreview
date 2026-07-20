@@ -503,6 +503,11 @@ describe("useReviewStore", () => {
 
       useReviewStore.getState().removeDraftComment(drafts[0].id);
       expect(useReviewStore.getState().draftComments).toHaveLength(0);
+
+      useReviewStore.getState().saveDraftComment("again");
+      expect(useReviewStore.getState().draftComments).toHaveLength(1);
+      useReviewStore.getState().clearDraftComments();
+      expect(useReviewStore.getState().draftComments).toHaveLength(0);
     });
 
     it("goNext / goToUnit exit comment mode but keep drafts", () => {

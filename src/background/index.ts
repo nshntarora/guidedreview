@@ -15,6 +15,8 @@ import type {
   ReviewErrorInfo,
   ReviewPlan,
   ReviewUnit,
+  SubmitReviewRequest,
+  SubmitReviewResponse,
   TestConnectionRequest,
   TestConnectionResponse,
 } from "../lib/types";
@@ -34,6 +36,7 @@ import {
   isGitHubOAuthConfigured,
 } from "../lib/github/oauthConfig";
 import { fetchPRDiff } from "../lib/github/diffFetch";
+import { submitPullRequestReview } from "../lib/github/submitReview";
 import { chunkDiffByFile } from "../lib/review/buildPrompt";
 import { StreamPlanParser } from "../lib/review/streamPlanParser";
 import { prefixChunkUnitId, validateAndCleanUnit } from "../lib/review/reviewPlan";
@@ -119,6 +122,20 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, _sender, sendR
       .catch((error: unknown) => {
         console.error("GITHUB_AUTH_CLEAR failed:", error);
         const response: GitHubAuthClearResponse = { ok: true };
+        sendResponse(response);
+      });
+    return true;
+  }
+
+  if (message.type === "SUBMIT_REVIEW") {
+    handleSubmitReview(message)
+      .then(sendResponse)
+      .catch((error: unknown) => {
+        const response: SubmitReviewResponse = {
+          ok: false,
+          code: "unknown",
+          error: describeErrorMessage(error),
+        };
         sendResponse(response);
       });
     return true;
@@ -342,6 +359,35 @@ async function handleGitHubAuthGet(): Promise<GitHubAuthGetResponse> {
 async function handleGitHubAuthClear(): Promise<GitHubAuthClearResponse> {
   await clearGitHubAuth();
   return { ok: true };
+}
+
+async function handleSubmitReview(
+  request: SubmitReviewRequest,
+): Promise<SubmitReviewResponse> {
+  const auth = await getGitHubAuth();
+  if (!auth) {
+    return {
+      ok: false,
+      code: "not_authenticated",
+      error:
+        "Connect GitHub in the extension options before submitting a review.",
+    };
+  }
+
+  const result = await submitPullRequestReview({
+    accessToken: auth.accessToken,
+    pr: request.pr,
+    body: request.body,
+    event: request.event,
+    comments: request.comments,
+  });
+
+  // Stale / revoked token: drop the stored session so Options shows disconnected.
+  if (!result.ok && result.code === "not_authenticated") {
+    await clearGitHubAuth();
+  }
+
+  return result;
 }
 
 function describeError(error: unknown): ReviewErrorInfo {

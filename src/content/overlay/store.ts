@@ -115,6 +115,7 @@ interface ReviewState {
   saveDraftComment: (body: string, unitId?: string) => void;
   updateDraftComment: (id: string, body: string) => void;
   removeDraftComment: (id: string) => void;
+  clearDraftComments: () => void;
 }
 
 /**
@@ -409,6 +410,8 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       draftComments: state.draftComments.filter((d) => d.id !== id),
     }));
   },
+
+  clearDraftComments: () => set({ draftComments: [] }),
 }));
 
 /** Bumped when the user sets a mode so pending storage reads are dropped. */

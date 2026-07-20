@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { submitPullRequestReview } from "../../lib/messaging";
 import { useReviewStore, persistSession } from "./store";
 import { resolveUnitFiles } from "./selectors";
 import { buildDisplayUnits, displayUnitCount } from "./displayUnits";
 import { buildSelectableLines } from "./buildSelectableLines";
 import { recordViewChordKey, type ViewChordPending } from "./viewModeChord";
 import type { ReviewSubmission } from "./commentTypes";
+import { mapDraftsToReviewComments } from "./mapDraftComments";
 import { ProgressHeader } from "./components/ProgressHeader";
 import { Sidebar } from "./components/Sidebar";
 import { DiffPane } from "./components/DiffPane";
@@ -66,24 +68,96 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   /** Pending `v` leader for view-mode chords (`v+u` / `v+s`). */
   const viewChordRef = useRef<ViewChordPending>(null);
   const [submitReviewOpen, setSubmitReviewOpen] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [submitReviewError, setSubmitReviewError] = useState<string | null>(
+    null,
+  );
   /** Latest submit action from the open Submit Review modal (for ⌘/Ctrl+Enter). */
   const submitReviewActionRef = useRef<(() => void) | null>(null);
   /** Choose-step keys (↑/↓/Enter) for the open Submit Review modal. */
   const submitReviewKeyRef = useRef<((e: KeyboardEvent) => boolean) | null>(
     null,
   );
+  /** Ignore stale submit responses after the modal is closed or a newer submit. */
+  const submitGenerationRef = useRef(0);
 
   const handleExit = () => {
     onRequestClose?.();
     close();
   };
 
-  const handleSubmitReview = (_submission: ReviewSubmission) => {
-    // API integration later — UI only closes the modal for now.
-    setSubmitReviewOpen(false);
-  };
-
   const draftComments = useReviewStore((s) => s.draftComments);
+  const clearDraftComments = useReviewStore((s) => s.clearDraftComments);
+
+  const closeSubmitReviewModal = useCallback(() => {
+    if (submittingReview) return;
+    setSubmitReviewOpen(false);
+    setSubmitReviewError(null);
+  }, [submittingReview]);
+
+  const handleSubmitReview = useCallback(
+    async (submission: ReviewSubmission) => {
+      if (submittingReview) return;
+
+      const trimmedBody = submission.body.trim();
+      if (
+        (submission.event === "COMMENT" ||
+          submission.event === "REQUEST_CHANGES") &&
+        trimmedBody.length === 0
+      ) {
+        setSubmitReviewError(
+          submission.event === "COMMENT"
+            ? "Add a review comment before submitting."
+            : "Add a summary explaining the requested changes before submitting.",
+        );
+        return;
+      }
+
+      const pr = prContext;
+      if (!pr) {
+        setSubmitReviewError(
+          "Missing pull request context. Close the review and try again from the PR page.",
+        );
+        return;
+      }
+
+      const generation = ++submitGenerationRef.current;
+      setSubmittingReview(true);
+      setSubmitReviewError(null);
+
+      try {
+        const result = await submitPullRequestReview(
+          { owner: pr.owner, repo: pr.repo, number: pr.number },
+          trimmedBody,
+          submission.event,
+          mapDraftsToReviewComments(draftComments),
+        );
+
+        if (generation !== submitGenerationRef.current) return;
+
+        if (!result.ok) {
+          setSubmitReviewError(result.error);
+          return;
+        }
+
+        clearDraftComments();
+        setSubmitReviewOpen(false);
+        setSubmitReviewError(null);
+      } catch (error: unknown) {
+        if (generation !== submitGenerationRef.current) return;
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Something went wrong while submitting the review.";
+        setSubmitReviewError(message);
+      } finally {
+        if (generation === submitGenerationRef.current) {
+          setSubmittingReview(false);
+        }
+      }
+    },
+    [submittingReview, prContext, draftComments, clearDraftComments],
+  );
 
   useEffect(() => {
     if (status === "ready") void persistSession();
@@ -163,7 +237,10 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         viewChordRef.current = null;
         if (event.key === "Escape") {
           event.preventDefault();
-          setSubmitReviewOpen(false);
+          if (!submittingReview) {
+            setSubmitReviewOpen(false);
+            setSubmitReviewError(null);
+          }
           return;
         }
         if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
@@ -208,6 +285,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
       if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
         viewChordRef.current = null;
+        setSubmitReviewError(null);
         setSubmitReviewOpen(true);
         return;
       }
@@ -327,7 +405,13 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     selectableForUnit,
     currentUnitId,
     submitReviewOpen,
+    submittingReview,
   ]);
+
+  function openSubmitReviewModal(): void {
+    setSubmitReviewError(null);
+    setSubmitReviewOpen(true);
+  }
 
   if (!isOpen) return null;
 
@@ -337,7 +421,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         prContext={prContext}
         diff={diff}
         onExit={handleExit}
-        onSubmitReview={() => setSubmitReviewOpen(true)}
+        onSubmitReview={openSubmitReviewModal}
       />
 
       <div className="flex min-h-0 flex-1">
@@ -393,8 +477,12 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
 
       <SubmitReviewModal
         open={submitReviewOpen}
-        onClose={() => setSubmitReviewOpen(false)}
-        onSubmit={handleSubmitReview}
+        onClose={closeSubmitReviewModal}
+        onSubmit={(submission) => {
+          void handleSubmitReview(submission);
+        }}
+        submitting={submittingReview}
+        error={submitReviewError}
         submitActionRef={submitReviewActionRef}
         keyActionRef={submitReviewKeyRef}
       />

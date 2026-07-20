@@ -14,6 +14,10 @@ interface SubmitReviewModalProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (submission: ReviewSubmission) => void;
+  /** True while the GitHub API request is in flight. */
+  submitting?: boolean;
+  /** User-facing error from the last submit attempt. */
+  error?: string | null;
   /**
    * Bound to the latest submit action so the overlay capture keydown can
    * fire ⌘/Ctrl+Enter (React handlers on the textarea do not see real keys
@@ -58,12 +62,14 @@ function eventIndex(event: ReviewEvent): number {
 
 /**
  * GitHub-style submit-review dialog: pick event type, then summary comment.
- * UI only — parent decides what to do with the submission (API later).
+ * Parent posts the submission to GitHub via the background worker.
  */
 export function SubmitReviewModal({
   open,
   onClose,
   onSubmit,
+  submitting = false,
+  error = null,
   submitActionRef,
   keyActionRef,
 }: SubmitReviewModalProps) {
@@ -114,10 +120,10 @@ export function SubmitReviewModal({
   }, [open, step]);
 
   // Keep the overlay capture path pointed at the current form values.
-  // Submit only available on the compose step.
+  // Submit only available on the compose step while not in-flight.
   useEffect(() => {
     if (!submitActionRef) return;
-    if (!open || step !== "compose") {
+    if (!open || step !== "compose" || submitting) {
       submitActionRef.current = null;
       return;
     }
@@ -125,7 +131,7 @@ export function SubmitReviewModal({
     return () => {
       submitActionRef.current = null;
     };
-  }, [open, step, body, event, onSubmit, submitActionRef]);
+  }, [open, step, body, event, onSubmit, submitActionRef, submitting]);
 
   // Choose-step keys via overlay capture (real keystrokes never reach React handlers).
   // highlightIndexRef keeps Enter accurate across sequential keys before re-render.
@@ -162,6 +168,7 @@ export function SubmitReviewModal({
   if (!open) return null;
 
   function handleSubmit(): void {
+    if (submitting) return;
     onSubmit({ body, event });
   }
 
@@ -169,7 +176,7 @@ export function SubmitReviewModal({
     if (e.key === "Escape") {
       e.preventDefault();
       e.stopPropagation();
-      onClose();
+      if (!submitting) onClose();
       return;
     }
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -219,7 +226,7 @@ export function SubmitReviewModal({
       className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       data-testid="submit-review-scrim"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget && !submitting) onClose();
       }}
     >
       <div
@@ -237,8 +244,9 @@ export function SubmitReviewModal({
           </h2>
           <button
             type="button"
-            className="inline-flex cursor-pointer items-center justify-center rounded-md border border-gr-border bg-gr-bg p-1.5 text-gr-muted hover:bg-gr-subtle hover:text-gr-text"
+            className="inline-flex cursor-pointer items-center justify-center rounded-md border border-gr-border bg-gr-bg p-1.5 text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50"
             onClick={onClose}
+            disabled={submitting}
             aria-label="Close"
             data-testid="submit-review-close"
           >
@@ -330,11 +338,12 @@ export function SubmitReviewModal({
             <div className="flex flex-col gap-4 px-4 py-4">
               <textarea
                 ref={textareaRef}
-                className="min-h-[100px] w-full resize-y rounded-md border border-gr-border bg-gr-bg px-3 py-2 font-sans text-[14px] leading-relaxed text-gr-text outline-none placeholder:text-gr-faint focus:border-gr-accent"
+                className="min-h-[100px] w-full resize-y rounded-md border border-gr-border bg-gr-bg px-3 py-2 font-sans text-[14px] leading-relaxed text-gr-text outline-none placeholder:text-gr-faint focus:border-gr-accent disabled:opacity-60"
                 placeholder="Leave a comment"
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 onKeyDown={handleTextareaKeyDown}
+                disabled={submitting}
                 aria-label="Review comment"
                 data-testid="submit-review-body"
               />
@@ -351,13 +360,24 @@ export function SubmitReviewModal({
                   {selectedOpt.description}
                 </div>
               </div>
+
+              {error ? (
+                <p
+                  className="m-0 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-[13px] leading-snug text-red-200"
+                  role="alert"
+                  data-testid="submit-review-error"
+                >
+                  {error}
+                </p>
+              ) : null}
             </div>
 
             <div className="flex items-center justify-between gap-2 border-t border-gr-border px-4 py-3">
               <button
                 type="button"
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-[13px] text-gr-muted hover:bg-gr-subtle hover:text-gr-text"
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-[13px] text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={goBack}
+                disabled={submitting}
                 data-testid="submit-review-back"
               >
                 Back
@@ -365,8 +385,9 @@ export function SubmitReviewModal({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-[13px] text-gr-muted hover:bg-gr-subtle hover:text-gr-text"
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-[13px] text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={onClose}
+                  disabled={submitting}
                   data-testid="submit-review-cancel"
                 >
                   Cancel
@@ -374,12 +395,13 @@ export function SubmitReviewModal({
                 </button>
                 <button
                   type="button"
-                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-[13px] font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit"
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-[13px] font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover disabled:cursor-not-allowed disabled:opacity-60 [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit"
                   onClick={handleSubmit}
+                  disabled={submitting}
                   data-testid="submit-review-confirm"
                 >
-                  Submit Review
-                  <ModEnterChord />
+                  {submitting ? "Submitting…" : "Submit Review"}
+                  {!submitting ? <ModEnterChord /> : null}
                 </button>
               </div>
             </div>

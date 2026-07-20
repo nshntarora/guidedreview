@@ -17,9 +17,13 @@ import type {
   ParsedDiff,
   PRContext,
   ProviderSettings,
+  ReviewCommentInput,
   ReviewErrorInfo,
+  ReviewEvent,
   ReviewPlan,
   ReviewUnit,
+  SubmitReviewRequest,
+  SubmitReviewResponse,
 } from "./types";
 
 const ANNOTATE_PORT_NAME = "annotate-review";
@@ -147,5 +151,25 @@ export async function getGitHubAuthStatus(): Promise<GitHubAuthGetResponse> {
 /** Options: disconnect and forget the stored GitHub token. */
 export async function clearGitHubAuthSession(): Promise<GitHubAuthClearResponse> {
   const request: GitHubAuthClearRequest = { type: "GITHUB_AUTH_CLEAR" };
+  return chrome.runtime.sendMessage(request);
+}
+
+/**
+ * Content-script-side helper: submit a PR review (summary + optional line
+ * comments) through the background worker, which holds the OAuth token.
+ */
+export async function submitPullRequestReview(
+  pr: SubmitReviewRequest["pr"],
+  body: string,
+  event: ReviewEvent,
+  comments: ReviewCommentInput[],
+): Promise<SubmitReviewResponse> {
+  const request: SubmitReviewRequest = {
+    type: "SUBMIT_REVIEW",
+    pr,
+    body,
+    event,
+    comments,
+  };
   return chrome.runtime.sendMessage(request);
 }

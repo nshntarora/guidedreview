@@ -211,6 +211,43 @@ export interface GitHubAuthClearResponse {
   ok: true;
 }
 
+// ---- Submit pull request review ---------------------------------------------
+
+/** GitHub pull request review event (create-review API). */
+export type ReviewEvent = "COMMENT" | "APPROVE" | "REQUEST_CHANGES";
+
+/** Inline comment payload for GitHub create-review `comments[]`. */
+export interface ReviewCommentInput {
+  path: string;
+  body: string;
+  side: "LEFT" | "RIGHT";
+  /** End line (file coordinates on `side`). */
+  line: number;
+  /** Start line when multi-line; omit when single-line. */
+  startLine?: number;
+  startSide?: "LEFT" | "RIGHT";
+}
+
+export interface SubmitReviewRequest {
+  type: "SUBMIT_REVIEW";
+  pr: { owner: string; repo: string; number: number };
+  body: string;
+  event: ReviewEvent;
+  comments: ReviewCommentInput[];
+}
+
+export type SubmitReviewErrorCode =
+  | "not_authenticated"
+  | "forbidden"
+  | "not_found"
+  | "validation"
+  | "network"
+  | "unknown";
+
+export type SubmitReviewResponse =
+  | { ok: true; reviewId: number; htmlUrl: string }
+  | { ok: false; error: string; code?: SubmitReviewErrorCode };
+
 /** One-shot request/response messages (annotate uses a port instead). */
 export type BackgroundRequest =
   | TestConnectionRequest
@@ -218,7 +255,8 @@ export type BackgroundRequest =
   | GitHubDeviceStartRequest
   | GitHubDevicePollRequest
   | GitHubAuthGetRequest
-  | GitHubAuthClearRequest;
+  | GitHubAuthClearRequest
+  | SubmitReviewRequest;
 
 // ---- Messaging protocol (background → content) -----------------------------
 
