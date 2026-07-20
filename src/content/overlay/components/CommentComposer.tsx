@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { formatLineRangeLabel } from "../commentTypes";
 import { Kbd } from "./Kbd";
+import { ModEnterChord } from "./ShortcutKeys";
 
 interface CommentComposerProps {
   filePath: string;
@@ -82,11 +83,8 @@ export function CommentComposer({
           }}
           data-testid="comment-composer-save"
         >
-          Save draft
-          <Kbd>⌘</Kbd>
-          <span className="text-[11px] opacity-70">/</span>
-          <Kbd>Ctrl</Kbd>
-          <Kbd>Enter</Kbd>
+          Save Draft
+          <ModEnterChord />
         </button>
       </div>
     </div>

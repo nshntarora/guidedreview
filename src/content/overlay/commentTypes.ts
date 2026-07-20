@@ -47,7 +47,7 @@ export type UiMode = "navigate" | "comment";
 /** GitHub pull request review event (API names; ready for a later post path). */
 export type ReviewEvent = "COMMENT" | "APPROVE" | "REQUEST_CHANGES";
 
-/** Summary body + event chosen in the Submit review modal. */
+/** Summary body + event chosen in the Submit Review modal. */
 export interface ReviewSubmission {
   body: string;
   event: ReviewEvent;

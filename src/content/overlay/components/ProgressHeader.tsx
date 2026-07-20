@@ -1,12 +1,13 @@
 import type { ParsedDiff, PRContext } from "../../../lib/types";
 import { summarizeDiff } from "../../../lib/github/diffSummary";
 import { Kbd } from "./Kbd";
+import { ModEnterChord } from "./ShortcutKeys";
 
 interface ProgressHeaderProps {
   prContext: PRContext | null;
   diff: ParsedDiff | null;
   onExit: () => void;
-  /** Opens the Submit review modal. */
+  /** Opens the Submit Review modal. */
   onSubmitReview: () => void;
 }
 
@@ -66,11 +67,8 @@ export function ProgressHeader({
             onClick={onSubmitReview}
             data-testid="submit-review-button"
           >
-            Submit review
-            <Kbd>⌘</Kbd>
-            <span className="text-[11px] opacity-70">/</span>
-            <Kbd>Ctrl</Kbd>
-            <Kbd>Enter</Kbd>
+            Submit Review
+            <ModEnterChord />
           </button>
           <button
             type="button"

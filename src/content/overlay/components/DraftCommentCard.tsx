@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { formatLineRangeLabel, type DraftComment } from "../commentTypes";
 import { Kbd } from "./Kbd";
+import { ModEnterChord } from "./ShortcutKeys";
 
 interface DraftCommentCardProps {
   comment: DraftComment;
@@ -119,10 +120,7 @@ export function DraftCommentCard({
               data-testid="draft-comment-edit-save"
             >
               Save
-              <Kbd>⌘</Kbd>
-              <span className="text-[11px] opacity-70">/</span>
-              <Kbd>Ctrl</Kbd>
-              <Kbd>Enter</Kbd>
+              <ModEnterChord />
             </button>
           </div>
         </>

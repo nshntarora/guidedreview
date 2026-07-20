@@ -67,9 +67,9 @@ export function Overlay({ onRequestClose }: OverlayProps) {
   /** Pending `v` leader for view-mode chords (`v+u` / `v+s`). */
   const viewChordRef = useRef<ViewChordPending>(null);
   const [submitReviewOpen, setSubmitReviewOpen] = useState(false);
-  /** Latest submit action from the open Submit review modal (for ⌘/Ctrl+Enter). */
+  /** Latest submit action from the open Submit Review modal (for ⌘/Ctrl+Enter). */
   const submitReviewActionRef = useRef<(() => void) | null>(null);
-  /** Choose-step keys (↑/↓/Enter) for the open Submit review modal. */
+  /** Choose-step keys (↑/↓/Enter) for the open Submit Review modal. */
   const submitReviewKeyRef = useRef<((e: KeyboardEvent) => boolean) | null>(
     null,
   );
@@ -203,7 +203,7 @@ export function Overlay({ onRequestClose }: OverlayProps) {
         return;
       }
 
-      // ⌘/Ctrl+Enter opens the Submit review modal (when not typing in a field).
+      // ⌘/Ctrl+Enter opens the Submit Review modal (when not typing in a field).
       if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
         viewChordRef.current = null;

@@ -8,6 +8,7 @@ import {
 } from "react";
 import type { ReviewEvent, ReviewSubmission } from "../commentTypes";
 import { Kbd } from "./Kbd";
+import { ModEnterChord } from "./ShortcutKeys";
 
 interface SubmitReviewModalProps {
   open: boolean;
@@ -43,7 +44,7 @@ const REVIEW_EVENTS: {
   },
   {
     value: "REQUEST_CHANGES",
-    label: "Request changes",
+    label: "Request Changes",
     description: "Submit feedback that must be addressed before merging.",
   },
 ];
@@ -232,7 +233,7 @@ export function SubmitReviewModal({
       >
         <div className="flex items-center justify-between gap-3 border-b border-gr-border px-4 py-3">
           <h2 id={titleId} className="m-0 text-[15px] font-semibold text-gr-text">
-            Submit review
+            Submit Review
           </h2>
           <button
             type="button"
@@ -377,11 +378,8 @@ export function SubmitReviewModal({
                   onClick={handleSubmit}
                   data-testid="submit-review-confirm"
                 >
-                  Submit review
-                  <Kbd>⌘</Kbd>
-                  <span className="text-[11px] opacity-70">/</span>
-                  <Kbd>Ctrl</Kbd>
-                  <Kbd>Enter</Kbd>
+                  Submit Review
+                  <ModEnterChord />
                 </button>
               </div>
             </div>

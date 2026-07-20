@@ -503,14 +503,14 @@ describe("Overlay", () => {
   });
 
   describe("submit review modal", () => {
-    it("opens from the header Submit review button", () => {
+    it("opens from the header Submit Review button", () => {
       seedReadyReview(0);
       render(<Overlay />);
 
       expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
       fireEvent.click(screen.getByTestId("submit-review-button"));
       expect(screen.getByTestId("submit-review-modal")).toBeInTheDocument();
-      expect(screen.getByRole("dialog", { name: "Submit review" })).toBeInTheDocument();
+      expect(screen.getByRole("dialog", { name: "Submit Review" })).toBeInTheDocument();
     });
 
     it("opens with meta+Enter when the modal is closed", () => {

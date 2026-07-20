@@ -19,6 +19,7 @@ import type { ResolvedUnitFile } from "../selectors";
 import { CommentComposer } from "./CommentComposer";
 import { DraftCommentCard } from "./DraftCommentCard";
 import { Kbd } from "./Kbd";
+import { ShortcutKeys } from "./ShortcutKeys";
 
 interface DiffPaneProps {
   files: ResolvedUnitFile[];
@@ -469,8 +470,7 @@ function DiffViewToggle({
           onClick={() => onChange("unified")}
         >
           Unified
-          <Kbd>v</Kbd>
-          <Kbd>u</Kbd>
+          <ShortcutKeys keys={["v", "u"]} join="sequence" />
         </button>
         <button
           type="button"
@@ -485,8 +485,7 @@ function DiffViewToggle({
           onClick={() => onChange("split")}
         >
           Split
-          <Kbd>v</Kbd>
-          <Kbd>s</Kbd>
+          <ShortcutKeys keys={["v", "s"]} join="sequence" />
         </button>
       </div>
     </div>
@@ -523,7 +522,7 @@ function AddCommentButton({
           ? "cursor-not-allowed bg-gr-bg text-gr-faint opacity-60"
           : "cursor-pointer bg-gr-bg text-gr-text hover:bg-gr-subtle",
       )}
-      aria-label="Add comment"
+      aria-label="Add Comment"
       disabled={disabled}
       data-testid="enter-comment-mode"
       onClick={() => {
