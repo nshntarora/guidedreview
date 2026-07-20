@@ -35,7 +35,7 @@ interface SubmitReviewModalProps {
 }
 
 const modalBtn =
-  "inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md border px-3 py-2 text-base";
+  "inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md border px-3 py-2 text-base disabled:cursor-not-allowed disabled:opacity-50";
 
 
 const REVIEW_EVENTS: {
@@ -384,7 +384,7 @@ export function SubmitReviewModal({
             <div className="flex items-center justify-between gap-2 border-t border-gr-border px-4 py-3">
               <button
                 type="button"
-                className={`${modalBtn} border-gr-border bg-gr-bg text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50`}
+                className={`${modalBtn} border-gr-border bg-gr-bg text-gr-muted hover:bg-gr-subtle hover:text-gr-text`}
                 onClick={goBack}
                 disabled={submitting}
                 data-testid="submit-review-back"
@@ -394,7 +394,7 @@ export function SubmitReviewModal({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className={`${modalBtn} border-gr-border bg-gr-bg text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50`}
+                  className={`${modalBtn} border-gr-border bg-gr-bg text-gr-muted hover:bg-gr-subtle hover:text-gr-text`}
                   onClick={onClose}
                   disabled={submitting}
                   data-testid="submit-review-cancel"
@@ -404,7 +404,7 @@ export function SubmitReviewModal({
                 </button>
                 <button
                   type="button"
-                  className={`${modalBtn} border-gr-accent bg-gr-accent font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover disabled:cursor-not-allowed disabled:opacity-60 [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit`}
+                  className={`${modalBtn} border-gr-accent bg-gr-accent font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover disabled:opacity-60 [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit`}
                   onClick={handleSubmit}
                   disabled={submitting}
                   data-testid="submit-review-confirm"

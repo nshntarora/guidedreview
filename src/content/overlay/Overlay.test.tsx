@@ -7,6 +7,7 @@ import { PR_DESCRIPTION_UNIT_TITLE } from "./displayUnits";
 import { VIEW_CHORD_WINDOW_MS } from "./viewModeChord";
 import type { ParsedDiff, PRContext, ReviewPlan } from "../../lib/types";
 import * as messaging from "../../lib/messaging";
+import * as oauthConfig from "../../lib/github/oauthConfig";
 
 const sampleAuth = {
   accessToken: "gho_test",
@@ -20,6 +21,12 @@ vi.mock("../../lib/messaging", () => ({
   getGitHubAuthStatus: vi.fn(),
   startGitHubDeviceAuth: vi.fn(),
   pollGitHubDeviceAuth: vi.fn(),
+}));
+
+// CI has no .env with VITE_GITHUB_CLIENT_ID; mock configured so the connect
+// prompt/button render (same pattern as ConnectGitHubModal.test.tsx).
+vi.mock("../../lib/github/oauthConfig", () => ({
+  isGitHubOAuthConfigured: vi.fn(() => true),
 }));
 
 function diffFixture(): ParsedDiff {
@@ -112,6 +119,7 @@ describe("Overlay", () => {
     Element.prototype.scrollTo = vi.fn();
     // jsdom does not implement scrollBy; ArrowDown scrolls the code column.
     Element.prototype.scrollBy = vi.fn();
+    vi.mocked(oauthConfig.isGitHubOAuthConfigured).mockReturnValue(true);
     vi.mocked(messaging.submitPullRequestReview).mockReset();
     vi.mocked(messaging.submitPullRequestReview).mockResolvedValue({
       ok: true,

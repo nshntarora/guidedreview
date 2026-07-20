@@ -244,7 +244,7 @@ describe("DiffPane", () => {
 
     renderPane([{ file, hunks: [] }]);
 
-    // buildPRFileDiffUrl is async (crypto.subtle); wait for the link to appear.
+    // URL is built async via crypto.subtle — wait for the link to appear.
     const link = await screen.findByTestId("binary-elided-github-link");
 
     expect(link).toHaveAttribute(
