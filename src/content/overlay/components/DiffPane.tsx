@@ -213,6 +213,7 @@ function UnifiedHunk({
             <div
               data-line-id={id}
               data-testid={isFocus ? "diff-line-focus" : undefined}
+              aria-current={isFocus ? "true" : undefined}
               className={cn(
                 DIFF_LINE_WRAP,
                 showDiffBg && line.type === "add" && "bg-gr-add-bg",
@@ -308,6 +309,7 @@ function SplitCellView({
       data-side={side}
       data-line-id={lineId}
       data-testid={isFocus ? "diff-line-focus" : undefined}
+      aria-current={isFocus ? "true" : undefined}
     >
       <span
         className={lineNumberClasses(highlightNumber)}
@@ -460,32 +462,34 @@ function DiffViewToggle({
         <button
           type="button"
           className={cn(
-            "inline-flex cursor-pointer items-center gap-1.5 px-3 py-1.5 text-[13px] transition-colors",
+            "inline-flex min-h-11 cursor-pointer items-center gap-1.5 px-3 py-2 text-[13px] transition-colors",
             mode === "unified"
               ? "bg-gr-subtle text-gr-text"
               : "bg-transparent text-gr-muted hover:bg-gr-subtle hover:text-gr-text",
           )}
-          aria-label="Unified"
           aria-pressed={mode === "unified"}
           onClick={() => onChange("unified")}
         >
           Unified
-          <ShortcutKeys keys={["v", "u"]} join="sequence" />
+          <span aria-hidden="true">
+            <ShortcutKeys keys={["v", "u"]} join="sequence" />
+          </span>
         </button>
         <button
           type="button"
           className={cn(
-            "inline-flex cursor-pointer items-center gap-1.5 border-l border-gr-border px-3 py-1.5 text-[13px] transition-colors",
+            "inline-flex min-h-11 cursor-pointer items-center gap-1.5 border-l border-gr-border px-3 py-2 text-[13px] transition-colors",
             mode === "split"
               ? "bg-gr-subtle text-gr-text"
               : "bg-transparent text-gr-muted hover:bg-gr-subtle hover:text-gr-text",
           )}
-          aria-label="Split"
           aria-pressed={mode === "split"}
           onClick={() => onChange("split")}
         >
           Split
-          <ShortcutKeys keys={["v", "s"]} join="sequence" />
+          <span aria-hidden="true">
+            <ShortcutKeys keys={["v", "s"]} join="sequence" />
+          </span>
         </button>
       </div>
     </div>
@@ -517,12 +521,11 @@ function AddCommentButton({
     <button
       type="button"
       className={cn(
-        "inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gr-border px-3 py-1.5 text-[13px] transition-colors",
+        "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-md border border-gr-border px-3 py-2 text-[13px] transition-colors",
         disabled
           ? "cursor-not-allowed bg-gr-bg text-gr-faint opacity-60"
           : "cursor-pointer bg-gr-bg text-gr-text hover:bg-gr-subtle",
       )}
-      aria-label="Add Comment"
       disabled={disabled}
       data-testid="enter-comment-mode"
       onClick={() => {
@@ -531,7 +534,9 @@ function AddCommentButton({
       }}
     >
       Add Comment
-      <Kbd>c</Kbd>
+      <span aria-hidden="true">
+        <Kbd>c</Kbd>
+      </span>
     </button>
   );
 }
@@ -701,8 +706,41 @@ export function DiffPane({ files, unitTitle, unitId }: DiffPaneProps) {
   const commentModeActive = uiMode === "comment";
   const commentModeDisabled = unitSelectableLines.length === 0;
 
+  // Announce focused/selected lines so comment mode is not color-only (1.4.1 / 4.1.3).
+  const selectionAnnouncement = useMemo(() => {
+    if (uiMode !== "comment" || !lineSelection) return "";
+    const lines =
+      selectableLines.length > 0 ? selectableLines : unitSelectableLines;
+    const focused = lines[lineSelection.focusIndex];
+    if (!focused) return "Comment mode. No line focused.";
+    const selected = linesInSelection(lines, lineSelection);
+    const focusNum = displayLineNumber(focused);
+    if (selected.length > 1) {
+      const first = selected[0];
+      const last = selected[selected.length - 1];
+      const start = displayLineNumber(first);
+      const end = displayLineNumber(last);
+      return `Comment mode. ${focused.filePath}, lines ${start ?? "?"} to ${end ?? "?"} selected.`;
+    }
+    return `Comment mode. ${focused.filePath}, line ${focusNum ?? "?"}.`;
+  }, [
+    uiMode,
+    lineSelection,
+    selectableLines,
+    unitSelectableLines,
+  ]);
+
   return (
     <div ref={rootRef}>
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="gr-sr-only"
+        data-testid="comment-selection-status"
+      >
+        {selectionAnnouncement}
+      </div>
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2
           className="min-w-0 truncate text-[15px] font-semibold text-gr-text"

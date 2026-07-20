@@ -42,7 +42,8 @@ describe("ContextPanel error state", () => {
     expect(screen.getByTestId("error-code")).toHaveTextContent("rate_limit_error");
     expect(screen.getByTestId("error-message")).toHaveTextContent("Rate limit exceeded");
 
-    screen.getByRole("button", { name: /retry building the guided review/i }).click();
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+    screen.getByRole("button", { name: /^retry$/i }).click();
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 

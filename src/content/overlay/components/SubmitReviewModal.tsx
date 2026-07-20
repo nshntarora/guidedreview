@@ -5,6 +5,7 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
   type MutableRefObject,
+  type Ref,
 } from "react";
 import type { ReviewEvent, ReviewSubmission } from "../commentTypes";
 import { Kbd } from "./Kbd";
@@ -25,7 +26,12 @@ interface SubmitReviewModalProps {
    * Returns true when the key was handled (caller should preventDefault).
    */
   keyActionRef?: MutableRefObject<((e: KeyboardEvent) => boolean) | null>;
+  /** Dialog panel node for Tab focus trapping in the overlay capture handler. */
+  dialogRef?: Ref<HTMLDivElement>;
 }
+
+const modalBtn =
+  "inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md border px-3 py-2 text-[13px]";
 
 const REVIEW_EVENTS: {
   value: ReviewEvent;
@@ -66,6 +72,7 @@ export function SubmitReviewModal({
   onSubmit,
   submitActionRef,
   keyActionRef,
+  dialogRef,
 }: SubmitReviewModalProps) {
   const titleId = useId();
   const listboxId = useId();
@@ -223,6 +230,7 @@ export function SubmitReviewModal({
       }}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -237,7 +245,7 @@ export function SubmitReviewModal({
           </h2>
           <button
             type="button"
-            className="inline-flex cursor-pointer items-center justify-center rounded-md border border-gr-border bg-gr-bg p-1.5 text-gr-muted hover:bg-gr-subtle hover:text-gr-text"
+            className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-md border border-gr-border bg-gr-bg p-2 text-gr-muted hover:bg-gr-subtle hover:text-gr-text"
             onClick={onClose}
             aria-label="Close"
             data-testid="submit-review-close"
@@ -272,7 +280,7 @@ export function SubmitReviewModal({
                 aria-label="Review type"
                 aria-activedescendant={activeOptionId}
                 data-testid="submit-review-event-list"
-                className="flex flex-col gap-2 outline-none"
+                className="flex flex-col gap-2 rounded-md"
                 onKeyDown={handleListboxKeyDown}
               >
                 {REVIEW_EVENTS.map((opt, index) => {
@@ -316,7 +324,7 @@ export function SubmitReviewModal({
             <div className="flex items-center justify-end gap-2 border-t border-gr-border px-4 py-3">
               <button
                 type="button"
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-[13px] text-gr-muted hover:bg-gr-subtle hover:text-gr-text"
+                className={`${modalBtn} border-gr-border bg-gr-bg text-gr-muted hover:bg-gr-subtle hover:text-gr-text`}
                 onClick={onClose}
                 data-testid="submit-review-cancel"
               >
@@ -330,7 +338,7 @@ export function SubmitReviewModal({
             <div className="flex flex-col gap-4 px-4 py-4">
               <textarea
                 ref={textareaRef}
-                className="min-h-[100px] w-full resize-y rounded-md border border-gr-border bg-gr-bg px-3 py-2 font-sans text-[14px] leading-relaxed text-gr-text outline-none placeholder:text-gr-faint focus:border-gr-accent"
+                className="min-h-[100px] w-full resize-y rounded-md border border-gr-border bg-gr-bg px-3 py-2 font-sans text-[14px] leading-relaxed text-gr-text placeholder:text-gr-faint focus:border-gr-accent"
                 placeholder="Leave a comment"
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
@@ -356,7 +364,7 @@ export function SubmitReviewModal({
             <div className="flex items-center justify-between gap-2 border-t border-gr-border px-4 py-3">
               <button
                 type="button"
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-[13px] text-gr-muted hover:bg-gr-subtle hover:text-gr-text"
+                className={`${modalBtn} border-gr-border bg-gr-bg text-gr-muted hover:bg-gr-subtle hover:text-gr-text`}
                 onClick={goBack}
                 data-testid="submit-review-back"
               >
@@ -365,7 +373,7 @@ export function SubmitReviewModal({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-[13px] text-gr-muted hover:bg-gr-subtle hover:text-gr-text"
+                  className={`${modalBtn} border-gr-border bg-gr-bg text-gr-muted hover:bg-gr-subtle hover:text-gr-text`}
                   onClick={onClose}
                   data-testid="submit-review-cancel"
                 >
@@ -374,7 +382,7 @@ export function SubmitReviewModal({
                 </button>
                 <button
                   type="button"
-                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-[13px] font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit"
+                  className={`${modalBtn} border-gr-accent bg-gr-accent font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit`}
                   onClick={handleSubmit}
                   data-testid="submit-review-confirm"
                 >

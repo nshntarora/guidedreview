@@ -218,7 +218,7 @@ describe("Overlay", () => {
     expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
 
-    screen.getByRole("button", { name: /retry building the guided review/i }).click();
+    screen.getByRole("button", { name: /^retry$/i }).click();
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
