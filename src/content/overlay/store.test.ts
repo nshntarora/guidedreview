@@ -104,7 +104,7 @@ describe("useReviewStore", () => {
   it("startLoading sets status to loading, stores sessionKey, clears plan/diff/error, and resets unit index", () => {
     resetStore();
     useReviewStore.setState({
-      error: "boom",
+      error: { message: "boom" },
       plan: planFixture(1),
       diff: diffFixture(),
       currentUnitIndex: 2,
@@ -194,11 +194,49 @@ describe("useReviewStore", () => {
     expect(useReviewStore.getState().currentUnitIndex).toBe(2);
   });
 
-  it("setError sets status to error with the message", () => {
+  it("setError sets status to error with a normalized message", () => {
     resetStore();
     useReviewStore.getState().setError("something broke");
     expect(useReviewStore.getState().status).toBe("error");
-    expect(useReviewStore.getState().error).toBe("something broke");
+    expect(useReviewStore.getState().error).toEqual({ message: "something broke" });
+  });
+
+  it("setError accepts structured ReviewErrorInfo", () => {
+    resetStore();
+    useReviewStore.getState().setError({
+      message: "Invalid API key",
+      statusCode: 401,
+      code: "authentication_error",
+    });
+    expect(useReviewStore.getState().error).toEqual({
+      message: "Invalid API key",
+      statusCode: 401,
+      code: "authentication_error",
+    });
+  });
+
+  it("beginRetry bumps generation, clears error/plan, keeps diff, and returns the new generation", () => {
+    resetStore();
+    useReviewStore.setState({
+      status: "error",
+      error: { message: "boom", statusCode: 500 },
+      diff: diffFixture(),
+      plan: planFixture(2),
+      prContext: prContextFixture(),
+      streamGeneration: 3,
+      sessionKey: SESSION_KEY,
+    });
+
+    const generation = useReviewStore.getState().beginRetry();
+    const state = useReviewStore.getState();
+
+    expect(generation).toBe(4);
+    expect(state.streamGeneration).toBe(4);
+    expect(state.status).toBe("streaming");
+    expect(state.error).toBeNull();
+    expect(state.plan).toEqual({ units: [] });
+    expect(state.diff).toEqual(diffFixture());
+    expect(state.sessionKey).toBe(SESSION_KEY);
   });
 
   it("setPRContext stores the context", () => {

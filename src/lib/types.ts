@@ -107,14 +107,25 @@ export interface AnnotateReviewRequest {
 }
 
 /**
+ * User-facing details for a failed review annotation (or related) step.
+ * `message` is always present; HTTP status / provider codes are optional.
+ */
+export interface ReviewErrorInfo {
+  message: string;
+  statusCode?: number;
+  /** Provider-specific code, e.g. `invalid_api_key` or `authentication_error`. */
+  code?: string;
+}
+
+/**
  * Progressive events on the `annotate-review` port from background → content.
  * Complete, validated units are pushed as they become available; DONE carries
- * the final merged plan; ERROR ends the stream with a user-safe message.
+ * the final merged plan; ERROR ends the stream with structured error details.
  */
 export type AnnotateReviewStreamEvent =
   | { type: "UNIT"; unit: ReviewUnit }
   | { type: "DONE"; plan: ReviewPlan }
-  | { type: "ERROR"; error: string };
+  | { type: "ERROR"; error: ReviewErrorInfo };
 
 export interface TestConnectionRequest {
   type: "TEST_CONNECTION";

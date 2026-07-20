@@ -24,5 +24,20 @@ export interface ProviderClient {
   testConnection(settings: ProviderSettings): Promise<void>;
 }
 
-/** Thrown for any provider-side failure; message is safe to show to the user. */
-export class ProviderError extends Error {}
+/**
+ * Thrown for any provider-side failure. `message` is safe to show to the user
+ * and should be the exact provider message when one was returned. Optional
+ * `statusCode` / `code` carry HTTP status and provider error codes.
+ */
+export class ProviderError extends Error {
+  readonly statusCode?: number;
+  /** Provider-specific code, e.g. `invalid_api_key` or `authentication_error`. */
+  readonly code?: string;
+
+  constructor(message: string, options?: { statusCode?: number; code?: string }) {
+    super(message);
+    this.name = "ProviderError";
+    this.statusCode = options?.statusCode;
+    this.code = options?.code;
+  }
+}

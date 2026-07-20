@@ -1,5 +1,11 @@
 import { create } from "zustand";
-import type { ParsedDiff, PRContext, ReviewPlan, ReviewUnit } from "../../lib/types";
+import type {
+  ParsedDiff,
+  PRContext,
+  ReviewErrorInfo,
+  ReviewPlan,
+  ReviewUnit,
+} from "../../lib/types";
 import {
   displayLineNumber,
   linesInSelection,
@@ -43,10 +49,14 @@ const COMMENT_UI_RESET = {
   selectableLines: [] as SelectableLine[],
 };
 
+function normalizeError(error: ReviewErrorInfo | string): ReviewErrorInfo {
+  return typeof error === "string" ? { message: error } : error;
+}
+
 interface ReviewState {
   isOpen: boolean;
   status: ReviewStatus;
-  error: string | null;
+  error: ReviewErrorInfo | null;
   diff: ParsedDiff | null;
   plan: ReviewPlan | null;
   prContext: PRContext | null;
@@ -79,9 +89,14 @@ interface ReviewState {
   setPRContext: (prContext: PRContext) => void;
   setDiff: (diff: ParsedDiff) => void;
   beginStreaming: (generation: number) => void;
+  /**
+   * Start a retry of the annotation stream without clearing the already-fetched
+   * diff. Bumps streamGeneration and returns the new generation.
+   */
+  beginRetry: () => number;
   appendUnit: (unit: ReviewUnit, generation: number) => void;
   setReady: (diff: ParsedDiff, plan: ReviewPlan, generation?: number) => void;
-  setError: (message: string, generation?: number) => void;
+  setError: (error: ReviewErrorInfo | string, generation?: number) => void;
   goToUnit: (index: number) => void;
   goNext: () => void;
   goPrev: () => void;
@@ -115,7 +130,10 @@ function storageKey(sessionKey: string): string {
 }
 
 function newDraftId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
   return `draft-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -167,6 +185,19 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
     set({ status: "streaming", plan: { units: [] }, error: null });
   },
 
+  beginRetry: () => {
+    const nextGeneration = get().streamGeneration + 1;
+    const hasDiff = get().diff !== null;
+    set({
+      streamGeneration: nextGeneration,
+      status: hasDiff ? "streaming" : "loading",
+      error: null,
+      plan: hasDiff ? { units: [] } : null,
+      ...clearCommentUi(),
+    });
+    return nextGeneration;
+  },
+
   appendUnit: (unit, generation) => {
     if (get().streamGeneration !== generation) return;
     set((state) => {
@@ -183,17 +214,25 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   },
 
   setReady: (diff, plan, generation) => {
-    if (generation !== undefined && get().streamGeneration !== generation) return;
+    if (generation !== undefined && get().streamGeneration !== generation)
+      return;
     set((state) => {
       const total = displayUnitCount(plan);
       const index = Math.min(Math.max(state.currentUnitIndex, 0), total - 1);
-      return { status: "ready", diff, plan, currentUnitIndex: index, error: null };
+      return {
+        status: "ready",
+        diff,
+        plan,
+        currentUnitIndex: index,
+        error: null,
+      };
     });
   },
 
-  setError: (message, generation) => {
-    if (generation !== undefined && get().streamGeneration !== generation) return;
-    set({ status: "error", error: message });
+  setError: (error, generation) => {
+    if (generation !== undefined && get().streamGeneration !== generation)
+      return;
+    set({ status: "error", error: normalizeError(error) });
   },
 
   goToUnit: (index) => {
@@ -415,15 +454,8 @@ export function resetDiffViewModeHydrationForTests(): void {
  * review flow.
  */
 export async function persistSession(): Promise<void> {
-  const {
-    status,
-    diff,
-    plan,
-    prContext,
-    currentUnitIndex,
-    sessionKey,
-    draftComments,
-  } = useReviewStore.getState();
+  const { status, diff, plan, prContext, currentUnitIndex, sessionKey } =
+    useReviewStore.getState();
   if (status !== "ready" || !diff || !plan || !sessionKey) return;
 
   const payload: PersistedSession = {
@@ -457,7 +489,10 @@ export async function restoreSession(sessionKey: string): Promise<boolean> {
   if (!saved) return false;
 
   const total = displayUnitCount(saved.plan);
-  const currentUnitIndex = Math.min(Math.max(saved.currentUnitIndex, 0), total - 1);
+  const currentUnitIndex = Math.min(
+    Math.max(saved.currentUnitIndex, 0),
+    total - 1,
+  );
 
   useReviewStore.setState({
     status: "ready",

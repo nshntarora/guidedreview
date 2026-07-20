@@ -1,4 +1,4 @@
-import type { ReviewUnit } from "../../../lib/types";
+import type { ReviewErrorInfo, ReviewUnit } from "../../../lib/types";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { Spinner } from "./Spinner";
 import { missingMetadataHint, PR_DESCRIPTION_HINT } from "../missingMetadata";
@@ -12,8 +12,10 @@ interface ContextPanelProps {
   hasTitle?: boolean;
   /** Whether the PR has a non-empty description. Used when the description unit is active. */
   hasDescription?: boolean;
-  error?: string | null;
+  error?: ReviewErrorInfo | null;
   loading?: boolean;
+  /** Retry the failed API / review build step. */
+  onRetry?: () => void;
 }
 
 export function ContextPanel({
@@ -22,6 +24,7 @@ export function ContextPanel({
   hasDescription = true,
   error,
   loading,
+  onRetry,
 }: ContextPanelProps) {
   if (error) {
     return (
@@ -29,9 +32,44 @@ export function ContextPanel({
         <div className="mb-2 text-xs font-semibold tracking-[0.04em] text-gr-muted uppercase">
           Something went wrong
         </div>
+
+        {(error.statusCode !== undefined || error.code) && (
+          <dl className="mb-2 m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[12.5px] leading-normal">
+            {error.statusCode !== undefined && (
+              <>
+                <dt className="m-0 font-medium text-gr-muted">HTTP status</dt>
+                <dd className="m-0 font-mono text-gr-danger" data-testid="error-status-code">
+                  {error.statusCode}
+                </dd>
+              </>
+            )}
+            {error.code && (
+              <>
+                <dt className="m-0 font-medium text-gr-muted">Error code</dt>
+                <dd className="m-0 font-mono break-all text-gr-danger" data-testid="error-code">
+                  {error.code}
+                </dd>
+              </>
+            )}
+          </dl>
+        )}
+
         <pre className="m-0 max-h-[40vh] overflow-x-auto overflow-y-auto rounded-md border border-gr-danger bg-gr-danger-subtle p-3 text-left font-mono text-[12.5px] leading-normal break-words whitespace-pre-wrap text-gr-danger">
-          <code>{error}</code>
+          <code data-testid="error-message">{error.message}</code>
         </pre>
+
+        {onRetry && (
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={onRetry}
+              aria-label="Retry building the guided review"
+              className="inline-flex cursor-pointer items-center rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-[13px] font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover"
+            >
+              Retry
+            </button>
+          </div>
+        )}
       </div>
     );
   }

@@ -3,10 +3,7 @@ import { useReviewStore, persistSession } from "./store";
 import { resolveUnitFiles } from "./selectors";
 import { buildDisplayUnits, displayUnitCount } from "./displayUnits";
 import { buildSelectableLines } from "./buildSelectableLines";
-import {
-  recordViewChordKey,
-  type ViewChordPending,
-} from "./viewModeChord";
+import { recordViewChordKey, type ViewChordPending } from "./viewModeChord";
 import type { ReviewSubmission } from "./commentTypes";
 import { ProgressHeader } from "./components/ProgressHeader";
 import { Sidebar } from "./components/Sidebar";
@@ -19,6 +16,8 @@ import { SubmitReviewModal } from "./components/SubmitReviewModal";
 interface OverlayProps {
   /** Invoked when the user exits so any in-flight stream can be cancelled. */
   onRequestClose?: () => void;
+  /** Retry a failed annotate / review-build step. */
+  onRetry?: () => void;
 }
 
 /**
@@ -47,7 +46,7 @@ function editableTextValue(el: HTMLElement): string {
   return el.innerText ?? "";
 }
 
-export function Overlay({ onRequestClose }: OverlayProps) {
+export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   const isOpen = useReviewStore((s) => s.isOpen);
   const status = useReviewStore((s) => s.status);
   const error = useReviewStore((s) => s.error);
@@ -111,11 +110,13 @@ export function Overlay({ onRequestClose }: OverlayProps) {
 
   const planStillBuilding = status === "loading" || status === "streaming";
   // Spinner on the description unit only while the plan is still being built.
-  const showBuildingSpinner = planStillBuilding && (!plan || currentUnitIndex === 0);
+  const showBuildingSpinner =
+    planStillBuilding && (!plan || currentUnitIndex === 0);
   const displayUnits = buildDisplayUnits(plan);
   const total = displayUnitCount(plan);
   const currentDisplay = displayUnits[currentUnitIndex] ?? displayUnits[0];
-  const isDescriptionUnit = !currentDisplay || currentDisplay.kind === "pr_description";
+  const isDescriptionUnit =
+    !currentDisplay || currentDisplay.kind === "pr_description";
   const currentReviewUnit =
     currentDisplay?.kind === "review" ? currentDisplay.unit : null;
 
@@ -290,13 +291,19 @@ export function Overlay({ onRequestClose }: OverlayProps) {
           return;
         case "ArrowUp":
           event.preventDefault();
-          viewChordRef.current = null;
-          codeColRef.current?.scrollBy({ top: -SCROLL_STEP, behavior: "smooth" });
+          event.stopPropagation();
+          codeColRef.current?.scrollBy({
+            top: -SCROLL_STEP,
+            behavior: "smooth",
+          });
           return;
         case "ArrowDown":
           event.preventDefault();
-          viewChordRef.current = null;
-          codeColRef.current?.scrollBy({ top: SCROLL_STEP, behavior: "smooth" });
+          event.stopPropagation();
+          codeColRef.current?.scrollBy({
+            top: SCROLL_STEP,
+            behavior: "smooth",
+          });
           return;
         case "c":
         case "C":
@@ -314,14 +321,33 @@ export function Overlay({ onRequestClose }: OverlayProps) {
 
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [isOpen, onRequestClose, selectableForUnit, currentUnitId, submitReviewOpen]);
+  }, [
+    isOpen,
+    onRequestClose,
+    selectableForUnit,
+    currentUnitId,
+    submitReviewOpen,
+  ]);
 
   if (!isOpen) return null;
 
+  const planStillBuilding = status === "loading" || status === "streaming";
+  // Spinner on the description unit only while the plan is still being built.
+  const showBuildingSpinner =
+    planStillBuilding && (!plan || currentUnitIndex === 0);
+  const displayUnits = buildDisplayUnits(plan);
+  const total = displayUnitCount(plan);
+  const totalKnown = status === "ready";
+  const currentDisplay = displayUnits[currentUnitIndex] ?? displayUnits[0];
+  const isDescriptionUnit =
+    !currentDisplay || currentDisplay.kind === "pr_description";
+  const currentReviewUnit =
+    currentDisplay?.kind === "review" ? currentDisplay.unit : null;
+  const resolvedFiles =
+    currentReviewUnit && diff ? resolveUnitFiles(currentReviewUnit, diff) : [];
+
   return (
-    <div
-      className="fixed inset-0 z-[2147483000] flex flex-col bg-gr-bg font-sans text-sm text-gr-text antialiased [color-scheme:dark] [text-rendering:optimizeLegibility]"
-    >
+    <div className="fixed inset-0 z-[2147483000] flex flex-col bg-gr-bg font-sans text-sm text-gr-text antialiased [color-scheme:dark] [text-rendering:optimizeLegibility]">
       <ProgressHeader
         prContext={prContext}
         diff={diff}
@@ -356,10 +382,12 @@ export function Overlay({ onRequestClose }: OverlayProps) {
               unit={currentReviewUnit}
               hasTitle={Boolean(prContext?.title?.trim())}
               hasDescription={Boolean(
-                prContext?.description?.trim() || prContext?.descriptionHtml?.trim()
+                prContext?.description?.trim() ||
+                prContext?.descriptionHtml?.trim(),
               )}
               error={status === "error" ? error : null}
               loading={showBuildingSpinner && isDescriptionUnit}
+              onRetry={status === "error" ? onRetry : undefined}
             />
           </div>
           <Sidebar

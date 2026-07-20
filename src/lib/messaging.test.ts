@@ -67,9 +67,14 @@ describe("messaging", () => {
     streamReviewPlan({ files: [] }, { title: "t" } as PRContext, { onUnit, onDone, onError });
     const port = vi.mocked(chrome.runtime.connect).mock.results[0].value as MockPort;
 
-    port.__emitMessage({ type: "ERROR", error: "No API key configured." });
+    const error = {
+      message: "Invalid API key",
+      statusCode: 401,
+      code: "authentication_error",
+    };
+    port.__emitMessage({ type: "ERROR", error });
 
-    expect(onError).toHaveBeenCalledWith("No API key configured.");
+    expect(onError).toHaveBeenCalledWith(error);
     expect(onDone).not.toHaveBeenCalled();
   });
 
