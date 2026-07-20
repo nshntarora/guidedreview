@@ -587,7 +587,7 @@ describe("Overlay", () => {
       expect(useReviewStore.getState().isOpen).toBe(false);
     });
 
-    it("submits a review to GitHub and closes the modal on success", async () => {
+    it("submits a review to GitHub and shows the success modal", async () => {
       seedReadyReview(0);
       useReviewStore.setState({
         draftComments: [
@@ -614,6 +614,10 @@ describe("Overlay", () => {
       await waitFor(() => {
         expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
       });
+      expect(screen.getByTestId("review-submitted-modal")).toBeInTheDocument();
+      expect(screen.getByTestId("review-submitted-summary")).toHaveTextContent(
+        "You approved this pull request and left 1 comment.",
+      );
       expect(messaging.submitPullRequestReview).toHaveBeenCalledWith(
         { owner: "acme", repo: "widgets", number: 1 },
         "Looks good",
@@ -629,6 +633,76 @@ describe("Overlay", () => {
       );
       expect(useReviewStore.getState().draftComments).toHaveLength(0);
       expect(useReviewStore.getState().isOpen).toBe(true);
+    });
+
+    it("exits guided review from the success modal and navigates to conversation", async () => {
+      const assign = vi.fn();
+      const originalLocation = window.location;
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: { pathname: "/acme/widgets/pull/1/files", assign },
+      });
+
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      fireEvent.click(screen.getByTestId("submit-review-button"));
+      fireEvent.click(screen.getByTestId("submit-review-event-APPROVE"));
+      fireEvent.change(screen.getByTestId("submit-review-body"), {
+        target: { value: "Looks good" },
+      });
+      fireEvent.click(screen.getByTestId("submit-review-confirm"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("review-submitted-modal")).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("review-submitted-exit"));
+
+      expect(useReviewStore.getState().isOpen).toBe(false);
+      expect(assign).toHaveBeenCalledWith(
+        "https://github.com/acme/widgets/pull/1",
+      );
+      expect(screen.queryByTestId("review-submitted-modal")).not.toBeInTheDocument();
+
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: originalLocation,
+      });
+    });
+
+    it("exits guided review with Enter while the success modal is open", async () => {
+      const assign = vi.fn();
+      const originalLocation = window.location;
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: { pathname: "/acme/widgets/pull/1", assign },
+      });
+
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      fireEvent.click(screen.getByTestId("submit-review-button"));
+      fireEvent.click(screen.getByTestId("submit-review-event-APPROVE"));
+      fireEvent.change(screen.getByTestId("submit-review-body"), {
+        target: { value: "Looks good" },
+      });
+      fireEvent.click(screen.getByTestId("submit-review-confirm"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("review-submitted-modal")).toBeInTheDocument();
+      });
+
+      fireEvent.keyDown(window, { key: "Enter" });
+
+      expect(useReviewStore.getState().isOpen).toBe(false);
+      expect(assign).not.toHaveBeenCalled();
+      expect(screen.queryByTestId("review-submitted-modal")).not.toBeInTheDocument();
+
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: originalLocation,
+      });
     });
 
     it("keeps the modal open and shows an error when submit fails", async () => {
@@ -683,6 +757,7 @@ describe("Overlay", () => {
       await waitFor(() => {
         expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
       });
+      expect(screen.getByTestId("review-submitted-modal")).toBeInTheDocument();
       expect(messaging.submitPullRequestReview).toHaveBeenCalledWith(
         { owner: "acme", repo: "widgets", number: 1 },
         "Approved via shortcut",
@@ -706,6 +781,10 @@ describe("Overlay", () => {
       await waitFor(() => {
         expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
       });
+      expect(screen.getByTestId("review-submitted-modal")).toBeInTheDocument();
+      expect(screen.getByTestId("review-submitted-summary")).toHaveTextContent(
+        "You submitted a comment review.",
+      );
       expect(messaging.submitPullRequestReview).toHaveBeenCalledWith(
         { owner: "acme", repo: "widgets", number: 1 },
         "General feedback",

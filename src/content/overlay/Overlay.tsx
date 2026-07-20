@@ -5,8 +5,9 @@ import { resolveUnitFiles } from "./selectors";
 import { buildDisplayUnits, displayUnitCount } from "./displayUnits";
 import { buildSelectableLines } from "./buildSelectableLines";
 import { recordViewChordKey, type ViewChordPending } from "./viewModeChord";
-import type { ReviewSubmission } from "./commentTypes";
+import type { ReviewEvent, ReviewSubmission } from "./commentTypes";
 import { mapDraftsToReviewComments } from "./mapDraftComments";
+import { navigateToPrConversation } from "./prConversationUrl";
 import { ProgressHeader } from "./components/ProgressHeader";
 import { Sidebar } from "./components/Sidebar";
 import { DiffPane } from "./components/DiffPane";
@@ -14,6 +15,12 @@ import { DescriptionPane } from "./components/DescriptionPane";
 import { ContextPanel } from "./components/ContextPanel";
 import { FooterNav } from "./components/FooterNav";
 import { SubmitReviewModal } from "./components/SubmitReviewModal";
+import { ReviewSubmittedModal } from "./components/ReviewSubmittedModal";
+
+interface SubmitSuccessInfo {
+  event: ReviewEvent;
+  commentCount: number;
+}
 
 interface OverlayProps {
   /** Invoked when the user exits so any in-flight stream can be cancelled. */
@@ -72,6 +79,9 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   const [submitReviewError, setSubmitReviewError] = useState<string | null>(
     null,
   );
+  const [submitSuccess, setSubmitSuccess] = useState<SubmitSuccessInfo | null>(
+    null,
+  );
   /** Latest submit action from the open Submit Review modal (for ⌘/Ctrl+Enter). */
   const submitReviewActionRef = useRef<(() => void) | null>(null);
   /** Choose-step keys (↑/↓/Enter) for the open Submit Review modal. */
@@ -81,10 +91,18 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   /** Ignore stale submit responses after the modal is closed or a newer submit. */
   const submitGenerationRef = useRef(0);
 
-  const handleExit = () => {
+  const handleExit = useCallback(() => {
     onRequestClose?.();
     close();
-  };
+  }, [onRequestClose, close]);
+
+  const exitAfterSubmit = useCallback(() => {
+    setSubmitSuccess(null);
+    if (prContext) {
+      navigateToPrConversation(prContext);
+    }
+    handleExit();
+  }, [prContext, handleExit]);
 
   const draftComments = useReviewStore((s) => s.draftComments);
   const clearDraftComments = useReviewStore((s) => s.clearDraftComments);
@@ -140,9 +158,11 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
           return;
         }
 
+        const commentCount = mapDraftsToReviewComments(draftComments).length;
         clearDraftComments();
         setSubmitReviewOpen(false);
         setSubmitReviewError(null);
+        setSubmitSuccess({ event: submission.event, commentCount });
       } catch (error: unknown) {
         if (generation !== submitGenerationRef.current) return;
         const message =
@@ -229,6 +249,27 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     // the key (so typing into the comment composer still inserts characters).
     function onKeyDown(event: KeyboardEvent): void {
       event.stopPropagation();
+
+      // Success modal: Enter / Esc exit guided review (single CTA dialog).
+      if (submitSuccess) {
+        viewChordRef.current = null;
+        if (
+          event.key === "Enter" &&
+          !event.metaKey &&
+          !event.ctrlKey &&
+          !event.altKey
+        ) {
+          event.preventDefault();
+          exitAfterSubmit();
+          return;
+        }
+        if (event.key === "Escape") {
+          event.preventDefault();
+          exitAfterSubmit();
+          return;
+        }
+        return;
+      }
 
       // Submit-review modal: Esc closes the dialog only (not the whole overlay).
       // ⌘/Ctrl+Enter submits on the compose step; ↑/↓/Enter drive the choose step.
@@ -406,6 +447,8 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     currentUnitId,
     submitReviewOpen,
     submittingReview,
+    submitSuccess,
+    exitAfterSubmit,
   ]);
 
   function openSubmitReviewModal(): void {
@@ -485,6 +528,13 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         error={submitReviewError}
         submitActionRef={submitReviewActionRef}
         keyActionRef={submitReviewKeyRef}
+      />
+
+      <ReviewSubmittedModal
+        open={submitSuccess !== null}
+        event={submitSuccess?.event ?? "COMMENT"}
+        commentCount={submitSuccess?.commentCount ?? 0}
+        onExit={exitAfterSubmit}
       />
     </div>
   );
