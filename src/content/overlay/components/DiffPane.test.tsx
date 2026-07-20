@@ -242,13 +242,10 @@ describe("DiffPane", () => {
       hunks: [],
     });
 
-    // Wrap render + crypto.subtle resolve so setState is inside act.
-    await act(async () => {
-      renderPane([{ file, hunks: [] }]);
-      await new Promise((r) => setTimeout(r, 0));
-    });
+    renderPane([{ file, hunks: [] }]);
 
-    const link = screen.getByTestId("binary-elided-github-link");
+    // buildPRFileDiffUrl is async (crypto.subtle); wait for the link to appear.
+    const link = await screen.findByTestId("binary-elided-github-link");
 
     expect(link).toHaveAttribute(
       "href",

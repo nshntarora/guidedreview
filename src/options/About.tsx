@@ -11,7 +11,7 @@ export function About() {
   const version = chrome.runtime.getManifest().version;
 
   return (
-    <div className="mx-auto max-w-[480px] px-6 py-8">
+    <main id="main-content" className="mx-auto max-w-[480px] px-6 py-8">
       <BrandHeader />
       <p className="mb-6 text-base text-opt-muted">
         AI-structured walkthroughs for GitHub pull requests
@@ -56,25 +56,23 @@ export function About() {
       <section className="mb-6">
         <h2 className={sectionTitle}>Privacy</h2>
         <p className={bodyText}>
-          Your AI API key and optional GitHub OAuth token are stored only in this browser via{" "}
+          Your API key is stored only in this browser via{" "}
           <code className="rounded bg-opt-subtle px-1 py-0.5 text-sm text-opt-text">
             chrome.storage.local
           </code>
-          . Diffs and prompts go only to the AI provider you choose (Anthropic, OpenAI, or xAI).
-          Connecting GitHub uses device sign-in so you can authorize API actions (such as
-          submitting reviews) without pasting a personal access token. There is no Guided Review
-          backend in the middle.
+          . Diffs and prompts go only to the provider you choose (Anthropic, OpenAI, or xAI).
+          There is no Guided Review backend in the middle.
         </p>
       </section>
 
-      <nav className="mt-8 border-t border-opt-border pt-6">
+      <nav className="mt-8 border-t border-opt-border pt-6" aria-label="Settings">
         <a
           href="#settings"
-          className="text-base font-semibold text-opt-muted no-underline hover:text-opt-text hover:underline"
+          className="text-base font-semibold text-opt-muted no-underline hover:text-opt-text hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent"
         >
           ← Settings
         </a>
       </nav>
-    </div>
+    </main>
   );
 }

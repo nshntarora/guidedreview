@@ -8,6 +8,7 @@ export function BrandHeader({ title = "Guided Review" }: { title?: string }) {
         alt=""
         width={40}
         height={40}
+        aria-hidden="true"
       />
       <h1 className="m-0 text-lg font-bold">{title}</h1>
     </div>

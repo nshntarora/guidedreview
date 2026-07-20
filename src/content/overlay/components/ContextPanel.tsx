@@ -28,7 +28,11 @@ export function ContextPanel({
 }: ContextPanelProps) {
   if (error) {
     return (
-      <div className="rounded-none border-0 bg-transparent px-0 py-0.5 pb-1">
+      <div
+        className="rounded-none border-0 bg-transparent px-0 py-0.5 pb-1"
+        role="alert"
+        data-testid="context-panel-error"
+      >
         <div className="mb-2 text-xs font-semibold tracking-[0.04em] text-gr-muted uppercase">
           Something went wrong
         </div>
@@ -63,8 +67,7 @@ export function ContextPanel({
             <button
               type="button"
               onClick={onRetry}
-              aria-label="Retry building the guided review"
-              className="inline-flex cursor-pointer items-center rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-base font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover"
+              className="inline-flex min-h-11 cursor-pointer items-center rounded-md border border-gr-accent bg-gr-accent px-3 py-2 text-base font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover"
             >
               Retry
             </button>
