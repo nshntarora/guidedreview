@@ -43,13 +43,7 @@ export function scrapePRContext(pr: PRIdentity): PRContext {
     'a[data-hovercard-type="user"].author',
   ]);
 
-  const baseRef =
-    firstAttr(['.commit-ref.base-ref[title]', '.base-ref[title]'], "title") ||
-    firstText([".commit-ref.base-ref", ".base-ref"]);
-
-  const headRef =
-    firstAttr(['.commit-ref.head-ref[title]', '.head-ref[title]'], "title") ||
-    firstText([".commit-ref.head-ref", ".head-ref"]);
+  const { baseRef, headRef } = scrapeBranchRefs(document);
 
   // Prefer a scraped title; fall back to document.title only when it looks like
   // a real PR title (GitHub's pattern is "Title · Pull Request #N · owner/repo").
@@ -65,9 +59,110 @@ export function scrapePRContext(pr: PRIdentity): PRContext {
     description: description ?? "",
     descriptionHtml: descriptionHtml ?? "",
     author: author ?? "",
+    baseRef,
+    headRef,
+  };
+}
+
+/**
+ * Resolve base/head branch names from GitHub's PR header DOM. GitHub uses
+ * several layouts depending on open vs merged and Conversation vs Files:
+ *
+ * 1. Classic labeled `.commit-ref.base-ref` / `.head-ref` (open Files tab)
+ * 2. Unlabeled `.commit-ref[title]` for base after merge (merged Files tab
+ *    drops the `base-ref` class because retargeting is disabled)
+ * 3. React Conversation chips: `a[data-component="BranchName"]` in
+ *    into-base / from-head order
+ *
+ * Each strategy only fills gaps left by earlier ones; missing refs stay "".
+ */
+function scrapeBranchRefs(root: ParentNode): { baseRef: string; headRef: string } {
+  let baseRef =
+    firstAttrIn(root, [".commit-ref.base-ref[title]", ".base-ref[title]"], "title") ||
+    firstTextIn(root, [".commit-ref.base-ref", ".base-ref"]);
+
+  let headRef =
+    firstAttrIn(root, [".commit-ref.head-ref[title]", ".head-ref[title]"], "title") ||
+    firstTextIn(root, [".commit-ref.head-ref", ".head-ref"]);
+
+  if (!baseRef || !headRef) {
+    const fromTitles = branchRefsFromCommitRefTitles(root);
+    baseRef = baseRef || fromTitles.baseRef;
+    headRef = headRef || fromTitles.headRef;
+  }
+
+  if (!baseRef || !headRef) {
+    const fromChips = branchRefsFromBranchNameChips(root);
+    baseRef = baseRef || fromChips.baseRef;
+    headRef = headRef || fromChips.headRef;
+  }
+
+  return {
     baseRef: normalizeRef(baseRef) ?? "",
     headRef: normalizeRef(headRef) ?? "",
   };
+}
+
+/**
+ * On merged PRs' Files tab, the base branch is still a `.commit-ref` with a
+ * `title="owner/repo:branch"` attribute, but without the `base-ref` class.
+ * Head usually still has `.head-ref`. Collect titled commit-refs and assign
+ * by class when present, otherwise treat the non-head one as base.
+ */
+function branchRefsFromCommitRefTitles(root: ParentNode): {
+  baseRef?: string;
+  headRef?: string;
+} {
+  const entries: { title: string; isBase: boolean; isHead: boolean }[] = [];
+  for (const el of root.querySelectorAll(".commit-ref[title]")) {
+    const title = el.getAttribute("title")?.trim();
+    if (!title) continue;
+    entries.push({
+      title,
+      isBase: el.classList.contains("base-ref"),
+      isHead: el.classList.contains("head-ref"),
+    });
+  }
+  if (entries.length === 0) return {};
+
+  const labeledBase = entries.find((e) => e.isBase)?.title;
+  const labeledHead = entries.find((e) => e.isHead)?.title;
+  const unlabeled = entries.filter((e) => !e.isBase && !e.isHead);
+
+  let baseRef = labeledBase;
+  let headRef = labeledHead;
+
+  // Merged Files: base lost its class but head kept `head-ref`.
+  if (!baseRef) {
+    baseRef = unlabeled[0]?.title;
+  }
+  if (!headRef) {
+    headRef =
+      unlabeled.find((e) => e.title !== baseRef)?.title ??
+      entries.find((e) => e.title !== baseRef)?.title;
+  }
+
+  return { baseRef, headRef };
+}
+
+/**
+ * New Conversation-tab header renders "into &lt;base&gt; from &lt;head&gt;" as
+ * Primer BranchName links. Take the first two unique chip texts.
+ */
+function branchRefsFromBranchNameChips(root: ParentNode): {
+  baseRef?: string;
+  headRef?: string;
+} {
+  const texts: string[] = [];
+  for (const el of root.querySelectorAll('a[data-component="BranchName"]')) {
+    const text = el.textContent?.trim();
+    if (!text) continue;
+    if (texts.includes(text)) continue;
+    texts.push(text);
+    if (texts.length >= 2) break;
+  }
+  if (texts.length === 0) return {};
+  return { baseRef: texts[0], headRef: texts[1] };
 }
 
 /**
@@ -82,8 +177,12 @@ function prTitleFromDocumentTitle(docTitle: string): string | undefined {
 }
 
 function firstText(selectors: string[]): string | undefined {
+  return firstTextIn(document, selectors);
+}
+
+function firstTextIn(root: ParentNode, selectors: string[]): string | undefined {
   for (const selector of selectors) {
-    const el = document.querySelector(selector);
+    const el = root.querySelector(selector);
     const text = el?.textContent?.trim();
     if (text) return text;
   }
@@ -145,9 +244,13 @@ export async function fetchConversationDescription(
   return { text: el.textContent?.trim() ?? "", html: DOMPurify.sanitize(el.innerHTML) };
 }
 
-function firstAttr(selectors: string[], attr: string): string | undefined {
+function firstAttrIn(
+  root: ParentNode,
+  selectors: string[],
+  attr: string
+): string | undefined {
   for (const selector of selectors) {
-    const el = document.querySelector(selector);
+    const el = root.querySelector(selector);
     const value = el?.getAttribute(attr)?.trim();
     if (value) return value;
   }

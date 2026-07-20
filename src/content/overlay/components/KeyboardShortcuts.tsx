@@ -1,10 +1,59 @@
-import { Kbd } from "./Kbd";
+import { ShortcutKeys, type ShortcutJoin } from "./ShortcutKeys";
 
-const SHORTCUTS = [
-  { keys: ["←", "→"], description: "Previous / next step" },
-  { keys: ["↑", "↓"], description: "Scroll the code pane" },
-  { keys: ["Esc"], description: "Exit the review" },
-] as const;
+/**
+ * Nested key groups for mixed joins (e.g. ⇧ + ↑ ↓ for multi-line select).
+ * Flat `keys` + `join` covers the common cases.
+ */
+type ShortcutRow =
+  | {
+      description: string;
+      keys: readonly string[];
+      join?: ShortcutJoin;
+    }
+  | {
+      description: string;
+      /** Chord of a modifier plus an alternative pair (no + between the pair). */
+      chordWithAlternatives: {
+        modifier: string;
+        alternatives: readonly string[];
+      };
+    };
+
+const SHORTCUTS: readonly ShortcutRow[] = [
+  { keys: ["←", "→"], join: "none", description: "Previous / next step" },
+  { keys: ["↑", "↓"], join: "none", description: "Scroll the code pane" },
+  { keys: ["v", "u"], join: "sequence", description: "Unified view" },
+  { keys: ["v", "s"], join: "sequence", description: "Split view" },
+  { keys: ["c"], join: "none", description: "Enter comment mode" },
+  { keys: ["↑", "↓"], join: "none", description: "Select lines (in comment mode)" },
+  {
+    description: "Multi-line select (comment mode)",
+    chordWithAlternatives: { modifier: "⇧", alternatives: ["↑", "↓"] },
+  },
+  { keys: ["Enter"], join: "none", description: "Open comment on selection" },
+  {
+    keys: ["mod", "Enter"],
+    join: "chord",
+    description: "Open / submit review (save draft in composer)",
+  },
+  { keys: ["Esc"], join: "none", description: "Exit comment mode / exit review" },
+];
+
+function ShortcutRowKeys({ row }: { row: ShortcutRow }) {
+  if ("chordWithAlternatives" in row) {
+    const { modifier, alternatives } = row.chordWithAlternatives;
+    return (
+      <span className="inline-flex items-center gap-1">
+        <ShortcutKeys keys={[modifier]} join="none" />
+        <span className="text-[11px] opacity-70" aria-hidden="true">
+          +
+        </span>
+        <ShortcutKeys keys={alternatives} join="none" />
+      </span>
+    );
+  }
+  return <ShortcutKeys keys={row.keys} join={row.join} />;
+}
 
 export function KeyboardShortcuts() {
   return (
@@ -13,14 +62,12 @@ export function KeyboardShortcuts() {
         Keyboard shortcuts
       </div>
       <ul className="m-0 flex list-none flex-col gap-2 p-0">
-        {SHORTCUTS.map(({ keys, description }) => (
-          <li key={description} className="flex items-center gap-3 text-[13px] text-gr-muted">
-            <span className="inline-flex min-w-[52px] shrink-0 items-center gap-1">
-              {keys.map((key) => (
-                <Kbd key={key}>{key}</Kbd>
-              ))}
+        {SHORTCUTS.map((row) => (
+          <li key={row.description} className="flex items-center gap-3 text-[13px] text-gr-muted">
+            <span className="inline-flex min-w-[72px] shrink-0 items-center gap-1">
+              <ShortcutRowKeys row={row} />
             </span>
-            <span>{description}</span>
+            <span>{row.description}</span>
           </li>
         ))}
       </ul>

@@ -184,6 +184,7 @@ export function Options() {
           type="button"
           className={cn(
             "inline-flex cursor-pointer items-center gap-2 rounded-md border border-opt-accent bg-opt-accent px-4 py-2 text-[13px] font-semibold text-opt-accent-on",
+            "enabled:hover:border-opt-accent-hover enabled:hover:bg-opt-accent-hover",
             "disabled:cursor-default disabled:opacity-60",
           )}
           onClick={onSave}

@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { sha256Hex } from "../../../lib/github/prFileDiffUrl";
 import type { DiffFile, DiffHunk, PRContext } from "../../../lib/types";
 import { DEFAULT_DIFF_VIEW_MODE } from "../diffViewMode";
@@ -70,6 +70,11 @@ function resetStore(): void {
     streamGeneration: 0,
     sessionKey: null,
     diffViewMode: DEFAULT_DIFF_VIEW_MODE,
+    uiMode: "navigate",
+    selectableLines: [],
+    lineSelection: null,
+    composerOpen: false,
+    draftComments: [],
   });
 }
 
@@ -90,6 +95,7 @@ describe("DiffPane", () => {
       "Wire up the new auth path",
     );
     expect(screen.getByTestId("diff-view-toggle")).toBeInTheDocument();
+    expect(screen.getByTestId("enter-comment-mode")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Split" })).toHaveAttribute(
       "aria-pressed",
       "true",
@@ -109,6 +115,65 @@ describe("DiffPane", () => {
     await act(async () => {
       await Promise.resolve();
     });
+  });
+
+  it("enters comment mode when Add Comment is pressed", async () => {
+    Element.prototype.scrollIntoView = vi.fn();
+    renderPane();
+
+    const button = screen.getByTestId("enter-comment-mode");
+    expect(button).toHaveTextContent(/add comment/i);
+    expect(button).not.toBeDisabled();
+    expect(screen.queryByTestId("comment-mode-chip")).not.toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(button);
+    });
+
+    expect(useReviewStore.getState().uiMode).toBe("comment");
+    expect(useReviewStore.getState().lineSelection).toEqual({
+      anchorIndex: 0,
+      focusIndex: 0,
+    });
+    expect(useReviewStore.getState().selectableLines.length).toBeGreaterThan(0);
+    // Button is replaced by the comment-mode label.
+    expect(screen.queryByTestId("enter-comment-mode")).not.toBeInTheDocument();
+    expect(screen.getByTestId("comment-mode-chip")).toBeInTheDocument();
+    expect(screen.getByTestId("comment-mode-chip")).toHaveTextContent(
+      /comment mode/i,
+    );
+  });
+
+  it("disables Add Comment when the unit has no selectable lines", async () => {
+    const file = fileFixture({
+      path: "logo.png",
+      isBinaryOrElided: true,
+      hunks: [],
+    });
+    renderPane([{ file, hunks: [] }]);
+
+    const button = screen.getByTestId("enter-comment-mode");
+    expect(button).toBeDisabled();
+
+    await act(async () => {
+      fireEvent.click(button);
+    });
+
+    expect(useReviewStore.getState().uiMode).toBe("navigate");
+  });
+
+  it("shows the comment-mode label to the left of the view toggle", async () => {
+    Element.prototype.scrollIntoView = vi.fn();
+    renderPane();
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("enter-comment-mode"));
+    });
+
+    const chip = screen.getByTestId("comment-mode-chip");
+    const toggle = screen.getByTestId("diff-view-toggle");
+    // Chip is a previous sibling of the toggle within the toolbar group.
+    expect(chip.compareDocumentPosition(toggle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("switches to unified view when Unified is pressed", async () => {
@@ -251,6 +316,108 @@ describe("DiffPane", () => {
     });
   });
 
+  it("focus highlights the line number gutter with brand colors", async () => {
+    Element.prototype.scrollIntoView = vi.fn();
+    useReviewStore.setState({ diffViewMode: "unified" });
+    renderPane();
+
+    const addId = "src/foo.ts#0:2:RIGHT";
+    const delId = "src/foo.ts#0:1:LEFT";
+    await act(async () => {
+      useReviewStore.getState().enterCommentMode([
+        {
+          id: addId,
+          filePath: "src/foo.ts",
+          hunkId: "src/foo.ts#0",
+          lineIndex: 2,
+          side: "RIGHT",
+          newLine: 2,
+          type: "add",
+        },
+        {
+          id: delId,
+          filePath: "src/foo.ts",
+          hunkId: "src/foo.ts#0",
+          lineIndex: 1,
+          side: "LEFT",
+          oldLine: 2,
+          type: "del",
+        },
+      ]);
+    });
+
+    const focus = screen.getByTestId("diff-line-focus");
+    expect(focus).toHaveAttribute("data-line-id", addId);
+    // Row wash + brand line-number gutter both mark focus.
+    expect(focus.className).toMatch(/bg-gr-accent-subtle/);
+    expect(focus.className).not.toMatch(/bg-gr-add-bg/);
+
+    const focusNumbers = screen.getAllByTestId("diff-line-number-highlight");
+    expect(focusNumbers.length).toBeGreaterThan(0);
+    for (const num of focusNumbers) {
+      expect(num.className).toMatch(/bg-gr-accent/);
+      expect(num.className).toMatch(/text-gr-accent-on/);
+    }
+
+    // Unfocused del line still uses del background.
+    const delLine = document.querySelector(`[data-line-id="${delId}"]`);
+    expect(delLine?.className).toMatch(/bg-gr-del-bg/);
+    expect(delLine?.className).not.toMatch(/bg-gr-accent-subtle/);
+  });
+
+  it("highlights line numbers for every line in a multi-line selection", async () => {
+    Element.prototype.scrollIntoView = vi.fn();
+    useReviewStore.setState({ diffViewMode: "unified" });
+    renderPane();
+
+    const firstId = "src/foo.ts#0:2:RIGHT";
+    const secondId = "src/foo.ts#0:3:RIGHT";
+    await act(async () => {
+      useReviewStore.getState().enterCommentMode([
+        {
+          id: firstId,
+          filePath: "src/foo.ts",
+          hunkId: "src/foo.ts#0",
+          lineIndex: 2,
+          side: "RIGHT",
+          newLine: 2,
+          type: "add",
+        },
+        {
+          id: secondId,
+          filePath: "src/foo.ts",
+          hunkId: "src/foo.ts#0",
+          lineIndex: 3,
+          side: "RIGHT",
+          newLine: 3,
+          type: "add",
+        },
+      ]);
+      // Extend selection to cover both lines (anchor 0, focus 1).
+      useReviewStore.setState({
+        lineSelection: { anchorIndex: 0, focusIndex: 1 },
+      });
+    });
+
+    const firstLine = document.querySelector(`[data-line-id="${firstId}"]`);
+    const secondLine = document.querySelector(`[data-line-id="${secondId}"]`);
+    expect(firstLine).not.toBeNull();
+    expect(secondLine).not.toBeNull();
+
+    const firstNums = firstLine!.querySelectorAll(
+      '[data-testid="diff-line-number-highlight"]',
+    );
+    const secondNums = secondLine!.querySelectorAll(
+      '[data-testid="diff-line-number-highlight"]',
+    );
+    expect(firstNums.length).toBeGreaterThan(0);
+    expect(secondNums.length).toBeGreaterThan(0);
+    for (const num of [...firstNums, ...secondNums]) {
+      expect(num.className).toMatch(/bg-gr-accent/);
+      expect(num.className).toMatch(/text-gr-accent-on/);
+    }
+  });
+
   it("soft-wraps long lines in unified view", async () => {
     const longPath =
       'd="M0,0L12.34567890123456789012345678901234567890123456789012345678901234567890123456789z"';
@@ -268,10 +435,92 @@ describe("DiffPane", () => {
 
     const unified = screen.getByTestId("diff-view-unified");
     expect(unified.className).toMatch(/overflow-x-hidden/);
-    const line = unified.firstElementChild;
+    const line = unified.querySelector("[data-line-id]");
     expect(line?.className).toMatch(/whitespace-pre-wrap/);
     expect(line?.className).toMatch(/break-all/);
     expect(line?.textContent).toContain(longPath);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+  });
+
+  it("renders draft comment cards with a dark surface background", async () => {
+    Element.prototype.scrollIntoView = vi.fn();
+    const addId = "src/foo.ts#0:2:RIGHT";
+    useReviewStore.setState({
+      diffViewMode: "unified",
+      uiMode: "comment",
+      selectableLines: [
+        {
+          id: addId,
+          filePath: "src/foo.ts",
+          hunkId: "src/foo.ts#0",
+          lineIndex: 2,
+          side: "RIGHT",
+          newLine: 2,
+          type: "add",
+        },
+      ],
+      lineSelection: { anchorIndex: 0, focusIndex: 0 },
+      draftComments: [
+        {
+          id: "draft-1",
+          filePath: "src/foo.ts",
+          side: "RIGHT",
+          startLine: 2,
+          endLine: 2,
+          lineIds: [addId],
+          body: "Looks good",
+        },
+      ],
+    });
+    renderPane();
+
+    const card = screen.getByTestId("draft-comment");
+    expect(card.className).toMatch(/bg-gr-bg/);
+    expect(card.className).toMatch(/border-gr-border/);
+    expect(card.className).not.toMatch(/bg-gr-accent-subtle/);
+    expect(card).toHaveTextContent("Looks good");
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+  });
+
+  it("pins split-view comment extras to the right column only", async () => {
+    Element.prototype.scrollIntoView = vi.fn();
+    const addId = "src/foo.ts#0:2:RIGHT";
+    useReviewStore.setState({
+      diffViewMode: "split",
+      uiMode: "comment",
+      selectableLines: [
+        {
+          id: addId,
+          filePath: "src/foo.ts",
+          hunkId: "src/foo.ts#0",
+          lineIndex: 2,
+          side: "RIGHT",
+          newLine: 2,
+          type: "add",
+        },
+      ],
+      lineSelection: { anchorIndex: 0, focusIndex: 0 },
+      composerOpen: true,
+    });
+    renderPane();
+
+    const extrasRow = screen.getByTestId("split-line-extras");
+    expect(extrasRow.className).toMatch(/flex/);
+    expect(screen.getByTestId("comment-composer")).toBeInTheDocument();
+    // Composer lives under the right flex-1 column (third child: spacer, divider, right).
+    const children = Array.from(extrasRow.children);
+    expect(children).toHaveLength(3);
+    const rightCol = children[2];
+    expect(rightCol.className).toMatch(/flex-1/);
+    expect(rightCol.querySelector('[data-testid="comment-composer"]')).not.toBeNull();
+    // Left spacer has no comment UI.
+    expect(children[0].querySelector('[data-testid="comment-composer"]')).toBeNull();
 
     await act(async () => {
       await Promise.resolve();

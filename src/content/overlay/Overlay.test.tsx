@@ -4,6 +4,7 @@ import { Overlay } from "./Overlay";
 import { DEFAULT_DIFF_VIEW_MODE } from "./diffViewMode";
 import { useReviewStore } from "./store";
 import { PR_DESCRIPTION_UNIT_TITLE } from "./displayUnits";
+import { VIEW_CHORD_WINDOW_MS } from "./viewModeChord";
 import type { ParsedDiff, PRContext, ReviewPlan } from "../../lib/types";
 
 function diffFixture(): ParsedDiff {
@@ -70,6 +71,22 @@ function resetStore(): void {
     streamGeneration: 0,
     sessionKey: null,
     diffViewMode: DEFAULT_DIFF_VIEW_MODE,
+    uiMode: "navigate",
+    selectableLines: [],
+    lineSelection: null,
+    composerOpen: false,
+    draftComments: [],
+  });
+}
+
+function seedReadyReview(unitIndex = 1): void {
+  useReviewStore.setState({
+    isOpen: true,
+    status: "ready",
+    diff: diffFixture(),
+    plan: planFixture(),
+    prContext: prContextFixture(),
+    currentUnitIndex: unitIndex,
   });
 }
 
@@ -78,6 +95,8 @@ describe("Overlay", () => {
     resetStore();
     Element.prototype.scrollIntoView = vi.fn();
     Element.prototype.scrollTo = vi.fn();
+    // jsdom does not implement scrollBy; ArrowDown scrolls the code column.
+    Element.prototype.scrollBy = vi.fn();
   });
 
   it("renders nothing when the review isn't open", () => {
@@ -171,7 +190,10 @@ describe("Overlay", () => {
     expect(screen.getByLabelText(/keyboard shortcuts/i)).toBeInTheDocument();
     expect(screen.getByText(/previous \/ next step/i)).toBeInTheDocument();
     expect(screen.getByText(/scroll the code pane/i)).toBeInTheDocument();
-    expect(screen.getByText(/exit the review/i)).toBeInTheDocument();
+    expect(screen.getByText(/^unified view$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^split view$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^enter comment mode$/i)).toBeInTheDocument();
+    expect(screen.getByText(/exit comment mode \/ exit review/i)).toBeInTheDocument();
     expect(screen.queryByText(/building the rest of the walkthrough/i)).not.toBeInTheDocument();
   });
 
@@ -317,6 +339,442 @@ describe("Overlay", () => {
     expect(scrollToMock).toHaveBeenCalledWith({ top: 0 });
     expect(scrollIntoViewMock).toHaveBeenCalledWith({ block: "nearest", behavior: "smooth" });
     expect(screen.getByRole("button", { current: true }).textContent).toMatch(/Update foo/);
+  });
+
+  describe("comment mode keyboard", () => {
+    it("c enters comment mode on a review unit with code", () => {
+      seedReadyReview(1);
+      render(<Overlay />);
+
+      fireEvent.keyDown(window, { key: "c" });
+
+      expect(useReviewStore.getState().uiMode).toBe("comment");
+      expect(useReviewStore.getState().lineSelection).toEqual({
+        anchorIndex: 0,
+        focusIndex: 0,
+      });
+      expect(screen.getByTestId("comment-mode-chip")).toBeInTheDocument();
+      expect(screen.getByTestId("diff-line-focus")).toBeInTheDocument();
+    });
+
+    it("c is a no-op on the description unit", () => {
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      fireEvent.keyDown(window, { key: "c" });
+
+      expect(useReviewStore.getState().uiMode).toBe("navigate");
+    });
+
+    it("ArrowUp/Down move the line cursor instead of scrolling in comment mode", () => {
+      seedReadyReview(1);
+      // Multi-line hunk so cursor can move.
+      useReviewStore.setState({
+        diff: {
+          files: [
+            {
+              path: "src/foo.ts",
+              status: "modified",
+              isBinaryOrElided: false,
+              hunks: [
+                {
+                  id: "src/foo.ts#0",
+                  header: "@@ -1,2 +1,2 @@",
+                  oldStart: 1,
+                  oldLines: 2,
+                  newStart: 1,
+                  newLines: 2,
+                  lines: [
+                    { type: "context", content: "a", oldLine: 1, newLine: 1 },
+                    { type: "add", content: "b", newLine: 2 },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      });
+      render(<Overlay />);
+      fireEvent.keyDown(window, { key: "c" });
+
+      const scrollBy = vi.fn();
+      const codeCol = screen.getByTestId("code-col");
+      codeCol.scrollBy = scrollBy;
+
+      fireEvent.keyDown(window, { key: "ArrowDown" });
+      expect(useReviewStore.getState().lineSelection?.focusIndex).toBe(1);
+      expect(scrollBy).not.toHaveBeenCalled();
+    });
+
+    it("Shift+ArrowDown extends the selection", () => {
+      seedReadyReview(1);
+      useReviewStore.setState({
+        diff: {
+          files: [
+            {
+              path: "src/foo.ts",
+              status: "modified",
+              isBinaryOrElided: false,
+              hunks: [
+                {
+                  id: "src/foo.ts#0",
+                  header: "@@ -1,0 +1,3 @@",
+                  oldStart: 1,
+                  oldLines: 0,
+                  newStart: 1,
+                  newLines: 3,
+                  lines: [
+                    { type: "add", content: "a", newLine: 1 },
+                    { type: "add", content: "b", newLine: 2 },
+                    { type: "add", content: "c", newLine: 3 },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      });
+      render(<Overlay />);
+      fireEvent.keyDown(window, { key: "c" });
+      fireEvent.keyDown(window, { key: "ArrowDown", shiftKey: true });
+      fireEvent.keyDown(window, { key: "ArrowDown", shiftKey: true });
+
+      expect(useReviewStore.getState().lineSelection).toEqual({
+        anchorIndex: 0,
+        focusIndex: 2,
+      });
+    });
+
+    it("Enter opens the composer; Esc exits comment mode", () => {
+      seedReadyReview(1);
+      render(<Overlay />);
+      fireEvent.keyDown(window, { key: "c" });
+      fireEvent.keyDown(window, { key: "Enter" });
+
+      expect(useReviewStore.getState().composerOpen).toBe(true);
+      expect(screen.getByTestId("comment-composer")).toBeInTheDocument();
+
+      fireEvent.keyDown(screen.getByTestId("comment-composer-input"), {
+        key: "Escape",
+      });
+      expect(useReviewStore.getState().composerOpen).toBe(false);
+      expect(useReviewStore.getState().uiMode).toBe("comment");
+
+      fireEvent.keyDown(window, { key: "Escape" });
+      expect(useReviewStore.getState().uiMode).toBe("navigate");
+    });
+
+    it("Ctrl+Enter in the composer saves a draft comment", () => {
+      seedReadyReview(1);
+      render(<Overlay />);
+      fireEvent.keyDown(window, { key: "c" });
+      fireEvent.keyDown(window, { key: "Enter" });
+
+      const input = screen.getByTestId("comment-composer-input");
+      fireEvent.change(input, { target: { value: "Please add a test" } });
+      fireEvent.keyDown(input, { key: "Enter", ctrlKey: true });
+
+      expect(useReviewStore.getState().draftComments).toHaveLength(1);
+      expect(useReviewStore.getState().draftComments[0].body).toBe(
+        "Please add a test",
+      );
+      expect(useReviewStore.getState().composerOpen).toBe(false);
+      expect(screen.getByTestId("draft-comment")).toHaveTextContent(
+        "Please add a test",
+      );
+    });
+
+    it("Ctrl+Enter via window capture saves when the composer textarea is focused", () => {
+      seedReadyReview(1);
+      render(<Overlay />);
+      fireEvent.keyDown(window, { key: "c" });
+      fireEvent.keyDown(window, { key: "Enter" });
+
+      const input = screen.getByTestId("comment-composer-input");
+      fireEvent.change(input, { target: { value: "From window handler" } });
+      input.focus();
+      fireEvent.keyDown(input, { key: "Enter", ctrlKey: true, bubbles: true });
+
+      expect(useReviewStore.getState().draftComments).toHaveLength(1);
+      expect(useReviewStore.getState().draftComments[0].body).toBe(
+        "From window handler",
+      );
+    });
+  });
+
+  describe("submit review modal", () => {
+    it("opens from the header Submit Review button", () => {
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
+      fireEvent.click(screen.getByTestId("submit-review-button"));
+      expect(screen.getByTestId("submit-review-modal")).toBeInTheDocument();
+      expect(screen.getByRole("dialog", { name: "Submit Review" })).toBeInTheDocument();
+    });
+
+    it("opens with meta+Enter when the modal is closed", () => {
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
+      fireEvent.keyDown(window, { key: "Enter", metaKey: true });
+      expect(screen.getByTestId("submit-review-modal")).toBeInTheDocument();
+    });
+
+    it("opens with Ctrl+Enter when the modal is closed", () => {
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      fireEvent.keyDown(window, { key: "Enter", ctrlKey: true });
+      expect(screen.getByTestId("submit-review-modal")).toBeInTheDocument();
+    });
+
+    it("opens with meta+Enter from comment mode (without opening the line composer)", () => {
+      seedReadyReview(1);
+      render(<Overlay />);
+
+      fireEvent.keyDown(window, { key: "c" });
+      expect(useReviewStore.getState().uiMode).toBe("comment");
+
+      fireEvent.keyDown(window, { key: "Enter", metaKey: true });
+      expect(screen.getByTestId("submit-review-modal")).toBeInTheDocument();
+      expect(useReviewStore.getState().composerOpen).toBe(false);
+    });
+
+    it("closes on Esc without exiting the overlay", () => {
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      fireEvent.click(screen.getByTestId("submit-review-button"));
+      expect(screen.getByTestId("submit-review-modal")).toBeInTheDocument();
+
+      fireEvent.keyDown(window, { key: "Escape" });
+      expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
+      expect(useReviewStore.getState().isOpen).toBe(true);
+    });
+
+    it("exits the overlay on Esc after the modal is closed", () => {
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      fireEvent.click(screen.getByTestId("submit-review-button"));
+      fireEvent.keyDown(window, { key: "Escape" });
+      expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
+
+      fireEvent.keyDown(window, { key: "Escape" });
+      expect(useReviewStore.getState().isOpen).toBe(false);
+    });
+
+    it("closes the modal on submit without calling network", () => {
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      fireEvent.click(screen.getByTestId("submit-review-button"));
+      fireEvent.click(screen.getByTestId("submit-review-event-APPROVE"));
+      fireEvent.change(screen.getByTestId("submit-review-body"), {
+        target: { value: "Looks good" },
+      });
+      fireEvent.click(screen.getByTestId("submit-review-confirm"));
+
+      expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
+      expect(useReviewStore.getState().isOpen).toBe(true);
+    });
+
+    it("submits with meta+Enter via the window capture handler", () => {
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      fireEvent.click(screen.getByTestId("submit-review-button"));
+      fireEvent.click(screen.getByTestId("submit-review-event-APPROVE"));
+      fireEvent.change(screen.getByTestId("submit-review-body"), {
+        target: { value: "Approved via shortcut" },
+      });
+      fireEvent.keyDown(window, { key: "Enter", metaKey: true });
+
+      expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
+      expect(useReviewStore.getState().isOpen).toBe(true);
+    });
+
+    it("submits with Ctrl+Enter via the window capture handler", () => {
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      fireEvent.click(screen.getByTestId("submit-review-button"));
+      fireEvent.click(screen.getByTestId("submit-review-event-COMMENT"));
+      fireEvent.keyDown(window, { key: "Enter", ctrlKey: true });
+
+      expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
+      expect(useReviewStore.getState().isOpen).toBe(true);
+    });
+
+    it("ArrowDown and Enter on choose step advance via window capture", () => {
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      fireEvent.click(screen.getByTestId("submit-review-button"));
+      expect(screen.getByTestId("submit-review-modal")).toHaveAttribute(
+        "data-step",
+        "choose",
+      );
+
+      fireEvent.keyDown(window, { key: "ArrowDown" });
+      expect(screen.getByTestId("submit-review-event-APPROVE")).toHaveAttribute(
+        "aria-selected",
+        "true",
+      );
+
+      fireEvent.keyDown(window, { key: "Enter" });
+      expect(screen.getByTestId("submit-review-modal")).toHaveAttribute(
+        "data-step",
+        "compose",
+      );
+      expect(screen.getByTestId("submit-review-selected-event")).toHaveAttribute(
+        "data-event",
+        "APPROVE",
+      );
+    });
+  });
+
+  describe("view mode keyboard chords", () => {
+    it("v then u switches to unified view", () => {
+      seedReadyReview(1);
+      render(<Overlay />);
+
+      expect(useReviewStore.getState().diffViewMode).toBe("split");
+      expect(screen.getByTestId("diff-view-split")).toBeInTheDocument();
+
+      fireEvent.keyDown(window, { key: "v" });
+      fireEvent.keyDown(window, { key: "u" });
+
+      expect(useReviewStore.getState().diffViewMode).toBe("unified");
+      expect(screen.getByTestId("diff-view-unified")).toBeInTheDocument();
+      expect(screen.queryByTestId("diff-view-split")).not.toBeInTheDocument();
+    });
+
+    it("v then s switches to split view", () => {
+      seedReadyReview(1);
+      useReviewStore.setState({ diffViewMode: "unified" });
+      render(<Overlay />);
+
+      fireEvent.keyDown(window, { key: "v" });
+      fireEvent.keyDown(window, { key: "s" });
+
+      expect(useReviewStore.getState().diffViewMode).toBe("split");
+      expect(screen.getByTestId("diff-view-split")).toBeInTheDocument();
+    });
+
+    it("does not switch when the second key arrives after the chord window", () => {
+      vi.useFakeTimers();
+      try {
+        vi.setSystemTime(new Date("2020-01-01T00:00:00.000Z"));
+        seedReadyReview(1);
+        render(<Overlay />);
+
+        fireEvent.keyDown(window, { key: "v" });
+        vi.setSystemTime(
+          new Date(Date.parse("2020-01-01T00:00:00.000Z") + VIEW_CHORD_WINDOW_MS + 1),
+        );
+        fireEvent.keyDown(window, { key: "u" });
+
+        expect(useReviewStore.getState().diffViewMode).toBe("split");
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("works in comment mode", () => {
+      seedReadyReview(1);
+      render(<Overlay />);
+
+      fireEvent.keyDown(window, { key: "c" });
+      expect(useReviewStore.getState().uiMode).toBe("comment");
+
+      fireEvent.keyDown(window, { key: "v" });
+      fireEvent.keyDown(window, { key: "u" });
+
+      expect(useReviewStore.getState().diffViewMode).toBe("unified");
+      expect(useReviewStore.getState().uiMode).toBe("comment");
+    });
+
+    it("does not change view mode while the composer is open", () => {
+      seedReadyReview(1);
+      render(<Overlay />);
+
+      fireEvent.keyDown(window, { key: "c" });
+      fireEvent.keyDown(window, { key: "Enter" });
+      expect(useReviewStore.getState().composerOpen).toBe(true);
+
+      fireEvent.keyDown(window, { key: "v" });
+      fireEvent.keyDown(window, { key: "u" });
+
+      expect(useReviewStore.getState().diffViewMode).toBe("split");
+    });
+  });
+
+  describe("keyboard isolation from the host page", () => {
+    function dispatchKeyOnWindow(key: string, init: KeyboardEventInit = {}) {
+      const event = new KeyboardEvent("keydown", {
+        key,
+        bubbles: true,
+        cancelable: true,
+        ...init,
+      });
+      const stopSpy = vi.spyOn(event, "stopPropagation");
+      const preventSpy = vi.spyOn(event, "preventDefault");
+      window.dispatchEvent(event);
+      return { event, stopSpy, preventSpy };
+    }
+
+    it("stops propagation for unhandled keys so GitHub shortcuts cannot run", () => {
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      for (const key of ["s", "t", "a", "i", "?", "/"]) {
+        const { stopSpy } = dispatchKeyOnWindow(key);
+        expect(stopSpy).toHaveBeenCalled();
+      }
+      // Overlay stays open; GitHub-style keys did not trigger our exit path.
+      expect(useReviewStore.getState().isOpen).toBe(true);
+    });
+
+    it("stops propagation for GitHub shortcut letters while the composer is open", () => {
+      seedReadyReview(1);
+      render(<Overlay />);
+      fireEvent.keyDown(window, { key: "c" });
+      fireEvent.keyDown(window, { key: "Enter" });
+      expect(useReviewStore.getState().composerOpen).toBe(true);
+
+      for (const key of ["s", "t", "c", "a", "i"]) {
+        const { stopSpy, preventSpy } = dispatchKeyOnWindow(key);
+        expect(stopSpy).toHaveBeenCalled();
+        // Character keys must not be cancelled so the textarea can receive them.
+        expect(preventSpy).not.toHaveBeenCalled();
+      }
+      expect(useReviewStore.getState().composerOpen).toBe(true);
+      expect(useReviewStore.getState().isOpen).toBe(true);
+    });
+
+    it("does not preventDefault for printable keys in the composer (typing allowed)", () => {
+      seedReadyReview(1);
+      render(<Overlay />);
+      fireEvent.keyDown(window, { key: "c" });
+      fireEvent.keyDown(window, { key: "Enter" });
+
+      const input = screen.getByTestId("comment-composer-input");
+      const event = new KeyboardEvent("keydown", {
+        key: "s",
+        bubbles: true,
+        cancelable: true,
+      });
+      const preventSpy = vi.spyOn(event, "preventDefault");
+      const stopSpy = vi.spyOn(event, "stopPropagation");
+      input.dispatchEvent(event);
+
+      expect(stopSpy).toHaveBeenCalled();
+      expect(preventSpy).not.toHaveBeenCalled();
+      expect(useReviewStore.getState().composerOpen).toBe(true);
+    });
   });
 });
 

@@ -9,7 +9,10 @@ import overlayStyles from "./overlay/styles/overlay.css?inline";
 import { useReviewStore, restoreSession, buildSessionKey } from "./overlay/store";
 
 const BUTTON_ID = "guided-review-start-btn";
+const BUTTON_STYLE_ID = "guided-review-start-btn-styles";
 const HOST_ID = "guided-review-overlay-host";
+/** Brand accent hover — keep in sync with `--color-gr-accent-hover` in theme.css. */
+const ACCENT_HOVER = "#b6e64e";
 
 let currentPR: PRIdentity | null = null;
 /** Active stream cancel handle so restart / close can abort the worker. */
@@ -17,7 +20,16 @@ let activeStreamCancel: (() => void) | null = null;
 
 init();
 
+function ensureButtonStyles(): void {
+  if (document.getElementById(BUTTON_STYLE_ID)) return;
+  const style = document.createElement("style");
+  style.id = BUTTON_STYLE_ID;
+  style.textContent = `#${BUTTON_ID}:hover{background:${ACCENT_HOVER};border-color:${ACCENT_HOVER}}`;
+  document.documentElement.appendChild(style);
+}
+
 function init(): void {
+  ensureButtonStyles();
   tryInjectButton();
 
   // Toolbar icon click is handled in the background worker; when the active
@@ -76,6 +88,7 @@ function tryInjectButton(): void {
       "font-weight: 600",
       "cursor: pointer",
       "line-height: 1.2",
+      "transition: background 0.12s ease, border-color 0.12s ease",
     ].join(";"),
   );
 
