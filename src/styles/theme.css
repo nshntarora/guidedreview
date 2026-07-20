@@ -58,6 +58,12 @@
   --font-mono:
     ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
+  /* Product type scale: 10 / 12 / 14 (body) / 16 */
+  --text-xs: 0.625rem; /* 10px — micro (kbd, section labels) */
+  --text-sm: 0.75rem; /* 12px — secondary (diff mono, badges, captions) */
+  --text-base: 0.875rem; /* 14px — body */
+  --text-lg: 1rem; /* 16px — titles / emphasis */
+
   --animate-gr-spin: gr-spin 0.8s linear infinite;
   --animate-gr-skeleton: gr-skeleton-pulse 1.2s ease-in-out infinite;
 }

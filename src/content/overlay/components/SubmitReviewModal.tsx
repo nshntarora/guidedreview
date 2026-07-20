@@ -239,7 +239,7 @@ export function SubmitReviewModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-3 border-b border-gr-border px-4 py-3">
-          <h2 id={titleId} className="m-0 text-[15px] font-semibold text-gr-text">
+          <h2 id={titleId} className="m-0 text-lg font-semibold text-gr-text">
             Submit Review
           </h2>
           <button
@@ -269,7 +269,7 @@ export function SubmitReviewModal({
         {step === "choose" ? (
           <>
             <div className="flex flex-col gap-3 px-4 py-4">
-              <p className="m-0 text-[13px] text-gr-muted">
+              <p className="m-0 text-base text-gr-muted">
                 What would you like to do?
               </p>
               <div
@@ -301,17 +301,17 @@ export function SubmitReviewModal({
                       onClick={() => confirmMode(index)}
                       onMouseEnter={() => setHighlight(index)}
                     >
-                      <div className="text-[13px] font-semibold text-gr-text">
+                      <div className="text-base font-semibold text-gr-text">
                         {opt.label}
                       </div>
-                      <div className="mt-0.5 text-[12.5px] leading-snug text-gr-muted">
+                      <div className="mt-0.5 text-sm leading-snug text-gr-muted">
                         {opt.description}
                       </div>
                     </div>
                   );
                 })}
               </div>
-              <div className="flex items-center gap-2 text-[12px] text-gr-faint">
+              <div className="flex items-center gap-2 text-sm text-gr-faint">
                 <Kbd>↑</Kbd>
                 <Kbd>↓</Kbd>
                 <span>to choose</span>
@@ -324,7 +324,7 @@ export function SubmitReviewModal({
             <div className="flex items-center justify-end gap-2 border-t border-gr-border px-4 py-3">
               <button
                 type="button"
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-[13px] text-gr-muted hover:bg-gr-subtle hover:text-gr-text"
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-base text-gr-muted hover:bg-gr-subtle hover:text-gr-text"
                 onClick={onClose}
                 data-testid="submit-review-cancel"
               >
@@ -338,7 +338,7 @@ export function SubmitReviewModal({
             <div className="flex flex-col gap-4 px-4 py-4">
               <textarea
                 ref={textareaRef}
-                className="min-h-[100px] w-full resize-y rounded-md border border-gr-border bg-gr-bg px-3 py-2 font-sans text-[14px] leading-relaxed text-gr-text outline-none placeholder:text-gr-faint focus:border-gr-accent disabled:opacity-60"
+                className="min-h-[100px] w-full resize-y rounded-md border border-gr-border bg-gr-bg px-3 py-2 font-sans text-base leading-relaxed text-gr-text outline-none placeholder:text-gr-faint focus:border-gr-accent disabled:opacity-60"
                 placeholder="Leave a comment"
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
@@ -353,17 +353,17 @@ export function SubmitReviewModal({
                 data-testid="submit-review-selected-event"
                 data-event={selectedOpt.value}
               >
-                <div className="text-[13px] font-semibold text-gr-text">
+                <div className="text-base font-semibold text-gr-text">
                   {selectedOpt.label}
                 </div>
-                <div className="mt-0.5 text-[12.5px] leading-snug text-gr-muted">
+                <div className="mt-0.5 text-sm leading-snug text-gr-muted">
                   {selectedOpt.description}
                 </div>
               </div>
 
               {error ? (
                 <p
-                  className="m-0 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-[13px] leading-snug text-red-200"
+                  className="m-0 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-base leading-snug text-red-200"
                   role="alert"
                   data-testid="submit-review-error"
                 >
@@ -375,7 +375,7 @@ export function SubmitReviewModal({
             <div className="flex items-center justify-between gap-2 border-t border-gr-border px-4 py-3">
               <button
                 type="button"
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-[13px] text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-base text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={goBack}
                 disabled={submitting}
                 data-testid="submit-review-back"
@@ -385,7 +385,7 @@ export function SubmitReviewModal({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-[13px] text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-base text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={onClose}
                   disabled={submitting}
                   data-testid="submit-review-cancel"
@@ -395,7 +395,7 @@ export function SubmitReviewModal({
                 </button>
                 <button
                   type="button"
-                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-[13px] font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover disabled:cursor-not-allowed disabled:opacity-60 [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit"
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-base font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover disabled:cursor-not-allowed disabled:opacity-60 [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit"
                   onClick={handleSubmit}
                   disabled={submitting}
                   data-testid="submit-review-confirm"

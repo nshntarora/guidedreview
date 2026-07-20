@@ -20,7 +20,7 @@ describe("CommentComposer", () => {
     const input = screen.getByTestId("comment-composer-input");
     expect(input).toHaveFocus();
     expect(input.className).toMatch(/font-sans/);
-    expect(input.className).toMatch(/text-\[14px\]/);
+    expect(input.className).toMatch(/\btext-base\b/);
   });
 
   it("saves with Ctrl+Enter when body is non-empty", () => {

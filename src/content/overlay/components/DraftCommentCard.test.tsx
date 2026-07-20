@@ -14,7 +14,7 @@ const draft: DraftComment = {
 };
 
 describe("DraftCommentCard", () => {
-  it("renders the body in sans 14px and shows Edit / Remove", () => {
+  it("renders the body in sans text-base and shows Edit / Remove", () => {
     render(
       <DraftCommentCard comment={draft} onRemove={vi.fn()} onUpdate={vi.fn()} />,
     );
@@ -22,7 +22,7 @@ describe("DraftCommentCard", () => {
     const body = screen.getByTestId("draft-comment-body");
     expect(body).toHaveTextContent("Looks good");
     expect(body.className).toMatch(/font-sans/);
-    expect(body.className).toMatch(/text-\[14px\]/);
+    expect(body.className).toMatch(/\btext-base\b/);
     expect(screen.getByTestId("draft-comment-edit")).toBeInTheDocument();
     expect(screen.getByTestId("draft-comment-remove")).toBeInTheDocument();
   });
@@ -37,7 +37,7 @@ describe("DraftCommentCard", () => {
     expect(input).toHaveValue("Looks good");
     expect(input).toHaveFocus();
     expect(input.className).toMatch(/font-sans/);
-    expect(input.className).toMatch(/text-\[14px\]/);
+    expect(input.className).toMatch(/\btext-base\b/);
     expect(screen.queryByTestId("draft-comment-edit")).not.toBeInTheDocument();
     expect(screen.queryByTestId("draft-comment-body")).not.toBeInTheDocument();
   });

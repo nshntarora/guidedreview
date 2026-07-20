@@ -45,7 +45,7 @@ function ShortcutRowKeys({ row }: { row: ShortcutRow }) {
     return (
       <span className="inline-flex items-center gap-1">
         <ShortcutKeys keys={[modifier]} join="none" />
-        <span className="text-[11px] opacity-70" aria-hidden="true">
+        <span className="text-xs opacity-70" aria-hidden="true">
           +
         </span>
         <ShortcutKeys keys={alternatives} join="none" />
@@ -63,7 +63,7 @@ export function KeyboardShortcuts() {
       </div>
       <ul className="m-0 flex list-none flex-col gap-2 p-0">
         {SHORTCUTS.map((row) => (
-          <li key={row.description} className="flex items-center gap-3 text-[13px] text-gr-muted">
+          <li key={row.description} className="flex items-center gap-3 text-base text-gr-muted">
             <span className="inline-flex min-w-[72px] shrink-0 items-center gap-1">
               <ShortcutRowKeys row={row} />
             </span>

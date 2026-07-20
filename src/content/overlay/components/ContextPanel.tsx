@@ -34,7 +34,7 @@ export function ContextPanel({
         </div>
 
         {(error.statusCode !== undefined || error.code) && (
-          <dl className="mb-2 m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[12.5px] leading-normal">
+          <dl className="mb-2 m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm leading-normal">
             {error.statusCode !== undefined && (
               <>
                 <dt className="m-0 font-medium text-gr-muted">HTTP status</dt>
@@ -54,7 +54,7 @@ export function ContextPanel({
           </dl>
         )}
 
-        <pre className="m-0 max-h-[40vh] overflow-x-auto overflow-y-auto rounded-md border border-gr-danger bg-gr-danger-subtle p-3 text-left font-mono text-[12.5px] leading-normal break-words whitespace-pre-wrap text-gr-danger">
+        <pre className="m-0 max-h-[40vh] overflow-x-auto overflow-y-auto rounded-md border border-gr-danger bg-gr-danger-subtle p-3 text-left font-mono text-sm leading-normal break-words whitespace-pre-wrap text-gr-danger">
           <code data-testid="error-message">{error.message}</code>
         </pre>
 
@@ -64,7 +64,7 @@ export function ContextPanel({
               type="button"
               onClick={onRetry}
               aria-label="Retry building the guided review"
-              className="inline-flex cursor-pointer items-center rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-[13px] font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover"
+              className="inline-flex cursor-pointer items-center rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-base font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover"
             >
               Retry
             </button>
@@ -88,7 +88,7 @@ export function ContextPanel({
         {loading ? (
           <div className="mt-4 flex items-center gap-2.5 border-t border-gr-border-muted pt-3">
             <Spinner label="Building the rest of the walkthrough" />
-            <p className="m-0 text-[13px] text-gr-muted">Building the rest of the walkthrough…</p>
+            <p className="m-0 text-base text-gr-muted">Building the rest of the walkthrough…</p>
           </div>
         ) : (
           <KeyboardShortcuts />

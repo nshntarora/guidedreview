@@ -18,10 +18,10 @@ type SessionState =
   | { kind: "connected"; auth: GitHubAuthState };
 
 const primaryBtn =
-  "inline-flex cursor-pointer items-center gap-2 rounded-md border border-opt-accent bg-opt-accent px-4 py-2 text-[13px] font-semibold text-opt-accent-on enabled:hover:border-opt-accent-hover enabled:hover:bg-opt-accent-hover disabled:cursor-default disabled:opacity-60";
+  "inline-flex cursor-pointer items-center gap-2 rounded-md border border-opt-accent bg-opt-accent px-4 py-2 text-base font-semibold text-opt-accent-on enabled:hover:border-opt-accent-hover enabled:hover:bg-opt-accent-hover disabled:cursor-default disabled:opacity-60";
 
 const secondaryBtn =
-  "inline-flex cursor-pointer items-center gap-2 rounded-md border border-opt-border bg-opt-subtle px-4 py-2 text-[13px] font-semibold text-opt-text disabled:cursor-default disabled:opacity-60";
+  "inline-flex cursor-pointer items-center gap-2 rounded-md border border-opt-border bg-opt-subtle px-4 py-2 text-base font-semibold text-opt-text disabled:cursor-default disabled:opacity-60";
 
 /**
  * Options section: GitHub device OAuth connect / disconnect.
@@ -102,16 +102,16 @@ export function GitHubAuthSection() {
 
   return (
     <section className="mb-8 border-b border-opt-border pb-8" data-testid="github-auth-section">
-      <h2 className="mb-1.5 text-[13px] font-semibold text-opt-text">GitHub account</h2>
-      <p className="mb-4 text-[13px] text-opt-muted">
+      <h2 className="mb-1.5 text-base font-semibold text-opt-text">GitHub account</h2>
+      <p className="mb-4 text-base text-opt-muted">
         Connect GitHub so Guided Review can act on your behalf (for example, submitting reviews).
         Uses device sign-in — no password is stored here. Token stays in this browser only.
       </p>
 
       {!configured && (
-        <p className="text-[13px] text-opt-muted" role="status">
+        <p className="text-base text-opt-muted" role="status">
           GitHub connection isn’t configured in this build. Set{" "}
-          <code className="rounded bg-opt-subtle px-1 py-0.5 text-[12px] text-opt-text">
+          <code className="rounded bg-opt-subtle px-1 py-0.5 text-sm text-opt-text">
             VITE_GITHUB_CLIENT_ID
           </code>{" "}
           and rebuild.
@@ -119,7 +119,7 @@ export function GitHubAuthSection() {
       )}
 
       {configured && session.kind === "loading" && flow.kind === "idle" && !showError && (
-        <p className="flex items-center gap-2 text-[13px] text-opt-muted" role="status">
+        <p className="flex items-center gap-2 text-base text-opt-muted" role="status">
           <ActionSpinner label="Loading GitHub connection" />
           Loading…
         </p>
@@ -142,7 +142,7 @@ export function GitHubAuthSection() {
               {busy && <ActionSpinner label="Connecting to GitHub" />}
               {busy ? "Connecting…" : "Connect GitHub"}
             </button>
-            <span className="text-xs text-opt-muted">Requests repo and read:user access.</span>
+            <span className="text-sm text-opt-muted">Requests repo and read:user access.</span>
           </div>
         )}
 
@@ -165,13 +165,13 @@ export function GitHubAuthSection() {
             </button>
           </div>
           <p
-            className="m-0 text-[13px] text-opt-muted"
+            className="m-0 text-base text-opt-muted"
             data-testid="github-copy-hint"
           >
             Copy this code, then paste it on the GitHub tab.
           </p>
           <div className="flex flex-wrap items-center gap-2.5">
-            <span className="flex items-center gap-2 text-[13px] text-opt-muted" role="status">
+            <span className="flex items-center gap-2 text-base text-opt-muted" role="status">
               <ActionSpinner label="Waiting for GitHub authorization" />
               Waiting for authorization…
             </span>
@@ -213,13 +213,13 @@ export function GitHubAuthSection() {
               </div>
             )}
             <div className="min-w-0">
-              <p className="m-0 truncate text-[13px] font-semibold text-opt-text">
+              <p className="m-0 truncate text-base font-semibold text-opt-text">
                 @{session.auth.login}
               </p>
               {session.auth.name ? (
-                <p className="m-0 truncate text-xs text-opt-muted">{session.auth.name}</p>
+                <p className="m-0 truncate text-sm text-opt-muted">{session.auth.name}</p>
               ) : (
-                <p className="m-0 text-xs text-opt-ok">Connected</p>
+                <p className="m-0 text-sm text-opt-ok">Connected</p>
               )}
             </div>
           </div>
@@ -237,7 +237,7 @@ export function GitHubAuthSection() {
 
       {configured && showError && (
         <div className="space-y-3" role="alert">
-          <p className={cn("m-0 text-[13px] text-opt-error")}>{showError}</p>
+          <p className={cn("m-0 text-base text-opt-error")}>{showError}</p>
           <button
             type="button"
             className={primaryBtn}

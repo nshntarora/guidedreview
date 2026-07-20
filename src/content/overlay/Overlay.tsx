@@ -531,7 +531,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[2147483000] flex flex-col bg-gr-bg font-sans text-sm text-gr-text antialiased [color-scheme:dark] [text-rendering:optimizeLegibility]">
+    <div className="fixed inset-0 z-[2147483000] flex flex-col bg-gr-bg font-sans text-base text-gr-text antialiased [color-scheme:dark] [text-rendering:optimizeLegibility]">
       <ProgressHeader
         prContext={prContext}
         diff={diff}

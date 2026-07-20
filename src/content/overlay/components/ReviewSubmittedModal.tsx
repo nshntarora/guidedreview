@@ -82,13 +82,13 @@ export function ReviewSubmittedModal({
 
         <h2
           id={titleId}
-          className="m-0 text-center text-[16px] font-semibold text-gr-text"
+          className="m-0 text-center text-lg font-semibold text-gr-text"
         >
           Review submitted successfully
         </h2>
 
         <p
-          className="mt-2 mb-0 text-center text-[13.5px] leading-relaxed text-gr-muted"
+          className="mt-2 mb-0 text-center text-base leading-relaxed text-gr-muted"
           data-testid="review-submitted-summary"
         >
           {eventSummary(event, commentCount)}
@@ -97,7 +97,7 @@ export function ReviewSubmittedModal({
         <button
           ref={exitButtonRef}
           type="button"
-          className="mt-7 inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-accent bg-gr-accent px-4 py-2 text-[13px] font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit"
+          className="mt-7 inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-accent bg-gr-accent px-4 py-2 text-base font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit"
           onClick={onExit}
           data-testid="review-submitted-exit"
         >
