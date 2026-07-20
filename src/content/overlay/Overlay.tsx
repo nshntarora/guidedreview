@@ -331,21 +331,6 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
 
   if (!isOpen) return null;
 
-  const planStillBuilding = status === "loading" || status === "streaming";
-  // Spinner on the description unit only while the plan is still being built.
-  const showBuildingSpinner =
-    planStillBuilding && (!plan || currentUnitIndex === 0);
-  const displayUnits = buildDisplayUnits(plan);
-  const total = displayUnitCount(plan);
-  const totalKnown = status === "ready";
-  const currentDisplay = displayUnits[currentUnitIndex] ?? displayUnits[0];
-  const isDescriptionUnit =
-    !currentDisplay || currentDisplay.kind === "pr_description";
-  const currentReviewUnit =
-    currentDisplay?.kind === "review" ? currentDisplay.unit : null;
-  const resolvedFiles =
-    currentReviewUnit && diff ? resolveUnitFiles(currentReviewUnit, diff) : [];
-
   return (
     <div className="fixed inset-0 z-[2147483000] flex flex-col bg-gr-bg font-sans text-sm text-gr-text antialiased [color-scheme:dark] [text-rendering:optimizeLegibility]">
       <ProgressHeader

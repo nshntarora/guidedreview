@@ -454,8 +454,15 @@ export function resetDiffViewModeHydrationForTests(): void {
  * review flow.
  */
 export async function persistSession(): Promise<void> {
-  const { status, diff, plan, prContext, currentUnitIndex, sessionKey } =
-    useReviewStore.getState();
+  const {
+    status,
+    diff,
+    plan,
+    prContext,
+    currentUnitIndex,
+    sessionKey,
+    draftComments,
+  } = useReviewStore.getState();
   if (status !== "ready" || !diff || !plan || !sessionKey) return;
 
   const payload: PersistedSession = {
