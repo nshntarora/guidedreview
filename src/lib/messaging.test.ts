@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
-import { requestPRDiff, streamReviewPlan, testConnection } from "./messaging";
+import {
+  clearGitHubAuthSession,
+  getGitHubAuthStatus,
+  pollGitHubDeviceAuth,
+  requestPRDiff,
+  startGitHubDeviceAuth,
+  streamReviewPlan,
+  testConnection,
+} from "./messaging";
 import type { ParsedDiff, PRContext, ReviewUnit } from "./types";
 import type { MockPort } from "../test/chromeMock";
 
@@ -102,5 +110,41 @@ describe("messaging", () => {
 
     expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({ type: "TEST_CONNECTION", settings });
     expect(result).toEqual(response);
+  });
+
+  it("startGitHubDeviceAuth sends GITHUB_DEVICE_START", async () => {
+    const response = {
+      ok: true as const,
+      userCode: "ABCD-EFGH",
+      verificationUri: "https://github.com/login/device",
+      deviceCode: "dev",
+      interval: 5,
+      expiresIn: 900,
+    };
+    vi.mocked(chrome.runtime.sendMessage).mockResolvedValueOnce(response);
+
+    await expect(startGitHubDeviceAuth()).resolves.toEqual(response);
+    expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({ type: "GITHUB_DEVICE_START" });
+  });
+
+  it("pollGitHubDeviceAuth sends GITHUB_DEVICE_POLL with deviceCode", async () => {
+    const response = { ok: true as const, status: "pending" as const };
+    vi.mocked(chrome.runtime.sendMessage).mockResolvedValueOnce(response);
+
+    await expect(pollGitHubDeviceAuth("device-xyz")).resolves.toEqual(response);
+    expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({
+      type: "GITHUB_DEVICE_POLL",
+      deviceCode: "device-xyz",
+    });
+  });
+
+  it("getGitHubAuthStatus and clearGitHubAuthSession send the expected types", async () => {
+    vi.mocked(chrome.runtime.sendMessage).mockResolvedValueOnce({ ok: true, auth: null });
+    await expect(getGitHubAuthStatus()).resolves.toEqual({ ok: true, auth: null });
+    expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({ type: "GITHUB_AUTH_GET" });
+
+    vi.mocked(chrome.runtime.sendMessage).mockResolvedValueOnce({ ok: true });
+    await expect(clearGitHubAuthSession()).resolves.toEqual({ ok: true });
+    expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({ type: "GITHUB_AUTH_CLEAR" });
   });
 });

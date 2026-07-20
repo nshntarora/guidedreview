@@ -97,6 +97,19 @@ export interface ProviderSettings {
   apiKey: string;
 }
 
+// ---- GitHub OAuth (device flow) ----------------------------------------------
+
+/** Persisted after a successful device authorization. */
+export interface GitHubAuthState {
+  accessToken: string;
+  tokenType: string;
+  scope: string;
+  /** From GET /user after connect. */
+  login: string;
+  avatarUrl?: string;
+  name?: string;
+}
+
 // ---- Messaging protocol (content <-> background) -----------------------------
 
 /** First message on the `annotate-review` port from content → background. */
@@ -152,8 +165,60 @@ export interface FetchDiffError {
   error: string;
 }
 
+// ---- GitHub device OAuth messaging ------------------------------------------
+
+export interface GitHubDeviceStartRequest {
+  type: "GITHUB_DEVICE_START";
+}
+
+export type GitHubDeviceStartResponse =
+  | {
+      ok: true;
+      userCode: string;
+      verificationUri: string;
+      deviceCode: string;
+      interval: number;
+      expiresIn: number;
+    }
+  | { ok: false; error: string };
+
+export interface GitHubDevicePollRequest {
+  type: "GITHUB_DEVICE_POLL";
+  deviceCode: string;
+}
+
+/** Discriminated outcomes for the Options-owned poll loop. */
+export type GitHubDevicePollResponse =
+  | { ok: true; status: "pending" }
+  | { ok: true; status: "slow_down"; interval: number }
+  | { ok: true; status: "authorized"; auth: GitHubAuthState }
+  | { ok: false; status: "expired" | "denied" | "error"; error: string };
+
+export interface GitHubAuthGetRequest {
+  type: "GITHUB_AUTH_GET";
+}
+
+export interface GitHubAuthGetResponse {
+  ok: true;
+  auth: GitHubAuthState | null;
+}
+
+export interface GitHubAuthClearRequest {
+  type: "GITHUB_AUTH_CLEAR";
+}
+
+export interface GitHubAuthClearResponse {
+  ok: true;
+}
+
 /** One-shot request/response messages (annotate uses a port instead). */
-export type BackgroundRequest = TestConnectionRequest | FetchDiffRequest;
+export type BackgroundRequest =
+  | TestConnectionRequest
+  | FetchDiffRequest
+  | GitHubDeviceStartRequest
+  | GitHubDevicePollRequest
+  | GitHubAuthGetRequest
+  | GitHubAuthClearRequest;
 
 // ---- Messaging protocol (background → content) -----------------------------
 

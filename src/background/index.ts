@@ -6,12 +6,33 @@ import type {
   FetchDiffError,
   FetchDiffRequest,
   FetchDiffResponse,
+  GitHubAuthClearResponse,
+  GitHubAuthGetResponse,
+  GitHubAuthState,
+  GitHubDevicePollRequest,
+  GitHubDevicePollResponse,
+  GitHubDeviceStartResponse,
   ReviewErrorInfo,
   ReviewPlan,
   ReviewUnit,
   TestConnectionRequest,
   TestConnectionResponse,
 } from "../lib/types";
+import {
+  clearGitHubAuth,
+  getGitHubAuth,
+  setGitHubAuth,
+} from "../lib/github/authStorage";
+import {
+  fetchGitHubUser,
+  pollAccessToken,
+  requestDeviceCode,
+} from "../lib/github/deviceOAuth";
+import {
+  GITHUB_OAUTH_CLIENT_ID,
+  GITHUB_OAUTH_SCOPES,
+  isGitHubOAuthConfigured,
+} from "../lib/github/oauthConfig";
 import { fetchPRDiff } from "../lib/github/diffFetch";
 import { chunkDiffByFile } from "../lib/review/buildPrompt";
 import { StreamPlanParser } from "../lib/review/streamPlanParser";
@@ -48,6 +69,56 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, _sender, sendR
       .then(sendResponse)
       .catch((error: unknown) => {
         const response: FetchDiffError = { ok: false, error: describeErrorMessage(error) };
+        sendResponse(response);
+      });
+    return true;
+  }
+
+  if (message.type === "GITHUB_DEVICE_START") {
+    handleGitHubDeviceStart()
+      .then(sendResponse)
+      .catch((error: unknown) => {
+        const response: GitHubDeviceStartResponse = {
+          ok: false,
+          error: describeErrorMessage(error),
+        };
+        sendResponse(response);
+      });
+    return true;
+  }
+
+  if (message.type === "GITHUB_DEVICE_POLL") {
+    handleGitHubDevicePoll(message)
+      .then(sendResponse)
+      .catch((error: unknown) => {
+        const response: GitHubDevicePollResponse = {
+          ok: false,
+          status: "error",
+          error: describeErrorMessage(error),
+        };
+        sendResponse(response);
+      });
+    return true;
+  }
+
+  if (message.type === "GITHUB_AUTH_GET") {
+    handleGitHubAuthGet()
+      .then(sendResponse)
+      .catch((error: unknown) => {
+        // Still a valid response shape; treat failure as signed-out.
+        console.error("GITHUB_AUTH_GET failed:", error);
+        const response: GitHubAuthGetResponse = { ok: true, auth: null };
+        sendResponse(response);
+      });
+    return true;
+  }
+
+  if (message.type === "GITHUB_AUTH_CLEAR") {
+    handleGitHubAuthClear()
+      .then(sendResponse)
+      .catch((error: unknown) => {
+        console.error("GITHUB_AUTH_CLEAR failed:", error);
+        const response: GitHubAuthClearResponse = { ok: true };
         sendResponse(response);
       });
     return true;
@@ -184,6 +255,93 @@ async function handleTestConnection(request: TestConnectionRequest): Promise<Tes
 async function handleFetchDiff(request: FetchDiffRequest): Promise<FetchDiffResponse> {
   const diff = await fetchPRDiff(request.pr);
   return { ok: true, diff };
+}
+
+async function handleGitHubDeviceStart(): Promise<GitHubDeviceStartResponse> {
+  if (!isGitHubOAuthConfigured()) {
+    return {
+      ok: false,
+      error:
+        "GitHub connection isn’t configured in this build. Set VITE_GITHUB_CLIENT_ID and rebuild.",
+    };
+  }
+
+  const device = await requestDeviceCode(GITHUB_OAUTH_CLIENT_ID, GITHUB_OAUTH_SCOPES);
+  return {
+    ok: true,
+    userCode: device.userCode,
+    verificationUri: device.verificationUri,
+    deviceCode: device.deviceCode,
+    interval: device.interval,
+    expiresIn: device.expiresIn,
+  };
+}
+
+async function handleGitHubDevicePoll(
+  request: GitHubDevicePollRequest,
+): Promise<GitHubDevicePollResponse> {
+  if (!isGitHubOAuthConfigured()) {
+    return {
+      ok: false,
+      status: "error",
+      error:
+        "GitHub connection isn’t configured in this build. Set VITE_GITHUB_CLIENT_ID and rebuild.",
+    };
+  }
+
+  const result = await pollAccessToken(GITHUB_OAUTH_CLIENT_ID, request.deviceCode);
+
+  switch (result.status) {
+    case "pending":
+      return { ok: true, status: "pending" };
+    case "slow_down":
+      return { ok: true, status: "slow_down", interval: result.interval };
+    case "expired":
+      return {
+        ok: false,
+        status: "expired",
+        error: "The device code expired. Start the connection again.",
+      };
+    case "denied":
+      return {
+        ok: false,
+        status: "denied",
+        error: "GitHub authorization was cancelled. You can try connecting again.",
+      };
+    case "error":
+      return { ok: false, status: "error", error: result.message };
+    case "authorized": {
+      const user = await fetchGitHubUser(result.accessToken);
+      const auth: GitHubAuthState = {
+        accessToken: result.accessToken,
+        tokenType: result.tokenType,
+        scope: result.scope,
+        login: user.login,
+        ...(user.avatarUrl ? { avatarUrl: user.avatarUrl } : {}),
+        ...(user.name ? { name: user.name } : {}),
+      };
+      await setGitHubAuth(auth);
+      return { ok: true, status: "authorized", auth };
+    }
+    default: {
+      const _exhaustive: never = result;
+      return {
+        ok: false,
+        status: "error",
+        error: `Unexpected poll status: ${JSON.stringify(_exhaustive)}`,
+      };
+    }
+  }
+}
+
+async function handleGitHubAuthGet(): Promise<GitHubAuthGetResponse> {
+  const auth = await getGitHubAuth();
+  return { ok: true, auth };
+}
+
+async function handleGitHubAuthClear(): Promise<GitHubAuthClearResponse> {
+  await clearGitHubAuth();
+  return { ok: true };
 }
 
 function describeError(error: unknown): ReviewErrorInfo {

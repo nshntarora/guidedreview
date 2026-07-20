@@ -6,6 +6,14 @@ import type {
   FetchDiffRequest,
   FetchDiffResponse,
   FetchDiffError,
+  GitHubAuthClearRequest,
+  GitHubAuthClearResponse,
+  GitHubAuthGetRequest,
+  GitHubAuthGetResponse,
+  GitHubDevicePollRequest,
+  GitHubDevicePollResponse,
+  GitHubDeviceStartRequest,
+  GitHubDeviceStartResponse,
   ParsedDiff,
   PRContext,
   ProviderSettings,
@@ -113,5 +121,31 @@ export async function requestPRDiff(
   pr: FetchDiffRequest["pr"],
 ): Promise<FetchDiffResponse | FetchDiffError> {
   const request: FetchDiffRequest = { type: "FETCH_DIFF", pr };
+  return chrome.runtime.sendMessage(request);
+}
+
+/** Options: begin GitHub device OAuth (returns user_code for the user to enter). */
+export async function startGitHubDeviceAuth(): Promise<GitHubDeviceStartResponse> {
+  const request: GitHubDeviceStartRequest = { type: "GITHUB_DEVICE_START" };
+  return chrome.runtime.sendMessage(request);
+}
+
+/** Options: one poll tick while waiting for the user to authorize. */
+export async function pollGitHubDeviceAuth(
+  deviceCode: string,
+): Promise<GitHubDevicePollResponse> {
+  const request: GitHubDevicePollRequest = { type: "GITHUB_DEVICE_POLL", deviceCode };
+  return chrome.runtime.sendMessage(request);
+}
+
+/** Options: load the stored GitHub session (or null). */
+export async function getGitHubAuthStatus(): Promise<GitHubAuthGetResponse> {
+  const request: GitHubAuthGetRequest = { type: "GITHUB_AUTH_GET" };
+  return chrome.runtime.sendMessage(request);
+}
+
+/** Options: disconnect and forget the stored GitHub token. */
+export async function clearGitHubAuthSession(): Promise<GitHubAuthClearResponse> {
+  const request: GitHubAuthClearRequest = { type: "GITHUB_AUTH_CLEAR" };
   return chrome.runtime.sendMessage(request);
 }
