@@ -3,22 +3,18 @@ import { summarizeDiff } from "../../../lib/github/diffSummary";
 import { Kbd } from "./Kbd";
 
 interface ProgressHeaderProps {
-  currentIndex: number;
-  total: number;
-  /** When false, only show "Step N" without a known total (plan still loading). */
-  totalKnown: boolean;
   prContext: PRContext | null;
   diff: ParsedDiff | null;
   onExit: () => void;
+  /** Opens the Submit review modal. */
+  onSubmitReview: () => void;
 }
 
 export function ProgressHeader({
-  currentIndex,
-  total,
-  totalKnown,
   prContext,
   diff,
   onExit,
+  onSubmitReview,
 }: ProgressHeaderProps) {
   const stats = diff ? summarizeDiff(diff) : null;
   const logomarkUrl = chrome.runtime.getURL("logomark.svg");
@@ -64,13 +60,18 @@ export function ProgressHeader({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-3">
-          {totalKnown && total > 0 ? (
-            <span className="text-[13px] text-gr-muted">
-              Step {currentIndex + 1} of {total}
-            </span>
-          ) : (
-            <span className="text-[13px] text-gr-muted">Step {currentIndex + 1}</span>
-          )}
+          <button
+            type="button"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-[13px] font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit"
+            onClick={onSubmitReview}
+            data-testid="submit-review-button"
+          >
+            Submit review
+            <Kbd>⌘</Kbd>
+            <span className="text-[11px] opacity-70">/</span>
+            <Kbd>Ctrl</Kbd>
+            <Kbd>Enter</Kbd>
+          </button>
           <button
             type="button"
             className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-[13px] text-gr-text hover:bg-gr-subtle"

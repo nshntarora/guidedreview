@@ -11,12 +11,13 @@
   --color-gr-bg: #110e0b;
   --color-gr-canvas: #16120f;
   --color-gr-subtle: #1c1814;
-  --color-gr-border: #2a2420;
-  --color-gr-border-muted: #211c18;
+  --color-gr-border: #3a342e;
+  --color-gr-border-muted: #2a2420;
   --color-gr-text: #fefefe;
   --color-gr-muted: #8b949e;
   --color-gr-faint: #6e7781;
   --color-gr-accent: #caff57;
+  --color-gr-accent-hover: #b6e64e;
   --color-gr-accent-on: #0d0806;
   --color-gr-accent-subtle: #1a2408;
   --color-gr-danger: #ff7b72;
@@ -46,6 +47,7 @@
   --color-opt-text: var(--opt-text);
   --color-opt-muted: var(--opt-muted);
   --color-opt-accent: var(--opt-accent);
+  --color-opt-accent-hover: var(--opt-accent-hover);
   --color-opt-accent-on: var(--opt-accent-on);
   --color-opt-ok: var(--opt-ok);
   --color-opt-error: var(--opt-error);
@@ -84,6 +86,7 @@
   --opt-text: #0d0806;
   --opt-muted: #59636e;
   --opt-accent: #caff57;
+  --opt-accent-hover: #b6e64e;
   --opt-accent-on: #0d0806;
   --opt-ok: #1a7f37;
   --opt-error: #cf222e;
@@ -93,10 +96,11 @@
   :root {
     --opt-bg: #0d0806;
     --opt-subtle: #16120f;
-    --opt-border: #2a2420;
+    --opt-border: #3a342e;
     --opt-text: #fefefe;
     --opt-muted: #8b949e;
     --opt-accent: #caff57;
+    --opt-accent-hover: #b6e64e;
     --opt-accent-on: #0d0806;
     --opt-ok: #3fb950;
     --opt-error: #ff7b72;

@@ -53,7 +53,24 @@ function resetStore(): void {
     streamGeneration: 0,
     sessionKey: null,
     diffViewMode: DEFAULT_DIFF_VIEW_MODE,
+    uiMode: "navigate",
+    selectableLines: [],
+    lineSelection: null,
+    composerOpen: false,
+    draftComments: [],
   });
+}
+
+function selectableFixture(count = 3) {
+  return Array.from({ length: count }, (_, i) => ({
+    id: `src/foo.ts#0:${i}:RIGHT`,
+    filePath: "src/foo.ts",
+    hunkId: "src/foo.ts#0",
+    lineIndex: i,
+    side: "RIGHT" as const,
+    newLine: i + 1,
+    type: "add" as const,
+  }));
 }
 
 describe("buildSessionKey", () => {
@@ -316,6 +333,229 @@ describe("useReviewStore", () => {
       );
       expect(restored).toBe(false);
       expect(useReviewStore.getState().status).toBe("idle");
+    });
+
+    it("persistSession / restoreSession round-trips draft comments", async () => {
+      resetStore();
+      const lines = selectableFixture(2);
+      useReviewStore.getState().startLoading(SESSION_KEY);
+      useReviewStore.getState().setReady(diffFixture(), planFixture(1));
+      useReviewStore.getState().enterCommentMode(lines);
+      useReviewStore.getState().saveDraftComment("Looks good");
+
+      await persistSession();
+      resetStore();
+      await restoreSession(SESSION_KEY);
+
+      const drafts = useReviewStore.getState().draftComments;
+      expect(drafts).toHaveLength(1);
+      expect(drafts[0].body).toBe("Looks good");
+      expect(useReviewStore.getState().uiMode).toBe("navigate");
+    });
+  });
+
+  describe("comment mode", () => {
+    it("enterCommentMode selects the first line; empty list is a no-op", () => {
+      resetStore();
+      useReviewStore.getState().enterCommentMode([]);
+      expect(useReviewStore.getState().uiMode).toBe("navigate");
+
+      useReviewStore.getState().enterCommentMode(selectableFixture(3));
+      const state = useReviewStore.getState();
+      expect(state.uiMode).toBe("comment");
+      expect(state.lineSelection).toEqual({ anchorIndex: 0, focusIndex: 0 });
+      expect(state.selectableLines).toHaveLength(3);
+    });
+
+    it("moveLineCursor moves focus; without shift resets anchor", () => {
+      resetStore();
+      useReviewStore.getState().enterCommentMode(selectableFixture(4));
+      useReviewStore.getState().moveLineCursor(1, false);
+      expect(useReviewStore.getState().lineSelection).toEqual({
+        anchorIndex: 1,
+        focusIndex: 1,
+      });
+      useReviewStore.getState().moveLineCursor(1, false);
+      expect(useReviewStore.getState().lineSelection).toEqual({
+        anchorIndex: 2,
+        focusIndex: 2,
+      });
+    });
+
+    it("moveLineCursor with extend grows a multi-line range on the same side", () => {
+      resetStore();
+      useReviewStore.getState().enterCommentMode(selectableFixture(4));
+      useReviewStore.getState().moveLineCursor(1, true);
+      useReviewStore.getState().moveLineCursor(1, true);
+      expect(useReviewStore.getState().lineSelection).toEqual({
+        anchorIndex: 0,
+        focusIndex: 2,
+      });
+    });
+
+    it("moveLineCursor with extend skips lines on a different side", () => {
+      resetStore();
+      const lines = [
+        {
+          id: "f#0:0:LEFT",
+          filePath: "f.ts",
+          hunkId: "f#0",
+          lineIndex: 0,
+          side: "LEFT" as const,
+          oldLine: 1,
+          type: "del" as const,
+        },
+        {
+          id: "f#0:1:RIGHT",
+          filePath: "f.ts",
+          hunkId: "f#0",
+          lineIndex: 1,
+          side: "RIGHT" as const,
+          newLine: 1,
+          type: "add" as const,
+        },
+        {
+          id: "f#0:2:LEFT",
+          filePath: "f.ts",
+          hunkId: "f#0",
+          lineIndex: 2,
+          side: "LEFT" as const,
+          oldLine: 2,
+          type: "del" as const,
+        },
+      ];
+      useReviewStore.getState().enterCommentMode(lines);
+      useReviewStore.getState().moveLineCursor(1, true);
+      // Skips RIGHT, lands on second LEFT
+      expect(useReviewStore.getState().lineSelection).toEqual({
+        anchorIndex: 0,
+        focusIndex: 2,
+      });
+    });
+
+    it("openComposer / saveDraftComment / updateDraftComment / removeDraftComment", () => {
+      resetStore();
+      useReviewStore.getState().enterCommentMode(selectableFixture(3));
+      useReviewStore.getState().moveLineCursor(1, true);
+      useReviewStore.getState().openComposer();
+      expect(useReviewStore.getState().composerOpen).toBe(true);
+
+      useReviewStore.getState().saveDraftComment("   ");
+      expect(useReviewStore.getState().draftComments).toHaveLength(0);
+      expect(useReviewStore.getState().composerOpen).toBe(true);
+
+      useReviewStore.getState().saveDraftComment("  Needs a test  ", "u0");
+      const drafts = useReviewStore.getState().draftComments;
+      expect(drafts).toHaveLength(1);
+      expect(drafts[0]).toMatchObject({
+        body: "Needs a test",
+        filePath: "src/foo.ts",
+        side: "RIGHT",
+        startLine: 1,
+        endLine: 2,
+        unitId: "u0",
+      });
+      expect(useReviewStore.getState().composerOpen).toBe(false);
+
+      useReviewStore.getState().updateDraftComment(drafts[0].id, "  Revised  ");
+      expect(useReviewStore.getState().draftComments[0].body).toBe("Revised");
+
+      useReviewStore.getState().updateDraftComment(drafts[0].id, "   ");
+      expect(useReviewStore.getState().draftComments[0].body).toBe("Revised");
+
+      useReviewStore.getState().removeDraftComment(drafts[0].id);
+      expect(useReviewStore.getState().draftComments).toHaveLength(0);
+    });
+
+    it("goNext / goToUnit exit comment mode but keep drafts", () => {
+      resetStore();
+      useReviewStore.getState().setReady(diffFixture(), planFixture(2));
+      useReviewStore.getState().enterCommentMode(selectableFixture(2));
+      useReviewStore.getState().saveDraftComment("keep me");
+
+      useReviewStore.getState().goNext();
+      expect(useReviewStore.getState().uiMode).toBe("navigate");
+      expect(useReviewStore.getState().lineSelection).toBeNull();
+      expect(useReviewStore.getState().draftComments).toHaveLength(1);
+    });
+
+    it("exitCommentMode clears selection without dropping drafts", () => {
+      resetStore();
+      useReviewStore.getState().enterCommentMode(selectableFixture(2));
+      useReviewStore.getState().saveDraftComment("draft");
+      useReviewStore.getState().exitCommentMode();
+      expect(useReviewStore.getState().uiMode).toBe("navigate");
+      expect(useReviewStore.getState().draftComments).toHaveLength(1);
+    });
+
+    it("setSelectableLines rematches focus/anchor by line id", () => {
+      resetStore();
+      const bothSides = [
+        {
+          id: "f#0:0:LEFT",
+          filePath: "f.ts",
+          hunkId: "f#0",
+          lineIndex: 0,
+          side: "LEFT" as const,
+          oldLine: 1,
+          type: "del" as const,
+        },
+        {
+          id: "f#0:1:RIGHT",
+          filePath: "f.ts",
+          hunkId: "f#0",
+          lineIndex: 1,
+          side: "RIGHT" as const,
+          newLine: 1,
+          type: "add" as const,
+        },
+        {
+          id: "f#0:2:RIGHT",
+          filePath: "f.ts",
+          hunkId: "f#0",
+          lineIndex: 2,
+          side: "RIGHT" as const,
+          newLine: 2,
+          type: "add" as const,
+        },
+      ];
+      useReviewStore.getState().enterCommentMode(bothSides);
+      useReviewStore.getState().moveLineCursor(2, false); // focus RIGHT line 2
+      expect(useReviewStore.getState().lineSelection).toEqual({
+        anchorIndex: 2,
+        focusIndex: 2,
+      });
+
+      // Simulate split → RIGHT-only (drop LEFT); same id should stay focused.
+      const rightOnly = bothSides.filter((l) => l.side === "RIGHT");
+      useReviewStore.getState().setSelectableLines(rightOnly);
+      expect(useReviewStore.getState().selectableLines).toHaveLength(2);
+      expect(useReviewStore.getState().lineSelection).toEqual({
+        anchorIndex: 1,
+        focusIndex: 1,
+      });
+      expect(useReviewStore.getState().selectableLines[1].id).toBe(
+        "f#0:2:RIGHT",
+      );
+    });
+
+    it("setSelectableLines resets when prior focus id is gone", () => {
+      resetStore();
+      useReviewStore.getState().enterCommentMode(selectableFixture(3));
+      useReviewStore.getState().moveLineCursor(2, false);
+      useReviewStore.getState().setSelectableLines(selectableFixture(2));
+      expect(useReviewStore.getState().lineSelection).toEqual({
+        anchorIndex: 0,
+        focusIndex: 0,
+      });
+    });
+
+    it("setSelectableLines with empty list exits comment mode", () => {
+      resetStore();
+      useReviewStore.getState().enterCommentMode(selectableFixture(2));
+      useReviewStore.getState().setSelectableLines([]);
+      expect(useReviewStore.getState().uiMode).toBe("navigate");
+      expect(useReviewStore.getState().lineSelection).toBeNull();
     });
   });
 });

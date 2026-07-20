@@ -7,6 +7,14 @@
  * not clobber Tailwind design tokens (unlayered rules beat @layer theme).
  * Host reset is pure CSS in this file (not SCSS): Sass was dropping nested
  * @layer contents when the reset lived only in a partial.
+ *
+ * Tailwind v4 border/outline/ring/shadow utilities resolve style via CSS
+ * variables whose defaults come from `@property { initial-value }`. Browsers
+ * ignore `@property` when the rule lives only in a Shadow DOM stylesheet
+ * (tailwindlabs/tailwindcss#15005, #16025), so e.g. `--tw-border-style` is
+ * undefined and `border-style: var(--tw-border-style)` computes to `none` —
+ * 1px borders never paint. Mirror Tailwind's pre-@property `@layer properties`
+ * fallback on every element so those utilities work inside the overlay host.
  */
 @layer reset, theme, base, components, utilities;
 
@@ -19,6 +27,19 @@
   *::before,
   *::after {
     box-sizing: border-box;
+    --tw-border-style: solid;
+    --tw-outline-style: solid;
+    --tw-space-y-reverse: 0;
+    --tw-shadow: 0 0 #0000;
+    --tw-shadow-alpha: 100%;
+    --tw-inset-shadow: 0 0 #0000;
+    --tw-inset-shadow-alpha: 100%;
+    --tw-ring-shadow: 0 0 #0000;
+    --tw-inset-ring-shadow: 0 0 #0000;
+    --tw-ring-offset-width: 0px;
+    --tw-ring-offset-color: #fff;
+    --tw-ring-offset-shadow: 0 0 #0000;
+    --tw-drop-shadow-alpha: 100%;
   }
 }
 

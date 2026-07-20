@@ -1,5 +1,13 @@
 import { create } from "zustand";
 import type { ParsedDiff, PRContext, ReviewPlan, ReviewUnit } from "../../lib/types";
+import {
+  displayLineNumber,
+  linesInSelection,
+  type DraftComment,
+  type LineSelection,
+  type SelectableLine,
+  type UiMode,
+} from "./commentTypes";
 import { displayUnitCount } from "./displayUnits";
 import {
   DEFAULT_DIFF_VIEW_MODE,
@@ -24,7 +32,16 @@ interface PersistedSession {
   prContext: PRContext | null;
   /** Index into the display unit list (0 = PR description, then plan units). */
   currentUnitIndex: number;
+  /** Local draft comments (session-scoped; not posted to GitHub). */
+  draftComments?: DraftComment[];
 }
+
+const COMMENT_UI_RESET = {
+  uiMode: "navigate" as UiMode,
+  lineSelection: null as LineSelection | null,
+  composerOpen: false,
+  selectableLines: [] as SelectableLine[],
+};
 
 interface ReviewState {
   isOpen: boolean;
@@ -48,6 +65,14 @@ interface ReviewState {
   /** Unified vs side-by-side code view (UI preference, not session data). */
   diffViewMode: DiffViewMode;
 
+  /** navigate = unit walkthrough; comment = line selection for drafts. */
+  uiMode: UiMode;
+  /** Flat selectable lines for the current unit (set when entering comment mode). */
+  selectableLines: SelectableLine[];
+  lineSelection: LineSelection | null;
+  composerOpen: boolean;
+  draftComments: DraftComment[];
+
   open: () => void;
   close: () => void;
   startLoading: (sessionKey: string) => void;
@@ -61,6 +86,20 @@ interface ReviewState {
   goNext: () => void;
   goPrev: () => void;
   setDiffViewMode: (mode: DiffViewMode) => void;
+
+  enterCommentMode: (lines: SelectableLine[]) => void;
+  exitCommentMode: () => void;
+  /**
+   * Replace the selectable-line list (e.g. after split/unified toggle).
+   * Rematches anchor/focus by line id when possible; otherwise resets to the first line.
+   */
+  setSelectableLines: (lines: SelectableLine[]) => void;
+  moveLineCursor: (delta: number, extend: boolean) => void;
+  openComposer: () => void;
+  closeComposer: () => void;
+  saveDraftComment: (body: string, unitId?: string) => void;
+  updateDraftComment: (id: string, body: string) => void;
+  removeDraftComment: (id: string) => void;
 }
 
 /**
@@ -75,6 +114,17 @@ function storageKey(sessionKey: string): string {
   return `guidedReview.session.${sessionKey}`;
 }
 
+function newDraftId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `draft-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function clearCommentUi(): typeof COMMENT_UI_RESET {
+  return { ...COMMENT_UI_RESET };
+}
+
 export const useReviewStore = create<ReviewState>((set, get) => ({
   isOpen: false,
   status: "idle",
@@ -86,9 +136,14 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   streamGeneration: 0,
   sessionKey: null,
   diffViewMode: DEFAULT_DIFF_VIEW_MODE,
+  uiMode: "navigate",
+  selectableLines: [],
+  lineSelection: null,
+  composerOpen: false,
+  draftComments: [],
 
   open: () => set({ isOpen: true }),
-  close: () => set({ isOpen: false }),
+  close: () => set({ isOpen: false, ...clearCommentUi() }),
 
   startLoading: (sessionKey) =>
     set((state) => ({
@@ -99,6 +154,8 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       diff: null,
       sessionKey,
       streamGeneration: state.streamGeneration + 1,
+      draftComments: [],
+      ...clearCommentUi(),
     })),
 
   setPRContext: (prContext) => set({ prContext }),
@@ -142,20 +199,22 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   goToUnit: (index) => {
     const total = displayUnitCount(get().plan);
     if (index < 0 || index >= total) return;
-    set({ currentUnitIndex: index });
+    set({ currentUnitIndex: index, ...clearCommentUi() });
   },
 
   goNext: () => {
     const { currentUnitIndex, plan } = get();
     const total = displayUnitCount(plan);
     if (currentUnitIndex < total - 1) {
-      set({ currentUnitIndex: currentUnitIndex + 1 });
+      set({ currentUnitIndex: currentUnitIndex + 1, ...clearCommentUi() });
     }
   },
 
   goPrev: () => {
     const { currentUnitIndex } = get();
-    if (currentUnitIndex > 0) set({ currentUnitIndex: currentUnitIndex - 1 });
+    if (currentUnitIndex > 0) {
+      set({ currentUnitIndex: currentUnitIndex - 1, ...clearCommentUi() });
+    }
   },
 
   setDiffViewMode: (mode) => {
@@ -164,6 +223,152 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
     diffViewModeHydrated = true;
     set({ diffViewMode: mode });
     void setStoredDiffViewMode(mode);
+  },
+
+  enterCommentMode: (lines) => {
+    if (lines.length === 0) return;
+    set({
+      uiMode: "comment",
+      selectableLines: lines,
+      lineSelection: { anchorIndex: 0, focusIndex: 0 },
+      composerOpen: false,
+    });
+  },
+
+  exitCommentMode: () => set(clearCommentUi()),
+
+  setSelectableLines: (lines) => {
+    const { uiMode, lineSelection, selectableLines: prevLines } = get();
+    if (uiMode !== "comment") {
+      set({ selectableLines: lines });
+      return;
+    }
+    if (lines.length === 0) {
+      set(clearCommentUi());
+      return;
+    }
+
+    // Rematch by stable line id so split↔unified (or RIGHT-only) toggles
+    // keep the cursor on the same logical line when it still exists.
+    let nextSelection: LineSelection = { anchorIndex: 0, focusIndex: 0 };
+    let selectionPreserved = false;
+    if (lineSelection) {
+      const prevFocus = prevLines[lineSelection.focusIndex];
+      const prevAnchor = prevLines[lineSelection.anchorIndex];
+      const focusIdx = prevFocus
+        ? lines.findIndex((l) => l.id === prevFocus.id)
+        : -1;
+      const anchorIdx = prevAnchor
+        ? lines.findIndex((l) => l.id === prevAnchor.id)
+        : -1;
+      if (focusIdx >= 0) {
+        nextSelection = {
+          focusIndex: focusIdx,
+          anchorIndex: anchorIdx >= 0 ? anchorIdx : focusIdx,
+        };
+        selectionPreserved = true;
+      }
+    }
+
+    set({
+      selectableLines: lines,
+      lineSelection: nextSelection,
+      composerOpen: selectionPreserved ? get().composerOpen : false,
+    });
+  },
+
+  moveLineCursor: (delta, extend) => {
+    const { uiMode, lineSelection, selectableLines, composerOpen } = get();
+    if (uiMode !== "comment" || composerOpen || !lineSelection) return;
+    if (selectableLines.length === 0) return;
+
+    if (!extend) {
+      const next = lineSelection.focusIndex + delta;
+      if (next < 0 || next >= selectableLines.length) return;
+      set({
+        lineSelection: { anchorIndex: next, focusIndex: next },
+      });
+      return;
+    }
+
+    // Shift+arrow: jump to the next line that shares the anchor's file + side.
+    const anchor = selectableLines[lineSelection.anchorIndex];
+    if (!anchor) return;
+    let i = lineSelection.focusIndex + delta;
+    while (i >= 0 && i < selectableLines.length) {
+      const candidate = selectableLines[i];
+      if (
+        candidate.filePath === anchor.filePath &&
+        candidate.side === anchor.side
+      ) {
+        set({
+          lineSelection: {
+            anchorIndex: lineSelection.anchorIndex,
+            focusIndex: i,
+          },
+        });
+        return;
+      }
+      i += delta;
+    }
+  },
+
+  openComposer: () => {
+    const { uiMode, lineSelection, selectableLines } = get();
+    if (uiMode !== "comment" || !lineSelection) return;
+    if (linesInSelection(selectableLines, lineSelection).length === 0) return;
+    set({ composerOpen: true });
+  },
+
+  closeComposer: () => set({ composerOpen: false }),
+
+  saveDraftComment: (body, unitId) => {
+    const trimmed = body.trim();
+    if (!trimmed) return;
+
+    const { uiMode, lineSelection, selectableLines, draftComments } = get();
+    if (uiMode !== "comment" || !lineSelection) return;
+
+    const selected = linesInSelection(selectableLines, lineSelection);
+    if (selected.length === 0) return;
+
+    const first = selected[0];
+    const last = selected[selected.length - 1];
+    const startNum = displayLineNumber(first);
+    const endNum = displayLineNumber(last);
+    if (startNum === undefined || endNum === undefined) return;
+
+    const draft: DraftComment = {
+      id: newDraftId(),
+      filePath: first.filePath,
+      side: first.side,
+      startLine: Math.min(startNum, endNum),
+      endLine: Math.max(startNum, endNum),
+      lineIds: selected.map((l) => l.id),
+      body: trimmed,
+      unitId,
+    };
+
+    set({
+      draftComments: [...draftComments, draft],
+      composerOpen: false,
+    });
+  },
+
+  updateDraftComment: (id, body) => {
+    const trimmed = body.trim();
+    if (!trimmed) return;
+    set((state) => ({
+      draftComments: state.draftComments.map((d) =>
+        d.id === id ? { ...d, body: trimmed } : d,
+      ),
+    }));
+  },
+
+  removeDraftComment: (id) => {
+    set((state) => ({
+      draftComments: state.draftComments.filter((d) => d.id !== id),
+    }));
   },
 }));
 
@@ -210,10 +415,24 @@ export function resetDiffViewModeHydrationForTests(): void {
  * review flow.
  */
 export async function persistSession(): Promise<void> {
-  const { status, diff, plan, prContext, currentUnitIndex, sessionKey } = useReviewStore.getState();
+  const {
+    status,
+    diff,
+    plan,
+    prContext,
+    currentUnitIndex,
+    sessionKey,
+    draftComments,
+  } = useReviewStore.getState();
   if (status !== "ready" || !diff || !plan || !sessionKey) return;
 
-  const payload: PersistedSession = { diff, plan, prContext, currentUnitIndex };
+  const payload: PersistedSession = {
+    diff,
+    plan,
+    prContext,
+    currentUnitIndex,
+    draftComments,
+  };
   try {
     await chrome.storage.session.set({ [storageKey(sessionKey)]: payload });
   } catch (error) {
@@ -248,6 +467,8 @@ export async function restoreSession(sessionKey: string): Promise<boolean> {
     currentUnitIndex,
     sessionKey,
     error: null,
+    draftComments: saved.draftComments ?? [],
+    ...clearCommentUi(),
   });
   return true;
 }

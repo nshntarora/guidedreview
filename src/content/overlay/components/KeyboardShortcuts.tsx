@@ -3,7 +3,14 @@ import { Kbd } from "./Kbd";
 const SHORTCUTS = [
   { keys: ["←", "→"], description: "Previous / next step" },
   { keys: ["↑", "↓"], description: "Scroll the code pane" },
-  { keys: ["Esc"], description: "Exit the review" },
+  { keys: ["v", "u"], description: "Unified view" },
+  { keys: ["v", "s"], description: "Split view" },
+  { keys: ["c"], description: "Enter comment mode" },
+  { keys: ["↑", "↓"], description: "Select lines (in comment mode)" },
+  { keys: ["⇧", "↑", "↓"], description: "Multi-line select (comment mode)" },
+  { keys: ["Enter"], description: "Open comment on selection" },
+  { keys: ["⌘", "Enter"], description: "Open / submit review (save draft in composer)" },
+  { keys: ["Esc"], description: "Exit comment mode / exit review" },
 ] as const;
 
 export function KeyboardShortcuts() {
@@ -15,9 +22,9 @@ export function KeyboardShortcuts() {
       <ul className="m-0 flex list-none flex-col gap-2 p-0">
         {SHORTCUTS.map(({ keys, description }) => (
           <li key={description} className="flex items-center gap-3 text-[13px] text-gr-muted">
-            <span className="inline-flex min-w-[52px] shrink-0 items-center gap-1">
-              {keys.map((key) => (
-                <Kbd key={key}>{key}</Kbd>
+            <span className="inline-flex min-w-[72px] shrink-0 items-center gap-1">
+              {keys.map((key, i) => (
+                <Kbd key={`${description}-${key}-${i}`}>{key}</Kbd>
               ))}
             </span>
             <span>{description}</span>
