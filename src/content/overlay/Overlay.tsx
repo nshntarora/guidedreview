@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { submitPullRequestReview } from "../../lib/messaging";
+import {
+  getGitHubAuthStatus,
+  submitPullRequestReview,
+} from "../../lib/messaging";
 import { useReviewStore, persistSession } from "./store";
 import { resolveUnitFiles } from "./selectors";
 import { buildDisplayUnits, displayUnitCount } from "./displayUnits";
@@ -14,6 +17,7 @@ import { DiffPane } from "./components/DiffPane";
 import { DescriptionPane } from "./components/DescriptionPane";
 import { ContextPanel } from "./components/ContextPanel";
 import { FooterNav } from "./components/FooterNav";
+import { ConnectGitHubModal } from "./components/ConnectGitHubModal";
 import { SubmitReviewModal } from "./components/SubmitReviewModal";
 import { ReviewSubmittedModal } from "./components/ReviewSubmittedModal";
 
@@ -75,6 +79,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   /** Pending `v` leader for view-mode chords (`v+u` / `v+s`). */
   const viewChordRef = useRef<ViewChordPending>(null);
   const [submitReviewOpen, setSubmitReviewOpen] = useState(false);
+  const [connectGitHubOpen, setConnectGitHubOpen] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
   const [submitReviewError, setSubmitReviewError] = useState<string | null>(
     null,
@@ -88,8 +93,12 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   const submitReviewKeyRef = useRef<((e: KeyboardEvent) => boolean) | null>(
     null,
   );
+  /** Primary Connect / Try again action from the open Connect GitHub modal. */
+  const connectGitHubActionRef = useRef<(() => void) | null>(null);
   /** Ignore stale submit responses after the modal is closed or a newer submit. */
   const submitGenerationRef = useRef(0);
+  /** Prevent double-open while auth status is in flight. */
+  const authCheckInFlightRef = useRef(false);
 
   const handleExit = useCallback(() => {
     onRequestClose?.();
@@ -112,6 +121,53 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     setSubmitReviewOpen(false);
     setSubmitReviewError(null);
   }, [submittingReview]);
+
+  const closeConnectGitHubModal = useCallback(() => {
+    setConnectGitHubOpen(false);
+  }, []);
+
+  const openSubmitReviewModalAfterAuth = useCallback(() => {
+    setConnectGitHubOpen(false);
+    setSubmitReviewError(null);
+    setSubmitReviewOpen(true);
+  }, []);
+
+  /**
+   * Gate Submit Review on a stored GitHub token. Missing auth → connect modal;
+   * after successful device OAuth the connect modal re-opens submit.
+   */
+  const requestOpenSubmitReview = useCallback(async () => {
+    if (
+      authCheckInFlightRef.current ||
+      submitReviewOpen ||
+      connectGitHubOpen ||
+      submittingReview ||
+      submitSuccess !== null
+    ) {
+      return;
+    }
+
+    authCheckInFlightRef.current = true;
+    try {
+      const status = await getGitHubAuthStatus();
+      if (status.ok && status.auth) {
+        setSubmitReviewError(null);
+        setSubmitReviewOpen(true);
+        return;
+      }
+      setConnectGitHubOpen(true);
+    } catch {
+      // Treat network/messaging failures as unauthenticated so the user can connect.
+      setConnectGitHubOpen(true);
+    } finally {
+      authCheckInFlightRef.current = false;
+    }
+  }, [
+    submitReviewOpen,
+    connectGitHubOpen,
+    submittingReview,
+    submitSuccess,
+  ]);
 
   const handleSubmitReview = useCallback(
     async (submission: ReviewSubmission) => {
@@ -271,6 +327,26 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         return;
       }
 
+      // Connect GitHub modal: Esc closes; Enter runs Connect / Try again / open GitHub.
+      if (connectGitHubOpen) {
+        viewChordRef.current = null;
+        if (event.key === "Escape") {
+          event.preventDefault();
+          setConnectGitHubOpen(false);
+          return;
+        }
+        if (
+          event.key === "Enter" &&
+          !event.metaKey &&
+          !event.ctrlKey &&
+          !event.altKey
+        ) {
+          event.preventDefault();
+          connectGitHubActionRef.current?.();
+        }
+        return;
+      }
+
       // Submit-review modal: Esc closes the dialog only (not the whole overlay).
       // ⌘/Ctrl+Enter submits on the compose step; ↑/↓/Enter drive the choose step.
       // Handled here because capture stopPropagation blocks element React handlers.
@@ -322,12 +398,11 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         return;
       }
 
-      // ⌘/Ctrl+Enter opens the Submit Review modal (when not typing in a field).
+      // ⌘/Ctrl+Enter opens Submit Review (or Connect GitHub if unauthenticated).
       if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
         viewChordRef.current = null;
-        setSubmitReviewError(null);
-        setSubmitReviewOpen(true);
+        void requestOpenSubmitReview();
         return;
       }
 
@@ -446,15 +521,12 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     selectableForUnit,
     currentUnitId,
     submitReviewOpen,
+    connectGitHubOpen,
     submittingReview,
     submitSuccess,
     exitAfterSubmit,
+    requestOpenSubmitReview,
   ]);
-
-  function openSubmitReviewModal(): void {
-    setSubmitReviewError(null);
-    setSubmitReviewOpen(true);
-  }
 
   if (!isOpen) return null;
 
@@ -464,7 +536,9 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         prContext={prContext}
         diff={diff}
         onExit={handleExit}
-        onSubmitReview={openSubmitReviewModal}
+        onSubmitReview={() => {
+          void requestOpenSubmitReview();
+        }}
       />
 
       <div className="flex min-h-0 flex-1">
@@ -516,6 +590,13 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         total={total}
         onPrev={goPrev}
         onNext={goNext}
+      />
+
+      <ConnectGitHubModal
+        open={connectGitHubOpen}
+        onClose={closeConnectGitHubModal}
+        onAuthenticated={openSubmitReviewModalAfterAuth}
+        connectActionRef={connectGitHubActionRef}
       />
 
       <SubmitReviewModal

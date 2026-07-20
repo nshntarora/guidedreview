@@ -1,26 +1,21 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { GitHubAuthState } from "../lib/types";
 import { isGitHubOAuthConfigured } from "../lib/github/oauthConfig";
 import {
+  openVerificationUri,
+  useGitHubDeviceAuth,
+} from "../lib/github/useGitHubDeviceAuth";
+import {
   clearGitHubAuthSession,
   getGitHubAuthStatus,
-  pollGitHubDeviceAuth,
-  startGitHubDeviceAuth,
 } from "../lib/messaging";
 import { ActionSpinner } from "./components/ActionSpinner";
 import { cn } from "../lib/cn";
 
-type ViewState =
+type SessionState =
   | { kind: "loading" }
   | { kind: "disconnected" }
-  | {
-      kind: "awaiting";
-      userCode: string;
-      verificationUri: string;
-      deviceCode: string;
-    }
-  | { kind: "connected"; auth: GitHubAuthState }
-  | { kind: "error"; message: string };
+  | { kind: "connected"; auth: GitHubAuthState };
 
 const primaryBtn =
   "inline-flex cursor-pointer items-center gap-2 rounded-md border border-opt-accent bg-opt-accent px-4 py-2 text-[13px] font-semibold text-opt-accent-on enabled:hover:border-opt-accent-hover enabled:hover:bg-opt-accent-hover disabled:cursor-default disabled:opacity-60";
@@ -30,32 +25,25 @@ const secondaryBtn =
 
 /**
  * Options section: GitHub device OAuth connect / disconnect.
- * Polling is owned here so the MV3 service worker does not need a long-lived timer.
+ * Device poll loop lives in useGitHubDeviceAuth (shared with the overlay modal).
  */
 export function GitHubAuthSection() {
   const configured = isGitHubOAuthConfigured();
-  const [view, setView] = useState<ViewState>({ kind: "loading" });
-  const [busy, setBusy] = useState(false);
+  const [session, setSession] = useState<SessionState>({ kind: "loading" });
+  const [disconnectBusy, setDisconnectBusy] = useState(false);
+  const [disconnectError, setDisconnectError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pollGenerationRef = useRef(0);
-
-  const stopPolling = useCallback(() => {
-    pollGenerationRef.current += 1;
-    if (pollTimerRef.current !== null) {
-      clearTimeout(pollTimerRef.current);
-      pollTimerRef.current = null;
-    }
-  }, []);
-
-  useEffect(() => {
-    return () => stopPolling();
-  }, [stopPolling]);
+  const { flow, busy: connectBusy, startConnect, cancel } = useGitHubDeviceAuth({
+    enabled: configured,
+    onAuthorized: (auth) => {
+      setSession({ kind: "connected", auth });
+    },
+  });
 
   useEffect(() => {
     if (!configured) {
-      setView({ kind: "disconnected" });
+      setSession({ kind: "disconnected" });
       return;
     }
 
@@ -64,13 +52,13 @@ export function GitHubAuthSection() {
       .then((res) => {
         if (cancelled) return;
         if (res.ok && res.auth) {
-          setView({ kind: "connected", auth: res.auth });
+          setSession({ kind: "connected", auth: res.auth });
         } else {
-          setView({ kind: "disconnected" });
+          setSession({ kind: "disconnected" });
         }
       })
       .catch(() => {
-        if (!cancelled) setView({ kind: "disconnected" });
+        if (!cancelled) setSession({ kind: "disconnected" });
       });
 
     return () => {
@@ -78,119 +66,24 @@ export function GitHubAuthSection() {
     };
   }, [configured]);
 
-  const schedulePoll = useCallback(
-    (deviceCode: string, intervalSec: number, generation: number) => {
-      if (pollTimerRef.current !== null) {
-        clearTimeout(pollTimerRef.current);
-      }
-      pollTimerRef.current = setTimeout(() => {
-        void (async () => {
-          if (generation !== pollGenerationRef.current) return;
-
-          try {
-            const result = await pollGitHubDeviceAuth(deviceCode);
-            if (generation !== pollGenerationRef.current) return;
-
-            if (result.ok && result.status === "pending") {
-              schedulePoll(deviceCode, intervalSec, generation);
-              return;
-            }
-
-            if (result.ok && result.status === "slow_down") {
-              schedulePoll(deviceCode, result.interval, generation);
-              return;
-            }
-
-            if (result.ok && result.status === "authorized") {
-              stopPolling();
-              setBusy(false);
-              setView({ kind: "connected", auth: result.auth });
-              return;
-            }
-
-            // Failure terminal states
-            stopPolling();
-            setBusy(false);
-            const message =
-              !result.ok
-                ? result.error
-                : "GitHub authorization failed. Try connecting again.";
-            setView({ kind: "error", message });
-          } catch (error) {
-            if (generation !== pollGenerationRef.current) return;
-            stopPolling();
-            setBusy(false);
-            const message =
-              error instanceof Error
-                ? error.message
-                : "GitHub authorization failed unexpectedly.";
-            setView({ kind: "error", message });
-          }
-        })();
-      }, Math.max(0, intervalSec) * 1000);
-    },
-    [stopPolling],
-  );
-
-  const onConnect = async () => {
-    if (!configured || busy) return;
-    stopPolling();
-    setBusy(true);
-    setCopied(false);
-    setView({ kind: "disconnected" });
-
-    try {
-      const start = await startGitHubDeviceAuth();
-      if (!start.ok) {
-        setBusy(false);
-        setView({ kind: "error", message: start.error });
-        return;
-      }
-
-      setView({
-        kind: "awaiting",
-        userCode: start.userCode,
-        verificationUri: start.verificationUri,
-        deviceCode: start.deviceCode,
-      });
-
-      // Open the verification page for the user.
-      try {
-        await chrome.tabs.create({ url: start.verificationUri });
-      } catch {
-        // Popup blockers / missing tabs permission — user can still click the link.
-      }
-
-      const generation = pollGenerationRef.current;
-      // First poll after the server-recommended interval.
-      schedulePoll(start.deviceCode, start.interval, generation);
-    } catch (error) {
-      setBusy(false);
-      const message =
-        error instanceof Error ? error.message : "Could not start GitHub sign-in.";
-      setView({ kind: "error", message });
-    }
-  };
-
   const onCancel = () => {
-    stopPolling();
-    setBusy(false);
+    cancel();
     setCopied(false);
-    setView({ kind: "disconnected" });
   };
 
   const onDisconnect = async () => {
-    if (busy) return;
-    setBusy(true);
+    if (disconnectBusy || connectBusy) return;
+    setDisconnectBusy(true);
+    setDisconnectError(null);
     try {
       await clearGitHubAuthSession();
-      setView({ kind: "disconnected" });
+      setSession({ kind: "disconnected" });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Could not disconnect GitHub.";
-      setView({ kind: "error", message });
+      setDisconnectError(message);
     } finally {
-      setBusy(false);
+      setDisconnectBusy(false);
     }
   };
 
@@ -203,6 +96,9 @@ export function GitHubAuthSection() {
       setCopied(false);
     }
   };
+
+  const busy = connectBusy || disconnectBusy;
+  const showError = flow.kind === "error" ? flow.message : disconnectError;
 
   return (
     <section className="mb-8 border-b border-opt-border pb-8" data-testid="github-auth-section">
@@ -222,57 +118,58 @@ export function GitHubAuthSection() {
         </p>
       )}
 
-      {configured && view.kind === "loading" && (
+      {configured && session.kind === "loading" && flow.kind === "idle" && !showError && (
         <p className="flex items-center gap-2 text-[13px] text-opt-muted" role="status">
           <ActionSpinner label="Loading GitHub connection" />
           Loading…
         </p>
       )}
 
-      {configured && view.kind === "disconnected" && (
-        <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            type="button"
-            className={primaryBtn}
-            onClick={() => void onConnect()}
-            disabled={busy}
-          >
-            {busy && <ActionSpinner label="Connecting to GitHub" />}
-            {busy ? "Connecting…" : "Connect GitHub"}
-          </button>
-          <span className="text-xs text-opt-muted">Requests repo and read:user access.</span>
-        </div>
-      )}
-
-      {configured && view.kind === "awaiting" && (
-        <div className="space-y-3" data-testid="github-auth-awaiting">
-          <p className="m-0 text-[13px] text-opt-muted">
-            Enter this code at{" "}
-            <a
-              href={view.verificationUri}
-              target="_blank"
-              rel="noreferrer"
-              className="font-semibold text-opt-text underline"
+      {configured &&
+        session.kind === "disconnected" &&
+        flow.kind === "idle" &&
+        !showError && (
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              className={primaryBtn}
+              onClick={() => {
+                setDisconnectError(null);
+                void startConnect();
+              }}
+              disabled={busy}
             >
-              {view.verificationUri.replace(/^https?:\/\//, "")}
-            </a>
-            , then keep this page open until authorization finishes.
-          </p>
+              {busy && <ActionSpinner label="Connecting to GitHub" />}
+              {busy ? "Connecting…" : "Connect GitHub"}
+            </button>
+            <span className="text-xs text-opt-muted">Requests repo and read:user access.</span>
+          </div>
+        )}
+
+      {configured && flow.kind === "awaiting" && (
+        <div className="space-y-3" data-testid="github-auth-awaiting">
           <div className="flex flex-wrap items-center gap-2">
             <code
               className="rounded-md border border-opt-border bg-opt-subtle px-3 py-2 font-mono text-lg tracking-widest text-opt-text"
               data-testid="github-user-code"
             >
-              {view.userCode}
+              {flow.userCode}
             </code>
             <button
               type="button"
               className={secondaryBtn}
-              onClick={() => void onCopyCode(view.userCode)}
+              onClick={() => void onCopyCode(flow.userCode)}
+              data-testid="github-copy-code"
             >
               {copied ? "Copied" : "Copy code"}
             </button>
           </div>
+          <p
+            className="m-0 text-[13px] text-opt-muted"
+            data-testid="github-copy-hint"
+          >
+            Copy this code, then paste it on the GitHub tab.
+          </p>
           <div className="flex flex-wrap items-center gap-2.5">
             <span className="flex items-center gap-2 text-[13px] text-opt-muted" role="status">
               <ActionSpinner label="Waiting for GitHub authorization" />
@@ -281,19 +178,27 @@ export function GitHubAuthSection() {
             <button type="button" className={secondaryBtn} onClick={onCancel}>
               Cancel
             </button>
+            <button
+              type="button"
+              className={primaryBtn}
+              onClick={() => void openVerificationUri(flow.verificationUri)}
+              data-testid="github-enter-code"
+            >
+              Enter Code On Github
+            </button>
           </div>
         </div>
       )}
 
-      {configured && view.kind === "connected" && (
+      {configured && session.kind === "connected" && flow.kind === "idle" && !showError && (
         <div
           className="flex flex-wrap items-center justify-between gap-3"
           data-testid="github-auth-connected"
         >
           <div className="flex min-w-0 items-center gap-3">
-            {view.auth.avatarUrl ? (
+            {session.auth.avatarUrl ? (
               <img
-                src={view.auth.avatarUrl}
+                src={session.auth.avatarUrl}
                 alt=""
                 width={36}
                 height={36}
@@ -304,15 +209,15 @@ export function GitHubAuthSection() {
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-opt-border bg-opt-subtle text-xs font-semibold text-opt-muted"
                 aria-hidden
               >
-                {view.auth.login.slice(0, 1).toUpperCase()}
+                {session.auth.login.slice(0, 1).toUpperCase()}
               </div>
             )}
             <div className="min-w-0">
               <p className="m-0 truncate text-[13px] font-semibold text-opt-text">
-                @{view.auth.login}
+                @{session.auth.login}
               </p>
-              {view.auth.name ? (
-                <p className="m-0 truncate text-xs text-opt-muted">{view.auth.name}</p>
+              {session.auth.name ? (
+                <p className="m-0 truncate text-xs text-opt-muted">{session.auth.name}</p>
               ) : (
                 <p className="m-0 text-xs text-opt-ok">Connected</p>
               )}
@@ -324,19 +229,22 @@ export function GitHubAuthSection() {
             onClick={() => void onDisconnect()}
             disabled={busy}
           >
-            {busy && <ActionSpinner label="Disconnecting" />}
+            {disconnectBusy && <ActionSpinner label="Disconnecting" />}
             Disconnect
           </button>
         </div>
       )}
 
-      {configured && view.kind === "error" && (
+      {configured && showError && (
         <div className="space-y-3" role="alert">
-          <p className={cn("m-0 text-[13px] text-opt-error")}>{view.message}</p>
+          <p className={cn("m-0 text-[13px] text-opt-error")}>{showError}</p>
           <button
             type="button"
             className={primaryBtn}
-            onClick={() => void onConnect()}
+            onClick={() => {
+              setDisconnectError(null);
+              void startConnect();
+            }}
             disabled={busy}
           >
             Try again

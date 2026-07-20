@@ -8,8 +8,18 @@ import { VIEW_CHORD_WINDOW_MS } from "./viewModeChord";
 import type { ParsedDiff, PRContext, ReviewPlan } from "../../lib/types";
 import * as messaging from "../../lib/messaging";
 
+const sampleAuth = {
+  accessToken: "gho_test",
+  tokenType: "bearer",
+  scope: "repo,read:user",
+  login: "octocat",
+};
+
 vi.mock("../../lib/messaging", () => ({
   submitPullRequestReview: vi.fn(),
+  getGitHubAuthStatus: vi.fn(),
+  startGitHubDeviceAuth: vi.fn(),
+  pollGitHubDeviceAuth: vi.fn(),
 }));
 
 function diffFixture(): ParsedDiff {
@@ -107,6 +117,11 @@ describe("Overlay", () => {
       ok: true,
       reviewId: 1,
       htmlUrl: "https://github.com/acme/widgets/pull/1#pullrequestreview-1",
+    });
+    vi.mocked(messaging.getGitHubAuthStatus).mockReset();
+    vi.mocked(messaging.getGitHubAuthStatus).mockResolvedValue({
+      ok: true,
+      auth: sampleAuth,
     });
   });
 
@@ -524,34 +539,116 @@ describe("Overlay", () => {
   });
 
   describe("submit review modal", () => {
-    it("opens from the header Submit Review button", () => {
+    async function openSubmitReviewModal(): Promise<void> {
+      fireEvent.click(screen.getByTestId("submit-review-button"));
+      expect(await screen.findByTestId("submit-review-modal")).toBeInTheDocument();
+    }
+
+    it("opens from the header Submit Review button when authenticated", async () => {
       seedReadyReview(0);
       render(<Overlay />);
 
       expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
-      fireEvent.click(screen.getByTestId("submit-review-button"));
-      expect(screen.getByTestId("submit-review-modal")).toBeInTheDocument();
+      await openSubmitReviewModal();
       expect(screen.getByRole("dialog", { name: "Submit Review" })).toBeInTheDocument();
     });
 
-    it("opens with meta+Enter when the modal is closed", () => {
+    it("opens the Connect GitHub modal when unauthenticated", async () => {
+      vi.mocked(messaging.getGitHubAuthStatus).mockResolvedValue({
+        ok: true,
+        auth: null,
+      });
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      fireEvent.click(screen.getByTestId("submit-review-button"));
+      expect(await screen.findByTestId("connect-github-modal")).toBeInTheDocument();
+      expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
+      expect(screen.getByTestId("connect-github-prompt")).toHaveTextContent(
+        /authenticate via GitHub/i,
+      );
+    });
+
+    it("opens submit review after successful connect-from-modal auth", async () => {
+      vi.mocked(messaging.getGitHubAuthStatus).mockResolvedValue({
+        ok: true,
+        auth: null,
+      });
+      vi.mocked(messaging.startGitHubDeviceAuth).mockResolvedValue({
+        ok: true,
+        userCode: "ABCD-EFGH",
+        verificationUri: "https://github.com/login/device",
+        deviceCode: "device-auth",
+        interval: 0,
+        expiresIn: 900,
+      });
+      vi.mocked(messaging.pollGitHubDeviceAuth).mockResolvedValue({
+        ok: true,
+        status: "authorized",
+        auth: sampleAuth,
+      });
+
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      fireEvent.click(screen.getByTestId("submit-review-button"));
+      expect(await screen.findByTestId("connect-github-modal")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId("connect-github-connect"));
+
+      await waitFor(() => {
+        expect(screen.queryByTestId("connect-github-modal")).not.toBeInTheDocument();
+      });
+      expect(await screen.findByTestId("submit-review-modal")).toBeInTheDocument();
+    });
+
+    it("closes the Connect GitHub modal on Esc without exiting the overlay", async () => {
+      vi.mocked(messaging.getGitHubAuthStatus).mockResolvedValue({
+        ok: true,
+        auth: null,
+      });
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      fireEvent.click(screen.getByTestId("submit-review-button"));
+      expect(await screen.findByTestId("connect-github-modal")).toBeInTheDocument();
+
+      fireEvent.keyDown(window, { key: "Escape" });
+      expect(screen.queryByTestId("connect-github-modal")).not.toBeInTheDocument();
+      expect(useReviewStore.getState().isOpen).toBe(true);
+    });
+
+    it("opens with meta+Enter when the modal is closed", async () => {
       seedReadyReview(0);
       render(<Overlay />);
 
       expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
       fireEvent.keyDown(window, { key: "Enter", metaKey: true });
-      expect(screen.getByTestId("submit-review-modal")).toBeInTheDocument();
+      expect(await screen.findByTestId("submit-review-modal")).toBeInTheDocument();
     });
 
-    it("opens with Ctrl+Enter when the modal is closed", () => {
+    it("opens Connect GitHub with meta+Enter when unauthenticated", async () => {
+      vi.mocked(messaging.getGitHubAuthStatus).mockResolvedValue({
+        ok: true,
+        auth: null,
+      });
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      fireEvent.keyDown(window, { key: "Enter", metaKey: true });
+      expect(await screen.findByTestId("connect-github-modal")).toBeInTheDocument();
+      expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
+    });
+
+    it("opens with Ctrl+Enter when the modal is closed", async () => {
       seedReadyReview(0);
       render(<Overlay />);
 
       fireEvent.keyDown(window, { key: "Enter", ctrlKey: true });
-      expect(screen.getByTestId("submit-review-modal")).toBeInTheDocument();
+      expect(await screen.findByTestId("submit-review-modal")).toBeInTheDocument();
     });
 
-    it("opens with meta+Enter from comment mode (without opening the line composer)", () => {
+    it("opens with meta+Enter from comment mode (without opening the line composer)", async () => {
       seedReadyReview(1);
       render(<Overlay />);
 
@@ -559,27 +656,26 @@ describe("Overlay", () => {
       expect(useReviewStore.getState().uiMode).toBe("comment");
 
       fireEvent.keyDown(window, { key: "Enter", metaKey: true });
-      expect(screen.getByTestId("submit-review-modal")).toBeInTheDocument();
+      expect(await screen.findByTestId("submit-review-modal")).toBeInTheDocument();
       expect(useReviewStore.getState().composerOpen).toBe(false);
     });
 
-    it("closes on Esc without exiting the overlay", () => {
+    it("closes on Esc without exiting the overlay", async () => {
       seedReadyReview(0);
       render(<Overlay />);
 
-      fireEvent.click(screen.getByTestId("submit-review-button"));
-      expect(screen.getByTestId("submit-review-modal")).toBeInTheDocument();
+      await openSubmitReviewModal();
 
       fireEvent.keyDown(window, { key: "Escape" });
       expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
       expect(useReviewStore.getState().isOpen).toBe(true);
     });
 
-    it("exits the overlay on Esc after the modal is closed", () => {
+    it("exits the overlay on Esc after the modal is closed", async () => {
       seedReadyReview(0);
       render(<Overlay />);
 
-      fireEvent.click(screen.getByTestId("submit-review-button"));
+      await openSubmitReviewModal();
       fireEvent.keyDown(window, { key: "Escape" });
       expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
 
@@ -604,7 +700,7 @@ describe("Overlay", () => {
       });
       render(<Overlay />);
 
-      fireEvent.click(screen.getByTestId("submit-review-button"));
+      await openSubmitReviewModal();
       fireEvent.click(screen.getByTestId("submit-review-event-APPROVE"));
       fireEvent.change(screen.getByTestId("submit-review-body"), {
         target: { value: "Looks good" },
@@ -646,7 +742,7 @@ describe("Overlay", () => {
       seedReadyReview(0);
       render(<Overlay />);
 
-      fireEvent.click(screen.getByTestId("submit-review-button"));
+      await openSubmitReviewModal();
       fireEvent.click(screen.getByTestId("submit-review-event-APPROVE"));
       fireEvent.change(screen.getByTestId("submit-review-body"), {
         target: { value: "Looks good" },
@@ -682,7 +778,7 @@ describe("Overlay", () => {
       seedReadyReview(0);
       render(<Overlay />);
 
-      fireEvent.click(screen.getByTestId("submit-review-button"));
+      await openSubmitReviewModal();
       fireEvent.click(screen.getByTestId("submit-review-event-APPROVE"));
       fireEvent.change(screen.getByTestId("submit-review-body"), {
         target: { value: "Looks good" },
@@ -715,7 +811,7 @@ describe("Overlay", () => {
       seedReadyReview(0);
       render(<Overlay />);
 
-      fireEvent.click(screen.getByTestId("submit-review-button"));
+      await openSubmitReviewModal();
       fireEvent.click(screen.getByTestId("submit-review-event-APPROVE"));
       fireEvent.click(screen.getByTestId("submit-review-confirm"));
 
@@ -731,7 +827,7 @@ describe("Overlay", () => {
       seedReadyReview(0);
       render(<Overlay />);
 
-      fireEvent.click(screen.getByTestId("submit-review-button"));
+      await openSubmitReviewModal();
       fireEvent.click(screen.getByTestId("submit-review-event-COMMENT"));
       fireEvent.click(screen.getByTestId("submit-review-confirm"));
 
@@ -747,7 +843,7 @@ describe("Overlay", () => {
       seedReadyReview(0);
       render(<Overlay />);
 
-      fireEvent.click(screen.getByTestId("submit-review-button"));
+      await openSubmitReviewModal();
       fireEvent.click(screen.getByTestId("submit-review-event-APPROVE"));
       fireEvent.change(screen.getByTestId("submit-review-body"), {
         target: { value: "Approved via shortcut" },
@@ -771,7 +867,7 @@ describe("Overlay", () => {
       seedReadyReview(0);
       render(<Overlay />);
 
-      fireEvent.click(screen.getByTestId("submit-review-button"));
+      await openSubmitReviewModal();
       fireEvent.click(screen.getByTestId("submit-review-event-COMMENT"));
       fireEvent.change(screen.getByTestId("submit-review-body"), {
         target: { value: "General feedback" },
@@ -794,11 +890,11 @@ describe("Overlay", () => {
       expect(useReviewStore.getState().isOpen).toBe(true);
     });
 
-    it("ArrowDown and Enter on choose step advance via window capture", () => {
+    it("ArrowDown and Enter on choose step advance via window capture", async () => {
       seedReadyReview(0);
       render(<Overlay />);
 
-      fireEvent.click(screen.getByTestId("submit-review-button"));
+      await openSubmitReviewModal();
       expect(screen.getByTestId("submit-review-modal")).toHaveAttribute(
         "data-step",
         "choose",

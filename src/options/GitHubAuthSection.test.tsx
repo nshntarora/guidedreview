@@ -1,9 +1,10 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GitHubAuthSection } from "./GitHubAuthSection";
 import * as messaging from "../lib/messaging";
 import * as oauthConfig from "../lib/github/oauthConfig";
+import * as deviceAuth from "../lib/github/useGitHubDeviceAuth";
 
 vi.mock("../lib/messaging", () => ({
   getGitHubAuthStatus: vi.fn(),
@@ -17,13 +18,22 @@ vi.mock("../lib/github/oauthConfig", () => ({
 }));
 
 describe("GitHubAuthSection", () => {
+  let openVerificationUriSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     vi.mocked(oauthConfig.isGitHubOAuthConfigured).mockReturnValue(true);
     vi.mocked(messaging.getGitHubAuthStatus).mockResolvedValue({ ok: true, auth: null });
     vi.mocked(messaging.startGitHubDeviceAuth).mockReset();
     vi.mocked(messaging.pollGitHubDeviceAuth).mockReset();
     vi.mocked(messaging.clearGitHubAuthSession).mockReset();
+    openVerificationUriSpy = vi
+      .spyOn(deviceAuth, "openVerificationUri")
+      .mockResolvedValue(undefined);
     vi.useRealTimers();
+  });
+
+  afterEach(() => {
+    openVerificationUriSpy.mockRestore();
   });
 
   it("shows a setup message when OAuth is not configured", async () => {
@@ -58,7 +68,7 @@ describe("GitHubAuthSection", () => {
     expect(screen.getByRole("button", { name: /disconnect/i })).toBeInTheDocument();
   });
 
-  it("starts device flow and shows the user code", async () => {
+  it("starts device flow, shows the user code, and does not open GitHub yet", async () => {
     const user = userEvent.setup();
     vi.mocked(messaging.startGitHubDeviceAuth).mockResolvedValue({
       ok: true,
@@ -69,7 +79,6 @@ describe("GitHubAuthSection", () => {
       expiresIn: 900,
     });
     vi.mocked(messaging.pollGitHubDeviceAuth).mockResolvedValue({ ok: true, status: "pending" });
-    vi.mocked(chrome.tabs.create).mockResolvedValue({} as chrome.tabs.Tab);
 
     render(<GitHubAuthSection />);
     await screen.findByRole("button", { name: /connect github/i });
@@ -77,9 +86,37 @@ describe("GitHubAuthSection", () => {
 
     expect(await screen.findByTestId("github-user-code")).toHaveTextContent("WDJB-MJHT");
     expect(screen.getByText(/Waiting for authorization/i)).toBeInTheDocument();
-    expect(chrome.tabs.create).toHaveBeenCalledWith({
-      url: "https://github.com/login/device",
+    expect(screen.getByTestId("github-copy-hint")).toHaveTextContent(
+      /Copy this code, then paste it on the GitHub tab/i,
+    );
+    expect(screen.getByTestId("github-enter-code")).toHaveTextContent(
+      /Enter Code On Github/,
+    );
+    expect(openVerificationUriSpy).not.toHaveBeenCalled();
+  });
+
+  it("opens GitHub when Enter Code On Github is clicked", async () => {
+    const user = userEvent.setup();
+    vi.mocked(messaging.startGitHubDeviceAuth).mockResolvedValue({
+      ok: true,
+      userCode: "WDJB-MJHT",
+      verificationUri: "https://github.com/login/device",
+      deviceCode: "device-1",
+      interval: 60,
+      expiresIn: 900,
     });
+    vi.mocked(messaging.pollGitHubDeviceAuth).mockResolvedValue({ ok: true, status: "pending" });
+
+    render(<GitHubAuthSection />);
+    await screen.findByRole("button", { name: /connect github/i });
+    await user.click(screen.getByRole("button", { name: /connect github/i }));
+    await screen.findByTestId("github-user-code");
+
+    await user.click(screen.getByTestId("github-enter-code"));
+    expect(openVerificationUriSpy).toHaveBeenCalledTimes(1);
+    expect(openVerificationUriSpy).toHaveBeenCalledWith(
+      "https://github.com/login/device",
+    );
   });
 
   it("shows connected state after a successful poll", async () => {
@@ -104,7 +141,6 @@ describe("GitHubAuthSection", () => {
         login: "monalisa",
       },
     });
-    vi.mocked(chrome.tabs.create).mockResolvedValue({} as chrome.tabs.Tab);
 
     render(<GitHubAuthSection />);
     await screen.findByRole("button", { name: /connect github/i });
