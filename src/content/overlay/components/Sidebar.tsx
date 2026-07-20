@@ -50,7 +50,7 @@ export function Sidebar({
             ref={isActive ? activeItemRef : undefined}
             aria-current={isActive ? "true" : undefined}
             className={cn(
-              "mb-0.5 block min-h-11 w-full cursor-pointer rounded-md border-none bg-transparent px-2 py-2.5 text-left text-base leading-snug text-gr-text",
+              "mb-0.5 block w-full cursor-pointer rounded-md border-none bg-transparent p-2 text-left text-base leading-snug text-gr-text",
               isActive &&
                 "bg-gr-accent-subtle text-gr-accent! hover:bg-gr-accent-subtle",
             )}

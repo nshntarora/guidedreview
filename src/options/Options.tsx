@@ -24,7 +24,7 @@ const fieldControl =
   "w-full rounded-md border border-opt-border bg-opt-subtle px-2.5 py-2 text-base text-opt-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-opt-accent";
 
 const actionBtn =
-  "inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-md border px-4 py-2 text-base font-semibold disabled:cursor-default disabled:opacity-60";
+  "inline-flex cursor-pointer items-center gap-2 rounded-md border px-4 py-2 text-base font-semibold disabled:cursor-default disabled:opacity-60";
 
 function OptionRow({ icon, label }: { icon: ProviderId; label: string }) {
   return (

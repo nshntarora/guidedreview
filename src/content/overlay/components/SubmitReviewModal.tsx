@@ -35,7 +35,7 @@ interface SubmitReviewModalProps {
 }
 
 const modalBtn =
-  "inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md border px-3 py-2 text-base disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-3 py-1.5 text-base disabled:cursor-not-allowed disabled:opacity-50";
 
 
 const REVIEW_EVENTS: {
@@ -253,7 +253,7 @@ export function SubmitReviewModal({
           </h2>
           <button
             type="button"
-            className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-md border border-gr-border bg-gr-bg p-2 text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex cursor-pointer items-center justify-center rounded-md border border-gr-border bg-gr-bg p-1.5 text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50"
             onClick={onClose}
             disabled={submitting}
             aria-label="Close"

@@ -58,6 +58,10 @@
  * still suppress the ring on widgets that use a custom focus style (e.g.
  * listbox + option highlight, textareas with focus:border).
  */
+:focus-visible {
+  outline: none;
+}
+
 @layer base {
   :is(
     a,

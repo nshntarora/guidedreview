@@ -9,7 +9,7 @@ interface FooterNavProps {
 }
 
 const navBtnBase =
-  "inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-md border px-4 py-2 text-base font-medium disabled:cursor-default disabled:opacity-40";
+  "inline-flex cursor-pointer items-center gap-2 rounded-md border px-4 py-[7px] text-base font-medium disabled:cursor-default disabled:opacity-40";
 
 export function FooterNav({
   currentIndex,

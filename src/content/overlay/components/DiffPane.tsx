@@ -462,7 +462,7 @@ function DiffViewToggle({
         <button
           type="button"
           className={cn(
-            "inline-flex min-h-11 cursor-pointer items-center gap-1.5 px-3 py-2 text-base transition-colors",
+            "inline-flex cursor-pointer items-center gap-1.5 px-3 py-1.5 text-base transition-colors",
             mode === "unified"
               ? "bg-gr-subtle text-gr-text"
               : "bg-transparent text-gr-muted hover:bg-gr-subtle hover:text-gr-text",
@@ -478,7 +478,7 @@ function DiffViewToggle({
         <button
           type="button"
           className={cn(
-            "inline-flex min-h-11 cursor-pointer items-center gap-1.5 border-l border-gr-border px-3 py-2 text-base transition-colors",
+            "inline-flex cursor-pointer items-center gap-1.5 border-l border-gr-border px-3 py-1.5 text-base transition-colors",
             mode === "split"
               ? "bg-gr-subtle text-gr-text"
               : "bg-transparent text-gr-muted hover:bg-gr-subtle hover:text-gr-text",
@@ -521,7 +521,7 @@ function AddCommentButton({
     <button
       type="button"
       className={cn(
-        "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-md border border-gr-border px-3 py-2 text-base transition-colors",
+        "inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gr-border px-3 py-1.5 text-base transition-colors",
         disabled
           ? "cursor-not-allowed bg-gr-bg text-gr-faint opacity-60"
           : "cursor-pointer bg-gr-bg text-gr-text hover:bg-gr-subtle",
