@@ -51,10 +51,36 @@
 /*
  * Visible focus for keyboard users (2.4.7). Prefer :focus-visible so mouse
  * clicks do not show a ring. Accent meets ≥ 3:1 against dark surfaces.
+ *
+ * Scoped to interactive controls only — containers (dialog shell, main column,
+ * cards) may be programmatically focused for traps/scroll restore but must not
+ * draw a chrome ring. Lives in @layer base so Tailwind `outline-none` can
+ * still suppress the ring on widgets that use a custom focus style (e.g.
+ * listbox + option highlight, textareas with focus:border).
  */
-:focus-visible {
-  outline: 2px solid var(--color-gr-accent, #caff57);
-  outline-offset: 2px;
+@layer base {
+  :is(
+    a,
+    button,
+    input,
+    select,
+    textarea,
+    summary,
+    [role="button"],
+    [role="link"],
+    [role="menuitem"],
+    [role="option"],
+    [role="tab"],
+    [role="checkbox"],
+    [role="radio"],
+    [role="switch"],
+    [role="combobox"],
+    [contenteditable="true"],
+    [tabindex]:not([tabindex="-1"])
+  ):focus-visible {
+    outline: 2px solid var(--color-gr-accent, #caff57);
+    outline-offset: 2px;
+  }
 }
 
 /* Screen-reader-only utility (Tailwind sr-only may not always ship into the host) */
