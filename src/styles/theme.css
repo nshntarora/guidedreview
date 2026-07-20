@@ -11,11 +11,13 @@
   --color-gr-bg: #110e0b;
   --color-gr-canvas: #16120f;
   --color-gr-subtle: #1c1814;
-  --color-gr-border: #3a342e;
-  --color-gr-border-muted: #2a2420;
+  /* Borders ≥ 3:1 against gr-bg/gr-chrome for WCAG 1.4.11 UI contrast */
+  --color-gr-border: #6b635a;
+  --color-gr-border-muted: #4a433c;
   --color-gr-text: #fefefe;
   --color-gr-muted: #8b949e;
-  --color-gr-faint: #6e7781;
+  /* ≥ 4.5:1 on gr-bg for normal text (line numbers, placeholders) */
+  --color-gr-faint: #768088;
   --color-gr-accent: #caff57;
   --color-gr-accent-hover: #b6e64e;
   --color-gr-accent-on: #0d0806;
@@ -82,7 +84,8 @@
   color-scheme: light dark;
   --opt-bg: #fefefe;
   --opt-subtle: #f6f8fa;
-  --opt-border: #d0d7de;
+  /* ≥ 3:1 against opt-bg for control borders (1.4.11) */
+  --opt-border: #8b949e;
   --opt-text: #0d0806;
   --opt-muted: #59636e;
   --opt-accent: #caff57;
@@ -96,7 +99,7 @@
   :root {
     --opt-bg: #0d0806;
     --opt-subtle: #16120f;
-    --opt-border: #3a342e;
+    --opt-border: #6b635a;
     --opt-text: #fefefe;
     --opt-muted: #8b949e;
     --opt-accent: #caff57;
@@ -104,5 +107,17 @@
     --opt-accent-on: #0d0806;
     --opt-ok: #3fb950;
     --opt-error: #ff7b72;
+  }
+}
+
+/* WCAG 2.3.3 — respect reduced-motion preference (overlay + options import this file) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

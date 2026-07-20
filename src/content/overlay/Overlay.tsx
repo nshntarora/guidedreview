@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   getGitHubAuthStatus,
   submitPullRequestReview,
@@ -7,6 +7,11 @@ import { useReviewStore, persistSession } from "./store";
 import { resolveUnitFiles } from "./selectors";
 import { buildDisplayUnits, displayUnitCount } from "./displayUnits";
 import { buildSelectableLines } from "./buildSelectableLines";
+import {
+  getFocusableElements,
+  restoreFocusAfterOverlay,
+  trapTabKey,
+} from "./focusTrap";
 import { recordViewChordKey, type ViewChordPending } from "./viewModeChord";
 import type { ReviewEvent, ReviewSubmission } from "./commentTypes";
 import { mapDraftsToReviewComments } from "./mapDraftComments";
@@ -74,8 +79,12 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   const goToUnit = useReviewStore((s) => s.goToUnit);
   const goNext = useReviewStore((s) => s.goNext);
   const goPrev = useReviewStore((s) => s.goPrev);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const submitModalDialogRef = useRef<HTMLDivElement>(null);
   const codeColRef = useRef<HTMLElement>(null);
   const contextPaneRef = useRef<HTMLDivElement>(null);
+  /** Element focused before the overlay opened (for restore if start button gone). */
+  const previousFocusRef = useRef<Element | null>(null);
   /** Pending `v` leader for view-mode chords (`v+u` / `v+s`). */
   const viewChordRef = useRef<ViewChordPending>(null);
   const [submitReviewOpen, setSubmitReviewOpen] = useState(false);
@@ -99,6 +108,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   const submitGenerationRef = useRef(0);
   /** Prevent double-open while auth status is in flight. */
   const authCheckInFlightRef = useRef(false);
+  const titleId = useId();
 
   const handleExit = useCallback(() => {
     onRequestClose?.();
@@ -120,6 +130,12 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     if (submittingReview) return;
     setSubmitReviewOpen(false);
     setSubmitReviewError(null);
+    // Return focus to the trigger so keyboard users are not dropped into limbo.
+    requestAnimationFrame(() => {
+      overlayRef.current
+        ?.querySelector<HTMLElement>('[data-testid="submit-review-button"]')
+        ?.focus();
+    });
   }, [submittingReview]);
 
   const closeConnectGitHubModal = useCallback(() => {
@@ -258,6 +274,24 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     };
   }, [isOpen]);
 
+  // Modal focus: move into the overlay on open; restore to the start button on close.
+  useEffect(() => {
+    if (!isOpen) return;
+
+    previousFocusRef.current = document.activeElement;
+    const frame = requestAnimationFrame(() => {
+      const root = overlayRef.current;
+      if (!root) return;
+      const focusable = getFocusableElements(root);
+      (focusable[0] ?? root).focus();
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      restoreFocusAfterOverlay(previousFocusRef.current);
+    };
+  }, [isOpen]);
+
   const planStillBuilding = status === "loading" || status === "streaming";
   // Spinner on the description unit only while the plan is still being built.
   const showBuildingSpinner =
@@ -305,6 +339,16 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     // the key (so typing into the comment composer still inserts characters).
     function onKeyDown(event: KeyboardEvent): void {
       event.stopPropagation();
+
+      // Tab trap: keep focus inside the submit modal when open, else the overlay.
+      // Must run here — window capture stopPropagation means element traps never see Tab.
+      if (event.key === "Tab") {
+        const trapRoot = submitReviewOpen
+          ? submitModalDialogRef.current
+          : overlayRef.current;
+        if (trapRoot) trapTabKey(event, trapRoot);
+        return;
+      }
 
       // Success modal: Enter / Esc exit guided review (single CTA dialog).
       if (submitSuccess) {
@@ -354,10 +398,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         viewChordRef.current = null;
         if (event.key === "Escape") {
           event.preventDefault();
-          if (!submittingReview) {
-            setSubmitReviewOpen(false);
-            setSubmitReviewError(null);
-          }
+          closeSubmitReviewModal();
           return;
         }
         if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
@@ -526,15 +567,57 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     submitSuccess,
     exitAfterSubmit,
     requestOpenSubmitReview,
+    closeSubmitReviewModal,
   ]);
+
+  const statusAnnouncement = useMemo(() => {
+    if (status === "error" && error) {
+      return `Error: ${error.message}`;
+    }
+    if (status === "loading") {
+      return "Loading pull request diff…";
+    }
+    if (status === "streaming") {
+      const n = plan?.units.length ?? 0;
+      return n > 0
+        ? `Building walkthrough. ${n} review unit${n === 1 ? "" : "s"} ready.`
+        : "Building walkthrough…";
+    }
+    if (status === "ready" && plan) {
+      return `Walkthrough ready. ${displayUnitCount(plan)} steps.`;
+    }
+    return "";
+  }, [status, error, plan]);
 
   if (!isOpen) return null;
 
+  const dialogTitle = prContext?.title?.trim() || "Guided Review";
+
   return (
-    <div className="fixed inset-0 z-[2147483000] flex flex-col bg-gr-bg font-sans text-sm text-gr-text antialiased [color-scheme:dark] [text-rendering:optimizeLegibility]">
+    <div
+      ref={overlayRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      tabIndex={-1}
+      className="fixed inset-0 z-[2147483000] flex flex-col bg-gr-bg font-sans text-sm text-gr-text antialiased outline-none [color-scheme:dark] [text-rendering:optimizeLegibility]"
+      data-testid="guided-review-overlay"
+    >
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="gr-sr-only"
+        data-testid="overlay-status-live"
+      >
+        {statusAnnouncement}
+      </div>
+
       <ProgressHeader
         prContext={prContext}
         diff={diff}
+        titleId={titleId}
+        title={dialogTitle}
         onExit={handleExit}
         onSubmitReview={() => {
           void requestOpenSubmitReview();
@@ -543,9 +626,11 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
 
       <div className="flex min-h-0 flex-1">
         <main
+          id="main-content"
           className="min-w-0 flex-[1_1_68%] overflow-y-auto border-r border-gr-border bg-gr-bg px-8 py-6"
           ref={codeColRef}
           data-testid="code-col"
+          tabIndex={-1}
         >
           {isDescriptionUnit ? (
             <DescriptionPane prContext={prContext} diff={diff} />
@@ -558,7 +643,10 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
           )}
         </main>
 
-        <aside className="flex max-w-[420px] min-w-[300px] flex-[1_1_32%] flex-col overflow-hidden bg-gr-chrome px-5 py-6">
+        <aside
+          className="flex max-w-[420px] min-w-[300px] flex-[1_1_32%] flex-col overflow-hidden bg-gr-chrome px-5 py-6"
+          aria-label="Review context and plan"
+        >
           <div
             className="min-h-0 flex-[1_1_50%] overflow-y-auto"
             ref={contextPaneRef}
@@ -609,6 +697,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         error={submitReviewError}
         submitActionRef={submitReviewActionRef}
         keyActionRef={submitReviewKeyRef}
+        dialogRef={submitModalDialogRef}
       />
 
       <ReviewSubmittedModal

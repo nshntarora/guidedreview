@@ -24,7 +24,11 @@ function ensureButtonStyles(): void {
   if (document.getElementById(BUTTON_STYLE_ID)) return;
   const style = document.createElement("style");
   style.id = BUTTON_STYLE_ID;
-  style.textContent = `#${BUTTON_ID}:hover{background:${ACCENT_HOVER};border-color:${ACCENT_HOVER}}`;
+  style.textContent = [
+    `#${BUTTON_ID}:hover{background:${ACCENT_HOVER};border-color:${ACCENT_HOVER}}`,
+    `#${BUTTON_ID}:focus-visible{outline:2px solid #CAFF57;outline-offset:2px}`,
+    `@media (prefers-reduced-motion:reduce){#${BUTTON_ID}{transition:none}}`,
+  ].join("");
   document.documentElement.appendChild(style);
 }
 

@@ -27,6 +27,7 @@ export function ProviderIcon({ provider, size = 16, className }: ProviderIconPro
       width={size}
       height={size}
       draggable={false}
+      aria-hidden="true"
       className={cn(
         "shrink-0 object-contain",
         // OpenAI asset is dark-on-transparent; invert for dark color scheme.
