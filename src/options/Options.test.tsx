@@ -81,7 +81,7 @@ describe("Options", () => {
     await user.type(screen.getByLabelText(/api key/i), "sk-x");
     await user.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(await screen.findByText("Quota exceeded")).toBeInTheDocument();
+    expect(await screen.findByText("Error: Quota exceeded")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save" })).not.toBeDisabled();
   });
 
@@ -115,7 +115,9 @@ describe("Options", () => {
     await user.type(screen.getByLabelText(/api key/i), "sk-bad");
     await user.click(screen.getByRole("button", { name: /test connection/i }));
 
-    await waitFor(() => expect(screen.getByText("Invalid API key")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("Error: Invalid API key")).toBeInTheDocument(),
+    );
   });
 
   it("shows an error when the connection test throws", async () => {
@@ -130,7 +132,7 @@ describe("Options", () => {
     await user.click(screen.getByRole("button", { name: /test connection/i }));
 
     await waitFor(() =>
-      expect(screen.getByText("Extension context invalidated")).toBeInTheDocument(),
+      expect(screen.getByText("Error: Extension context invalidated")).toBeInTheDocument(),
     );
     // Must not remain stuck on "Testing…"
     expect(screen.getByRole("button", { name: /test connection/i })).not.toBeDisabled();

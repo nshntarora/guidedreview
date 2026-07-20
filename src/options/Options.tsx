@@ -21,7 +21,10 @@ type ActionStatus =
   | { kind: "error"; message: string };
 
 const fieldControl =
-  "w-full rounded-md border border-opt-border bg-opt-subtle px-2.5 py-2 text-[13px] text-opt-text";
+  "w-full rounded-md border border-opt-border bg-opt-subtle px-2.5 py-2 text-[13px] text-opt-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-opt-accent";
+
+const actionBtn =
+  "inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-md border px-4 py-2 text-[13px] font-semibold disabled:cursor-default disabled:opacity-60";
 
 function OptionRow({ icon, label }: { icon: ProviderId; label: string }) {
   return (
@@ -125,7 +128,7 @@ export function Options() {
         : null;
 
   return (
-    <div className="mx-auto max-w-[480px] px-6 py-8">
+    <main id="main-content" className="mx-auto max-w-[480px] px-6 py-8">
       <BrandHeader />
       <p className="mb-6 text-[13px] text-opt-muted">
         Choose an AI provider and paste your own API key. The key is stored only in this
@@ -173,8 +176,9 @@ export function Options() {
           value={settings.apiKey}
           onChange={(e) => onApiKeyChange(e.target.value)}
           disabled={busy}
+          aria-describedby="apiKey-hint"
         />
-        <p className="mt-1 text-xs text-opt-muted">
+        <p id="apiKey-hint" className="mt-1 text-xs text-opt-muted">
           Stored locally on this device via chrome.storage.local — never synced.
         </p>
       </div>
@@ -183,9 +187,10 @@ export function Options() {
         <button
           type="button"
           className={cn(
-            "inline-flex cursor-pointer items-center gap-2 rounded-md border border-opt-accent bg-opt-accent px-4 py-2 text-[13px] font-semibold text-opt-accent-on",
+            actionBtn,
+            "border-opt-accent bg-opt-accent text-opt-accent-on",
             "enabled:hover:border-opt-accent-hover enabled:hover:bg-opt-accent-hover",
-            "disabled:cursor-default disabled:opacity-60",
+            "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent",
           )}
           onClick={onSave}
           disabled={busy}
@@ -196,8 +201,9 @@ export function Options() {
         <button
           type="button"
           className={cn(
-            "inline-flex cursor-pointer items-center gap-2 rounded-md border border-opt-border bg-opt-subtle px-4 py-2 text-[13px] font-semibold text-opt-text",
-            "disabled:cursor-default disabled:opacity-60",
+            actionBtn,
+            "border-opt-border bg-opt-subtle text-opt-text",
+            "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent",
           )}
           onClick={onTestConnection}
           disabled={!settings.apiKey || busy}
@@ -215,19 +221,19 @@ export function Options() {
               statusMessage.kind === "error" && "text-opt-error",
             )}
           >
-            {statusMessage.message}
+            {statusMessage.kind === "error" ? `Error: ${statusMessage.message}` : statusMessage.message}
           </span>
         )}
       </div>
 
-      <nav className="mt-8 border-t border-opt-border pt-6">
+      <nav className="mt-8 border-t border-opt-border pt-6" aria-label="About">
         <a
           href="#about"
-          className="text-[13px] font-semibold text-opt-muted no-underline hover:text-opt-text hover:underline"
+          className="text-[13px] font-semibold text-opt-muted no-underline hover:text-opt-text hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent"
         >
           About Guided Review
         </a>
       </nav>
-    </div>
+    </main>
   );
 }

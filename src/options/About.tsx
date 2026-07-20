@@ -11,7 +11,7 @@ export function About() {
   const version = chrome.runtime.getManifest().version;
 
   return (
-    <div className="mx-auto max-w-[480px] px-6 py-8">
+    <main id="main-content" className="mx-auto max-w-[480px] px-6 py-8">
       <BrandHeader />
       <p className="mb-6 text-[13px] text-opt-muted">
         AI-structured walkthroughs for GitHub pull requests
@@ -65,14 +65,14 @@ export function About() {
         </p>
       </section>
 
-      <nav className="mt-8 border-t border-opt-border pt-6">
+      <nav className="mt-8 border-t border-opt-border pt-6" aria-label="Settings">
         <a
           href="#settings"
-          className="text-[13px] font-semibold text-opt-muted no-underline hover:text-opt-text hover:underline"
+          className="text-[13px] font-semibold text-opt-muted no-underline hover:text-opt-text hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent"
         >
           ← Settings
         </a>
       </nav>
-    </div>
+    </main>
   );
 }

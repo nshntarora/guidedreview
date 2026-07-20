@@ -47,3 +47,25 @@
 @import "./_highlight.scss";
 @import "./_markdown.scss";
 @import "./_animations.scss";
+
+/*
+ * Visible focus for keyboard users (2.4.7). Prefer :focus-visible so mouse
+ * clicks do not show a ring. Accent meets ≥ 3:1 against dark surfaces.
+ */
+:focus-visible {
+  outline: 2px solid var(--color-gr-accent, #caff57);
+  outline-offset: 2px;
+}
+
+/* Screen-reader-only utility (Tailwind sr-only may not always ship into the host) */
+.gr-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
