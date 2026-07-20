@@ -9,6 +9,7 @@ import type {
   ParsedDiff,
   PRContext,
   ProviderSettings,
+  ReviewErrorInfo,
   ReviewPlan,
   ReviewUnit,
 } from "./types";
@@ -18,7 +19,7 @@ const ANNOTATE_PORT_NAME = "annotate-review";
 export interface StreamReviewPlanHandlers {
   onUnit: (unit: ReviewUnit) => void;
   onDone: (plan: ReviewPlan) => void;
-  onError: (error: string) => void;
+  onError: (error: ReviewErrorInfo) => void;
 }
 
 /**
@@ -73,7 +74,9 @@ export function streamReviewPlan(
     // If the background dies or the port drops without DONE/ERROR, surface it.
     finish(() => {
       const err = chrome.runtime.lastError?.message;
-      handlers.onError(err ?? "Lost connection to the review worker before the plan finished.");
+      handlers.onError({
+        message: err ?? "Lost connection to the review worker before the plan finished.",
+      });
     });
   });
 

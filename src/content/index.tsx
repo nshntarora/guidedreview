@@ -2,7 +2,7 @@ import { createRoot } from "react-dom/client";
 import { parsePRUrl, type PRIdentity } from "../lib/github/diffFetch";
 import { fetchConversationDescription, scrapePRContext } from "../lib/github/prContext";
 import { requestPRDiff, streamReviewPlan } from "../lib/messaging";
-import type { ContentRequest } from "../lib/types";
+import type { ContentRequest, ParsedDiff, PRContext } from "../lib/types";
 import { ensureFallbackHost, FALLBACK_HOST_ID, findButtonAnchor } from "./buttonAnchor";
 import { Overlay } from "./overlay/Overlay";
 import overlayStyles from "./overlay/styles/overlay.css?inline";
@@ -133,6 +133,40 @@ function cancelActiveStream(): void {
   }
 }
 
+function startAnnotationStream(
+  diff: ParsedDiff,
+  prContext: PRContext,
+  streamGeneration: number,
+): void {
+  const { cancel } = streamReviewPlan(diff, prContext, {
+    onUnit: (unit) => useReviewStore.getState().appendUnit(unit, streamGeneration),
+    onDone: (plan) => {
+      activeStreamCancel = null;
+      useReviewStore.getState().setReady(diff, plan, streamGeneration);
+    },
+    onError: (error) => {
+      activeStreamCancel = null;
+      useReviewStore.getState().setError(error, streamGeneration);
+    },
+  });
+  activeStreamCancel = cancel;
+}
+
+/**
+ * Retry after a failure. If the diff was already fetched, re-run only the LLM
+ * annotate call; otherwise restart the full review flow (diff fetch + annotate).
+ */
+function retryAnnotation(): void {
+  const { diff, prContext } = useReviewStore.getState();
+  if (diff && prContext) {
+    cancelActiveStream();
+    const generation = useReviewStore.getState().beginRetry();
+    startAnnotationStream(diff, prContext, generation);
+    return;
+  }
+  void onStartReview();
+}
+
 async function onStartReview(): Promise<void> {
   // Prefer the cached identity from button injection; re-parse the URL so a
   // toolbar-icon click still works if the button hasn't painted yet.
@@ -186,18 +220,7 @@ async function onStartReview(): Promise<void> {
     useReviewStore.getState().beginStreaming(streamGeneration);
 
     const latestContext = useReviewStore.getState().prContext ?? prContext;
-    const { cancel } = streamReviewPlan(diff, latestContext, {
-      onUnit: (unit) => useReviewStore.getState().appendUnit(unit, streamGeneration),
-      onDone: (plan) => {
-        activeStreamCancel = null;
-        useReviewStore.getState().setReady(diff, plan, streamGeneration);
-      },
-      onError: (error) => {
-        activeStreamCancel = null;
-        useReviewStore.getState().setError(error, streamGeneration);
-      },
-    });
-    activeStreamCancel = cancel;
+    startAnnotationStream(diff, latestContext, streamGeneration);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to build the guided review.";
     useReviewStore.getState().setError(message, streamGeneration);
@@ -225,5 +248,7 @@ function ensureOverlayMounted(): void {
 
   // Overlay reads the active session key from the store, so SPA navigation to
   // another PR never leaves a stale prUrl prop from the first mount.
-  createRoot(appRoot).render(<Overlay onRequestClose={cancelActiveStream} />);
+  createRoot(appRoot).render(
+    <Overlay onRequestClose={cancelActiveStream} onRetry={retryAnnotation} />,
+  );
 }

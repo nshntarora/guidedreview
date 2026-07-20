@@ -1,7 +1,7 @@
 import type { ProviderSettings } from "../../lib/types";
 import { buildUserPrompt, SYSTEM_PROMPT } from "../../lib/review/buildPrompt";
 import { REVIEW_PLAN_JSON_SCHEMA } from "../../lib/review/reviewSchema";
-import { isAbortError, safeErrorDetail } from "./http";
+import { isAbortError, parseProviderHttpError } from "./http";
 import { readSseJsonStream } from "./sse";
 import type { AnnotateReviewInput, AnnotateStreamEvent, ProviderClient } from "./types";
 import { ProviderError } from "./types";
@@ -54,8 +54,11 @@ export const anthropicProvider: ProviderClient = {
     }
 
     if (!response.ok) {
-      const detail = await safeErrorDetail(response);
-      throw new ProviderError(`Claude API error (${response.status}): ${detail}`);
+      const detail = await parseProviderHttpError(response);
+      throw new ProviderError(detail.message, {
+        statusCode: response.status,
+        code: detail.code,
+      });
     }
 
     if (!response.body) {
@@ -69,11 +72,13 @@ export const anthropicProvider: ProviderClient = {
       const ev = event as {
         type?: string;
         delta?: { type?: string; text?: string; stop_reason?: string };
-        error?: { message?: string };
+        error?: { message?: string; type?: string };
       };
 
       if (ev.type === "error") {
-        throw new ProviderError(ev.error?.message ?? "Claude stream error.");
+        throw new ProviderError(ev.error?.message ?? "Claude stream error.", {
+          code: ev.error?.type,
+        });
       }
 
       if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta" && ev.delta.text) {
@@ -110,8 +115,11 @@ export const anthropicProvider: ProviderClient = {
     });
 
     if (!response.ok) {
-      const detail = await safeErrorDetail(response);
-      throw new ProviderError(`Claude API error (${response.status}): ${detail}`);
+      const detail = await parseProviderHttpError(response);
+      throw new ProviderError(detail.message, {
+        statusCode: response.status,
+        code: detail.code,
+      });
     }
   },
 };

@@ -6,6 +6,7 @@ import type {
   FetchDiffError,
   FetchDiffRequest,
   FetchDiffResponse,
+  ReviewErrorInfo,
   ReviewPlan,
   ReviewUnit,
   TestConnectionRequest,
@@ -36,7 +37,7 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, _sender, sendR
     handleTestConnection(message)
       .then(sendResponse)
       .catch((error: unknown) => {
-        const response: TestConnectionResponse = { ok: false, error: describeError(error) };
+        const response: TestConnectionResponse = { ok: false, error: describeErrorMessage(error) };
         sendResponse(response);
       });
     return true;
@@ -46,7 +47,7 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, _sender, sendR
     handleFetchDiff(message)
       .then(sendResponse)
       .catch((error: unknown) => {
-        const response: FetchDiffError = { ok: false, error: describeError(error) };
+        const response: FetchDiffError = { ok: false, error: describeErrorMessage(error) };
         sendResponse(response);
       });
     return true;
@@ -91,7 +92,9 @@ async function handleAnnotateReviewStream(
   if (!settings.apiKey) {
     postEvent(port, {
       type: "ERROR",
-      error: "No API key configured. Open the extension settings to add one.",
+      error: {
+        message: "No API key configured. Open the extension settings to add one.",
+      },
     });
     return;
   }
@@ -183,11 +186,22 @@ async function handleFetchDiff(request: FetchDiffRequest): Promise<FetchDiffResp
   return { ok: true, diff };
 }
 
-function describeError(error: unknown): string {
-  if (error instanceof ProviderError) return error.message;
-  if (error instanceof DOMException && error.name === "AbortError") {
-    return "Review annotation was cancelled.";
+function describeError(error: unknown): ReviewErrorInfo {
+  if (error instanceof ProviderError) {
+    return {
+      message: error.message,
+      ...(error.statusCode !== undefined ? { statusCode: error.statusCode } : {}),
+      ...(error.code !== undefined ? { code: error.code } : {}),
+    };
   }
-  if (error instanceof Error) return error.message;
-  return "Something went wrong talking to the AI provider.";
+  if (error instanceof DOMException && error.name === "AbortError") {
+    return { message: "Review annotation was cancelled." };
+  }
+  if (error instanceof Error) return { message: error.message };
+  return { message: "Something went wrong talking to the AI provider." };
+}
+
+/** Flatten structured errors for one-shot message responses that still use a string. */
+function describeErrorMessage(error: unknown): string {
+  return describeError(error).message;
 }

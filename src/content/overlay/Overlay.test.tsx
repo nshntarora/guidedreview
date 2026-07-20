@@ -201,15 +201,25 @@ describe("Overlay", () => {
     useReviewStore.setState({
       isOpen: true,
       status: "error",
-      error: "Network error",
+      error: {
+        message: "Invalid API key",
+        statusCode: 401,
+        code: "authentication_error",
+      },
       prContext: prContextFixture(),
       currentUnitIndex: 0,
     });
-    render(<Overlay />);
+    const onRetry = vi.fn();
+    render(<Overlay onRetry={onRetry} />);
     expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
-    expect(screen.getByText("Network error")).toBeInTheDocument();
+    expect(screen.getByTestId("error-message")).toHaveTextContent("Invalid API key");
+    expect(screen.getByTestId("error-status-code")).toHaveTextContent("401");
+    expect(screen.getByTestId("error-code")).toHaveTextContent("authentication_error");
     expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
+
+    screen.getByRole("button", { name: /retry building the guided review/i }).click();
+    expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
   it("still shows the PR description unit when the plan has no code units", () => {

@@ -1,7 +1,7 @@
 import type { ProviderSettings } from "../../lib/types";
 import { buildUserPrompt, SYSTEM_PROMPT } from "../../lib/review/buildPrompt";
 import { REVIEW_PLAN_JSON_SCHEMA } from "../../lib/review/reviewSchema";
-import { isAbortError, safeErrorDetail } from "./http";
+import { isAbortError, parseProviderHttpError } from "./http";
 import { readSseJsonStream } from "./sse";
 import type { AnnotateReviewInput, AnnotateStreamEvent, ProviderClient } from "./types";
 import { ProviderError } from "./types";
@@ -57,8 +57,11 @@ export function createOpenAICompatibleProvider(baseUrl: string, displayName: str
       }
 
       if (!response.ok) {
-        const detail = await safeErrorDetail(response);
-        throw new ProviderError(`${displayName} API error (${response.status}): ${detail}`);
+        const detail = await parseProviderHttpError(response);
+        throw new ProviderError(detail.message, {
+          statusCode: response.status,
+          code: detail.code,
+        });
       }
 
       if (!response.body) {
@@ -71,11 +74,13 @@ export function createOpenAICompatibleProvider(baseUrl: string, displayName: str
         if (!event || typeof event !== "object") continue;
         const data = event as {
           choices?: Array<{ delta?: { content?: string | null }; finish_reason?: string | null }>;
-          error?: { message?: string };
+          error?: { message?: string; code?: string; type?: string };
         };
 
         if (data.error?.message) {
-          throw new ProviderError(data.error.message);
+          throw new ProviderError(data.error.message, {
+            code: data.error.code ?? data.error.type,
+          });
         }
 
         const content = data.choices?.[0]?.delta?.content;
@@ -107,8 +112,11 @@ export function createOpenAICompatibleProvider(baseUrl: string, displayName: str
       });
 
       if (!response.ok) {
-        const detail = await safeErrorDetail(response);
-        throw new ProviderError(`${displayName} API error (${response.status}): ${detail}`);
+        const detail = await parseProviderHttpError(response);
+        throw new ProviderError(detail.message, {
+          statusCode: response.status,
+          code: detail.code,
+        });
       }
     },
   };
