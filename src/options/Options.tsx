@@ -12,6 +12,7 @@ import { Select, type SelectOption } from "./components/Select";
 import { ProviderIcon } from "./components/ProviderIcon";
 import { ActionSpinner } from "./components/ActionSpinner";
 import { BrandHeader } from "./BrandHeader";
+import { GitHubAuthSection } from "./GitHubAuthSection";
 import { cn } from "../lib/cn";
 
 type ActionStatus =
@@ -131,9 +132,12 @@ export function Options() {
     <main id="main-content" className="mx-auto max-w-[480px] px-6 py-8">
       <BrandHeader />
       <p className="mb-6 text-[13px] text-opt-muted">
-        Choose an AI provider and paste your own API key. The key is stored only in this
-        browser and is used solely to annotate PR diffs you open.
+        Connect GitHub and choose an AI provider. Keys and tokens stay in this browser only.
       </p>
+
+      <GitHubAuthSection />
+
+      <h2 className="mb-4 text-[13px] font-semibold text-opt-text">AI provider</h2>
 
       <div className="mb-4">
         <label className="mb-1.5 block text-[13px] font-semibold" id="provider-label" htmlFor="provider">

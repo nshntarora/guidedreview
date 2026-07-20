@@ -56,12 +56,14 @@ export function About() {
       <section className="mb-6">
         <h2 className={sectionTitle}>Privacy</h2>
         <p className={bodyText}>
-          Your API key is stored only in this browser via{" "}
+          Your AI API key and optional GitHub OAuth token are stored only in this browser via{" "}
           <code className="rounded bg-opt-subtle px-1 py-0.5 text-[12px] text-opt-text">
             chrome.storage.local
           </code>
-          . Diffs and prompts go only to the provider you choose (Anthropic, OpenAI, or xAI).
-          There is no Guided Review backend in the middle.
+          . Diffs and prompts go only to the AI provider you choose (Anthropic, OpenAI, or xAI).
+          Connecting GitHub uses device sign-in so you can authorize API actions (such as
+          submitting reviews) without pasting a personal access token. There is no Guided Review
+          backend in the middle.
         </p>
       </section>
 

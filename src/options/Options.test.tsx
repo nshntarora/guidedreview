@@ -93,7 +93,16 @@ describe("Options", () => {
 
   it("shows a success status when the connection test succeeds", async () => {
     const user = userEvent.setup();
-    vi.mocked(chrome.runtime.sendMessage).mockResolvedValueOnce({ ok: true });
+    // GitHubAuthSection also messages on mount (GITHUB_AUTH_GET); route by type.
+    vi.mocked(chrome.runtime.sendMessage).mockImplementation(async (message) => {
+      const type =
+        message && typeof message === "object" && "type" in message
+          ? (message as { type: string }).type
+          : "";
+      if (type === "GITHUB_AUTH_GET") return { ok: true, auth: null };
+      if (type === "TEST_CONNECTION") return { ok: true };
+      return undefined;
+    });
     render(<Options />);
 
     await screen.findByRole("combobox", { name: /provider/i });
@@ -105,9 +114,14 @@ describe("Options", () => {
 
   it("shows the error message when the connection test fails", async () => {
     const user = userEvent.setup();
-    vi.mocked(chrome.runtime.sendMessage).mockResolvedValueOnce({
-      ok: false,
-      error: "Invalid API key",
+    vi.mocked(chrome.runtime.sendMessage).mockImplementation(async (message) => {
+      const type =
+        message && typeof message === "object" && "type" in message
+          ? (message as { type: string }).type
+          : "";
+      if (type === "GITHUB_AUTH_GET") return { ok: true, auth: null };
+      if (type === "TEST_CONNECTION") return { ok: false, error: "Invalid API key" };
+      return undefined;
     });
     render(<Options />);
 
@@ -122,9 +136,17 @@ describe("Options", () => {
 
   it("shows an error when the connection test throws", async () => {
     const user = userEvent.setup();
-    vi.mocked(chrome.runtime.sendMessage).mockRejectedValueOnce(
-      new Error("Extension context invalidated"),
-    );
+    vi.mocked(chrome.runtime.sendMessage).mockImplementation(async (message) => {
+      const type =
+        message && typeof message === "object" && "type" in message
+          ? (message as { type: string }).type
+          : "";
+      if (type === "GITHUB_AUTH_GET") return { ok: true, auth: null };
+      if (type === "TEST_CONNECTION") {
+        throw new Error("Extension context invalidated");
+      }
+      return undefined;
+    });
     render(<Options />);
 
     await screen.findByRole("combobox", { name: /provider/i });

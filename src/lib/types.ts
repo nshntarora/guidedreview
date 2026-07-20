@@ -97,6 +97,19 @@ export interface ProviderSettings {
   apiKey: string;
 }
 
+// ---- GitHub OAuth (device flow) ----------------------------------------------
+
+/** Persisted after a successful device authorization. */
+export interface GitHubAuthState {
+  accessToken: string;
+  tokenType: string;
+  scope: string;
+  /** From GET /user after connect. */
+  login: string;
+  avatarUrl?: string;
+  name?: string;
+}
+
 // ---- Messaging protocol (content <-> background) -----------------------------
 
 /** First message on the `annotate-review` port from content → background. */
@@ -152,8 +165,98 @@ export interface FetchDiffError {
   error: string;
 }
 
+// ---- GitHub device OAuth messaging ------------------------------------------
+
+export interface GitHubDeviceStartRequest {
+  type: "GITHUB_DEVICE_START";
+}
+
+export type GitHubDeviceStartResponse =
+  | {
+      ok: true;
+      userCode: string;
+      verificationUri: string;
+      deviceCode: string;
+      interval: number;
+      expiresIn: number;
+    }
+  | { ok: false; error: string };
+
+export interface GitHubDevicePollRequest {
+  type: "GITHUB_DEVICE_POLL";
+  deviceCode: string;
+}
+
+/** Discriminated outcomes for the Options-owned poll loop. */
+export type GitHubDevicePollResponse =
+  | { ok: true; status: "pending" }
+  | { ok: true; status: "slow_down"; interval: number }
+  | { ok: true; status: "authorized"; auth: GitHubAuthState }
+  | { ok: false; status: "expired" | "denied" | "error"; error: string };
+
+export interface GitHubAuthGetRequest {
+  type: "GITHUB_AUTH_GET";
+}
+
+export interface GitHubAuthGetResponse {
+  ok: true;
+  auth: GitHubAuthState | null;
+}
+
+export interface GitHubAuthClearRequest {
+  type: "GITHUB_AUTH_CLEAR";
+}
+
+export interface GitHubAuthClearResponse {
+  ok: true;
+}
+
+// ---- Submit pull request review ---------------------------------------------
+
+/** GitHub pull request review event (create-review API). */
+export type ReviewEvent = "COMMENT" | "APPROVE" | "REQUEST_CHANGES";
+
+/** Inline comment payload for GitHub create-review `comments[]`. */
+export interface ReviewCommentInput {
+  path: string;
+  body: string;
+  side: "LEFT" | "RIGHT";
+  /** End line (file coordinates on `side`). */
+  line: number;
+  /** Start line when multi-line; omit when single-line. */
+  startLine?: number;
+  startSide?: "LEFT" | "RIGHT";
+}
+
+export interface SubmitReviewRequest {
+  type: "SUBMIT_REVIEW";
+  pr: { owner: string; repo: string; number: number };
+  body: string;
+  event: ReviewEvent;
+  comments: ReviewCommentInput[];
+}
+
+export type SubmitReviewErrorCode =
+  | "not_authenticated"
+  | "forbidden"
+  | "not_found"
+  | "validation"
+  | "network"
+  | "unknown";
+
+export type SubmitReviewResponse =
+  | { ok: true; reviewId: number; htmlUrl: string }
+  | { ok: false; error: string; code?: SubmitReviewErrorCode };
+
 /** One-shot request/response messages (annotate uses a port instead). */
-export type BackgroundRequest = TestConnectionRequest | FetchDiffRequest;
+export type BackgroundRequest =
+  | TestConnectionRequest
+  | FetchDiffRequest
+  | GitHubDeviceStartRequest
+  | GitHubDevicePollRequest
+  | GitHubAuthGetRequest
+  | GitHubAuthClearRequest
+  | SubmitReviewRequest;
 
 // ---- Messaging protocol (background → content) -----------------------------
 

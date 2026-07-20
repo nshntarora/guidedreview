@@ -1,8 +1,11 @@
 /**
  * Local draft review-comment types for the overlay.
- * Kept out of `src/lib/types.ts` until a GitHub post path exists.
+ * Shared submit-API shapes (`ReviewEvent`, `ReviewCommentInput`) live in `src/lib/types.ts`.
  */
 
+import type { ReviewEvent } from "../../lib/types";
+
+export type { ReviewEvent };
 export type DiffSide = "LEFT" | "RIGHT";
 
 /** One keyboard-selectable line anchor in the current unit's code pane. */
@@ -43,9 +46,6 @@ export interface DraftComment {
 }
 
 export type UiMode = "navigate" | "comment";
-
-/** GitHub pull request review event (API names; ready for a later post path). */
-export type ReviewEvent = "COMMENT" | "APPROVE" | "REQUEST_CHANGES";
 
 /** Summary body + event chosen in the Submit Review modal. */
 export interface ReviewSubmission {

@@ -16,6 +16,7 @@ export default defineManifest({
   host_permissions: [
     "https://github.com/*",
     "https://patch-diff.githubusercontent.com/*",
+    "https://api.github.com/*",
     "https://api.anthropic.com/*",
     "https://api.openai.com/*",
     "https://api.x.ai/*",
