@@ -1,0 +1,13 @@
+dist
+**/dist/**
+node_modules
+coverage
+package-lock.json
+test-results
+playwright-report
+blob-report
+*.tsbuildinfo
+.next
+out
+**/.next/**
+**/out/**

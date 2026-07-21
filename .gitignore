@@ -5,6 +5,8 @@ dist_chrome/
 *.local
 .vite/
 *.tsbuildinfo
+.next/
+out/
 
 # Test artifacts
 test-results/

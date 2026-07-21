@@ -1,0 +1,25 @@
+{
+  "name": "@guided-review/web",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@guided-review/ui": "*",
+    "next": "^15.5.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.6.3"
+  }
+}
