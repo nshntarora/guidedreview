@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
 
+# paths-filter uses the Pulls API on pull_request events; without
+# pull-requests:read the job fails with "Resource not accessible by integration".
+permissions:
+  contents: read
+  pull-requests: read
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
