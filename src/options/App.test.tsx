@@ -24,7 +24,7 @@ describe("App", () => {
     window.location.hash = "#about";
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "What it does" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "What It Does" })).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: /provider/i })).not.toBeInTheDocument();
     expect(document.title).toBe("Guided Review — About");
   });
@@ -36,7 +36,7 @@ describe("App", () => {
     await screen.findByRole("combobox", { name: /provider/i });
     await user.click(screen.getByRole("link", { name: /about guided review/i }));
 
-    expect(await screen.findByRole("heading", { name: "What it does" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "What It Does" })).toBeInTheDocument();
     await waitFor(() => expect(window.location.hash).toBe("#about"));
 
     await user.click(screen.getByRole("link", { name: /settings/i }));

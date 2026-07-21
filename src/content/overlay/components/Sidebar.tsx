@@ -35,10 +35,10 @@ export function Sidebar({
   return (
     <nav
       className="mt-6 min-h-0 flex-[1_1_50%] overflow-y-auto border-t border-gr-border-muted pt-4"
-      aria-label="Review units"
+      aria-label="Review Units"
     >
       <div className="px-2 pb-1 pt-2.5 text-xs tracking-[0.04em] text-gr-muted uppercase">
-        Review units
+        Review Units
       </div>
 
       {displayUnits.map((unit, displayIndex) => {

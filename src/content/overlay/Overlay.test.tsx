@@ -156,8 +156,8 @@ describe("Overlay", () => {
     // Title in left pane + entry in the unit list.
     expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
-    expect(screen.getByText(/building the rest of the walkthrough/i)).toBeInTheDocument();
-    expect(screen.getByRole("status", { name: /building the rest of the walkthrough/i })).toBeInTheDocument();
+    expect(screen.getByText(/building remaining units/i)).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: /building remaining units/i })).toBeInTheDocument();
     // Skeleton placeholders are present (non-interactive bars in the unit list).
     expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
     // Shortcuts are reserved for the ready state; spinner occupies that slot while loading.
@@ -181,7 +181,7 @@ describe("Overlay", () => {
     expect(screen.getByLabelText(/diff summary/i)).toBeInTheDocument();
     expect(screen.getByText("src/foo.ts")).toBeInTheDocument();
     // Plan still loading — skeleton + status copy remain.
-    expect(screen.getByText(/building the rest of the walkthrough/i)).toBeInTheDocument();
+    expect(screen.getByText(/building remaining units/i)).toBeInTheDocument();
     expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
   });
 
@@ -198,7 +198,7 @@ describe("Overlay", () => {
 
     expect(screen.getByText("Update foo")).toBeInTheDocument();
     expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
-    expect(screen.getByText(/building the rest of the walkthrough/i)).toBeInTheDocument();
+    expect(screen.getByText(/building remaining units/i)).toBeInTheDocument();
   });
 
   it("shows unit context without the building spinner when viewing a streamed unit", () => {
@@ -213,10 +213,10 @@ describe("Overlay", () => {
     render(<Overlay />);
 
     expect(screen.getByText("because it needed updating")).toBeInTheDocument();
-    expect(screen.queryByText(/building the rest of the walkthrough/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/building remaining units/i)).not.toBeInTheDocument();
   });
 
-  it("shows keyboard shortcuts on the description unit once the walkthrough is ready", () => {
+  it("shows keyboard shortcuts on the description unit once the review plan is ready", () => {
     useReviewStore.setState({
       isOpen: true,
       status: "ready",
@@ -234,7 +234,7 @@ describe("Overlay", () => {
     expect(screen.getByText(/^split view$/i)).toBeInTheDocument();
     expect(screen.getByText(/^enter comment mode$/i)).toBeInTheDocument();
     expect(screen.getByText(/exit comment mode \/ exit review/i)).toBeInTheDocument();
-    expect(screen.queryByText(/building the rest of the walkthrough/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/building remaining units/i)).not.toBeInTheDocument();
   });
 
   it("shows the error in the context panel without collapsing the layout", () => {
@@ -251,7 +251,7 @@ describe("Overlay", () => {
     });
     const onRetry = vi.fn();
     render(<Overlay onRetry={onRetry} />);
-    expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
+    expect(screen.getByText(/^error$/i)).toBeInTheDocument();
     expect(screen.getByTestId("error-message")).toHaveTextContent("Invalid API key");
     expect(screen.getByTestId("error-status-code")).toHaveTextContent("401");
     expect(screen.getByTestId("error-code")).toHaveTextContent("authentication_error");
@@ -317,11 +317,11 @@ describe("Overlay", () => {
     });
     render(<Overlay />);
     expect(
-      screen.getByText(/read the author's intent before walking the code/i)
+      screen.getByText(/author's summary of intent/i)
     ).toBeInTheDocument();
   });
 
-  it("explains missing description and that the AI will infer intent", () => {
+  it("explains missing description and that intent will be inferred", () => {
     useReviewStore.setState({
       isOpen: true,
       status: "ready",
@@ -334,13 +334,13 @@ describe("Overlay", () => {
 
     // Left pane empty state + right pane context both mention the gap.
     expect(screen.getByTestId("description-pane-empty").textContent).toMatch(
-      /author hasn't added a PR description/i
+      /No PR description/i
     );
     expect(screen.getByTestId("context-panel-body").textContent).toMatch(
-      /rely on the AI to tell us what this PR is about/i
+      /Intent will be inferred from the title and diff/i
     );
     expect(
-      screen.queryByText(/read the author's intent before walking the code/i)
+      screen.queryByText(/author's summary of intent/i)
     ).not.toBeInTheDocument();
   });
 
@@ -354,13 +354,13 @@ describe("Overlay", () => {
     render(<Overlay />);
 
     expect(screen.getByTestId("description-pane-empty").textContent).toMatch(
-      /author hasn't added a PR title or description/i
+      /No PR title or description/i
     );
     expect(screen.getByTestId("context-panel-body").textContent).toMatch(
-      /author hasn't added a PR title or description/i
+      /No PR title or description/i
     );
     expect(screen.getByTestId("context-panel-body").textContent).toMatch(
-      /rely on the AI to tell us what this PR is about from the diff/i
+      /Intent will be inferred from the diff/i
     );
   });
 
@@ -579,7 +579,7 @@ describe("Overlay", () => {
       expect(await screen.findByTestId("connect-github-modal")).toBeInTheDocument();
       expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
       expect(screen.getByTestId("connect-github-prompt")).toHaveTextContent(
-        /authenticate via GitHub/i,
+        /Connect GitHub to submit this review/i,
       );
     });
 
@@ -695,7 +695,7 @@ describe("Overlay", () => {
 
       fireEvent.keyDown(window, { key: "Escape" });
       expect(await screen.findByTestId("confirmation-dialog")).toBeInTheDocument();
-      expect(screen.getByText(/Exit guided review/i)).toBeInTheDocument();
+      expect(screen.getByText("Exit review?")).toBeInTheDocument();
       expect(useReviewStore.getState().isOpen).toBe(true);
 
       fireEvent.click(screen.getByTestId("confirmation-ok"));
@@ -766,7 +766,7 @@ describe("Overlay", () => {
       expect(useReviewStore.getState().isOpen).toBe(true);
     });
 
-    it("exits guided review from the success modal and navigates to conversation", async () => {
+    it("exits the review from the success modal and navigates to conversation", async () => {
       const assign = vi.fn();
       const originalLocation = window.location;
       Object.defineProperty(window, "location", {
@@ -802,7 +802,7 @@ describe("Overlay", () => {
       });
     });
 
-    it("exits guided review with Enter while the success modal is open", async () => {
+    it("exits the review with Enter while the success modal is open", async () => {
       const assign = vi.fn();
       const originalLocation = window.location;
       Object.defineProperty(window, "location", {

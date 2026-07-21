@@ -1,7 +1,7 @@
 import type { ReviewPlan, ReviewUnit } from "../../lib/types";
 
 export const PR_DESCRIPTION_UNIT_ID = "__pr_description";
-export const PR_DESCRIPTION_UNIT_TITLE = "PR description";
+export const PR_DESCRIPTION_UNIT_TITLE = "PR Description";
 
 export type DisplayUnit =
   | { kind: "pr_description"; id: typeof PR_DESCRIPTION_UNIT_ID; title: typeof PR_DESCRIPTION_UNIT_TITLE }

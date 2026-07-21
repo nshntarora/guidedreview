@@ -3,9 +3,9 @@ import type { StartGuidedReviewMessage } from "../lib/types";
 import "./popup.css";
 
 const NOT_ON_PR =
-  "Guided Review only works on GitHub pull request pages right now.";
+  "Open a GitHub pull request page to start a review.";
 const RELOAD_PR =
-  "Open a GitHub pull request and reload the page, then try again.";
+  "Reload this pull request page, then try again.";
 
 /** Path registered as `options_page` in the manifest (stable across builds). */
 const OPTIONS_PAGE = "src/options/index.html";

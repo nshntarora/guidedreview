@@ -402,7 +402,7 @@ function describeError(error: unknown): ReviewErrorInfo {
     return { message: "Review annotation was cancelled." };
   }
   if (error instanceof Error) return { message: error.message };
-  return { message: "Something went wrong talking to the AI provider." };
+  return { message: "Could not reach the AI provider." };
 }
 
 /** Flatten structured errors for one-shot message responses that still use a string. */

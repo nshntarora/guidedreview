@@ -96,7 +96,7 @@ function diffFixture(): ParsedDiff {
 describe("DescriptionPane", () => {
   it("renders the PR description without a diff summary when diff is null", () => {
     render(<DescriptionPane prContext={prContext()} diff={null} />);
-    expect(screen.getByText("PR description")).toBeInTheDocument();
+    expect(screen.getByText("PR Description")).toBeInTheDocument();
     expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
     expect(screen.queryByLabelText(/diff summary/i)).not.toBeInTheDocument();
   });

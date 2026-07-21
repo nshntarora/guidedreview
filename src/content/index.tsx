@@ -240,7 +240,7 @@ async function onStartReview(): Promise<void> {
     const latestContext = useReviewStore.getState().prContext ?? prContext;
     startAnnotationStream(diff, latestContext, streamGeneration);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to build the guided review.";
+    const message = error instanceof Error ? error.message : "Failed to build the review.";
     useReviewStore.getState().setError(message, streamGeneration);
   }
 }

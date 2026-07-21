@@ -19,17 +19,17 @@ test.describe("Options page", () => {
       "Claude (Anthropic)",
     );
 
-    await page.getByLabel("API key").fill("sk-e2e-test-key");
+    await page.getByLabel("API Key").fill("sk-e2e-test-key");
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("Saved")).toBeVisible();
 
-    await page.getByRole("button", { name: "Test connection" }).click();
-    await expect(page.getByText("Connection works")).toBeVisible();
+    await page.getByRole("button", { name: "Test Connection" }).click();
+    await expect(page.getByText("Connection OK")).toBeVisible();
 
     // Reload to prove the settings round-tripped through the real chrome.storage.local,
     // not just in-memory component state.
     await page.reload();
-    await expect(page.getByLabel("API key")).toHaveValue("sk-e2e-test-key");
+    await expect(page.getByLabel("API Key")).toHaveValue("sk-e2e-test-key");
     await expect(page.getByRole("combobox", { name: "Provider" })).toContainText(
       "Claude (Anthropic)",
     );
@@ -54,7 +54,7 @@ test.describe("Options page", () => {
     await page.goto(`chrome-extension://${extensionId}/src/options/index.html`);
 
     await page.getByRole("link", { name: /about guided review/i }).click();
-    await expect(page.getByRole("heading", { name: "What it does" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "What It Does" })).toBeVisible();
     await expect(page).toHaveURL(/#about$/);
     await expect(page).toHaveTitle(/About/);
 

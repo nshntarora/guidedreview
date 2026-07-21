@@ -46,17 +46,17 @@ const REVIEW_EVENTS: {
   {
     value: "COMMENT",
     label: "Comment",
-    description: "Submit general feedback without explicit approval.",
+    description: "General feedback without approving or requesting changes.",
   },
   {
     value: "APPROVE",
     label: "Approve",
-    description: "Submit feedback and approve merging these changes.",
+    description: "Approve these changes for merge. Optional summary.",
   },
   {
     value: "REQUEST_CHANGES",
     label: "Request Changes",
-    description: "Submit feedback that must be addressed before merging.",
+    description: "Require changes before merge. Summary required.",
   },
 ];
 
@@ -279,7 +279,7 @@ export function SubmitReviewModal({
           <>
             <div className="flex flex-col gap-3 px-4 py-4">
               <p className="m-0 text-base text-gr-muted">
-                What would you like to do?
+                Choose a review type.
               </p>
               <div
                 ref={listboxRef}
@@ -348,7 +348,7 @@ export function SubmitReviewModal({
               <textarea
                 ref={textareaRef}
                 className="min-h-[100px] w-full resize-y rounded-md border border-gr-border bg-gr-bg px-3 py-2 font-sans text-base leading-relaxed text-gr-text outline-none placeholder:text-gr-faint focus:border-gr-accent disabled:opacity-60"
-                placeholder="Leave a comment"
+                placeholder="Review summary (markdown supported)…"
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 onKeyDown={handleTextareaKeyDown}

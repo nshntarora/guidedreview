@@ -84,7 +84,7 @@ export function ReviewSubmittedModal({
           id={titleId}
           className="m-0 text-center text-lg font-semibold text-gr-text"
         >
-          Review submitted successfully
+          Review Submitted
         </h2>
 
         <p
@@ -101,7 +101,7 @@ export function ReviewSubmittedModal({
           onClick={onExit}
           data-testid="review-submitted-exit"
         >
-          Exit Guided Review
+          Exit review
           <Kbd>Enter</Kbd>
         </button>
       </div>

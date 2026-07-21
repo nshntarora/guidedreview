@@ -58,7 +58,7 @@ export function CommentComposer({
       <textarea
         ref={textareaRef}
         className="min-h-[88px] w-full resize-y rounded-md border border-gr-border bg-gr-bg px-3 py-2 font-sans text-base leading-relaxed text-gr-text placeholder:text-gr-faint focus:border-gr-accent"
-        placeholder="Leave a review comment (markdown supported)…"
+        placeholder="Line comment (markdown supported)…"
         value={body}
         onChange={(e) => setBody(e.target.value)}
         onKeyDown={handleKeyDown}

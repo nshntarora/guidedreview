@@ -4,7 +4,7 @@ const sectionTitle = "mb-2 mt-0 text-base font-semibold text-opt-text";
 const bodyText = "m-0 text-base leading-relaxed text-opt-muted";
 
 /**
- * Explains what Guided Review does, how a walkthrough works, and where data goes.
+ * Explains what Guided Review does, how a review works, and where data goes.
  * Linked from the Settings (options) page via `#about`.
  */
 export function About() {
@@ -14,7 +14,7 @@ export function About() {
     <main id="main-content" className="mx-auto max-w-[480px] px-6 py-8">
       <BrandHeader />
       <p className="mb-6 text-base text-opt-muted">
-        AI-structured walkthroughs for GitHub pull requests
+        AI-structured review plans for GitHub pull requests
         {version ? (
           <>
             {" "}
@@ -24,17 +24,16 @@ export function About() {
       </p>
 
       <section className="mb-6">
-        <h2 className={sectionTitle}>What it does</h2>
+        <h2 className={sectionTitle}>What It Does</h2>
         <p className={bodyText}>
-          Guided Review turns a GitHub pull request diff into an ordered, AI-guided review.
-          Instead of scrolling a flat file list, you walk through logical units — schema and
-          data-model changes first, then the core logic that depends on them, then call-sites,
-          then tests — with short context and risk flags for each step.
+          Guided Review turns a PR diff into an ordered review plan. You step through
+          logical units — schema and data model first, then core logic, call-sites, then
+          tests — with short context and risk notes per step.
         </p>
       </section>
 
       <section className="mb-6">
-        <h2 className={sectionTitle}>How a review works</h2>
+        <h2 className={sectionTitle}>How a Review Works</h2>
         <ol className="m-0 list-decimal space-y-2 pl-5 text-base leading-relaxed text-opt-muted">
           <li>Open a pull request on GitHub.</li>
           <li>

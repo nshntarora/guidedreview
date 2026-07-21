@@ -8,11 +8,11 @@ describe("About", () => {
 
     expect(screen.getByRole("heading", { name: "Guided Review" })).toBeInTheDocument();
     expect(screen.getByText(/v0\.1\.0/)).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "What it does" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "What It Does" })).toBeInTheDocument();
     expect(
-      screen.getByText(/turns a GitHub pull request diff into an ordered, AI-guided review/i),
+      screen.getByText(/turns a PR diff into an ordered review plan/i),
     ).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "How a review works" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "How a Review Works" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Privacy" })).toBeInTheDocument();
     expect(screen.getByText(/no Guided Review backend/i)).toBeInTheDocument();
   });
