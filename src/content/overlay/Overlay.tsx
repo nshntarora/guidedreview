@@ -354,33 +354,36 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     const SCROLL_STEP = 120;
     viewChordRef.current = null;
 
-    // Capture on window so we run before GitHub's document-level shortcuts.
-    // The overlay mounts in an open shadow root; with focus inside it,
-    // document.activeElement is the host — GitHub thinks nothing is focused
-    // and would fire s/t/c/a/i/etc. Always stopPropagation so the page never
-    // sees keys while the overlay is open. Only preventDefault when we consume
-    // the key (so typing into the comment composer still inserts characters).
-    function onKeyDown(event: KeyboardEvent): void {
-      event.stopPropagation();
+    type Store = ReturnType<typeof useReviewStore.getState>;
 
-      // Tab trap: confirmation → submit modal → overlay.
-      // Must run here — window capture stopPropagation means element traps never see Tab.
-      if (event.key === "Tab") {
-        const confirmDialog = getConfirmationDialogElement();
-        const trapRoot = confirmDialog
-          ? confirmDialog
-          : submitReviewOpen
-            ? submitModalDialogRef.current
-            : overlayRef.current;
-        if (trapRoot) trapTabKey(event, trapRoot);
-        return;
-      }
+    /**
+     * Tab trap: confirmation → submit modal → overlay.
+     * Must run here — window capture stopPropagation means element traps never see Tab.
+     * Returns true when the key was consumed (caller should return).
+     */
+    function handleTabTrap(event: KeyboardEvent): boolean {
+      if (event.key !== "Tab") return false;
+      const confirmDialog = getConfirmationDialogElement();
+      const trapRoot = confirmDialog
+        ? confirmDialog
+        : submitReviewOpen
+          ? submitModalDialogRef.current
+          : overlayRef.current;
+      if (trapRoot) trapTabKey(event, trapRoot);
+      return true;
+    }
 
+    /**
+     * Confirmation → success → connect-GitHub → submit-review modals, in
+     * that priority order. Each owns the key outright while open (even keys
+     * it doesn't act on), so any true here means the caller should return.
+     */
+    function handleModalKeys(event: KeyboardEvent): boolean {
       // Confirmation dialog: Enter = OK, Esc = cancel (highest priority modal).
       if (confirmationHandlesKey(event)) {
         event.preventDefault();
         viewChordRef.current = null;
-        return;
+        return true;
       }
 
       // Success modal: Enter / Esc exit the review (single CTA dialog).
@@ -394,14 +397,14 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         ) {
           event.preventDefault();
           exitAfterSubmit();
-          return;
+          return true;
         }
         if (event.key === "Escape") {
           event.preventDefault();
           exitAfterSubmit();
-          return;
+          return true;
         }
-        return;
+        return true;
       }
 
       // Connect GitHub modal: Esc closes; Enter runs Connect / Try again / open GitHub.
@@ -410,7 +413,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         if (event.key === "Escape") {
           event.preventDefault();
           setConnectGitHubOpen(false);
-          return;
+          return true;
         }
         if (
           event.key === "Enter" &&
@@ -421,7 +424,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
           event.preventDefault();
           connectGitHubActionRef.current?.();
         }
-        return;
+        return true;
       }
 
       // Submit-review modal: Esc closes the dialog only (not the whole overlay).
@@ -432,114 +435,107 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         if (event.key === "Escape") {
           event.preventDefault();
           closeSubmitReviewModal();
-          return;
+          return true;
         }
         if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
           event.preventDefault();
           submitReviewActionRef.current?.();
-          return;
+          return true;
         }
         if (submitReviewKeyRef.current?.(event)) {
           event.preventDefault();
         }
-        return;
+        return true;
       }
 
-      const store = useReviewStore.getState();
+      return false;
+    }
+
+    /**
+     * Composer / any editable: let the control own typing. Handle Esc and
+     * ⌘/Ctrl+Enter here because stopPropagation in capture prevents the
+     * textarea's React onKeyDown from running for real keystrokes.
+     */
+    function handleComposerKeys(event: KeyboardEvent, store: Store): boolean {
       const editable = isEditableEvent(event);
+      if (!store.composerOpen && !editable) return false;
 
-      // Composer / any editable: let the control own typing. Handle Esc and
-      // ⌘/Ctrl+Enter here because stopPropagation in capture prevents the
-      // textarea's React onKeyDown from running for real keystrokes.
-      if (store.composerOpen || editable) {
-        viewChordRef.current = null;
-        if (event.key === "Escape") {
-          event.preventDefault();
-          if (store.composerOpen) store.closeComposer();
-          return;
-        }
-        if (
-          store.composerOpen &&
-          event.key === "Enter" &&
-          (event.metaKey || event.ctrlKey)
-        ) {
-          event.preventDefault();
-          const el = findEditableInPath(event);
-          const body = el ? editableTextValue(el) : "";
-          store.saveDraftComment(body, currentUnitId);
-          return;
-        }
-        return;
-      }
-
-      // ⌘/Ctrl+Enter opens Submit Review (or Connect GitHub if unauthenticated).
-      if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+      viewChordRef.current = null;
+      if (event.key === "Escape") {
         event.preventDefault();
-        viewChordRef.current = null;
-        void requestOpenSubmitReview();
-        return;
+        if (store.composerOpen) store.closeComposer();
+        return true;
       }
-
-      // View-mode chords: v+u (unified), v+s (split). Both navigate and comment mode.
       if (
-        !event.metaKey &&
-        !event.ctrlKey &&
-        !event.altKey &&
-        !event.shiftKey
+        store.composerOpen &&
+        event.key === "Enter" &&
+        (event.metaKey || event.ctrlKey)
       ) {
-        const { next, mode, consumed } = recordViewChordKey(
-          viewChordRef.current,
-          event.key,
-          Date.now(),
-        );
-        viewChordRef.current = next;
-        if (consumed) {
-          event.preventDefault();
-          if (mode) store.setDiffViewMode(mode);
-          return;
-        }
-      } else {
+        event.preventDefault();
+        const el = findEditableInPath(event);
+        const body = el ? editableTextValue(el) : "";
+        store.saveDraftComment(body, currentUnitId);
+        return true;
+      }
+      return true;
+    }
+
+    /** View-mode chords: v+u (unified), v+s (split). Both navigate and comment mode. */
+    function handleViewModeChord(event: KeyboardEvent, store: Store): boolean {
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) {
         viewChordRef.current = null;
+        return false;
       }
+      const { next, mode, consumed } = recordViewChordKey(
+        viewChordRef.current,
+        event.key,
+        Date.now(),
+      );
+      viewChordRef.current = next;
+      if (!consumed) return false;
+      event.preventDefault();
+      if (mode) store.setDiffViewMode(mode);
+      return true;
+    }
 
-      if (store.uiMode === "comment") {
-        switch (event.key) {
-          case "Escape":
-            event.preventDefault();
-            viewChordRef.current = null;
-            store.exitCommentMode();
-            return;
-          case "ArrowUp":
-            event.preventDefault();
-            viewChordRef.current = null;
-            store.moveLineCursor(-1, event.shiftKey);
-            return;
-          case "ArrowDown":
-            event.preventDefault();
-            viewChordRef.current = null;
-            store.moveLineCursor(1, event.shiftKey);
-            return;
-          case "Enter":
-            event.preventDefault();
-            viewChordRef.current = null;
-            store.openComposer();
-            return;
-          case "ArrowRight":
-            event.preventDefault();
-            viewChordRef.current = null;
-            store.goNext();
-            return;
-          case "ArrowLeft":
-            event.preventDefault();
-            viewChordRef.current = null;
-            store.goPrev();
-            return;
-          default:
-            return;
-        }
+    function handleCommentModeKeys(event: KeyboardEvent, store: Store): void {
+      switch (event.key) {
+        case "Escape":
+          event.preventDefault();
+          viewChordRef.current = null;
+          store.exitCommentMode();
+          return;
+        case "ArrowUp":
+          event.preventDefault();
+          viewChordRef.current = null;
+          store.moveLineCursor(-1, event.shiftKey);
+          return;
+        case "ArrowDown":
+          event.preventDefault();
+          viewChordRef.current = null;
+          store.moveLineCursor(1, event.shiftKey);
+          return;
+        case "Enter":
+          event.preventDefault();
+          viewChordRef.current = null;
+          store.openComposer();
+          return;
+        case "ArrowRight":
+          event.preventDefault();
+          viewChordRef.current = null;
+          store.goNext();
+          return;
+        case "ArrowLeft":
+          event.preventDefault();
+          viewChordRef.current = null;
+          store.goPrev();
+          return;
+        default:
+          return;
       }
+    }
 
-      // navigate mode
+    function handleNavigateModeKeys(event: KeyboardEvent, store: Store): void {
       switch (event.key) {
         case "Escape":
           event.preventDefault();
@@ -584,6 +580,40 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         default:
           return;
       }
+    }
+
+    // Capture on window so we run before GitHub's document-level shortcuts.
+    // The overlay mounts in an open shadow root; with focus inside it,
+    // document.activeElement is the host — GitHub thinks nothing is focused
+    // and would fire s/t/c/a/i/etc. Always stopPropagation so the page never
+    // sees keys while the overlay is open. Only preventDefault when we consume
+    // the key (so typing into the comment composer still inserts characters).
+    function onKeyDown(event: KeyboardEvent): void {
+      event.stopPropagation();
+
+      if (handleTabTrap(event)) return;
+      if (handleModalKeys(event)) return;
+
+      const store = useReviewStore.getState();
+
+      if (handleComposerKeys(event, store)) return;
+
+      // ⌘/Ctrl+Enter opens Submit Review (or Connect GitHub if unauthenticated).
+      if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        viewChordRef.current = null;
+        void requestOpenSubmitReview();
+        return;
+      }
+
+      if (handleViewModeChord(event, store)) return;
+
+      if (store.uiMode === "comment") {
+        handleCommentModeKeys(event, store);
+        return;
+      }
+
+      handleNavigateModeKeys(event, store);
     }
 
     window.addEventListener("keydown", onKeyDown, true);

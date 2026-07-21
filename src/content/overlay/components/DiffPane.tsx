@@ -30,6 +30,25 @@ interface DiffPaneProps {
   unitId?: string;
 }
 
+/** File + line span the comment composer is currently anchored to. */
+type ComposerRange = {
+  filePath: string;
+  startLine: number;
+  endLine: number;
+} | null;
+
+/** Shared per-hunk render props for `UnifiedHunk` and `SplitHunk`. */
+interface HunkViewProps {
+  hunk: DiffHunk;
+  language: string | undefined;
+  selectedIds: Set<string>;
+  focusId: string | null;
+  draftsByEndLineId: Map<string, DraftComment[]>;
+  composerPlacementId: string | null;
+  composerRange: ComposerRange;
+  unitId?: string;
+}
+
 /**
  * Highlight a hunk's lines against GitHub's syntax palette.
  *
@@ -128,11 +147,7 @@ interface LineExtrasProps {
   lineId: string;
   draftsByEndLineId: Map<string, DraftComment[]>;
   composerPlacementId: string | null;
-  composerRange: {
-    filePath: string;
-    startLine: number;
-    endLine: number;
-  } | null;
+  composerRange: ComposerRange;
   unitId?: string;
 }
 
@@ -197,20 +212,7 @@ function UnifiedHunk({
   composerPlacementId,
   composerRange,
   unitId,
-}: {
-  hunk: DiffHunk;
-  language: string | undefined;
-  selectedIds: Set<string>;
-  focusId: string | null;
-  draftsByEndLineId: Map<string, DraftComment[]>;
-  composerPlacementId: string | null;
-  composerRange: {
-    filePath: string;
-    startLine: number;
-    endLine: number;
-  } | null;
-  unitId?: string;
-}) {
+}: HunkViewProps) {
   const highlighted = useMemo(
     () => highlightHunkLines(hunk, language),
     [hunk, language],
@@ -363,20 +365,7 @@ function SplitHunk({
   composerPlacementId,
   composerRange,
   unitId,
-}: {
-  hunk: DiffHunk;
-  language: string | undefined;
-  selectedIds: Set<string>;
-  focusId: string | null;
-  draftsByEndLineId: Map<string, DraftComment[]>;
-  composerPlacementId: string | null;
-  composerRange: {
-    filePath: string;
-    startLine: number;
-    endLine: number;
-  } | null;
-  unitId?: string;
-}) {
+}: HunkViewProps) {
   const highlighted = useMemo(
     () => highlightHunkLines(hunk, language),
     [hunk, language],
@@ -640,11 +629,7 @@ function useSelectionDerived(
         : null;
 
     let composerPlacementId: string | null = null;
-    let composerRange: {
-      filePath: string;
-      startLine: number;
-      endLine: number;
-    } | null = null;
+    let composerRange: ComposerRange = null;
 
     if (composerOpen && selected.length > 0) {
       const first = selected[0];
