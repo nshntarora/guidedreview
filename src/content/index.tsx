@@ -51,9 +51,19 @@ function init(): void {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
+function removeStartButton(): void {
+  document.getElementById(BUTTON_ID)?.remove();
+  document.getElementById(FALLBACK_HOST_ID)?.remove();
+  currentPR = null;
+}
+
 function tryInjectButton(): void {
   const pr = parsePRUrl(window.location.href);
-  if (!pr) return;
+  // Content script matches all github.com; tear down UI when the SPA leaves a PR.
+  if (!pr) {
+    removeStartButton();
+    return;
+  }
 
   currentPR = pr;
 
@@ -76,22 +86,26 @@ function tryInjectButton(): void {
   const button = document.createElement("button");
   button.id = BUTTON_ID;
   button.type = "button";
+  // Size matches GitHub Primer medium action buttons (32px) in the PR header.
   button.setAttribute(
     "style",
     [
       "display: inline-flex",
       "align-items: center",
+      "justify-content: center",
+      "box-sizing: border-box",
+      "height: 32px",
       "gap: 8px",
       "margin-left: 8px",
-      "padding: 5px 12px",
+      "padding: 0 12px",
       "border-radius: 6px",
       "border: 1px solid #CAFF57",
       "background: #CAFF57",
       "color: #0D0806",
-      "font-size: 12px",
+      "font-size: 14px",
       "font-weight: 600",
       "cursor: pointer",
-      "line-height: 1.2",
+      "line-height: 20px",
       "transition: background 0.12s ease, border-color 0.12s ease",
     ].join(";"),
   );

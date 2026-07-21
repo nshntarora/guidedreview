@@ -5,8 +5,10 @@ import { expect, test } from "./fixtures";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PR_URL = "https://github.com/acme/widgets/pull/1";
+const PULLS_LIST_URL = "https://github.com/acme/widgets/pulls";
 const PR_FIXTURE_PATH = path.resolve(__dirname, "fixtures/pr-page.html");
 const PR_MODERN_FIXTURE_PATH = path.resolve(__dirname, "fixtures/pr-page-modern.html");
+const PULLS_LIST_FIXTURE_PATH = path.resolve(__dirname, "fixtures/pulls-list.html");
 
 const CANNED_DIFF = [
   "diff --git a/src/foo.ts b/src/foo.ts",
@@ -131,5 +133,47 @@ test.describe("Guided review overlay", () => {
       await page.goto(url);
       await expect(page.getByRole("button", { name: "Start Guided Review" })).toBeVisible();
     }
+  });
+
+  test("injects Start Guided Review after SPA navigation from the PR list", async ({ context }) => {
+    // Content script matches all of github.com so it is already running on the
+    // list page; MutationObserver + URL check should inject after a client-side
+    // route change without a full reload.
+    await context.route(PULLS_LIST_URL, (route) =>
+      route.fulfill({ path: PULLS_LIST_FIXTURE_PATH, contentType: "text/html" }),
+    );
+    await context.route(PR_URL, (route) =>
+      route.fulfill({ path: PR_MODERN_FIXTURE_PATH, contentType: "text/html" }),
+    );
+
+    const page = await context.newPage();
+    await page.goto(PULLS_LIST_URL);
+
+    await expect(page.getByRole("button", { name: "Start Guided Review" })).toHaveCount(0);
+
+    // Simulate GitHub SPA navigation: history update + swap in PR header DOM
+    // (the MutationObserver reacts to the DOM mutation).
+    await page.evaluate((prUrl) => {
+      history.pushState({}, "", prUrl);
+      document.body.innerHTML = `
+        <header data-component="PageHeader">
+          <div data-component="TitleArea">
+            <h1 data-component="PH_Title">
+              <span data-component="Text">Add feature</span>
+            </h1>
+            <div data-component="PH_Actions" class="d-none"></div>
+          </div>
+          <div data-component="PH_Navigation">
+            <div class="right-actions"></div>
+            <nav aria-label="Pull request navigation tabs">
+              <a role="tab" href="/acme/widgets/pull/1" aria-selected="true">Conversation</a>
+            </nav>
+          </div>
+        </header>
+      `;
+    }, PR_URL);
+
+    await expect(page.getByRole("button", { name: "Start Guided Review" })).toBeVisible();
+    await expect(page.locator('[data-component="PH_Actions"] #guided-review-start-btn')).toBeVisible();
   });
 });

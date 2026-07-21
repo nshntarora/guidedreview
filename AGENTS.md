@@ -40,12 +40,15 @@ the latest changes — no need to remove/re-add the unpacked extension.
 The extension has three isolated runtime contexts that only talk to each other through
 `chrome.runtime.sendMessage` — keep this boundary in mind when adding functionality:
 
-- **Content script** (`src/content/`) — injected on `https://github.com/*/*/pull/*`. `index.tsx` is the
-  entry point: it watches the DOM (GitHub is an SPA) to inject the button, scrapes PR metadata directly
-  from the page (`src/lib/github/prContext.ts`), and mounts the review overlay into a Shadow DOM host
-  (`ensureOverlayMounted`) so its styles never leak into/from GitHub's page. Overlay UI is styled with
-  Tailwind utilities; residual overrides (highlight.js, markdown-body, host reset) live in SCSS under
-  `src/content/overlay/styles/` and are injected via `overlay.css?inline` into the shadow root.
+- **Content script** (`src/content/`) — injected on `https://github.com/*` so it is already running when
+  the user SPA-navigates from e.g. the PR list into a PR (Chrome does not re-inject content scripts on
+  History API navigations). `index.tsx` is the entry point: a MutationObserver watches the DOM and only
+  injects the "Start Guided Review" button when the URL is a PR path (`parsePRUrl`); it removes the
+  button when the SPA leaves a PR. Scrapes PR metadata from the page (`src/lib/github/prContext.ts`),
+  and mounts the review overlay into a Shadow DOM host (`ensureOverlayMounted`) so its styles never
+  leak into/from GitHub's page. Overlay UI is styled with Tailwind utilities; residual overrides
+  (highlight.js, markdown-body, host reset) live in SCSS under `src/content/overlay/styles/` and are
+  injected via `overlay.css?inline` into the shadow root.
 - **Background service worker** (`src/background/index.ts`) — the only context allowed to make
   cross-origin requests and hold the API key. Handles three message types: `FETCH_DIFF`,
   `ANNOTATE_REVIEW`, `TEST_CONNECTION`. Diff fetching happens here (not in the content script) because
