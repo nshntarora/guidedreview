@@ -26,7 +26,7 @@ describe("ReviewSubmittedModal", () => {
     );
 
     expect(
-      screen.getByRole("dialog", { name: "Review submitted successfully" }),
+      screen.getByRole("dialog", { name: "Review Submitted" }),
     ).toBeInTheDocument();
     expect(screen.getByTestId("review-submitted-icon")).toBeInTheDocument();
     expect(screen.getByTestId("review-submitted-modal")).toHaveAttribute(

@@ -96,7 +96,7 @@ export function GitHubAuthSection() {
     if (disconnectBusy || connectBusy) return;
     confirm({
       title: "Disconnect GitHub?",
-      body: "Guided Review will no longer be able to submit reviews on your behalf until you connect again. Your AI provider settings are unchanged.",
+      body: "Guided Review will not submit reviews on your behalf until you connect again. AI provider settings are unchanged.",
       variant: "destructive",
       okButtonText: "Disconnect",
       cancelButtonText: "Cancel",
@@ -119,10 +119,10 @@ export function GitHubAuthSection() {
 
   return (
     <section className="mb-8 border-b border-opt-border pb-8" data-testid="github-auth-section">
-      <h2 className="mb-1.5 text-base font-semibold text-opt-text">GitHub account</h2>
+      <h2 className="mb-1.5 text-base font-semibold text-opt-text">GitHub Account</h2>
       <p className="mb-4 text-base text-opt-muted">
-        Connect GitHub so Guided Review can act on your behalf (for example, submitting reviews).
-        Uses device sign-in — no password is stored here. Token stays in this browser only.
+        Connect GitHub so Guided Review can submit reviews on your behalf. Uses
+        device sign-in — no password is stored. Token stays in this browser only.
       </p>
 
       {!configured && (
@@ -178,7 +178,7 @@ export function GitHubAuthSection() {
               onClick={() => void onCopyCode(flow.userCode)}
               data-testid="github-copy-code"
             >
-              {copied ? "Copied" : "Copy code"}
+              {copied ? "Copied" : "Copy Code"}
             </button>
           </div>
           <p
@@ -201,7 +201,7 @@ export function GitHubAuthSection() {
               onClick={() => void openVerificationUri(flow.verificationUri)}
               data-testid="github-enter-code"
             >
-              Enter Code On Github
+              Enter Code On GitHub
             </button>
           </div>
         </div>
@@ -264,7 +264,7 @@ export function GitHubAuthSection() {
             }}
             disabled={busy}
           >
-            Try again
+            Try Again
           </button>
         </div>
       )}

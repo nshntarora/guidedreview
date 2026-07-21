@@ -253,7 +253,7 @@ describe("DiffPane", () => {
     );
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
-    expect(link).toHaveTextContent("View file diff on GitHub");
+    expect(link).toHaveTextContent("View File Diff on GitHub");
   });
 
   it("persists the view mode to chrome.storage.local", async () => {

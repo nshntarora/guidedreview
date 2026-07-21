@@ -72,7 +72,7 @@ describe("ConnectGitHubModal", () => {
     expect(screen.getByRole("dialog", { name: "Connect GitHub" })).toBeInTheDocument();
     expect(screen.getByTestId("connect-github-logo")).toBeInTheDocument();
     expect(screen.getByTestId("connect-github-prompt")).toHaveTextContent(
-      /authenticate via GitHub to submit your reviews/i,
+      /Connect GitHub to submit this review/i,
     );
     const connect = screen.getByTestId("connect-github-connect");
     expect(connect).toBeInTheDocument();
@@ -101,7 +101,7 @@ describe("ConnectGitHubModal", () => {
       /Copy this code, then paste it on the GitHub tab/i,
     );
     expect(screen.getByTestId("connect-github-enter-code")).toHaveTextContent(
-      /Enter Code On Github/,
+      /Enter Code On GitHub/,
     );
     expect(
       screen.getByTestId("connect-github-enter-code").querySelector("kbd"),
@@ -109,7 +109,7 @@ describe("ConnectGitHubModal", () => {
     expect(openVerificationUriSpy).not.toHaveBeenCalled();
   });
 
-  it("opens GitHub when Enter Code On Github is clicked", async () => {
+  it("opens GitHub when Enter Code On GitHub is clicked", async () => {
     const user = userEvent.setup();
     await startAwaitingFlow(user);
 

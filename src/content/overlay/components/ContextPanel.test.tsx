@@ -1,26 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { ContextPanel, missingMetadataHint } from "./ContextPanel";
-
-describe("missingMetadataHint", () => {
-  it("mentions both title and description when neither is present", () => {
-    expect(missingMetadataHint(false, false)).toMatch(/title or description/i);
-    expect(missingMetadataHint(false, false)).toMatch(/AI/i);
-  });
-
-  it("mentions only description when the title is present", () => {
-    const hint = missingMetadataHint(true, false);
-    expect(hint).toMatch(/description/i);
-    expect(hint).not.toMatch(/title/i);
-    expect(hint).toMatch(/AI/i);
-  });
-
-  it("mentions only title when the description is present", () => {
-    const hint = missingMetadataHint(false, true);
-    expect(hint).toMatch(/title/i);
-    expect(hint).toMatch(/AI/i);
-  });
-});
+import { ContextPanel } from "./ContextPanel";
 
 describe("ContextPanel error state", () => {
   it("renders status code, error code, message, and retry", () => {
@@ -37,7 +17,7 @@ describe("ContextPanel error state", () => {
       />,
     );
 
-    expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
+    expect(screen.getByText(/^error$/i)).toBeInTheDocument();
     expect(screen.getByTestId("error-status-code")).toHaveTextContent("429");
     expect(screen.getByTestId("error-code")).toHaveTextContent("rate_limit_error");
     expect(screen.getByTestId("error-message")).toHaveTextContent("Rate limit exceeded");

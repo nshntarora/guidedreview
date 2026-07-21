@@ -85,8 +85,7 @@ function CodeContent({
 }
 
 /** Soft-wrap long lines (e.g. SVG paths) like GitHub — no horizontal scroll bleed. */
-const DIFF_LINE_WRAP =
-  "flex min-w-0 whitespace-pre-wrap break-all pr-3";
+const DIFF_LINE_WRAP = "flex min-w-0 whitespace-pre-wrap break-all pr-3";
 
 function selectionClasses(
   lineId: string | undefined,
@@ -129,7 +128,11 @@ interface LineExtrasProps {
   lineId: string;
   draftsByEndLineId: Map<string, DraftComment[]>;
   composerPlacementId: string | null;
-  composerRange: { filePath: string; startLine: number; endLine: number } | null;
+  composerRange: {
+    filePath: string;
+    startLine: number;
+    endLine: number;
+  } | null;
   unitId?: string;
 }
 
@@ -151,8 +154,8 @@ function LineExtras({
 
   function requestRemoveDraft(id: string): void {
     confirm({
-      title: "Remove draft comment?",
-      body: "This draft will be discarded. You can write a new comment on these lines later.",
+      title: "Remove Comment?",
+      body: "This comment will be removed. You can comment on these lines again later.",
       variant: "destructive",
       okButtonText: "Remove",
       cancelButtonText: "Cancel",
@@ -201,7 +204,11 @@ function UnifiedHunk({
   focusId: string | null;
   draftsByEndLineId: Map<string, DraftComment[]>;
   composerPlacementId: string | null;
-  composerRange: { filePath: string; startLine: number; endLine: number } | null;
+  composerRange: {
+    filePath: string;
+    startLine: number;
+    endLine: number;
+  } | null;
   unitId?: string;
 }) {
   const highlighted = useMemo(
@@ -327,9 +334,7 @@ function SplitCellView({
     >
       <span
         className={lineNumberClasses(highlightNumber)}
-        data-testid={
-          highlightNumber ? "diff-line-number-highlight" : undefined
-        }
+        data-testid={highlightNumber ? "diff-line-number-highlight" : undefined}
       >
         {cell.lineNumber ?? ""}
       </span>
@@ -365,7 +370,11 @@ function SplitHunk({
   focusId: string | null;
   draftsByEndLineId: Map<string, DraftComment[]>;
   composerPlacementId: string | null;
-  composerRange: { filePath: string; startLine: number; endLine: number } | null;
+  composerRange: {
+    filePath: string;
+    startLine: number;
+    endLine: number;
+  } | null;
   unitId?: string;
 }) {
   const highlighted = useMemo(
@@ -428,7 +437,10 @@ function SplitHunk({
             {(showLeftExtras || showRightExtras) && (
               <div className="flex min-w-0" data-testid="split-line-extras">
                 <div className="min-w-0 flex-1" aria-hidden="true" />
-                <div className="w-px shrink-0 bg-gr-border" aria-hidden="true" />
+                <div
+                  className="w-px shrink-0 bg-gr-border"
+                  aria-hidden="true"
+                />
                 <div className="min-w-0 flex-1">
                   {showLeftExtras && leftId && (
                     <LineExtras
@@ -516,9 +528,9 @@ function CommentModeChip() {
       className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-gr-accent/40 bg-gr-accent-subtle px-2.5 py-1 text-sm text-gr-accent"
       data-testid="comment-mode-chip"
     >
-      Comment mode
+      Comment Mode
       <span className="inline-flex items-center gap-1 text-gr-muted">
-        · <Kbd>Esc</Kbd> to exit
+        · <Kbd>Esc</Kbd> exits
       </span>
     </span>
   );
@@ -603,7 +615,7 @@ function BinaryElidedEmptyState({ filePath }: { filePath: string }) {
           className="text-base font-medium text-gr-accent underline-offset-2 hover:underline"
           data-testid="binary-elided-github-link"
         >
-          View file diff on GitHub
+          View File Diff on GitHub
         </a>
       )}
     </div>
@@ -737,12 +749,7 @@ export function DiffPane({ files, unitTitle, unitId }: DiffPaneProps) {
       return `Comment mode. ${focused.filePath}, lines ${start ?? "?"} to ${end ?? "?"} selected.`;
     }
     return `Comment mode. ${focused.filePath}, line ${focusNum ?? "?"}.`;
-  }, [
-    uiMode,
-    lineSelection,
-    selectableLines,
-    unitSelectableLines,
-  ]);
+  }, [uiMode, lineSelection, selectableLines, unitSelectableLines]);
 
   return (
     <div ref={rootRef}>

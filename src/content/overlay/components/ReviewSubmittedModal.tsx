@@ -84,7 +84,7 @@ export function ReviewSubmittedModal({
           id={titleId}
           className="m-0 text-center text-lg font-semibold text-gr-text"
         >
-          Review submitted successfully
+          Review Submitted
         </h2>
 
         <p

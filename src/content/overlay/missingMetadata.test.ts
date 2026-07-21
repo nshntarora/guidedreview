@@ -3,21 +3,21 @@ import { emptyDescriptionCopy, missingMetadataHint, PR_DESCRIPTION_HINT } from "
 
 describe("missingMetadataHint", () => {
   it("mentions both title and description when neither is present", () => {
-    expect(missingMetadataHint(false, false)).toMatch(/title or description/i);
-    expect(missingMetadataHint(false, false)).toMatch(/AI/i);
+    const hint = missingMetadataHint(false, false);
+    expect(hint).toMatch(/title or description/i);
+    expect(hint).toMatch(/inferred from the diff/i);
   });
 
-  it("mentions only description when the title is present", () => {
+  it("mentions missing description when the title is present", () => {
     const hint = missingMetadataHint(true, false);
-    expect(hint).toMatch(/description/i);
-    expect(hint).not.toMatch(/title/i);
-    expect(hint).toMatch(/AI/i);
+    expect(hint).toMatch(/^No PR description\./);
+    expect(hint).toMatch(/inferred from the title and diff/i);
   });
 
-  it("mentions only title when the description is present", () => {
+  it("mentions missing title when the description is present", () => {
     const hint = missingMetadataHint(false, true);
-    expect(hint).toMatch(/title/i);
-    expect(hint).toMatch(/AI/i);
+    expect(hint).toMatch(/^No PR title\./);
+    expect(hint).toMatch(/inferred from the description and diff/i);
   });
 
   it("returns the default PR description hint when both are present", () => {
@@ -28,11 +28,12 @@ describe("missingMetadataHint", () => {
 describe("emptyDescriptionCopy", () => {
   it("mentions title and description when the title is missing", () => {
     expect(emptyDescriptionCopy(false)).toMatch(/title or description/i);
+    expect(emptyDescriptionCopy(false)).toMatch(/inferred from the diff/i);
   });
 
   it("mentions only description when the title is present", () => {
     const copy = emptyDescriptionCopy(true);
-    expect(copy).toMatch(/description/i);
-    expect(copy).not.toMatch(/title/i);
+    expect(copy).toMatch(/^No PR description\./);
+    expect(copy).toMatch(/inferred from the title and diff/i);
   });
 });

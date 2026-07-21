@@ -50,7 +50,7 @@ export function DescriptionPane({ prContext, diff }: DescriptionPaneProps) {
     >
       <div className="min-w-0 max-w-[720px] flex-1">
         <h2 className="mb-5 text-[1.375rem] font-semibold leading-snug tracking-[-0.01em] text-gr-text">
-          PR description
+          PR Description
         </h2>
         {descriptionHtml ? (
           <div

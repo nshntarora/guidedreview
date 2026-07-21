@@ -235,7 +235,7 @@ export function ConnectGitHubModal({
                   onClick={() => void onCopyCode(flow.userCode)}
                   data-testid="connect-github-copy-code"
                 >
-                  {copied ? "Copied" : "Copy code"}
+                  {copied ? "Copied" : "Copy Code"}
                 </button>
               </div>
               <p
@@ -257,7 +257,8 @@ export function ConnectGitHubModal({
               className="m-0 w-full text-center text-base leading-relaxed text-gr-muted"
               data-testid="connect-github-prompt"
             >
-              You need to authenticate via GitHub to submit your reviews.
+              Connect GitHub to submit this review. Uses device sign-in; the token
+              stays in this browser only.
             </p>
           )}
         </div>
@@ -287,7 +288,7 @@ export function ConnectGitHubModal({
                 </>
               ) : (
                 <>
-                  Try again
+                  Try Again
                   <Kbd>Enter</Kbd>
                 </>
               )}
@@ -299,7 +300,7 @@ export function ConnectGitHubModal({
               onClick={() => void openVerificationUri(flow.verificationUri)}
               data-testid="connect-github-enter-code"
             >
-              Enter Code On Github
+              Enter Code On GitHub
               <Kbd>Enter</Kbd>
             </button>
           ) : configured ? (

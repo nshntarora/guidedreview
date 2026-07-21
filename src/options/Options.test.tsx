@@ -109,7 +109,7 @@ describe("Options", () => {
     await user.type(screen.getByLabelText(/api key/i), "sk-test");
     await user.click(screen.getByRole("button", { name: /test connection/i }));
 
-    await waitFor(() => expect(screen.getByText("Connection works")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Connection OK")).toBeInTheDocument());
   });
 
   it("shows the error message when the connection test fails", async () => {

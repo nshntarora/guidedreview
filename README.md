@@ -2,4 +2,4 @@
 
 # Guided Review
 
-**AI-structured walkthroughs for GitHub pull requests**
+**AI-structured review plans for GitHub pull requests**

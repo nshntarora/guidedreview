@@ -61,7 +61,7 @@ test.describe("Guided review overlay", () => {
     // way a user would configure the extension before it can call an AI provider.
     const optionsPage = await context.newPage();
     await optionsPage.goto(`chrome-extension://${extensionId}/src/options/index.html`);
-    await optionsPage.getByLabel("API key").fill("sk-e2e-test-key");
+    await optionsPage.getByLabel("API Key").fill("sk-e2e-test-key");
     await optionsPage.getByRole("button", { name: "Save" }).click();
     await expect(optionsPage.getByText("Saved")).toBeVisible();
     await optionsPage.close();
@@ -90,7 +90,7 @@ test.describe("Guided review overlay", () => {
     // Playwright locators pierce open shadow roots by default, so these resolve inside the
     // overlay's shadow DOM without any special selector syntax.
     // First unit is always the synthetic PR description.
-    await expect(page.getByText("PR description").first()).toBeVisible();
+    await expect(page.getByText("PR Description").first()).toBeVisible();
 
     // After the plan streams in, the AI unit is listed and reachable via Next.
     await expect(page.getByText(CANNED_PLAN.units[0].title)).toBeVisible();

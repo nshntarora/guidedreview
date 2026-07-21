@@ -125,8 +125,8 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   /** Esc (and Exit button) — confirm before leaving guided review. */
   const requestExit = useCallback(() => {
     confirm({
-      title: "Exit guided review?",
-      body: "You can reopen this walkthrough on the same PR later. Unsubmitted draft comments are kept for this browser session.",
+      title: "Exit Guided Review?",
+      body: "You can reopen on this PR later. Draft comments stay for this browser session.",
       variant: "destructive",
       okButtonText: "Exit",
       cancelButtonText: "Stay",
@@ -263,7 +263,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         const message =
           error instanceof Error
             ? error.message
-            : "Something went wrong while submitting the review.";
+            : "Could not submit the review.";
         setSubmitReviewError(message);
       } finally {
         if (generation === submitGenerationRef.current) {
@@ -614,11 +614,11 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     if (status === "streaming") {
       const n = plan?.units.length ?? 0;
       return n > 0
-        ? `Building walkthrough. ${n} review unit${n === 1 ? "" : "s"} ready.`
-        : "Building walkthrough…";
+        ? `Building review plan. ${n} review unit${n === 1 ? "" : "s"} ready.`
+        : "Building review plan…";
     }
     if (status === "ready" && plan) {
-      return `Walkthrough ready. ${displayUnitCount(plan)} steps.`;
+      return `Review plan ready. ${displayUnitCount(plan)} steps.`;
     }
     return "";
   }, [status, error, plan]);

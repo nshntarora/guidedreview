@@ -107,7 +107,7 @@ export function Options() {
       await setProviderSettings(settings);
       const result = await testConnection(settings);
       if (result.ok) {
-        setConnection({ kind: "ok", message: "Connection works" });
+        setConnection({ kind: "ok", message: "Connection OK" });
       } else {
         setConnection({
           kind: "error",
@@ -137,7 +137,7 @@ export function Options() {
 
       <GitHubAuthSection />
 
-      <h2 className="mb-4 text-base font-semibold text-opt-text">AI provider</h2>
+      <h2 className="mb-4 text-base font-semibold text-opt-text">AI Provider</h2>
 
       <div className="mb-4">
         <label className="mb-1.5 block text-base font-semibold" id="provider-label" htmlFor="provider">
@@ -169,7 +169,7 @@ export function Options() {
 
       <div className="mb-4">
         <label className="mb-1.5 block text-base font-semibold" htmlFor="apiKey">
-          API key
+          API Key
         </label>
         <input
           id="apiKey"
@@ -213,7 +213,7 @@ export function Options() {
           disabled={!settings.apiKey || busy}
         >
           {connection.kind === "working" && <ActionSpinner label="Testing connection" />}
-          {connection.kind === "working" ? "Testing…" : "Test connection"}
+          {connection.kind === "working" ? "Testing…" : "Test Connection"}
         </button>
         {statusMessage && (
           <span

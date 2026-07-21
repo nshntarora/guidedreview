@@ -25,18 +25,18 @@ describe("SubmitReviewModal", () => {
     );
     expect(screen.getByRole("dialog", { name: "Submit Review" })).toBeInTheDocument();
     expect(screen.queryByTestId("submit-review-body")).not.toBeInTheDocument();
-    expect(screen.getByText("What would you like to do?")).toBeInTheDocument();
+    expect(screen.getByText("Choose a review type.")).toBeInTheDocument();
     expect(screen.getByText("Comment")).toBeInTheDocument();
     expect(
-      screen.getByText("Submit general feedback without explicit approval."),
+      screen.getByText("General feedback without approving or requesting changes."),
     ).toBeInTheDocument();
     expect(screen.getByText("Approve")).toBeInTheDocument();
     expect(
-      screen.getByText("Submit feedback and approve merging these changes."),
+      screen.getByText("Approve these changes for merge. Optional summary."),
     ).toBeInTheDocument();
     expect(screen.getByText("Request Changes")).toBeInTheDocument();
     expect(
-      screen.getByText("Submit feedback that must be addressed before merging."),
+      screen.getByText("Require changes before merge. Summary required."),
     ).toBeInTheDocument();
     expect(screen.queryByTestId("submit-review-confirm")).not.toBeInTheDocument();
   });

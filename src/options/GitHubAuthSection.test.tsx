@@ -92,12 +92,12 @@ describe("GitHubAuthSection", () => {
       /Copy this code, then paste it on the GitHub tab/i,
     );
     expect(screen.getByTestId("github-enter-code")).toHaveTextContent(
-      /Enter Code On Github/,
+      /Enter Code On GitHub/,
     );
     expect(openVerificationUriSpy).not.toHaveBeenCalled();
   });
 
-  it("opens GitHub when Enter Code On Github is clicked", async () => {
+  it("opens GitHub when Enter Code On GitHub is clicked", async () => {
     const user = userEvent.setup();
     vi.mocked(messaging.startGitHubDeviceAuth).mockResolvedValue({
       ok: true,

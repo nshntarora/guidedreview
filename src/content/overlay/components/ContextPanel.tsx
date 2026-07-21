@@ -34,14 +34,14 @@ export function ContextPanel({
         data-testid="context-panel-error"
       >
         <div className="mb-2 text-xs font-semibold tracking-[0.04em] text-gr-muted uppercase">
-          Something went wrong
+          Error
         </div>
 
         {(error.statusCode !== undefined || error.code) && (
           <dl className="mb-2 m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm leading-normal">
             {error.statusCode !== undefined && (
               <>
-                <dt className="m-0 font-medium text-gr-muted">HTTP status</dt>
+                <dt className="m-0 font-medium text-gr-muted">HTTP Status</dt>
                 <dd
                   className="m-0 font-mono text-gr-danger"
                   data-testid="error-status-code"
@@ -52,7 +52,7 @@ export function ContextPanel({
             )}
             {error.code && (
               <>
-                <dt className="m-0 font-medium text-gr-muted">Error code</dt>
+                <dt className="m-0 font-medium text-gr-muted">Error Code</dt>
                 <dd
                   className="m-0 font-mono break-all text-gr-danger"
                   data-testid="error-code"
@@ -99,9 +99,9 @@ export function ContextPanel({
         </div>
         {loading ? (
           <div className="mt-4 flex items-center gap-2.5 border-t border-gr-border-muted pt-3">
-            <Spinner label="Building the rest of the walkthrough" />
+            <Spinner label="Building remaining units" />
             <p className="m-0 text-base text-gr-muted">
-              Building the rest of the walkthrough…
+              Building remaining units…
             </p>
           </div>
         ) : (
