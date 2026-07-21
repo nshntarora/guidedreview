@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { formatLineRangeLabel, type DraftComment } from "../commentTypes";
-import { Kbd } from "@guided-review/ui";
+import { Button, Kbd, Textarea } from "@guided-review/ui";
 import { ModEnterChord } from "./ShortcutKeys";
 
 interface DraftCommentCardProps {
@@ -89,9 +89,10 @@ export function DraftCommentCard({ comment, onRemove, onUpdate }: DraftCommentCa
       </div>
       {editing ? (
         <>
-          <textarea
+          <Textarea
             ref={textareaRef}
-            className="min-h-[88px] w-full resize-y rounded-md border border-gr-border bg-gr-chrome px-3 py-2 font-sans text-base leading-relaxed text-gr-text placeholder:text-gr-faint focus:border-gr-accent"
+            surface="overlay"
+            className="bg-gr-chrome"
             value={body}
             onChange={(e) => setBody(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -99,25 +100,28 @@ export function DraftCommentCard({ comment, onRemove, onUpdate }: DraftCommentCa
             data-testid="draft-comment-edit-input"
           />
           <div className="mt-2 flex flex-wrap items-center justify-end gap-2">
-            <button
-              type="button"
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-chrome px-3 py-1.5 text-base text-gr-muted hover:bg-gr-subtle hover:text-gr-text"
+            <Button
+              surface="overlay"
+              variant="secondary"
+              size="sm"
+              className="bg-gr-chrome"
               onClick={exitEdit}
               data-testid="draft-comment-edit-cancel"
             >
               Cancel
               <Kbd>Esc</Kbd>
-            </button>
-            <button
-              type="button"
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-base font-medium text-gr-accent-on enabled:hover:border-gr-accent-hover enabled:hover:bg-gr-accent-hover disabled:cursor-not-allowed disabled:opacity-40 [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit"
+            </Button>
+            <Button
+              surface="overlay"
+              size="sm"
               disabled={!canSave}
               onClick={saveEdit}
               data-testid="draft-comment-edit-save"
+              className="disabled:opacity-40"
             >
               Save
               <ModEnterChord />
-            </button>
+            </Button>
           </div>
         </>
       ) : (

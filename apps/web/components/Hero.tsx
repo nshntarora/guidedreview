@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { buttonClassName } from "@guided-review/ui";
 
 export function Hero() {
   return (
@@ -14,16 +15,10 @@ export function Hero() {
         logic, call-sites, and tests — so you walk the change the way a careful human would.
       </p>
       <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-        <a
-          href="#install"
-          className="inline-flex items-center rounded-lg border border-opt-accent bg-opt-accent px-5 py-2.5 text-base font-semibold text-opt-accent-on no-underline hover:bg-opt-accent-hover"
-        >
+        <a href="#install" className={buttonClassName({ size: "lg" })}>
           Install the extension
         </a>
-        <Link
-          href="/#features"
-          className="inline-flex items-center rounded-lg border border-opt-border bg-opt-subtle px-5 py-2.5 text-base font-medium text-opt-text no-underline hover:border-opt-muted"
-        >
+        <Link href="/#features" className={buttonClassName({ variant: "secondary", size: "lg" })}>
           See how it works
         </Link>
       </div>

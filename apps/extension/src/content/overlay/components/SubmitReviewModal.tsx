@@ -9,9 +9,8 @@ import {
 } from "react";
 import type { ReviewEvent, ReviewSubmission } from "../commentTypes";
 import { CloseButton } from "./CloseButton";
-import { Kbd } from "@guided-review/ui";
+import { Button, Kbd, Textarea } from "@guided-review/ui";
 import { ModalShell } from "./ModalShell";
-import { secondaryModalBtn } from "./modalButtonClasses";
 import { ModEnterChord } from "./ShortcutKeys";
 
 interface SubmitReviewModalProps {
@@ -36,9 +35,6 @@ interface SubmitReviewModalProps {
   /** Dialog panel node for Tab focus trapping in the overlay capture handler. */
   dialogRef?: Ref<HTMLDivElement>;
 }
-
-const accentBtn =
-  "inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-3 py-1.5 text-base disabled:cursor-not-allowed disabled:opacity-50 border-gr-accent bg-gr-accent font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover disabled:opacity-60 [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit";
 
 const REVIEW_EVENTS: {
   value: ReviewEvent;
@@ -297,23 +293,25 @@ export function SubmitReviewModal({
           </div>
 
           <div className="flex items-center justify-end gap-2 border-t border-gr-border px-4 py-3">
-            <button
-              type="button"
-              className={secondaryModalBtn}
+            <Button
+              surface="overlay"
+              variant="secondary"
+              size="sm"
               onClick={onClose}
               data-testid="submit-review-cancel"
             >
               Cancel
               <Kbd>Esc</Kbd>
-            </button>
+            </Button>
           </div>
         </>
       ) : (
         <>
           <div className="flex flex-col gap-4 px-4 py-4">
-            <textarea
+            <Textarea
               ref={textareaRef}
-              className="min-h-[100px] w-full resize-y rounded-md border border-gr-border bg-gr-bg px-3 py-2 font-sans text-base leading-relaxed text-gr-text outline-none placeholder:text-gr-faint focus:border-gr-accent disabled:opacity-60"
+              surface="overlay"
+              className="min-h-[100px]"
               placeholder="Review summary (markdown supported)…"
               value={body}
               onChange={(e) => setBody(e.target.value)}
@@ -346,36 +344,38 @@ export function SubmitReviewModal({
           </div>
 
           <div className="flex items-center justify-between gap-2 border-t border-gr-border px-4 py-3">
-            <button
-              type="button"
-              className={secondaryModalBtn}
+            <Button
+              surface="overlay"
+              variant="secondary"
+              size="sm"
               onClick={goBack}
               disabled={submitting}
               data-testid="submit-review-back"
             >
               Back
-            </button>
+            </Button>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className={secondaryModalBtn}
+              <Button
+                surface="overlay"
+                variant="secondary"
+                size="sm"
                 onClick={onClose}
                 disabled={submitting}
                 data-testid="submit-review-cancel"
               >
                 Cancel
                 <Kbd>Esc</Kbd>
-              </button>
-              <button
-                type="button"
-                className={accentBtn}
+              </Button>
+              <Button
+                surface="overlay"
+                size="sm"
                 onClick={handleSubmit}
                 disabled={submitting}
                 data-testid="submit-review-confirm"
               >
                 {submitting ? "Submitting…" : "Submit Review"}
                 {!submitting ? <ModEnterChord /> : null}
-              </button>
+              </Button>
             </div>
           </div>
         </>

@@ -2,9 +2,8 @@ import { useEffect, useId, useRef, useState, type MutableRefObject } from "react
 import { isGitHubOAuthConfigured } from "../../../lib/github/oauthConfig";
 import { openVerificationUri, useGitHubDeviceAuth } from "../../../lib/github/useGitHubDeviceAuth";
 import { CloseButton } from "./CloseButton";
-import { Kbd, Spinner } from "@guided-review/ui";
+import { Button, Kbd, Spinner } from "@guided-review/ui";
 import { ModalShell } from "./ModalShell";
-import { secondaryModalBtn } from "./modalButtonClasses";
 
 export interface ConnectGitHubModalProps {
   open: boolean;
@@ -17,9 +16,6 @@ export interface ConnectGitHubModalProps {
    */
   connectActionRef?: MutableRefObject<(() => void) | null>;
 }
-
-const primaryBtn =
-  "inline-flex cursor-pointer items-center gap-2 rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-base font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover disabled:cursor-not-allowed disabled:opacity-60 [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit";
 
 /** Official GitHub mark (Octocat) — filled via currentColor. */
 function GitHubLogo({ className }: { className?: string }) {
@@ -185,14 +181,15 @@ export function ConnectGitHubModal({
               >
                 {flow.userCode}
               </code>
-              <button
-                type="button"
-                className={secondaryModalBtn}
+              <Button
+                surface="overlay"
+                variant="secondary"
+                size="sm"
                 onClick={() => void onCopyCode(flow.userCode)}
                 data-testid="connect-github-copy-code"
               >
                 {copied ? "Copied" : "Copy Code"}
-              </button>
+              </Button>
             </div>
             <p
               className="m-0 text-center text-base leading-relaxed text-gr-muted"
@@ -220,19 +217,20 @@ export function ConnectGitHubModal({
       </div>
 
       <div className="flex items-center justify-end gap-2 border-t border-gr-border px-4 py-3">
-        <button
-          type="button"
-          className={secondaryModalBtn}
+        <Button
+          surface="overlay"
+          variant="secondary"
+          size="sm"
           onClick={onCancel}
           data-testid="connect-github-cancel"
         >
           Cancel
           <Kbd>Esc</Kbd>
-        </button>
+        </Button>
         {configured && flow.kind === "error" ? (
-          <button
-            type="button"
-            className={primaryBtn}
+          <Button
+            surface="overlay"
+            size="sm"
             onClick={() => void startConnect()}
             disabled={busy}
             data-testid="connect-github-retry"
@@ -248,22 +246,22 @@ export function ConnectGitHubModal({
                 <Kbd>Enter</Kbd>
               </>
             )}
-          </button>
+          </Button>
         ) : configured && flow.kind === "awaiting" ? (
-          <button
-            type="button"
-            className={primaryBtn}
+          <Button
+            surface="overlay"
+            size="sm"
             onClick={() => void openVerificationUri(flow.verificationUri)}
             data-testid="connect-github-enter-code"
           >
             Enter Code On GitHub
             <Kbd>Enter</Kbd>
-          </button>
+          </Button>
         ) : configured ? (
-          <button
+          <Button
             ref={connectButtonRef}
-            type="button"
-            className={primaryBtn}
+            surface="overlay"
+            size="sm"
             onClick={() => void startConnect()}
             disabled={busy}
             data-testid="connect-github-connect"
@@ -279,7 +277,7 @@ export function ConnectGitHubModal({
                 <Kbd>Enter</Kbd>
               </>
             )}
-          </button>
+          </Button>
         ) : null}
       </div>
     </ModalShell>

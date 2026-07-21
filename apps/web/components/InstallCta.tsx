@@ -1,3 +1,5 @@
+import { buttonClassName } from "@guided-review/ui";
+
 export function InstallCta() {
   return (
     <section
@@ -10,6 +12,19 @@ export function InstallCta() {
         request. Click <strong className="font-semibold text-opt-text">Start Guided Review</strong>{" "}
         to begin.
       </p>
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <a
+          href="https://github.com/nshntarora/guidedreview"
+          className={buttonClassName({ size: "lg" })}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          View on GitHub
+        </a>
+        <a href="#features" className={buttonClassName({ variant: "secondary", size: "lg" })}>
+          Explore features
+        </a>
+      </div>
       <p className="mt-6 text-sm text-opt-muted">
         Chrome Web Store listing coming soon. Developers can load the unpacked build from{" "}
         <code className="rounded bg-opt-bg px-1.5 py-0.5 text-sm">apps/extension/dist</code> in this

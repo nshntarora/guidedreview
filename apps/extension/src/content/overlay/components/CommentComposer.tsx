@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { formatLineRangeLabel } from "../commentTypes";
-import { Kbd } from "@guided-review/ui";
+import { Button, Kbd, Textarea } from "@guided-review/ui";
 import { ModEnterChord } from "./ShortcutKeys";
 
 interface CommentComposerProps {
@@ -55,9 +55,9 @@ export function CommentComposer({
       <div className="mb-2 font-mono text-sm text-gr-muted">
         {formatLineRangeLabel(filePath, startLine, endLine)}
       </div>
-      <textarea
+      <Textarea
         ref={textareaRef}
-        className="min-h-[88px] w-full resize-y rounded-md border border-gr-border bg-gr-bg px-3 py-2 font-sans text-base leading-relaxed text-gr-text placeholder:text-gr-faint focus:border-gr-accent"
+        surface="overlay"
         placeholder="Line comment (markdown supported)…"
         value={body}
         onChange={(e) => setBody(e.target.value)}
@@ -66,26 +66,23 @@ export function CommentComposer({
         data-testid="comment-composer-input"
       />
       <div className="mt-2 flex flex-wrap items-center justify-end gap-2">
-        <button
-          type="button"
-          className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-base text-gr-muted hover:bg-gr-subtle hover:text-gr-text"
-          onClick={onCancel}
-        >
+        <Button surface="overlay" variant="secondary" size="sm" onClick={onCancel}>
           Cancel
           <Kbd>Esc</Kbd>
-        </button>
-        <button
-          type="button"
-          className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-base font-medium text-gr-accent-on enabled:hover:border-gr-accent-hover enabled:hover:bg-gr-accent-hover disabled:cursor-not-allowed disabled:opacity-40 [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit"
+        </Button>
+        <Button
+          surface="overlay"
+          size="sm"
           disabled={!canSave}
           onClick={() => {
             if (canSave) onSave(body);
           }}
           data-testid="comment-composer-save"
+          className="disabled:opacity-40"
         >
           Save Draft
           <ModEnterChord />
-        </button>
+        </Button>
       </div>
     </div>
   );

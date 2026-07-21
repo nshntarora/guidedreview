@@ -1,6 +1,6 @@
 import type { ReviewErrorInfo, ReviewUnit } from "../../../lib/types";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
-import { Spinner } from "@guided-review/ui";
+import { Button, Spinner } from "@guided-review/ui";
 import { missingMetadataHint, PR_DESCRIPTION_HINT } from "../missingMetadata";
 
 export { missingMetadataHint, PR_DESCRIPTION_HINT } from "../missingMetadata";
@@ -64,13 +64,9 @@ export function ContextPanel({
 
         {onRetry && (
           <div className="mt-3">
-            <button
-              type="button"
-              onClick={onRetry}
-              className="inline-flex cursor-pointer items-center rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-base font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover"
-            >
+            <Button surface="overlay" size="sm" onClick={onRetry}>
               Retry
-            </button>
+            </Button>
           </div>
         )}
       </div>

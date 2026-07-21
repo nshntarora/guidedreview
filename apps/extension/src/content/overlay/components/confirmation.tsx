@@ -7,9 +7,8 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { cn, Kbd } from "@guided-review/ui";
+import { Button, Kbd } from "@guided-review/ui";
 import { ModalShell } from "./ModalShell";
-import { secondaryModalBtn } from "./modalButtonClasses";
 
 export type ConfirmVariant = "primary" | "destructive";
 
@@ -157,12 +156,6 @@ export function resetConfirmationQueueForTests(): void {
 
 // ── Dialog UI ──────────────────────────────────────────────────────────────
 
-const primaryOkBtn =
-  "inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-base font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover disabled:cursor-not-allowed disabled:opacity-50 [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit";
-
-const destructiveOkBtn =
-  "inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-danger bg-gr-danger-subtle px-3 py-1.5 text-base font-medium text-gr-danger hover:bg-[rgba(255,123,114,0.2)] disabled:cursor-not-allowed disabled:opacity-50";
-
 interface ConfirmationDialogProps {
   title: string;
   body: ReactNode;
@@ -295,27 +288,29 @@ function ConfirmationDialog({
       </div>
 
       <div className="flex flex-wrap items-center justify-end gap-2 border-t border-gr-border px-4 py-3">
-        <button
+        <Button
           ref={cancelRef}
-          type="button"
-          className={secondaryModalBtn}
+          surface="overlay"
+          variant="secondary"
+          size="sm"
           onClick={() => void handleCancel()}
           disabled={isLoading}
           data-testid="confirmation-cancel"
         >
           {cancelButtonText}
           <Kbd>Esc</Kbd>
-        </button>
-        <button
-          type="button"
-          className={cn(variant === "destructive" ? destructiveOkBtn : primaryOkBtn)}
+        </Button>
+        <Button
+          surface="overlay"
+          variant={variant === "destructive" ? "destructive" : "primary"}
+          size="sm"
           onClick={() => void handleOk()}
           disabled={isLoading}
           data-testid="confirmation-ok"
         >
           {isLoading ? "Processing…" : okButtonText}
           {!isLoading && <Kbd>Enter</Kbd>}
-        </button>
+        </Button>
       </div>
     </ModalShell>
   );

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { BrandMark } from "@guided-review/ui";
+import { BrandMark, buttonClassName } from "@guided-review/ui";
 import iconPng from "@guided-review/ui/assets/icon.png";
 import Link from "next/link";
 import "./globals.css";
@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Link href="/" className="no-underline">
               <BrandMark iconSrc={iconSrc} className="mb-0" />
             </Link>
-            <nav className="flex items-center gap-4 text-sm text-opt-muted" aria-label="Primary">
+            <nav className="flex items-center gap-3 text-sm text-opt-muted" aria-label="Primary">
               <Link href="/#features" className="hover:text-opt-text">
                 Features
               </Link>
@@ -39,6 +39,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </Link>
               <Link href="/terms" className="hover:text-opt-text">
                 Terms
+              </Link>
+              <Link href="/#install" className={buttonClassName({ size: "sm", className: "ml-1" })}>
+                Install
               </Link>
             </nav>
           </div>

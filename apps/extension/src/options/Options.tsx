@@ -8,24 +8,16 @@ import {
 } from "../lib/providers/catalog";
 import { getProviderSettings, setProviderSettings } from "../lib/settings";
 import { testConnection } from "../lib/messaging";
-import { Select, type SelectOption } from "./components/Select";
 import { ProviderIcon } from "./components/ProviderIcon";
-import { ActionSpinner } from "./components/ActionSpinner";
 import { BrandHeader } from "./BrandHeader";
 import { GitHubAuthSection } from "./GitHubAuthSection";
-import { cn } from "@guided-review/ui";
+import { Button, Input, Label, Select, Spinner, cn, type SelectOption } from "@guided-review/ui";
 
 type ActionStatus =
   | { kind: "idle" }
   | { kind: "working" }
   | { kind: "ok"; message: string }
   | { kind: "error"; message: string };
-
-const fieldControl =
-  "w-full rounded-md border border-opt-border bg-opt-subtle px-2.5 py-2 text-base text-opt-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-opt-accent";
-
-const actionBtn =
-  "inline-flex cursor-pointer items-center gap-2 rounded-md border px-4 py-2 text-base font-semibold disabled:cursor-default disabled:opacity-60";
 
 function OptionRow({ icon, label }: { icon: ProviderId; label: string }) {
   return (
@@ -139,13 +131,9 @@ export function Options() {
       <h2 className="mb-4 text-base font-semibold text-opt-text">AI Provider</h2>
 
       <div className="mb-4">
-        <label
-          className="mb-1.5 block text-base font-semibold"
-          id="provider-label"
-          htmlFor="provider"
-        >
+        <Label id="provider-label" htmlFor="provider">
           Provider
-        </label>
+        </Label>
         <Select
           id="provider"
           aria-labelledby="provider-label"
@@ -157,9 +145,9 @@ export function Options() {
       </div>
 
       <div className="mb-4">
-        <label className="mb-1.5 block text-base font-semibold" id="model-label" htmlFor="model">
+        <Label id="model-label" htmlFor="model">
           Model
-        </label>
+        </Label>
         <Select
           id="model"
           aria-labelledby="model-label"
@@ -171,12 +159,9 @@ export function Options() {
       </div>
 
       <div className="mb-4">
-        <label className="mb-1.5 block text-base font-semibold" htmlFor="apiKey">
-          API Key
-        </label>
-        <input
+        <Label htmlFor="apiKey">API Key</Label>
+        <Input
           id="apiKey"
-          className={fieldControl}
           type="password"
           autoComplete="off"
           placeholder={providerDef.keyPlaceholder}
@@ -191,33 +176,16 @@ export function Options() {
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-2.5">
-        <button
-          type="button"
-          className={cn(
-            actionBtn,
-            "border-opt-accent bg-opt-accent text-opt-accent-on",
-            "enabled:hover:border-opt-accent-hover enabled:hover:bg-opt-accent-hover",
-            "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent",
-          )}
-          onClick={onSave}
-          disabled={busy}
-        >
-          {saveStatus.kind === "working" && <ActionSpinner label="Saving" />}
+        <Button onClick={onSave} disabled={busy}>
+          {saveStatus.kind === "working" && <Spinner surface="app" size={14} label="Saving" />}
           {saveStatus.kind === "working" ? "Saving…" : "Save"}
-        </button>
-        <button
-          type="button"
-          className={cn(
-            actionBtn,
-            "border-opt-border bg-opt-subtle text-opt-text",
-            "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent",
+        </Button>
+        <Button variant="secondary" onClick={onTestConnection} disabled={!settings.apiKey || busy}>
+          {connection.kind === "working" && (
+            <Spinner surface="app" size={14} label="Testing connection" />
           )}
-          onClick={onTestConnection}
-          disabled={!settings.apiKey || busy}
-        >
-          {connection.kind === "working" && <ActionSpinner label="Testing connection" />}
           {connection.kind === "working" ? "Testing…" : "Test Connection"}
-        </button>
+        </Button>
         {statusMessage && (
           <span
             role="status"

@@ -124,7 +124,11 @@ Source-only package (no emit/`build` script). Apps import `@guided-review/ui` an
 Next `transpilePackages`.
 
 - Tokens: `@guided-review/ui/theme.css`
-- Components: `cn`, `Spinner`, `Kbd`, `BrandMark` (chrome-free; pass `iconSrc`)
+- Components: `cn`, `Spinner`, `Kbd`, `BrandMark`, `Button` / `buttonClassName`, `Input`, `Textarea`,
+  `Label`, `Select` (chrome-free; brand mark takes `iconSrc`)
+- Surfaces: form controls accept `surface?: "app" | "overlay"` — `app` uses adaptive `opt-*` tokens
+  (options + marketing), `overlay` uses dark `gr-*` tokens (review overlay). Defaults: form controls
+  → `app`; `Spinner` → `overlay`.
 - Assets: `@guided-review/ui/assets/*` (canonical brand). Extension syncs into `public/` via
   `apps/extension/scripts/sync-ui-assets.mjs` on `predev`/`prebuild`.
 

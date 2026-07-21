@@ -4,17 +4,10 @@ import { isGitHubOAuthConfigured } from "../lib/github/oauthConfig";
 import { openVerificationUri, useGitHubDeviceAuth } from "../lib/github/useGitHubDeviceAuth";
 import { clearGitHubAuthSession, getGitHubAuthStatus } from "../lib/messaging";
 import { confirm, ConfirmationHost } from "../content/overlay/components/confirmation";
-import { ActionSpinner } from "./components/ActionSpinner";
-import { cn } from "@guided-review/ui";
+import { Button, Spinner, cn } from "@guided-review/ui";
 
 type SessionState =
   { kind: "loading" } | { kind: "disconnected" } | { kind: "connected"; auth: GitHubAuthState };
-
-const primaryBtn =
-  "inline-flex cursor-pointer items-center gap-2 rounded-md border border-opt-accent bg-opt-accent px-4 py-2 text-base font-semibold text-opt-accent-on enabled:hover:border-opt-accent-hover enabled:hover:bg-opt-accent-hover disabled:cursor-default disabled:opacity-60";
-
-const secondaryBtn =
-  "inline-flex cursor-pointer items-center gap-2 rounded-md border border-opt-border bg-opt-subtle px-4 py-2 text-base font-semibold text-opt-text disabled:cursor-default disabled:opacity-60";
 
 /**
  * Options section: GitHub device OAuth connect / disconnect.
@@ -130,25 +123,23 @@ export function GitHubAuthSection() {
 
       {configured && session.kind === "loading" && flow.kind === "idle" && !showError && (
         <p className="flex items-center gap-2 text-base text-opt-muted" role="status">
-          <ActionSpinner label="Loading GitHub connection" />
+          <Spinner surface="app" size={14} label="Loading GitHub connection" />
           Loading…
         </p>
       )}
 
       {configured && session.kind === "disconnected" && flow.kind === "idle" && !showError && (
         <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            type="button"
-            className={primaryBtn}
+          <Button
             onClick={() => {
               setDisconnectError(null);
               void startConnect();
             }}
             disabled={busy}
           >
-            {busy && <ActionSpinner label="Connecting to GitHub" />}
+            {busy && <Spinner surface="app" size={14} label="Connecting to GitHub" />}
             {busy ? "Connecting…" : "Connect GitHub"}
-          </button>
+          </Button>
           <span className="text-sm text-opt-muted">Requests repo and read:user access.</span>
         </div>
       )}
@@ -162,34 +153,31 @@ export function GitHubAuthSection() {
             >
               {flow.userCode}
             </code>
-            <button
-              type="button"
-              className={secondaryBtn}
+            <Button
+              variant="secondary"
               onClick={() => void onCopyCode(flow.userCode)}
               data-testid="github-copy-code"
             >
               {copied ? "Copied" : "Copy Code"}
-            </button>
+            </Button>
           </div>
           <p className="m-0 text-base text-opt-muted" data-testid="github-copy-hint">
             Copy this code, then paste it on the GitHub tab.
           </p>
           <div className="flex flex-wrap items-center gap-2.5">
             <span className="flex items-center gap-2 text-base text-opt-muted" role="status">
-              <ActionSpinner label="Waiting for GitHub authorization" />
+              <Spinner surface="app" size={14} label="Waiting for GitHub authorization" />
               Waiting for authorization…
             </span>
-            <button type="button" className={secondaryBtn} onClick={onCancel}>
+            <Button variant="secondary" onClick={onCancel}>
               Cancel
-            </button>
-            <button
-              type="button"
-              className={primaryBtn}
+            </Button>
+            <Button
               onClick={() => void openVerificationUri(flow.verificationUri)}
               data-testid="github-enter-code"
             >
               Enter Code On GitHub
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -227,24 +215,17 @@ export function GitHubAuthSection() {
               )}
             </div>
           </div>
-          <button
-            type="button"
-            className={secondaryBtn}
-            onClick={requestDisconnect}
-            disabled={busy}
-          >
-            {disconnectBusy && <ActionSpinner label="Disconnecting" />}
+          <Button variant="secondary" onClick={requestDisconnect} disabled={busy}>
+            {disconnectBusy && <Spinner surface="app" size={14} label="Disconnecting" />}
             Disconnect
-          </button>
+          </Button>
         </div>
       )}
 
       {configured && showError && (
         <div className="space-y-3" role="alert">
           <p className={cn("m-0 text-base text-opt-error")}>{showError}</p>
-          <button
-            type="button"
-            className={primaryBtn}
+          <Button
             onClick={() => {
               setDisconnectError(null);
               void startConnect();
@@ -252,7 +233,7 @@ export function GitHubAuthSection() {
             disabled={busy}
           >
             Try Again
-          </button>
+          </Button>
         </div>
       )}
 

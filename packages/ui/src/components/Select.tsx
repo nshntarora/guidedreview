@@ -1,3 +1,5 @@
+"use client";
+
 import {
   useCallback,
   useEffect,
@@ -9,7 +11,8 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
-import { cn } from "@guided-review/ui";
+import { cn } from "../cn";
+import type { Surface } from "../surface";
 
 export interface SelectOption<T extends string = string> {
   value: T;
@@ -36,6 +39,11 @@ export interface SelectProps<T extends string = string> {
   className?: string;
   /** Placeholder when value is not in options (should be rare after normalize). */
   placeholder?: string;
+  /**
+   * Token set: `app` (options + marketing, opt-*) or `overlay` (dark review UI, gr-*).
+   * Defaults to `app`.
+   */
+  surface?: Surface;
 }
 
 function findNextEnabled(options: SelectOption[], from: number, direction: 1 | -1): number {
@@ -63,6 +71,7 @@ export function Select<T extends string = string>({
   disabled = false,
   className,
   placeholder = "Select…",
+  surface = "app",
 }: SelectProps<T>) {
   const listboxId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -210,6 +219,8 @@ export function Select<T extends string = string>({
   const activeDescendant =
     open && highlightIndex >= 0 ? `${listboxId}-opt-${highlightIndex}` : undefined;
 
+  const isApp = surface === "app";
+
   return (
     <div ref={rootRef} className={cn("relative", className)}>
       <button
@@ -225,9 +236,17 @@ export function Select<T extends string = string>({
         aria-label={ariaLabel}
         disabled={disabled}
         className={cn(
-          "flex w-full items-center gap-2 rounded-md border border-opt-border bg-opt-subtle px-2.5 py-2 text-left text-base text-opt-text",
-          "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-opt-accent",
+          "flex w-full items-center gap-2 rounded-md border px-2.5 py-2 text-left text-base",
           "disabled:cursor-not-allowed disabled:opacity-60",
+          isApp
+            ? cn(
+                "border-opt-border bg-opt-subtle text-opt-text",
+                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-opt-accent",
+              )
+            : cn(
+                "border-gr-border bg-gr-bg text-gr-text",
+                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-gr-accent",
+              ),
         )}
         onClick={() => (open ? close(true) : openList())}
         onKeyDown={onTriggerKeyDown}
@@ -240,13 +259,14 @@ export function Select<T extends string = string>({
               selected.label
             )
           ) : (
-            <span className="text-opt-muted">{placeholder}</span>
+            <span className={isApp ? "text-opt-muted" : "text-gr-muted"}>{placeholder}</span>
           )}
         </span>
         <svg
           aria-hidden
           className={cn(
-            "h-3.5 w-3.5 shrink-0 text-opt-muted transition-transform",
+            "h-3.5 w-3.5 shrink-0 transition-transform",
+            isApp ? "text-opt-muted" : "text-gr-muted",
             open && "rotate-180",
           )}
           viewBox="0 0 16 16"
@@ -269,7 +289,12 @@ export function Select<T extends string = string>({
           role="listbox"
           tabIndex={-1}
           aria-labelledby={ariaLabelledBy}
-          className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-opt-border bg-opt-bg py-1 shadow-md"
+          className={cn(
+            "absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border py-1 shadow-md",
+            isApp
+              ? "border-opt-border bg-opt-bg text-opt-text"
+              : "border-gr-border bg-gr-chrome text-gr-text",
+          )}
           onKeyDown={onListKeyDown}
         >
           {options.map((opt, index) => {
@@ -283,8 +308,8 @@ export function Select<T extends string = string>({
                 aria-selected={isSelected}
                 aria-disabled={opt.disabled || undefined}
                 className={cn(
-                  "flex cursor-pointer items-center gap-2 px-2.5 py-1.5 text-base text-opt-text",
-                  isHighlighted && "bg-opt-subtle",
+                  "flex cursor-pointer items-center gap-2 px-2.5 py-1.5 text-base",
+                  isHighlighted && (isApp ? "bg-opt-subtle" : "bg-gr-subtle"),
                   isSelected && "font-semibold",
                   opt.disabled && "cursor-not-allowed opacity-50",
                 )}
