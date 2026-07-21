@@ -695,7 +695,7 @@ describe("Overlay", () => {
 
       fireEvent.keyDown(window, { key: "Escape" });
       expect(await screen.findByTestId("confirmation-dialog")).toBeInTheDocument();
-      expect(screen.getByText(/Exit Guided Review/i)).toBeInTheDocument();
+      expect(screen.getByText("Exit review?")).toBeInTheDocument();
       expect(useReviewStore.getState().isOpen).toBe(true);
 
       fireEvent.click(screen.getByTestId("confirmation-ok"));
@@ -766,7 +766,7 @@ describe("Overlay", () => {
       expect(useReviewStore.getState().isOpen).toBe(true);
     });
 
-    it("exits guided review from the success modal and navigates to conversation", async () => {
+    it("exits the review from the success modal and navigates to conversation", async () => {
       const assign = vi.fn();
       const originalLocation = window.location;
       Object.defineProperty(window, "location", {
@@ -802,7 +802,7 @@ describe("Overlay", () => {
       });
     });
 
-    it("exits guided review with Enter while the success modal is open", async () => {
+    it("exits the review with Enter while the success modal is open", async () => {
       const assign = vi.fn();
       const originalLocation = window.location;
       Object.defineProperty(window, "location", {

@@ -122,10 +122,10 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     close();
   }, [onRequestClose, close]);
 
-  /** Esc (and Exit button) — confirm before leaving guided review. */
+  /** Esc (and Exit button) — confirm before leaving the review. */
   const requestExit = useCallback(() => {
     confirm({
-      title: "Exit Guided Review?",
+      title: "Exit review?",
       body: "You can reopen on this PR later. Draft comments stay for this browser session.",
       variant: "destructive",
       okButtonText: "Exit",
@@ -383,7 +383,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         return;
       }
 
-      // Success modal: Enter / Esc exit guided review (single CTA dialog).
+      // Success modal: Enter / Esc exit the review (single CTA dialog).
       if (submitSuccess) {
         viewChordRef.current = null;
         if (

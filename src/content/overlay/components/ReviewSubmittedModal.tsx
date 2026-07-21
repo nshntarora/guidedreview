@@ -101,7 +101,7 @@ export function ReviewSubmittedModal({
           onClick={onExit}
           data-testid="review-submitted-exit"
         >
-          Exit Guided Review
+          Exit review
           <Kbd>Enter</Kbd>
         </button>
       </div>

@@ -3,7 +3,7 @@ import type { StartGuidedReviewMessage } from "../lib/types";
 import "./popup.css";
 
 const NOT_ON_PR =
-  "Open a GitHub pull request page to start Guided Review.";
+  "Open a GitHub pull request page to start a review.";
 const RELOAD_PR =
   "Reload this pull request page, then try again.";
 
