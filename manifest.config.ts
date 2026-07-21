@@ -27,7 +27,10 @@ export default defineManifest({
   },
   content_scripts: [
     {
-      matches: ["https://github.com/*/*/pull/*"],
+      // Match all of github.com so the content script (and its MutationObserver)
+      // is already running when the user SPA-navigates from e.g. the PR list into
+      // a PR. UI is only injected when parsePRUrl matches a PR path.
+      matches: ["https://github.com/*"],
       js: ["src/content/index.tsx"],
       run_at: "document_idle",
     },

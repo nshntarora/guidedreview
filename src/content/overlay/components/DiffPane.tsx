@@ -17,6 +17,7 @@ import type { DiffViewMode } from "../diffViewMode";
 import { hydrateDiffViewMode, useReviewStore } from "../store";
 import type { ResolvedUnitFile } from "../selectors";
 import { CommentComposer } from "./CommentComposer";
+import { confirm } from "./confirmation";
 import { DraftCommentCard } from "./DraftCommentCard";
 import { Kbd } from "./Kbd";
 import { ShortcutKeys } from "./ShortcutKeys";
@@ -148,13 +149,26 @@ function LineExtras({
 
   if (!showComposer && drafts.length === 0) return null;
 
+  function requestRemoveDraft(id: string): void {
+    confirm({
+      title: "Remove draft comment?",
+      body: "This draft will be discarded. You can write a new comment on these lines later.",
+      variant: "destructive",
+      okButtonText: "Remove",
+      cancelButtonText: "Cancel",
+      okButtonHandler: () => {
+        removeDraftComment(id);
+      },
+    });
+  }
+
   return (
     <div className="font-sans" data-testid={`line-extras-${lineId}`}>
       {drafts.map((d) => (
         <DraftCommentCard
           key={d.id}
           comment={d}
-          onRemove={removeDraftComment}
+          onRemove={requestRemoveDraft}
           onUpdate={updateDraftComment}
         />
       ))}

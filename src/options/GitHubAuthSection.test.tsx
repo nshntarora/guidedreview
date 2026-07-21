@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { resetConfirmationQueueForTests } from "../content/overlay/components/confirmation";
 import { GitHubAuthSection } from "./GitHubAuthSection";
 import * as messaging from "../lib/messaging";
 import * as oauthConfig from "../lib/github/oauthConfig";
@@ -34,6 +35,7 @@ describe("GitHubAuthSection", () => {
 
   afterEach(() => {
     openVerificationUriSpy.mockRestore();
+    resetConfirmationQueueForTests();
   });
 
   it("shows a setup message when OAuth is not configured", async () => {
@@ -153,7 +155,7 @@ describe("GitHubAuthSection", () => {
     expect(messaging.pollGitHubDeviceAuth).toHaveBeenCalledWith("device-2");
   });
 
-  it("disconnects and returns to Connect", async () => {
+  it("disconnects and returns to Connect after confirmation", async () => {
     const user = userEvent.setup();
     vi.mocked(messaging.getGitHubAuthStatus).mockResolvedValue({
       ok: true,
@@ -170,7 +172,38 @@ describe("GitHubAuthSection", () => {
     await screen.findByText("@octocat");
     await user.click(screen.getByRole("button", { name: /disconnect/i }));
 
-    expect(messaging.clearGitHubAuthSession).toHaveBeenCalled();
+    expect(messaging.clearGitHubAuthSession).not.toHaveBeenCalled();
+    expect(await screen.findByTestId("confirmation-dialog")).toBeInTheDocument();
+    expect(screen.getByText(/Disconnect GitHub/i)).toBeInTheDocument();
+
+    await user.click(screen.getByTestId("confirmation-ok"));
+
+    await waitFor(() => {
+      expect(messaging.clearGitHubAuthSession).toHaveBeenCalled();
+    });
     expect(await screen.findByRole("button", { name: /connect github/i })).toBeInTheDocument();
+  });
+
+  it("does not disconnect when confirmation is cancelled", async () => {
+    const user = userEvent.setup();
+    vi.mocked(messaging.getGitHubAuthStatus).mockResolvedValue({
+      ok: true,
+      auth: {
+        accessToken: "gho_x",
+        tokenType: "bearer",
+        scope: "repo",
+        login: "octocat",
+      },
+    });
+
+    render(<GitHubAuthSection />);
+    await screen.findByText("@octocat");
+    await user.click(screen.getByRole("button", { name: /disconnect/i }));
+    await screen.findByTestId("confirmation-dialog");
+    await user.click(screen.getByTestId("confirmation-cancel"));
+
+    expect(messaging.clearGitHubAuthSession).not.toHaveBeenCalled();
+    expect(screen.getByText("@octocat")).toBeInTheDocument();
+    expect(screen.queryByTestId("confirmation-dialog")).not.toBeInTheDocument();
   });
 });

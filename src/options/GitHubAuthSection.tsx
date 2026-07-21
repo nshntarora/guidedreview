@@ -9,6 +9,10 @@ import {
   clearGitHubAuthSession,
   getGitHubAuthStatus,
 } from "../lib/messaging";
+import {
+  confirm,
+  ConfirmationHost,
+} from "../content/overlay/components/confirmation";
 import { ActionSpinner } from "./components/ActionSpinner";
 import { cn } from "../lib/cn";
 
@@ -71,7 +75,7 @@ export function GitHubAuthSection() {
     setCopied(false);
   };
 
-  const onDisconnect = async () => {
+  const performDisconnect = async () => {
     if (disconnectBusy || connectBusy) return;
     setDisconnectBusy(true);
     setDisconnectError(null);
@@ -82,9 +86,22 @@ export function GitHubAuthSection() {
       const message =
         error instanceof Error ? error.message : "Could not disconnect GitHub.";
       setDisconnectError(message);
+      throw error instanceof Error ? error : new Error(message);
     } finally {
       setDisconnectBusy(false);
     }
+  };
+
+  const requestDisconnect = () => {
+    if (disconnectBusy || connectBusy) return;
+    confirm({
+      title: "Disconnect GitHub?",
+      body: "Guided Review will no longer be able to submit reviews on your behalf until you connect again. Your AI provider settings are unchanged.",
+      variant: "destructive",
+      okButtonText: "Disconnect",
+      cancelButtonText: "Cancel",
+      okButtonHandler: () => performDisconnect(),
+    });
   };
 
   const onCopyCode = async (code: string) => {
@@ -226,7 +243,7 @@ export function GitHubAuthSection() {
           <button
             type="button"
             className={secondaryBtn}
-            onClick={() => void onDisconnect()}
+            onClick={requestDisconnect}
             disabled={busy}
           >
             {disconnectBusy && <ActionSpinner label="Disconnecting" />}
@@ -251,6 +268,8 @@ export function GitHubAuthSection() {
           </button>
         </div>
       )}
+
+      <ConfirmationHost />
     </section>
   );
 }

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Overlay } from "./Overlay";
+import { resetConfirmationQueueForTests } from "./components/confirmation";
 import { DEFAULT_DIFF_VIEW_MODE } from "./diffViewMode";
 import { useReviewStore } from "./store";
 import { PR_DESCRIPTION_UNIT_TITLE } from "./displayUnits";
@@ -115,6 +116,7 @@ function seedReadyReview(unitIndex = 1): void {
 describe("Overlay", () => {
   beforeEach(() => {
     resetStore();
+    resetConfirmationQueueForTests();
     Element.prototype.scrollIntoView = vi.fn();
     Element.prototype.scrollTo = vi.fn();
     // jsdom does not implement scrollBy; ArrowDown scrolls the code column.
@@ -131,6 +133,10 @@ describe("Overlay", () => {
       ok: true,
       auth: sampleAuth,
     });
+  });
+
+  afterEach(() => {
+    resetConfirmationQueueForTests();
   });
 
   it("renders nothing when the review isn't open", () => {
@@ -679,7 +685,7 @@ describe("Overlay", () => {
       expect(useReviewStore.getState().isOpen).toBe(true);
     });
 
-    it("exits the overlay on Esc after the modal is closed", async () => {
+    it("prompts to exit on Esc after the modal is closed, then exits on confirm", async () => {
       seedReadyReview(0);
       render(<Overlay />);
 
@@ -688,7 +694,28 @@ describe("Overlay", () => {
       expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
 
       fireEvent.keyDown(window, { key: "Escape" });
-      expect(useReviewStore.getState().isOpen).toBe(false);
+      expect(await screen.findByTestId("confirmation-dialog")).toBeInTheDocument();
+      expect(screen.getByText(/Exit guided review/i)).toBeInTheDocument();
+      expect(useReviewStore.getState().isOpen).toBe(true);
+
+      fireEvent.click(screen.getByTestId("confirmation-ok"));
+      await waitFor(() => {
+        expect(useReviewStore.getState().isOpen).toBe(false);
+      });
+    });
+
+    it("stays open when exit confirmation is cancelled", async () => {
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      fireEvent.keyDown(window, { key: "Escape" });
+      expect(await screen.findByTestId("confirmation-dialog")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId("confirmation-cancel"));
+      await waitFor(() => {
+        expect(screen.queryByTestId("confirmation-dialog")).not.toBeInTheDocument();
+      });
+      expect(useReviewStore.getState().isOpen).toBe(true);
     });
 
     it("submits a review to GitHub and shows the success modal", async () => {

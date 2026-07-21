@@ -23,6 +23,13 @@ import { DescriptionPane } from "./components/DescriptionPane";
 import { ContextPanel } from "./components/ContextPanel";
 import { FooterNav } from "./components/FooterNav";
 import { ConnectGitHubModal } from "./components/ConnectGitHubModal";
+import {
+  confirm,
+  ConfirmationHost,
+  confirmationHandlesKey,
+  getConfirmationDialogElement,
+  useConfirmationOpen,
+} from "./components/confirmation";
 import { SubmitReviewModal } from "./components/SubmitReviewModal";
 import { ReviewSubmittedModal } from "./components/ReviewSubmittedModal";
 
@@ -115,16 +122,32 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     close();
   }, [onRequestClose, close]);
 
+  /** Esc (and Exit button) — confirm before leaving guided review. */
+  const requestExit = useCallback(() => {
+    confirm({
+      title: "Exit guided review?",
+      body: "You can reopen this walkthrough on the same PR later. Unsubmitted draft comments are kept for this browser session.",
+      variant: "destructive",
+      okButtonText: "Exit",
+      cancelButtonText: "Stay",
+      okButtonHandler: () => {
+        handleExit();
+      },
+    });
+  }, [handleExit]);
+
   const exitAfterSubmit = useCallback(() => {
     setSubmitSuccess(null);
     if (prContext) {
       navigateToPrConversation(prContext);
     }
+    // Post-submit exit is intentional (single CTA) — skip the confirm prompt.
     handleExit();
   }, [prContext, handleExit]);
 
   const draftComments = useReviewStore((s) => s.draftComments);
   const clearDraftComments = useReviewStore((s) => s.clearDraftComments);
+  const confirmationOpen = useConfirmationOpen();
 
   const closeSubmitReviewModal = useCallback(() => {
     if (submittingReview) return;
@@ -340,13 +363,23 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     function onKeyDown(event: KeyboardEvent): void {
       event.stopPropagation();
 
-      // Tab trap: keep focus inside the submit modal when open, else the overlay.
+      // Tab trap: confirmation → submit modal → overlay.
       // Must run here — window capture stopPropagation means element traps never see Tab.
       if (event.key === "Tab") {
-        const trapRoot = submitReviewOpen
-          ? submitModalDialogRef.current
-          : overlayRef.current;
+        const confirmDialog = getConfirmationDialogElement();
+        const trapRoot = confirmDialog
+          ? confirmDialog
+          : submitReviewOpen
+            ? submitModalDialogRef.current
+            : overlayRef.current;
         if (trapRoot) trapTabKey(event, trapRoot);
+        return;
+      }
+
+      // Confirmation dialog: Enter = OK, Esc = cancel (highest priority modal).
+      if (confirmationHandlesKey(event)) {
+        event.preventDefault();
+        viewChordRef.current = null;
         return;
       }
 
@@ -511,8 +544,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         case "Escape":
           event.preventDefault();
           viewChordRef.current = null;
-          onRequestClose?.();
-          store.close();
+          requestExit();
           return;
         case "ArrowRight":
           event.preventDefault();
@@ -568,6 +600,8 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     exitAfterSubmit,
     requestOpenSubmitReview,
     closeSubmitReviewModal,
+    confirmationOpen,
+    requestExit,
   ]);
 
   const statusAnnouncement = useMemo(() => {
@@ -618,7 +652,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         diff={diff}
         titleId={titleId}
         title={dialogTitle}
-        onExit={handleExit}
+        onExit={requestExit}
         onSubmitReview={() => {
           void requestOpenSubmitReview();
         }}
@@ -706,6 +740,8 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         commentCount={submitSuccess?.commentCount ?? 0}
         onExit={exitAfterSubmit}
       />
+
+      <ConfirmationHost />
     </div>
   );
 }
