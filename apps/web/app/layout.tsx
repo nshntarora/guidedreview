@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Victor_Mono } from "next/font/google";
-import { buttonClassName } from "@guided-review/ui";
 import logoSvg from "@guided-review/ui/assets/logo.svg";
 import Link from "next/link";
-import { GitHubIcon } from "../components/icons";
-import { CHROME_WEB_STORE_URL, GITHUB_REPO_URL } from "../lib/links";
+import { InstallButton, StarOnGitHubButton } from "../components/CtaButtons";
+import { SiteShortcuts } from "../components/SiteShortcuts";
+import { GITHUB_REPO_URL } from "../lib/links";
 import "./globals.css";
 
 const victorMono = Victor_Mono({
@@ -62,31 +62,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               >
                 Features
               </Link>
-              <a
-                href={GITHUB_REPO_URL}
-                className={buttonClassName({
-                  variant: "secondary",
-                  size: "sm",
-                  surface: "overlay",
-                })}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Guided Review on GitHub"
-              >
-                <GitHubIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">GitHub</span>
-              </a>
-              <a
-                href={CHROME_WEB_STORE_URL}
-                className={buttonClassName({ size: "sm", surface: "overlay" })}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Install
-              </a>
+              <StarOnGitHubButton size="sm" surface="overlay" compact />
+              <InstallButton size="sm" surface="overlay" compact />
             </nav>
           </div>
         </header>
+        <SiteShortcuts />
         <main id="main">{children}</main>
         <footer className="mt-16 border-t border-gr-border bg-gr-bg">
           <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-6 py-8 text-sm text-gr-muted">

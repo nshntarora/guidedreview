@@ -33,6 +33,8 @@ const appVariants: Record<ButtonVariant, string> = {
     "border-opt-accent bg-opt-accent font-semibold text-opt-accent-on",
     "not-disabled:hover:border-opt-accent-hover not-disabled:hover:bg-opt-accent-hover",
     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent",
+    // Nested keyboard chords on accent fill need inverted kbd chrome.
+    "[&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit",
   ),
   secondary: cn(
     "border-opt-border bg-opt-subtle font-semibold text-opt-text",

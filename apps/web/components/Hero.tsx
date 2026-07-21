@@ -1,6 +1,4 @@
-import { buttonClassName } from "@guided-review/ui";
-import { CHROME_WEB_STORE_URL, GITHUB_URL } from "../lib/links";
-import { GitHubIcon } from "./icons";
+import { InstallButton, StarOnGitHubButton } from "./CtaButtons";
 import { ProductVideo } from "./ProductVideo";
 
 export function Hero() {
@@ -27,23 +25,8 @@ export function Hero() {
           like clustered file changes, summaries, and a keyboard first experience.
         </p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <a
-            href={CHROME_WEB_STORE_URL}
-            className={buttonClassName({ size: "lg" })}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Install the extension
-          </a>
-          <a
-            href={GITHUB_URL}
-            className={buttonClassName({ variant: "secondary", size: "lg" })}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <GitHubIcon className="h-4 w-4" />
-            Start on GitHub
-          </a>
+          <InstallButton />
+          <StarOnGitHubButton />
         </div>
         <p className="mt-4 font-mono text-xs text-opt-muted">
           Free · Open source · Bring your own LLM key

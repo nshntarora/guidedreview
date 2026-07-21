@@ -1,9 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
+import { ShortcutChord } from "./ShortcutChord";
 
 const VIDEO_SRC = "/product-preview/demo.webm";
 const THUMBNAIL_SRC = "/product-preview/thumbnail.png";
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  const tag = target.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+}
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -146,6 +154,35 @@ export function ProductVideo() {
     }
   }, [clearHideTimer, scheduleHideControls]);
 
+  const startedRef = useRef(started);
+  startedRef.current = started;
+
+  // ⌘/Ctrl+V plays the demo (start if needed; resume if paused).
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
+      if (event.repeat) return;
+      if (event.key.toLowerCase() !== "v") return;
+      if (isEditableTarget(event.target)) return;
+
+      event.preventDefault();
+      if (!startedRef.current) {
+        setStarted(true);
+        return;
+      }
+      const video = videoRef.current;
+      if (video && video.paused) {
+        void video.play().then(() => {
+          setPlaying(true);
+          scheduleHideControls();
+        });
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [scheduleHideControls]);
+
   const toggleMute = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -201,7 +238,13 @@ export function ProductVideo() {
         <span className="h-2.5 w-2.5 rounded-full bg-gr-danger" aria-hidden="true" />
         <span className="h-2.5 w-2.5 rounded-full bg-gr-syntax-variable" aria-hidden="true" />
         <span className="h-2.5 w-2.5 rounded-full bg-gr-add-text" aria-hidden="true" />
-        <span className="ml-3 font-mono text-xs text-gr-muted">Product demo</span>
+        <span className="ml-3 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-gr-muted">
+          <span>Product demo</span>
+          <span className="inline-flex items-center gap-1.5 text-gr-faint">
+            <ShortcutChord keyLabel="v" />
+            <span>to play</span>
+          </span>
+        </span>
       </div>
 
       <div
