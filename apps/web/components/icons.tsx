@@ -55,6 +55,24 @@ export function CheckShieldIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function KeyboardIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base(props)}>
+      <rect x="2" y="6" width="20" height="12" rx="2" />
+      <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10" />
+    </svg>
+  );
+}
+
+export function SparkleIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base({ ...props, fill: "currentColor", stroke: "none" })}>
+      <path d="M12 2c.6 3.6 2.4 5.4 6 6-3.6.6-5.4 2.4-6 6-.6-3.6-2.4-5.4-6-6 3.6-.6 5.4-2.4 6-6Z" />
+      <path d="M19 15c.3 1.6 1.1 2.4 2.7 2.7-1.6.3-2.4 1.1-2.7 2.7-.3-1.6-1.1-2.4-2.7-2.7 1.6-.3 2.4-1.1 2.7-2.7Z" />
+    </svg>
+  );
+}
+
 export function GitHubIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg {...base({ ...props, fill: "currentColor", stroke: "none" })}>

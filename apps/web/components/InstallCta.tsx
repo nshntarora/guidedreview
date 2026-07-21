@@ -7,11 +7,7 @@ export function InstallCta() {
       className="relative mx-auto my-16 max-w-5xl overflow-hidden rounded-2xl border border-opt-border bg-opt-subtle px-6 py-14 sm:px-12"
     >
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,color-mix(in_srgb,var(--opt-accent)_18%,transparent),transparent)]"
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(color-mix(in_srgb,var(--opt-border)_18%,transparent)_1px,transparent_1px),linear-gradient(90deg,color-mix(in_srgb,var(--opt-border)_18%,transparent)_1px,transparent_1px)] bg-[size:44px_44px] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,black,transparent)]"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--opt-accent)_14%,transparent),transparent_55%)]"
         aria-hidden="true"
       />
 
