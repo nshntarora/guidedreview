@@ -33,7 +33,9 @@ export async function fetchPRDiff(pr: PRIdentity): Promise<ParsedDiff> {
     });
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(`Network error fetching the diff from ${url}: ${detail}`);
+    throw new Error(`Network error fetching the diff from ${url}: ${detail}`, {
+      cause: error,
+    });
   }
 
   if (!response.ok) {
