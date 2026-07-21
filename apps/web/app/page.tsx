@@ -15,9 +15,9 @@ export default function HomePage() {
   return (
     <>
       <Hero />
+      <FeatureGrid />
       <Problem />
       <HowItWorks />
-      <FeatureGrid />
       <InstallCta />
     </>
   );
