@@ -4,8 +4,9 @@ import pkg from "./package.json";
 export default defineManifest({
   manifest_version: 3,
   name: "Guided Review",
+  // Chrome caps description at 132 characters (browser load + Web Store).
   description:
-    "Turns a GitHub pull request diff into a guided, AI-structured review: model changes first, grouped by concern, with context and risk flags.",
+    "Turns a GitHub PR diff into a guided, AI-structured review: model changes first, grouped by concern, with context and risk flags.",
   version: pkg.version,
   icons: {
     16: "public/icons/icon16.png",

@@ -47,8 +47,8 @@ export function FooterNav({ currentIndex, total, onPrev, onNext }: FooterNavProp
         type="button"
         className={cn(
           navBtnBase,
-          "border-gr-accent bg-gr-accent text-gr-accent-on",
-          "enabled:hover:border-gr-accent-hover enabled:hover:bg-gr-accent-hover",
+          "border-gr-accent bg-gr-accent text-gr-accent-on transition-colors",
+          "not-disabled:hover:border-gr-accent-hover not-disabled:hover:bg-gr-accent-hover",
           "[&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit",
         )}
         onClick={onNext}

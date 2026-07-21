@@ -22,25 +22,31 @@ const sizeClasses: Record<ButtonSize, string> = {
   lg: "gap-2 rounded-lg px-5 py-2.5 text-base",
 };
 
+/**
+ * Hover uses `not-disabled:` (not `enabled:`) so styles apply to both real
+ * `<button>`s and anchors/`Link`s styled via `buttonClassName`. CSS `:enabled`
+ * only matches form controls, so link-buttons never received hover under the
+ * old selector.
+ */
 const appVariants: Record<ButtonVariant, string> = {
   primary: cn(
     "border-opt-accent bg-opt-accent font-semibold text-opt-accent-on",
-    "enabled:hover:border-opt-accent-hover enabled:hover:bg-opt-accent-hover",
+    "not-disabled:hover:border-opt-accent-hover not-disabled:hover:bg-opt-accent-hover",
     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent",
   ),
   secondary: cn(
     "border-opt-border bg-opt-subtle font-semibold text-opt-text",
-    "enabled:hover:border-opt-muted",
+    "not-disabled:hover:border-opt-muted not-disabled:hover:bg-[color-mix(in_srgb,var(--opt-muted)_10%,var(--opt-subtle))]",
     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent",
   ),
   destructive: cn(
     "border-opt-error bg-opt-subtle font-semibold text-opt-error",
-    "enabled:hover:bg-[color-mix(in_srgb,var(--opt-error)_12%,var(--opt-subtle))]",
+    "not-disabled:hover:bg-[color-mix(in_srgb,var(--opt-error)_12%,var(--opt-subtle))]",
     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-error",
   ),
   ghost: cn(
     "border-transparent bg-transparent font-medium text-opt-muted",
-    "enabled:hover:bg-opt-subtle enabled:hover:text-opt-text",
+    "not-disabled:hover:bg-opt-subtle not-disabled:hover:text-opt-text",
     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent",
   ),
 };
@@ -48,21 +54,25 @@ const appVariants: Record<ButtonVariant, string> = {
 const overlayVariants: Record<ButtonVariant, string> = {
   primary: cn(
     "border-gr-accent bg-gr-accent font-medium text-gr-accent-on",
-    "enabled:hover:border-gr-accent-hover enabled:hover:bg-gr-accent-hover",
+    "not-disabled:hover:border-gr-accent-hover not-disabled:hover:bg-gr-accent-hover",
+    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gr-accent",
     // Nested keyboard chords on accent fill need inverted kbd chrome.
     "[&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit",
   ),
   secondary: cn(
     "border-gr-border bg-gr-bg text-gr-muted",
-    "enabled:hover:bg-gr-subtle enabled:hover:text-gr-text",
+    "not-disabled:hover:bg-gr-subtle not-disabled:hover:text-gr-text",
+    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gr-accent",
   ),
   destructive: cn(
     "border-gr-danger bg-gr-danger-subtle font-medium text-gr-danger",
-    "enabled:hover:bg-[rgba(255,123,114,0.2)]",
+    "not-disabled:hover:bg-[rgba(255,123,114,0.2)]",
+    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gr-danger",
   ),
   ghost: cn(
     "border-transparent bg-transparent text-gr-muted",
-    "enabled:hover:bg-gr-subtle enabled:hover:text-gr-text",
+    "not-disabled:hover:bg-gr-subtle not-disabled:hover:text-gr-text",
+    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gr-accent",
   ),
 };
 
@@ -80,7 +90,7 @@ export function buttonClassName({
 } = {}): string {
   const variants = surface === "overlay" ? overlayVariants : appVariants;
   return cn(
-    "inline-flex cursor-pointer items-center justify-center border no-underline",
+    "inline-flex cursor-pointer items-center justify-center border no-underline transition-colors",
     "disabled:cursor-not-allowed disabled:opacity-60",
     sizeClasses[size],
     variants[variant],

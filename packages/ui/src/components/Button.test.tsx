@@ -22,4 +22,19 @@ describe("Button", () => {
     expect(buttonClassName()).toContain("bg-opt-accent");
     expect(buttonClassName({ surface: "overlay", variant: "secondary" })).toContain("bg-gr-bg");
   });
+
+  it("uses not-disabled:hover so hover works on anchors and enabled buttons", () => {
+    // `:enabled` only matches form controls — link-styled CTAs would never hover.
+    const primary = buttonClassName();
+    expect(primary).toContain("not-disabled:hover:bg-opt-accent-hover");
+    expect(primary).not.toContain("enabled:hover:");
+
+    const overlayPrimary = buttonClassName({ surface: "overlay" });
+    expect(overlayPrimary).toContain("not-disabled:hover:bg-gr-accent-hover");
+    expect(overlayPrimary).not.toContain("enabled:hover:");
+  });
+
+  it("includes transition-colors for hover feedback", () => {
+    expect(buttonClassName()).toContain("transition-colors");
+  });
 });

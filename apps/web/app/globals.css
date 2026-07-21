@@ -2,10 +2,20 @@
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
 @import "@guided-review/ui/theme.css";
 
+/* Brand mono — Victor Mono via next/font (Google Fonts); CSS var set on <html>. */
+@theme {
+  --font-brand:
+    var(--font-victor-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
 html,
 body {
   margin: 0;
   min-height: 100%;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -14,6 +24,19 @@ body {
   color: var(--opt-text, #0d0806);
 }
 
-a {
-  color: inherit;
+@layer base {
+  a {
+    color: inherit;
+  }
+}
+
+::selection {
+  background: var(--opt-accent);
+  color: var(--opt-accent-on);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
