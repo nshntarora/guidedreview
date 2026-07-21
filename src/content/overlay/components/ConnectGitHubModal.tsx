@@ -10,7 +10,10 @@ import {
   openVerificationUri,
   useGitHubDeviceAuth,
 } from "../../../lib/github/useGitHubDeviceAuth";
+import { CloseButton } from "./CloseButton";
 import { Kbd } from "./Kbd";
+import { ModalShell } from "./ModalShell";
+import { secondaryModalBtn } from "./modalButtonClasses";
 import { Spinner } from "./Spinner";
 
 export interface ConnectGitHubModalProps {
@@ -27,9 +30,6 @@ export interface ConnectGitHubModalProps {
 
 const primaryBtn =
   "inline-flex cursor-pointer items-center gap-2 rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-base font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover disabled:cursor-not-allowed disabled:opacity-60 [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit";
-
-const secondaryBtn =
-  "inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-base text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50";
 
 /** Official GitHub mark (Octocat) — filled via currentColor. */
 function GitHubLogo({ className }: { className?: string }) {
@@ -141,47 +141,23 @@ export function ConnectGitHubModal({
   };
 
   return (
-    <div
-      className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-      data-testid="connect-github-scrim"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !busy && flow.kind !== "awaiting") {
-          onClose();
-        }
+    <ModalShell
+      scrimTestId="connect-github-scrim"
+      onScrimDismiss={
+        !busy && flow.kind !== "awaiting" ? onClose : undefined
+      }
+      maxWidthClassName="max-w-[480px]"
+      panelProps={{
+        role: "dialog",
+        "aria-modal": "true",
+        "aria-labelledby": titleId,
+        "data-testid": "connect-github-modal",
+        "data-flow": flow.kind,
       }}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        data-testid="connect-github-modal"
-        data-flow={flow.kind}
-        className="flex w-full max-w-[480px] flex-col rounded-lg border border-gr-border bg-gr-chrome shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-end border-b border-gr-border px-4 py-3">
-          <button
-            type="button"
-            className="inline-flex cursor-pointer items-center justify-center rounded-md border border-gr-border bg-gr-bg p-1.5 text-gr-muted hover:bg-gr-subtle hover:text-gr-text"
-            onClick={onCancel}
-            aria-label="Close"
-            data-testid="connect-github-close"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              <path
-                d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"
-                fill="currentColor"
-              />
-            </svg>
-          </button>
-        </div>
+      <div className="flex items-center justify-end border-b border-gr-border px-4 py-3">
+        <CloseButton onClick={onCancel} testId="connect-github-close" />
+      </div>
 
         <div className="flex flex-col items-center gap-4 px-6 py-6 text-center">
           <div
@@ -231,7 +207,7 @@ export function ConnectGitHubModal({
                 </code>
                 <button
                   type="button"
-                  className={secondaryBtn}
+                  className={secondaryModalBtn}
                   onClick={() => void onCopyCode(flow.userCode)}
                   data-testid="connect-github-copy-code"
                 >
@@ -266,7 +242,7 @@ export function ConnectGitHubModal({
         <div className="flex items-center justify-end gap-2 border-t border-gr-border px-4 py-3">
           <button
             type="button"
-            className={secondaryBtn}
+            className={secondaryModalBtn}
             onClick={onCancel}
             data-testid="connect-github-cancel"
           >
@@ -326,7 +302,6 @@ export function ConnectGitHubModal({
             </button>
           ) : null}
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

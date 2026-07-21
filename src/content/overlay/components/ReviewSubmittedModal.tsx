@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from "react";
 import type { ReviewEvent } from "../commentTypes";
 import { Kbd } from "./Kbd";
+import { ModalShell } from "./ModalShell";
 
 export interface ReviewSubmittedModalProps {
   open: boolean;
@@ -47,20 +48,19 @@ export function ReviewSubmittedModal({
   if (!open) return null;
 
   return (
-    <div
-      className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-      data-testid="review-submitted-scrim"
+    <ModalShell
+      scrimTestId="review-submitted-scrim"
+      maxWidthClassName="max-w-[420px]"
+      panelClassName="items-center px-6 py-8"
+      panelProps={{
+        role: "dialog",
+        "aria-modal": "true",
+        "aria-labelledby": titleId,
+        "data-testid": "review-submitted-modal",
+        "data-event": event,
+        "data-comment-count": commentCount,
+      }}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        data-testid="review-submitted-modal"
-        data-event={event}
-        data-comment-count={commentCount}
-        className="flex w-full max-w-[420px] flex-col items-center rounded-lg border border-gr-border bg-gr-chrome px-6 py-8 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
         <div
           className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-gr-accent text-gr-accent-on"
           data-testid="review-submitted-icon"
@@ -104,7 +104,6 @@ export function ReviewSubmittedModal({
           Exit review
           <Kbd>Enter</Kbd>
         </button>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

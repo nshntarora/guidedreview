@@ -1,21 +1,12 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import {
-  getGitHubAuthStatus,
-  submitPullRequestReview,
-} from "../../lib/messaging";
+import { useCallback, useEffect, useId, useMemo, useRef } from "react";
 import { useReviewStore, persistSession } from "./store";
 import { resolveUnitFiles } from "./selectors";
 import { buildDisplayUnits, displayUnitCount } from "./displayUnits";
 import { buildSelectableLines } from "./buildSelectableLines";
-import {
-  getFocusableElements,
-  restoreFocusAfterOverlay,
-  trapTabKey,
-} from "./focusTrap";
-import { recordViewChordKey, type ViewChordPending } from "./viewModeChord";
-import type { ReviewEvent, ReviewSubmission } from "./commentTypes";
-import { mapDraftsToReviewComments } from "./mapDraftComments";
-import { navigateToPrConversation } from "./prConversationUrl";
+import { getFocusableElements, restoreFocusAfterOverlay } from "./focusTrap";
+import type { ViewChordPending } from "./viewModeChord";
+import { useOverlayKeyboard } from "./useOverlayKeyboard";
+import { useSubmitReviewFlow } from "./useSubmitReviewFlow";
 import { ProgressHeader } from "./components/ProgressHeader";
 import { Sidebar } from "./components/Sidebar";
 import { DiffPane } from "./components/DiffPane";
@@ -26,49 +17,16 @@ import { ConnectGitHubModal } from "./components/ConnectGitHubModal";
 import {
   confirm,
   ConfirmationHost,
-  confirmationHandlesKey,
-  getConfirmationDialogElement,
   useConfirmationOpen,
 } from "./components/confirmation";
 import { SubmitReviewModal } from "./components/SubmitReviewModal";
 import { ReviewSubmittedModal } from "./components/ReviewSubmittedModal";
-
-interface SubmitSuccessInfo {
-  event: ReviewEvent;
-  commentCount: number;
-}
 
 interface OverlayProps {
   /** Invoked when the user exits so any in-flight stream can be cancelled. */
   onRequestClose?: () => void;
   /** Retry a failed annotate / review-build step. */
   onRetry?: () => void;
-}
-
-/**
- * Whether this keydown targets an editable control. Uses composedPath so we
- * see elements inside the overlay's open shadow root (event.target is retargeted
- * to the host for listeners outside the shadow tree).
- */
-function findEditableInPath(event: KeyboardEvent): HTMLElement | null {
-  for (const node of event.composedPath()) {
-    if (!(node instanceof HTMLElement)) continue;
-    const tag = node.tagName;
-    if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT") return node;
-    if (node.isContentEditable) return node;
-  }
-  return null;
-}
-
-function isEditableEvent(event: KeyboardEvent): boolean {
-  return findEditableInPath(event) !== null;
-}
-
-function editableTextValue(el: HTMLElement): string {
-  if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) {
-    return el.value;
-  }
-  return el.innerText ?? "";
 }
 
 export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
@@ -86,6 +44,8 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   const goToUnit = useReviewStore((s) => s.goToUnit);
   const goNext = useReviewStore((s) => s.goNext);
   const goPrev = useReviewStore((s) => s.goPrev);
+  const draftComments = useReviewStore((s) => s.draftComments);
+  const clearDraftComments = useReviewStore((s) => s.clearDraftComments);
   const overlayRef = useRef<HTMLDivElement>(null);
   const submitModalDialogRef = useRef<HTMLDivElement>(null);
   const codeColRef = useRef<HTMLElement>(null);
@@ -94,27 +54,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   const previousFocusRef = useRef<Element | null>(null);
   /** Pending `v` leader for view-mode chords (`v+u` / `v+s`). */
   const viewChordRef = useRef<ViewChordPending>(null);
-  const [submitReviewOpen, setSubmitReviewOpen] = useState(false);
-  const [connectGitHubOpen, setConnectGitHubOpen] = useState(false);
-  const [submittingReview, setSubmittingReview] = useState(false);
-  const [submitReviewError, setSubmitReviewError] = useState<string | null>(
-    null,
-  );
-  const [submitSuccess, setSubmitSuccess] = useState<SubmitSuccessInfo | null>(
-    null,
-  );
-  /** Latest submit action from the open Submit Review modal (for ⌘/Ctrl+Enter). */
-  const submitReviewActionRef = useRef<(() => void) | null>(null);
-  /** Choose-step keys (↑/↓/Enter) for the open Submit Review modal. */
-  const submitReviewKeyRef = useRef<((e: KeyboardEvent) => boolean) | null>(
-    null,
-  );
-  /** Primary Connect / Try again action from the open Connect GitHub modal. */
-  const connectGitHubActionRef = useRef<(() => void) | null>(null);
-  /** Ignore stale submit responses after the modal is closed or a newer submit. */
-  const submitGenerationRef = useRef(0);
-  /** Prevent double-open while auth status is in flight. */
-  const authCheckInFlightRef = useRef(false);
+  const confirmationOpen = useConfirmationOpen();
   const titleId = useId();
 
   const handleExit = useCallback(() => {
@@ -136,143 +76,28 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     });
   }, [handleExit]);
 
-  const exitAfterSubmit = useCallback(() => {
-    setSubmitSuccess(null);
-    if (prContext) {
-      navigateToPrConversation(prContext);
-    }
-    // Post-submit exit is intentional (single CTA) — skip the confirm prompt.
-    handleExit();
-  }, [prContext, handleExit]);
-
-  const draftComments = useReviewStore((s) => s.draftComments);
-  const clearDraftComments = useReviewStore((s) => s.clearDraftComments);
-  const confirmationOpen = useConfirmationOpen();
-
-  const closeSubmitReviewModal = useCallback(() => {
-    if (submittingReview) return;
-    setSubmitReviewOpen(false);
-    setSubmitReviewError(null);
-    // Return focus to the trigger so keyboard users are not dropped into limbo.
-    requestAnimationFrame(() => {
-      overlayRef.current
-        ?.querySelector<HTMLElement>('[data-testid="submit-review-button"]')
-        ?.focus();
-    });
-  }, [submittingReview]);
-
-  const closeConnectGitHubModal = useCallback(() => {
-    setConnectGitHubOpen(false);
-  }, []);
-
-  const openSubmitReviewModalAfterAuth = useCallback(() => {
-    setConnectGitHubOpen(false);
-    setSubmitReviewError(null);
-    setSubmitReviewOpen(true);
-  }, []);
-
-  /**
-   * Gate Submit Review on a stored GitHub token. Missing auth → connect modal;
-   * after successful device OAuth the connect modal re-opens submit.
-   */
-  const requestOpenSubmitReview = useCallback(async () => {
-    if (
-      authCheckInFlightRef.current ||
-      submitReviewOpen ||
-      connectGitHubOpen ||
-      submittingReview ||
-      submitSuccess !== null
-    ) {
-      return;
-    }
-
-    authCheckInFlightRef.current = true;
-    try {
-      const status = await getGitHubAuthStatus();
-      if (status.ok && status.auth) {
-        setSubmitReviewError(null);
-        setSubmitReviewOpen(true);
-        return;
-      }
-      setConnectGitHubOpen(true);
-    } catch {
-      // Treat network/messaging failures as unauthenticated so the user can connect.
-      setConnectGitHubOpen(true);
-    } finally {
-      authCheckInFlightRef.current = false;
-    }
-  }, [
+  const {
     submitReviewOpen,
     connectGitHubOpen,
     submittingReview,
+    submitReviewError,
     submitSuccess,
-  ]);
-
-  const handleSubmitReview = useCallback(
-    async (submission: ReviewSubmission) => {
-      if (submittingReview) return;
-
-      const trimmedBody = submission.body.trim();
-      if (
-        (submission.event === "COMMENT" ||
-          submission.event === "REQUEST_CHANGES") &&
-        trimmedBody.length === 0
-      ) {
-        setSubmitReviewError(
-          submission.event === "COMMENT"
-            ? "Add a review comment before submitting."
-            : "Add a summary explaining the requested changes before submitting.",
-        );
-        return;
-      }
-
-      const pr = prContext;
-      if (!pr) {
-        setSubmitReviewError(
-          "Missing pull request context. Close the review and try again from the PR page.",
-        );
-        return;
-      }
-
-      const generation = ++submitGenerationRef.current;
-      setSubmittingReview(true);
-      setSubmitReviewError(null);
-
-      try {
-        const result = await submitPullRequestReview(
-          { owner: pr.owner, repo: pr.repo, number: pr.number },
-          trimmedBody,
-          submission.event,
-          mapDraftsToReviewComments(draftComments),
-        );
-
-        if (generation !== submitGenerationRef.current) return;
-
-        if (!result.ok) {
-          setSubmitReviewError(result.error);
-          return;
-        }
-
-        const commentCount = mapDraftsToReviewComments(draftComments).length;
-        clearDraftComments();
-        setSubmitReviewOpen(false);
-        setSubmitReviewError(null);
-        setSubmitSuccess({ event: submission.event, commentCount });
-      } catch (error: unknown) {
-        if (generation !== submitGenerationRef.current) return;
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Could not submit the review.";
-        setSubmitReviewError(message);
-      } finally {
-        if (generation === submitGenerationRef.current) {
-          setSubmittingReview(false);
-        }
-      }
-    },
-    [submittingReview, prContext, draftComments, clearDraftComments],
-  );
+    submitReviewActionRef,
+    submitReviewKeyRef,
+    connectGitHubActionRef,
+    exitAfterSubmit,
+    closeSubmitReviewModal,
+    closeConnectGitHubModal,
+    openSubmitReviewModalAfterAuth,
+    requestOpenSubmitReview,
+    handleSubmitReview,
+  } = useSubmitReviewFlow({
+    prContext,
+    draftComments,
+    clearDraftComments,
+    handleExit,
+    overlayRef,
+  });
 
   useEffect(() => {
     if (status === "ready") void persistSession();
@@ -348,261 +173,28 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
 
   const currentUnitId = currentReviewUnit?.id;
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const SCROLL_STEP = 120;
-    viewChordRef.current = null;
-
-    // Capture on window so we run before GitHub's document-level shortcuts.
-    // The overlay mounts in an open shadow root; with focus inside it,
-    // document.activeElement is the host — GitHub thinks nothing is focused
-    // and would fire s/t/c/a/i/etc. Always stopPropagation so the page never
-    // sees keys while the overlay is open. Only preventDefault when we consume
-    // the key (so typing into the comment composer still inserts characters).
-    function onKeyDown(event: KeyboardEvent): void {
-      event.stopPropagation();
-
-      // Tab trap: confirmation → submit modal → overlay.
-      // Must run here — window capture stopPropagation means element traps never see Tab.
-      if (event.key === "Tab") {
-        const confirmDialog = getConfirmationDialogElement();
-        const trapRoot = confirmDialog
-          ? confirmDialog
-          : submitReviewOpen
-            ? submitModalDialogRef.current
-            : overlayRef.current;
-        if (trapRoot) trapTabKey(event, trapRoot);
-        return;
-      }
-
-      // Confirmation dialog: Enter = OK, Esc = cancel (highest priority modal).
-      if (confirmationHandlesKey(event)) {
-        event.preventDefault();
-        viewChordRef.current = null;
-        return;
-      }
-
-      // Success modal: Enter / Esc exit the review (single CTA dialog).
-      if (submitSuccess) {
-        viewChordRef.current = null;
-        if (
-          event.key === "Enter" &&
-          !event.metaKey &&
-          !event.ctrlKey &&
-          !event.altKey
-        ) {
-          event.preventDefault();
-          exitAfterSubmit();
-          return;
-        }
-        if (event.key === "Escape") {
-          event.preventDefault();
-          exitAfterSubmit();
-          return;
-        }
-        return;
-      }
-
-      // Connect GitHub modal: Esc closes; Enter runs Connect / Try again / open GitHub.
-      if (connectGitHubOpen) {
-        viewChordRef.current = null;
-        if (event.key === "Escape") {
-          event.preventDefault();
-          setConnectGitHubOpen(false);
-          return;
-        }
-        if (
-          event.key === "Enter" &&
-          !event.metaKey &&
-          !event.ctrlKey &&
-          !event.altKey
-        ) {
-          event.preventDefault();
-          connectGitHubActionRef.current?.();
-        }
-        return;
-      }
-
-      // Submit-review modal: Esc closes the dialog only (not the whole overlay).
-      // ⌘/Ctrl+Enter submits on the compose step; ↑/↓/Enter drive the choose step.
-      // Handled here because capture stopPropagation blocks element React handlers.
-      if (submitReviewOpen) {
-        viewChordRef.current = null;
-        if (event.key === "Escape") {
-          event.preventDefault();
-          closeSubmitReviewModal();
-          return;
-        }
-        if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
-          event.preventDefault();
-          submitReviewActionRef.current?.();
-          return;
-        }
-        if (submitReviewKeyRef.current?.(event)) {
-          event.preventDefault();
-        }
-        return;
-      }
-
-      const store = useReviewStore.getState();
-      const editable = isEditableEvent(event);
-
-      // Composer / any editable: let the control own typing. Handle Esc and
-      // ⌘/Ctrl+Enter here because stopPropagation in capture prevents the
-      // textarea's React onKeyDown from running for real keystrokes.
-      if (store.composerOpen || editable) {
-        viewChordRef.current = null;
-        if (event.key === "Escape") {
-          event.preventDefault();
-          if (store.composerOpen) store.closeComposer();
-          return;
-        }
-        if (
-          store.composerOpen &&
-          event.key === "Enter" &&
-          (event.metaKey || event.ctrlKey)
-        ) {
-          event.preventDefault();
-          const el = findEditableInPath(event);
-          const body = el ? editableTextValue(el) : "";
-          store.saveDraftComment(body, currentUnitId);
-          return;
-        }
-        return;
-      }
-
-      // ⌘/Ctrl+Enter opens Submit Review (or Connect GitHub if unauthenticated).
-      if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault();
-        viewChordRef.current = null;
-        void requestOpenSubmitReview();
-        return;
-      }
-
-      // View-mode chords: v+u (unified), v+s (split). Both navigate and comment mode.
-      if (
-        !event.metaKey &&
-        !event.ctrlKey &&
-        !event.altKey &&
-        !event.shiftKey
-      ) {
-        const { next, mode, consumed } = recordViewChordKey(
-          viewChordRef.current,
-          event.key,
-          Date.now(),
-        );
-        viewChordRef.current = next;
-        if (consumed) {
-          event.preventDefault();
-          if (mode) store.setDiffViewMode(mode);
-          return;
-        }
-      } else {
-        viewChordRef.current = null;
-      }
-
-      if (store.uiMode === "comment") {
-        switch (event.key) {
-          case "Escape":
-            event.preventDefault();
-            viewChordRef.current = null;
-            store.exitCommentMode();
-            return;
-          case "ArrowUp":
-            event.preventDefault();
-            viewChordRef.current = null;
-            store.moveLineCursor(-1, event.shiftKey);
-            return;
-          case "ArrowDown":
-            event.preventDefault();
-            viewChordRef.current = null;
-            store.moveLineCursor(1, event.shiftKey);
-            return;
-          case "Enter":
-            event.preventDefault();
-            viewChordRef.current = null;
-            store.openComposer();
-            return;
-          case "ArrowRight":
-            event.preventDefault();
-            viewChordRef.current = null;
-            store.goNext();
-            return;
-          case "ArrowLeft":
-            event.preventDefault();
-            viewChordRef.current = null;
-            store.goPrev();
-            return;
-          default:
-            return;
-        }
-      }
-
-      // navigate mode
-      switch (event.key) {
-        case "Escape":
-          event.preventDefault();
-          viewChordRef.current = null;
-          requestExit();
-          return;
-        case "ArrowRight":
-          event.preventDefault();
-          viewChordRef.current = null;
-          store.goNext();
-          return;
-        case "ArrowLeft":
-          event.preventDefault();
-          viewChordRef.current = null;
-          store.goPrev();
-          return;
-        case "ArrowUp":
-          event.preventDefault();
-          event.stopPropagation();
-          codeColRef.current?.scrollBy({
-            top: -SCROLL_STEP,
-            behavior: "smooth",
-          });
-          return;
-        case "ArrowDown":
-          event.preventDefault();
-          event.stopPropagation();
-          codeColRef.current?.scrollBy({
-            top: SCROLL_STEP,
-            behavior: "smooth",
-          });
-          return;
-        case "c":
-        case "C":
-          if (event.metaKey || event.ctrlKey || event.altKey) return;
-          event.preventDefault();
-          viewChordRef.current = null;
-          if (selectableForUnit.length > 0) {
-            store.enterCommentMode(selectableForUnit);
-          }
-          return;
-        default:
-          return;
-      }
-    }
-
-    window.addEventListener("keydown", onKeyDown, true);
-    return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [
+  useOverlayKeyboard({
     isOpen,
-    onRequestClose,
+    overlayRef,
+    submitModalDialogRef,
+    codeColRef,
+    viewChordRef,
     selectableForUnit,
     currentUnitId,
     submitReviewOpen,
     connectGitHubOpen,
     submittingReview,
     submitSuccess,
+    submitReviewActionRef,
+    submitReviewKeyRef,
+    connectGitHubActionRef,
     exitAfterSubmit,
     requestOpenSubmitReview,
     closeSubmitReviewModal,
+    setConnectGitHubOpen: closeConnectGitHubModal,
     confirmationOpen,
     requestExit,
-  ]);
+  });
 
   const statusAnnouncement = useMemo(() => {
     if (status === "error" && error) {

@@ -9,6 +9,8 @@ import {
 } from "react";
 import { cn } from "../../../lib/cn";
 import { Kbd } from "./Kbd";
+import { ModalShell } from "./ModalShell";
+import { secondaryModalBtn } from "./modalButtonClasses";
 
 export type ConfirmVariant = "primary" | "destructive";
 
@@ -163,9 +165,6 @@ export function resetConfirmationQueueForTests(): void {
 
 // ── Dialog UI ──────────────────────────────────────────────────────────────
 
-const secondaryBtn =
-  "inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-border bg-gr-bg px-3 py-1.5 text-base text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50";
-
 const primaryOkBtn =
   "inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gr-accent bg-gr-accent px-3 py-1.5 text-base font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover disabled:cursor-not-allowed disabled:opacity-50 [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit";
 
@@ -283,60 +282,55 @@ function ConfirmationDialog({
   }, []);
 
   return (
-    <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
-      data-testid="confirmation-scrim"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !isLoading) {
-          void handleCancel();
-        }
+    <ModalShell
+      position="fixed"
+      zIndexClassName="z-[60]"
+      scrimTestId="confirmation-scrim"
+      onScrimDismiss={isLoading ? undefined : () => void handleCancel()}
+      maxWidthClassName="max-w-[420px]"
+      panelRef={dialogRef}
+      panelProps={{
+        role: "alertdialog",
+        "aria-modal": "true",
+        "aria-labelledby": titleId,
+        "aria-describedby": bodyId,
+        "data-testid": "confirmation-dialog",
+        "data-variant": variant,
       }}
     >
-      <div
-        ref={dialogRef}
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={bodyId}
-        data-testid="confirmation-dialog"
-        data-variant={variant}
-        className="flex w-full max-w-[420px] flex-col rounded-lg border border-gr-border bg-gr-chrome shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex flex-col gap-2 px-4 py-4">
-          <h2 id={titleId} className="m-0 text-lg font-semibold text-gr-text">
-            {title}
-          </h2>
-          <div id={bodyId} className="m-0 text-base leading-relaxed text-gr-muted">
-            {typeof body === "string" ? <p className="m-0">{body}</p> : body}
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-gr-border px-4 py-3">
-          <button
-            ref={cancelRef}
-            type="button"
-            className={secondaryBtn}
-            onClick={() => void handleCancel()}
-            disabled={isLoading}
-            data-testid="confirmation-cancel"
-          >
-            {cancelButtonText}
-            <Kbd>Esc</Kbd>
-          </button>
-          <button
-            type="button"
-            className={cn(variant === "destructive" ? destructiveOkBtn : primaryOkBtn)}
-            onClick={() => void handleOk()}
-            disabled={isLoading}
-            data-testid="confirmation-ok"
-          >
-            {isLoading ? "Processing…" : okButtonText}
-            {!isLoading && <Kbd>Enter</Kbd>}
-          </button>
+      <div className="flex flex-col gap-2 px-4 py-4">
+        <h2 id={titleId} className="m-0 text-lg font-semibold text-gr-text">
+          {title}
+        </h2>
+        <div id={bodyId} className="m-0 text-base leading-relaxed text-gr-muted">
+          {typeof body === "string" ? <p className="m-0">{body}</p> : body}
         </div>
       </div>
-    </div>
+
+      <div className="flex flex-wrap items-center justify-end gap-2 border-t border-gr-border px-4 py-3">
+        <button
+          ref={cancelRef}
+          type="button"
+          className={secondaryModalBtn}
+          onClick={() => void handleCancel()}
+          disabled={isLoading}
+          data-testid="confirmation-cancel"
+        >
+          {cancelButtonText}
+          <Kbd>Esc</Kbd>
+        </button>
+        <button
+          type="button"
+          className={cn(variant === "destructive" ? destructiveOkBtn : primaryOkBtn)}
+          onClick={() => void handleOk()}
+          disabled={isLoading}
+          data-testid="confirmation-ok"
+        >
+          {isLoading ? "Processing…" : okButtonText}
+          {!isLoading && <Kbd>Enter</Kbd>}
+        </button>
+      </div>
+    </ModalShell>
   );
 }
 

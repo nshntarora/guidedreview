@@ -8,7 +8,10 @@ import {
   type Ref,
 } from "react";
 import type { ReviewEvent, ReviewSubmission } from "../commentTypes";
+import { CloseButton } from "./CloseButton";
 import { Kbd } from "./Kbd";
+import { ModalShell } from "./ModalShell";
+import { secondaryModalBtn } from "./modalButtonClasses";
 import { ModEnterChord } from "./ShortcutKeys";
 
 interface SubmitReviewModalProps {
@@ -34,9 +37,8 @@ interface SubmitReviewModalProps {
   dialogRef?: Ref<HTMLDivElement>;
 }
 
-const modalBtn =
-  "inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-3 py-1.5 text-base disabled:cursor-not-allowed disabled:opacity-50";
-
+const accentBtn =
+  "inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-3 py-1.5 text-base disabled:cursor-not-allowed disabled:opacity-50 border-gr-accent bg-gr-accent font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover disabled:opacity-60 [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit";
 
 const REVIEW_EVENTS: {
   value: ReviewEvent;
@@ -230,52 +232,31 @@ export function SubmitReviewModal({
   const activeOptionId = `${listboxId}-option-${highlightIndex}`;
 
   return (
-    <div
-      className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-      data-testid="submit-review-scrim"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !submitting) onClose();
+    <ModalShell
+      scrimTestId="submit-review-scrim"
+      onScrimDismiss={submitting ? undefined : onClose}
+      maxWidthClassName="max-w-[480px]"
+      panelRef={dialogRef}
+      panelProps={{
+        role: "dialog",
+        "aria-modal": "true",
+        "aria-labelledby": titleId,
+        "data-testid": "submit-review-modal",
+        "data-step": step,
       }}
     >
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        data-testid="submit-review-modal"
-        data-step={step}
-        className="flex w-full max-w-[480px] flex-col rounded-lg border border-gr-border bg-gr-chrome shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between gap-3 border-b border-gr-border px-4 py-3">
-          <h2 id={titleId} className="m-0 text-lg font-semibold text-gr-text">
-            Submit Review
-          </h2>
-          <button
-            type="button"
-            className="inline-flex cursor-pointer items-center justify-center rounded-md border border-gr-border bg-gr-bg p-1.5 text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={onClose}
-            disabled={submitting}
-            aria-label="Close"
-            data-testid="submit-review-close"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              <path
-                d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"
-                fill="currentColor"
-              />
-            </svg>
-          </button>
-        </div>
+      <div className="flex items-center justify-between gap-3 border-b border-gr-border px-4 py-3">
+        <h2 id={titleId} className="m-0 text-lg font-semibold text-gr-text">
+          Submit Review
+        </h2>
+        <CloseButton
+          onClick={onClose}
+          disabled={submitting}
+          testId="submit-review-close"
+        />
+      </div>
 
-        {step === "choose" ? (
+      {step === "choose" ? (
           <>
             <div className="flex flex-col gap-3 px-4 py-4">
               <p className="m-0 text-base text-gr-muted">
@@ -333,7 +314,7 @@ export function SubmitReviewModal({
             <div className="flex items-center justify-end gap-2 border-t border-gr-border px-4 py-3">
               <button
                 type="button"
-                className={`${modalBtn} border-gr-border bg-gr-bg text-gr-muted hover:bg-gr-subtle hover:text-gr-text`}
+                className={secondaryModalBtn}
                 onClick={onClose}
                 data-testid="submit-review-cancel"
               >
@@ -384,7 +365,7 @@ export function SubmitReviewModal({
             <div className="flex items-center justify-between gap-2 border-t border-gr-border px-4 py-3">
               <button
                 type="button"
-                className={`${modalBtn} border-gr-border bg-gr-bg text-gr-muted hover:bg-gr-subtle hover:text-gr-text`}
+                className={secondaryModalBtn}
                 onClick={goBack}
                 disabled={submitting}
                 data-testid="submit-review-back"
@@ -394,7 +375,7 @@ export function SubmitReviewModal({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className={`${modalBtn} border-gr-border bg-gr-bg text-gr-muted hover:bg-gr-subtle hover:text-gr-text`}
+                  className={secondaryModalBtn}
                   onClick={onClose}
                   disabled={submitting}
                   data-testid="submit-review-cancel"
@@ -404,7 +385,7 @@ export function SubmitReviewModal({
                 </button>
                 <button
                   type="button"
-                  className={`${modalBtn} border-gr-accent bg-gr-accent font-medium text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover disabled:opacity-60 [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit`}
+                  className={accentBtn}
                   onClick={handleSubmit}
                   disabled={submitting}
                   data-testid="submit-review-confirm"
@@ -416,7 +397,6 @@ export function SubmitReviewModal({
             </div>
           </>
         )}
-      </div>
-    </div>
+    </ModalShell>
   );
 }
