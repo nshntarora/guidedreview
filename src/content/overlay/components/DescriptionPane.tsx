@@ -42,11 +42,13 @@ export function DescriptionPane({ prContext, diff }: DescriptionPaneProps) {
     <div
       className={cn(
         "w-full max-w-full",
-        summary && "flex flex-wrap items-start justify-start gap-x-8 gap-y-7"
+        // Keep Changes to the right of the description; shrink the description
+        // before wrapping so the side-by-side layout holds in typical pane widths.
+        summary && "flex flex-nowrap items-start justify-start gap-x-8"
       )}
       data-testid="description-pane"
     >
-      <div className="min-w-0 max-w-[720px] flex-[0_1_720px]">
+      <div className="min-w-0 max-w-[720px] flex-1">
         <h2 className="mb-5 text-[1.375rem] font-semibold leading-snug tracking-[-0.01em] text-gr-text">
           PR description
         </h2>
@@ -71,7 +73,7 @@ export function DescriptionPane({ prContext, diff }: DescriptionPaneProps) {
 
       {summary && (
         <section
-          className="ml-0 w-full min-w-[min(100%,260px)] max-w-[400px] flex-[0_1_360px] rounded-none border-0 border-l border-gr-border bg-transparent py-0 pr-0 pl-6"
+          className="w-[min(100%,360px)] shrink-0 max-w-[400px] border-l border-gr-border pl-6"
           aria-label="Diff summary"
         >
           <h3 className="mb-2.5 text-lg font-semibold text-gr-text">Changes</h3>
@@ -82,7 +84,7 @@ export function DescriptionPane({ prContext, diff }: DescriptionPaneProps) {
               · {summary.files} file{summary.files === 1 ? "" : "s"}
             </span>
           </p>
-          <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
+          <ul className="m-0 flex max-h-[min(60vh,520px)] list-none flex-col gap-0.5 overflow-y-auto p-0">
             {summary.fileSummaries.map((file) => (
               <DiffSummaryFileRow key={fileKey(file)} file={file} />
             ))}
@@ -101,7 +103,7 @@ function DiffSummaryFileRow({ file }: { file: FileDiffSummary }) {
       : file.path;
 
   return (
-    <li className="grid grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-2 rounded-md px-2 py-1.5 font-mono text-[0.8125rem] hover:bg-gr-subtle">
+    <li className="grid grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-2 rounded-md px-2 py-1.5 font-mono text-[0.8125rem]">
       <span
         className={cn(
           "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-xs font-bold leading-none",
