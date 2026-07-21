@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Hero } from "../components/Hero";
 import { FeatureGrid } from "../components/FeatureGrid";
+import { Faqs } from "../components/Faqs";
 import { InstallCta } from "../components/InstallCta";
 
 export const metadata: Metadata = {
@@ -14,6 +15,7 @@ export default function HomePage() {
     <>
       <Hero />
       <FeatureGrid />
+      <Faqs />
       <InstallCta />
     </>
   );
