@@ -678,7 +678,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         </main>
 
         <aside
-          className="flex max-w-[420px] min-w-[300px] flex-[1_1_32%] flex-col overflow-hidden bg-gr-chrome px-5 py-6"
+          className="flex max-w-[420px] min-w-[300px] flex-[1_1_32%] flex-col overflow-hidden bg-gr-chrome py-6"
           aria-label="Review context and plan"
         >
           <div
@@ -686,17 +686,19 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
             ref={contextPaneRef}
             data-testid="context-pane"
           >
-            <ContextPanel
-              unit={currentReviewUnit}
-              hasTitle={Boolean(prContext?.title?.trim())}
-              hasDescription={Boolean(
-                prContext?.description?.trim() ||
-                prContext?.descriptionHtml?.trim(),
-              )}
-              error={status === "error" ? error : null}
-              loading={showBuildingSpinner && isDescriptionUnit}
-              onRetry={status === "error" ? onRetry : undefined}
-            />
+            <div className="px-5">
+              <ContextPanel
+                unit={currentReviewUnit}
+                hasTitle={Boolean(prContext?.title?.trim())}
+                hasDescription={Boolean(
+                  prContext?.description?.trim() ||
+                  prContext?.descriptionHtml?.trim(),
+                )}
+                error={status === "error" ? error : null}
+                loading={showBuildingSpinner && isDescriptionUnit}
+                onRetry={status === "error" ? onRetry : undefined}
+              />
+            </div>
           </div>
           <Sidebar
             plan={plan}
