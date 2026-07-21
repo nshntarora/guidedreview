@@ -4,6 +4,7 @@ import { buttonClassName } from "@guided-review/ui";
 import logoSvg from "@guided-review/ui/assets/logo.svg";
 import Link from "next/link";
 import { GitHubIcon } from "../components/icons";
+import { CHROME_WEB_STORE_URL, GITHUB_REPO_URL } from "../lib/links";
 import "./globals.css";
 
 const victorMono = Victor_Mono({
@@ -56,19 +57,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Link>
             <nav className="flex items-center gap-5 text-base text-gr-muted" aria-label="Primary">
               <Link
-                href="/#how-it-works"
-                className="hidden transition-colors hover:text-gr-text sm:inline"
-              >
-                How it works
-              </Link>
-              <Link
                 href="/#features"
                 className="hidden transition-colors hover:text-gr-text sm:inline"
               >
                 Features
               </Link>
               <a
-                href="https://github.com/nshntarora/guidedreview"
+                href={GITHUB_REPO_URL}
                 className={buttonClassName({
                   variant: "secondary",
                   size: "sm",
@@ -81,12 +76,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <GitHubIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">GitHub</span>
               </a>
-              <Link
-                href="/#install"
+              <a
+                href={CHROME_WEB_STORE_URL}
                 className={buttonClassName({ size: "sm", surface: "overlay" })}
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 Install
-              </Link>
+              </a>
             </nav>
           </div>
         </header>
@@ -96,7 +93,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <p className="m-0">© {new Date().getFullYear()} Guided Review</p>
             <div className="flex gap-4">
               <a
-                href="https://github.com/nshntarora/guidedreview"
+                href={GITHUB_REPO_URL}
                 className="transition-colors hover:text-gr-text"
                 target="_blank"
                 rel="noopener noreferrer"

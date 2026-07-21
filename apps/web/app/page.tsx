@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Hero } from "../components/Hero";
 import { Problem } from "../components/Problem";
-import { HowItWorks } from "../components/HowItWorks";
 import { FeatureGrid } from "../components/FeatureGrid";
 import { InstallCta } from "../components/InstallCta";
 
@@ -17,7 +16,6 @@ export default function HomePage() {
       <Hero />
       <FeatureGrid />
       <Problem />
-      <HowItWorks />
       <InstallCta />
     </>
   );

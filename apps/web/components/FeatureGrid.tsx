@@ -20,23 +20,21 @@ const features: Feature[] = [
     title: "Read and navigate how you write",
     body: [
       "We've designed the whole code review experience to be keyboard first.",
-      "You will not need to lift your hands from your keyboard to browse, comment, or review.",
+      "You will not need to lift your hands from your keyboard to browse, comment, review.",
     ],
   },
   {
     Illustration: ClusteredChangesIllustration,
-    title: "Review changes, not files",
+    title: "Review changes not files",
     body: [
-      "Instead of showing just a diff of all the files that have changed in alphabetical order and letting you figure out how they connect, we use AI to cluster related changes together.",
-      "If the author changed the config in two places, you'll find them together.",
+      "Instead of showing just a diff of all the files that have changed in alphabetical order and letting you figure out how they connect together, we use AI to cluster related changes together.",
     ],
   },
   {
     Illustration: SummariesIllustration,
     title: "Summaries (because AI)",
     body: [
-      "You can choose not to read them. Sometimes they're really helpful; sometimes they may not be.",
-      "Take them with a grain of salt.",
+      "Get a 2 line overview of every change. Sometimes it's really helpful, sometimes it's not. Take it with a grain of salt.",
     ],
     footnote:
       "Model companies apparently block your API keys if you do not implement summarisation. Seriously.",
@@ -45,58 +43,52 @@ const features: Feature[] = [
     Illustration: NoBackendIllustration,
     title: "We didn't even build a backend",
     body: [
-      "There's no tracking. Your extension never pushes any code to our systems. You configure your API keys and the extension calls the APIs directly.",
-      "You connect your GitHub account and it happens without hitting our servers.",
-      "We don't even have servers. Not even the serverless servers (as of now).",
+      "Your extension never pushes any code to our systems. You configure your AI provider and the extension calls their APIs directly.",
+      "You connect your GitHub account without hitting any of our APIs.",
     ],
+    footnote: "We don't even have servers. Not even the serverless kind.",
   },
   {
     Illustration: ApprovedToolsIllustration,
     title: "Tools corporate security has already approved",
     body: [
-      "If you're allowed to access OpenAI, Anthropic, or xAI, you can use this. Just add your API key.",
-      "If you do not trust the code, read it — or ask your AI agent to read it for you. It's open source, it's on GitHub.",
+      "Just add your already approved AI provider with an API key. Want to read the code? Add a custom AI provider? It's open source (without VC funding).",
     ],
     footnote:
-      "Please check with them if your employer is serious about these things. If you're a two-person startup, you're fine.",
+      "Please check with your employer if they've policies about this. If you're a 2 person startup, you're (probably) fine.",
   },
 ];
 
 export function FeatureGrid() {
   return (
-    <section id="features" className="mx-auto max-w-5xl px-6 py-16">
-      <h2 className="m-0 text-center text-2xl font-bold tracking-tight sm:text-3xl font-brand">
+    <section id="features" className="mx-auto max-w-6xl px-6 py-20 sm:py-24">
+      <h2 className="m-0 text-center text-3xl font-bold tracking-tight sm:text-4xl font-brand">
         Features
       </h2>
-      <p className="mx-auto mt-3 max-w-2xl text-center text-opt-muted">
+      <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-opt-muted">
         Built for humans who still have to read the code.
       </p>
 
-      <ul className="mt-12 m-0 flex list-none flex-col gap-6 p-0">
+      <ul className="mt-16 m-0 flex list-none flex-col gap-20 p-0 sm:mt-20 sm:gap-28">
         {features.map((f) => (
-          <li
-            key={f.title}
-            className="overflow-hidden rounded-xl border border-opt-border bg-opt-subtle shadow-sm transition-[border-color,box-shadow] duration-150 hover:border-opt-accent hover:shadow-md"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-stretch">
-              <div className="flex flex-1 flex-col justify-center p-6 sm:p-8">
-                <h3 className="m-0 text-xl font-semibold tracking-tight sm:text-2xl">{f.title}</h3>
-                <div className="mt-3 space-y-3 text-base leading-relaxed text-opt-muted">
-                  {f.body.map((paragraph) => (
-                    <p key={paragraph} className="m-0">
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
-                {f.footnote ? (
-                  <p className="mt-4 m-0 border-t border-opt-border pt-3 text-sm leading-relaxed text-opt-muted italic">
-                    {f.footnote}
+          <li key={f.title} className="flex flex-col gap-8 sm:flex-row sm:items-center sm:gap-14">
+            <div className="flex flex-1 flex-col justify-center">
+              <h3 className="m-0 text-2xl font-semibold tracking-tight sm:text-3xl">{f.title}</h3>
+              <div className="mt-4 space-y-4 text-lg leading-relaxed text-opt-muted sm:text-xl">
+                {f.body.map((paragraph) => (
+                  <p key={paragraph} className="m-0">
+                    {paragraph}
                   </p>
-                ) : null}
+                ))}
               </div>
-              <div className="flex shrink-0 items-center justify-center border-t border-opt-border bg-opt-bg/60 px-4 py-6 sm:w-[min(42%,20rem)] sm:border-t-0 sm:border-l">
-                <f.Illustration className="h-auto w-full max-w-[280px]" />
-              </div>
+              {f.footnote ? (
+                <p className="mt-5 m-0 text-base leading-relaxed text-opt-muted italic">
+                  {f.footnote}
+                </p>
+              ) : null}
+            </div>
+            <div className="flex shrink-0 items-center justify-center sm:w-[min(48%,24rem)]">
+              <f.Illustration className="h-auto w-full max-w-[360px]" />
             </div>
           </li>
         ))}
