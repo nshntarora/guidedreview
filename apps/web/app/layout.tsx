@@ -3,8 +3,8 @@ import { Victor_Mono } from "next/font/google";
 import logoSvg from "@guided-review/ui/assets/logo.svg";
 import Link from "next/link";
 import { InstallButton, StarOnGitHubButton } from "../components/CtaButtons";
+import { Footer } from "../components/Footer";
 import { SiteShortcuts } from "../components/SiteShortcuts";
-import { GITHUB_REPO_URL } from "../lib/links";
 import "./globals.css";
 
 const victorMono = Victor_Mono({
@@ -69,27 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </header>
         <SiteShortcuts />
         <main id="main">{children}</main>
-        <footer className="mt-16 border-t border-gr-border bg-gr-bg">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-6 py-8 text-sm text-gr-muted">
-            <p className="m-0">© {new Date().getFullYear()} Guided Review</p>
-            <div className="flex gap-4">
-              <a
-                href={GITHUB_REPO_URL}
-                className="transition-colors hover:text-gr-text"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                GitHub
-              </a>
-              <Link href="/privacy" className="transition-colors hover:text-gr-text">
-                Privacy
-              </Link>
-              <Link href="/terms" className="transition-colors hover:text-gr-text">
-                Terms
-              </Link>
-            </div>
-          </div>
-        </footer>
+        <Footer />
       </body>
     </html>
   );
