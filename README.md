@@ -31,6 +31,17 @@ npm run format              # Prettier write
 npm run format:check        # Prettier check
 ```
 
+### GitHub OAuth (device flow)
+
+Copy `.env.example` to `.env` at the **monorepo root** and set `VITE_GITHUB_CLIENT_ID` to your
+GitHub OAuth App client ID (Device Flow enabled). The extension Vite build loads env from the
+repo root, then inlines the value at build time — rebuild after changing it:
+
+```bash
+cp .env.example .env   # then edit VITE_GITHUB_CLIENT_ID
+npm run build:extension
+```
+
 ### Chrome load path
 
 **Load unpacked → `apps/extension/dist`** (not a root-level `dist/`).

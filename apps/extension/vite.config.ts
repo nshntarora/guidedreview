@@ -6,6 +6,9 @@ import path from "node:path";
 import manifest from "./manifest.config";
 
 export default defineConfig({
+  // Monorepo root holds .env / .env.example (VITE_GITHUB_CLIENT_ID, etc.).
+  // Vite defaults to the config file directory (apps/extension), which has no .env.
+  envDir: path.resolve(__dirname, "../.."),
   plugins: [react(), tailwindcss(), crx({ manifest })],
   resolve: {
     alias: {
