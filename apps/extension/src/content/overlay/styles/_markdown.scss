@@ -120,6 +120,33 @@
     background: transparent;
   }
 
+  /*
+   * Tailwind preflight sets svg { display: block }. GitHub issue refs are
+   *   Closes <span.reference><svg.octicon/><a/></span>
+   * so a block SVG blockifies the span and drops the link onto the next line.
+   * Match GitHub: keep octicons (and other inline SVGs) in the text flow.
+   */
+  svg,
+  .octicon {
+    display: inline-block;
+    vertical-align: text-bottom;
+    fill: currentColor;
+    overflow: visible;
+  }
+
+  /* Utility classes from scraped GitHub HTML (not in our Tailwind scan). */
+  .mr-1 {
+    margin-right: 0.25rem;
+  }
+
+  .issue-keyword {
+    font-weight: 600;
+  }
+
+  .reference {
+    white-space: normal;
+  }
+
   hr {
     height: 0.2em;
     padding: 0;
@@ -131,7 +158,16 @@
 
   ul,
   ol {
+    /* Tailwind preflight sets list-style: none; restore markers for PR HTML. */
     padding-left: 2em;
+  }
+
+  ul {
+    list-style-type: disc;
+  }
+
+  ol {
+    list-style-type: decimal;
   }
 
   ul ul,
@@ -140,6 +176,14 @@
   ol ul {
     margin-top: 0;
     margin-bottom: 0;
+  }
+
+  ul ul {
+    list-style-type: circle;
+  }
+
+  ul ul ul {
+    list-style-type: square;
   }
 
   ol ol {

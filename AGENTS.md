@@ -126,7 +126,7 @@ Next `transpilePackages`.
 - Tokens: `@guided-review/ui/theme.css`
 - Components: `cn`, `Spinner`, `Kbd`, `BrandMark`, `Button` / `buttonClassName`, `Input`, `Textarea`,
   `Label`, `Select` (chrome-free; brand mark takes `iconSrc`)
-- Surfaces: form controls accept `surface?: "app" | "overlay"` — `app` uses adaptive `opt-*` tokens
+- Surfaces: form controls accept `surface?: "app" | "overlay"` — `app` uses dark `opt-*` tokens
   (options + marketing), `overlay` uses dark `gr-*` tokens (review overlay). Defaults: form controls
   → `app`; `Spinner` → `overlay`.
 - Assets: `@guided-review/ui/assets/*` (canonical brand). Extension syncs into `public/` via
@@ -141,5 +141,97 @@ are not scanned by default).
 
 ## Marketing site (`apps/web`)
 
-Next.js App Router with SSG for `/`, `/privacy`, `/terms`. Dev on port 3000. Hosting deferred — CI
-runs `next build` only.
+Next.js App Router with SSG for `/`, `/docs`, `/privacy`, `/terms`, `/cookies`. Product docs are
+MDX under `apps/web/content/help/` (`@next/mdx` + `mdxRs` GFM), registered in
+`config/help-pages.ts` / `config/help-navigation.ts`, rendered at `/docs` and `/docs/[slug]`. Dev
+on port 3000. Hosting deferred — CI runs `next build` only.
+
+## Voice and tone
+
+**Source of truth:** landing page copy in `apps/web` (`Hero`, `Why`, `FeatureGrid`, `TrustBand`,
+`Faqs`, `InstallCta`). When writing marketing, docs, options UI, overlay copy, errors, or empty
+states, match this voice — do not invent a more corporate or more hype-y register.
+
+### Who we sound like
+
+A senior engineer who built the tool for themselves and is talking to peers. First-person founder
+energy is allowed on the site ("That's why I built…") but it should be rare and used only for emphasis; product UI can stay second-person ("you")
+without becoming impersonal SaaS.
+
+- **Honest about AI.** AI helps structure the review; humans still read the code and have the final
+  say. Never imply the product replaces judgment or "approves PRs for you."
+- **Human-first.** The product is "designed for humans" and "uses AI in just the right places (not
+  too little, not too much)." Lead with the human job (reading, understanding, deciding), then how
+  AI assists.
+- **Privacy as plain fact.** No backend, no servers, BYO key, code never hits our infrastructure.
+  State it plainly and specifically — not as a compliance badge farm.
+- **Open source without the pitch deck.** Free, open source, forkable. Mention maintenance
+  honestly; don't oversell "community" or "ecosystem."
+- **Dry, self-aware humor.** Dry asides and footnotes are in-voice ("Seriously.", "Not even the
+  serverless kind.", fake credit card in FAQ). Never try-hard meme voice, never mean about users.
+
+### Tone dial
+
+| Dial            | Default                                                                                     |
+| --------------- | ------------------------------------------------------------------------------------------- |
+| Formality       | Casual-professional. Contractions fine. "wayyyy" is landing-page flair, not a template.     |
+| Sentence length | Short–medium. Prefer plain sentences over stacked clauses.                                  |
+| Confidence      | Direct claims, then caveats when real ("sometimes helpful, sometimes not").                 |
+| Humor           | Optional; one dry line beats a joke every paragraph. Skip in errors and destructive flows.  |
+| Empathy         | Name the pain (too much code, agents write more than you can review) without therapy-speak. |
+
+### Core messages (keep consistent)
+
+1. **Humans review AI-generated code** — better reading/navigation, not autonomous review bots.
+2. **AI clusters and orders; you judge** — review changes/units, not alphabetical file dumps.
+3. **Keyboard-first** — browse, comment, and review without leaving the keyboard.
+4. **No backend / BYO LLM** — extension talks to GitHub + your provider only.
+5. **You still have the final say** — more context than any agent (people, business, product).
+
+### Do say / don't say
+
+| Do                                                              | Don't                                         |
+| --------------------------------------------------------------- | --------------------------------------------- |
+| "Help you review" / "make reading code better"                  | "AI that reviews for you" / "auto-approve"    |
+| "Cluster related changes" / "review units"                      | Vague "unlock insights" / "supercharge PRs"   |
+| "Bring your own LLM key"                                        | "Our secure cloud AI" (we don't have one)     |
+| "Take it with a grain of salt" (summaries)                      | Guarantees about model accuracy or coverage   |
+| "We don't even have servers"                                    | Enterprise trust theater without substance    |
+| "Please check with your employer…"                              | Absolute legal claims about policy compliance |
+| "Forever is a long time" (pricing honesty)                      | "Free forever!!!" promises                    |
+| Specific next steps ("Install… add a key… Start Guided Review") | "Get started in seconds" fluff                |
+
+### Surface-specific guidance
+
+- **Landing / marketing** — Full personality: problem story, first person, footnotes, FAQ wit. Hero
+  can be punchy; features stay concrete (what it does + why it matters).
+- **Docs / help** — Same plain language, less joke density. Prefer "you" + imperative steps. Keep
+  privacy and BYO-key framing aligned with the site.
+- **In-app (overlay, options, modals)** — Clear, short, peer-to-peer. Labels and CTAs stay practical
+  ("Start Guided Review", "Connect GitHub"). Light wit only if it doesn't slow a task.
+- **Errors / failures** — Straight and useful: what failed, what to try. No blame, no jokes that
+  hide the fix. Provider/API messages may surface as-is when already user-safe.
+- **Trust / privacy** — Specific over slogan. Prefer "the extension doesn't talk to any third-party
+  servers other than GitHub and your AI provider" over "we take privacy seriously."
+
+### Word choices
+
+- Prefer **review**, **read**, **cluster**, **summary**, **keyboard-first**, **overlay**, **diff**,
+  **pull request / PR**, **provider**, **API key**, **open source**.
+- Product name: **Guided Review** (two words, title case). CTA pattern already in product: **Start
+  Guided Review**.
+- Avoid SaaS clichés: _leverage, seamless, robust, next-gen, AI-powered magic, ship faster_ (unless
+  describing a real user outcome in plain words).
+- Avoid overclaiming: don't say the model "understands your codebase" or "catches every bug."
+
+### Example rewrites (in-voice)
+
+| Off-voice                                             | In-voice                                                                              |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| "Unlock the power of AI code review."                 | "Use AI to help you review code — not review it for you."                             |
+| "Our enterprise-grade platform keeps your IP secure." | "Your code never touches our infrastructure. We don't have any."                      |
+| "Intelligent summaries for every change."             | "A 2-line overview of every change. Sometimes useful — take it with a grain of salt." |
+| "Something went wrong. Please try again later."       | "Couldn't reach your AI provider. Check the API key in options and try again."        |
+
+When in doubt, re-read the Why section and feature cards on the landing page and match that
+register: peer, specific, slightly irreverent, never replacing the human reviewer.

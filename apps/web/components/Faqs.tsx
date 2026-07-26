@@ -1,9 +1,12 @@
 import type { ReactNode } from "react";
 import { CHROME_WEB_STORE_URL, GITHUB_REPO_URL } from "../lib/links";
+import { WindowFrame } from "./WindowFrame";
 
 type Faq = {
   question: string;
   answer: ReactNode[];
+  /** Plain-text version of `answer`, used for FAQPage structured data. */
+  plainAnswer: string;
 };
 
 function FaqLink({ href, children }: { href: string; children: ReactNode }) {
@@ -20,33 +23,62 @@ const faqs: Faq[] = [
     answer: [
       <>
         Once the <FaqLink href={CHROME_WEB_STORE_URL}>Chrome extension</FaqLink> is installed, it
-        injects a start review button on the <FaqLink href="https://github.com">GitHub</FaqLink> PR
-        page, you click that it takes you to a different experience.
+        adds a Start Guided Review button to the <FaqLink href="https://github.com">GitHub</FaqLink>{" "}
+        PR page. Click it and the review opens as an overlay on top of GitHub.
       </>,
-      "We open the UI as an overlay on the GitHub review experience, read the diff that is generated in the PR, make an API call to your configured AI provider to get the review units/changes and summaries, map them to diffs and show them to you for review.",
+      "We read the diff from the PR, send it to your configured AI provider to get review units and summaries, map those back to the diff, and show you the result.",
     ],
+    plainAnswer:
+      "Once the Chrome extension is installed, it adds a Start Guided Review button to the GitHub PR page. Click it and the review opens as an overlay on top of GitHub. We read the diff from the PR, send it to your configured AI provider to get review units and summaries, map those back to the diff, and show you the result.",
+  },
+  {
+    question: "Which AI providers work?",
+    answer: [
+      <>
+        Claude (Anthropic), OpenAI, and Grok (xAI). You pick the provider and model in the
+        extension&apos;s <a href="/docs/configure-provider">options page</a> and paste your own API
+        key. We&apos;ll keep adding more providers —{" "}
+        <FaqLink href={GITHUB_REPO_URL}>request one on the GitHub repo</FaqLink>, or open a PR that
+        adds yours.
+      </>,
+    ],
+    plainAnswer:
+      "Claude (Anthropic), OpenAI, and Grok (xAI). You pick the provider and model in the extension's options page and paste your own API key. We'll keep adding more providers — request one on the GitHub repo, or open a PR that adds yours.",
+  },
+  {
+    question: "Will this run up my API bill?",
+    answer: [
+      "Starting a review makes one call to your provider to cluster the diff into review units and summarize them. Cost scales with how big the diff is and which model you picked — a small PR on a cheap model is fractions of a cent, a huge PR on a frontier model is not.",
+      "You're paying your provider directly, so whatever it costs shows up on their dashboard, not ours. We never see it.",
+    ],
+    plainAnswer:
+      "Starting a review makes one call to your provider to cluster the diff into review units and summarize them. Cost scales with how big the diff is and which model you picked. You're paying your provider directly, so it shows up on their dashboard, not ours.",
   },
   {
     question: "So you don't track anything at all?",
     answer: [
       <>
-        Yes, there&apos;s only an anonymous analytics script on this website, the extension
-        doesn&apos;t track anything at all. It doesn&apos;t talk to any third party servers at all
-        (other than <FaqLink href="https://github.com">GitHub</FaqLink> and your AI provider).
+        Yes. There&apos;s an anonymous analytics script on this website, and that&apos;s it. The
+        extension doesn&apos;t track anything and doesn&apos;t talk to any third-party servers other
+        than <FaqLink href="https://github.com">GitHub</FaqLink> and your AI provider.
       </>,
     ],
+    plainAnswer:
+      "Yes. There's an anonymous analytics script on this website, and that's it. The extension doesn't track anything and doesn't talk to any third-party servers other than GitHub and your AI provider.",
   },
   {
     question: "Is it free forever?",
     answer: [
       <>
-        Forever is a long time. It is free until it can be maintained for free, if demand for the
+        Forever is a long time. It is free until it can be maintained for free. If demand for the
         tool increases and it takes a lot of my bandwidth to maintain, I will introduce some way to
-        be compensated for the extra time, but since it&apos;s{" "}
-        <FaqLink href={GITHUB_REPO_URL}>open source</FaqLink> you can fork it if you find I&apos;m
+        be compensated for the extra time. But since it&apos;s{" "}
+        <FaqLink href={GITHUB_REPO_URL}>open source</FaqLink>, you can fork it if you find I&apos;m
         not a good person.
       </>,
     ],
+    plainAnswer:
+      "Forever is a long time. It is free until it can be maintained for free. If demand for the tool increases and it takes a lot of my bandwidth to maintain, I will introduce some way to be compensated for the extra time. But since it's open source, you can fork it if you find I'm not a good person.",
   },
   {
     question: "Who are you?",
@@ -58,57 +90,75 @@ const faqs: Faq[] = [
         and here&apos;s my credit card number - 4242 4242 4242 4242
       </>,
     ],
+    plainAnswer:
+      "I'm Nishant. Website: nishantarora.org. Twitter/X: @nshntarora. LinkedIn: aroranishant.",
   },
 ];
 
+function faqJsonLd(items: Faq[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.plainAnswer,
+      },
+    })),
+  };
+}
+
 export function Faqs() {
   return (
-    <section id="faqs" className="relative overflow-hidden px-6 py-20 sm:py-28">
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-        aria-hidden="true"
-      >
-        <div className="absolute left-1/2 top-24 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-opt-accent/6 blur-[120px]" />
-      </div>
+    <section id="faqs" className="relative px-6 py-20 sm:py-28">
+      {/* Static, locally-authored JSON (not user input) — safe to inject directly. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd(faqs)) }}
+      />
 
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-5xl">
         <h2 className="m-0 text-center text-3xl font-bold tracking-tight sm:text-4xl font-brand">
           FAQs
         </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-opt-muted text-balance">
+        <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-opt-muted text-balance sm:text-xl">
           The questions everyone asks before installing.
         </p>
 
-        <ul className="mt-14 m-0 grid list-none grid-cols-1 gap-4 p-0 sm:mt-20">
-          {faqs.map((faq) => (
-            <li key={faq.question}>
-              <details className="group rounded-3xl border border-opt-border bg-opt-subtle/60 transition-all duration-300 hover:border-opt-accent/60 hover:bg-opt-subtle [&_summary::-webkit-details-marker]:hidden">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-6 text-lg font-semibold tracking-tight sm:p-8 sm:text-xl">
-                  {faq.question}
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 24 24"
-                    className="h-5 w-5 flex-shrink-0 text-opt-muted transition-transform duration-300 group-open:rotate-180"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
-                </summary>
-                <div className="space-y-3 px-6 pb-6 text-base leading-relaxed text-opt-muted sm:px-8 sm:pb-8 sm:text-lg">
-                  {faq.answer.map((paragraph, index) => (
-                    <p key={index} className="m-0">
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
-              </details>
-            </li>
-          ))}
-        </ul>
+        <WindowFrame label="faq.md" className="mt-14 sm:mt-20" bodyClassName="p-0">
+          <ul className="m-0 list-none divide-y divide-opt-border p-0">
+            {faqs.map((faq) => (
+              <li key={faq.question}>
+                <details className="group [&_summary::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-6 text-lg font-semibold tracking-tight transition-colors hover:text-opt-accent sm:p-8 sm:text-xl">
+                    {faq.question}
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      className="h-5 w-5 flex-shrink-0 text-opt-muted transition-transform duration-300 group-open:rotate-180"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </summary>
+                  <div className="space-y-3 px-6 pb-6 text-base leading-relaxed text-opt-muted sm:px-8 sm:pb-8 sm:text-lg">
+                    {faq.answer.map((paragraph, index) => (
+                      <p key={index} className="m-0">
+                        {paragraph}
+                      </p>
+                    ))}
+                  </div>
+                </details>
+              </li>
+            ))}
+          </ul>
+        </WindowFrame>
       </div>
     </section>
   );

@@ -1,0 +1,55 @@
+export const toc = [
+  { id: "open-a-pull-request", label: "Open a pull request", level: 2 },
+  { id: "start-guided-review", label: "Start Guided Review", level: 2 },
+  { id: "walk-the-plan", label: "Walk the plan", level: 2 },
+  { id: "leave-comments-and-submit", label: "Leave comments and submit", level: 2 },
+  { id: "resume-later", label: "Resume later", level: 2 },
+];
+
+# Your first review
+
+From a normal GitHub PR page to a structured walkthrough in a few clicks. If the extension isn’t installed yet, start with [Install](/docs/install).
+
+<TocCard toc={toc} />
+
+## Open a pull request
+
+Navigate to any pull request on `github.com` (Conversation, Files changed, or Commits). The content script is injected on `https://github.com/*` so SPA navigation from the PR list still shows the button when you land on a PR.
+
+No button? See [Troubleshooting](/docs/troubleshooting#no-start-guided-review-button).
+
+## Start Guided Review
+
+1. Click **Start Guided Review** on the PR page.
+2. The overlay opens in a Shadow DOM host so its styles don’t fight GitHub’s CSS.
+3. The extension fetches the PR diff, builds a prompt, and streams a [review plan](/docs/how-it-works) from your configured provider.
+4. Units appear progressively as the stream completes each chunk; the final merged plan is what you step through.
+
+> **No provider configured?** You’ll be prompted to open Options and [add an API key](/docs/configure-provider) first. Connection failures: [Troubleshooting](/docs/troubleshooting#provider-and-api-key).
+
+## Walk the plan
+
+The overlay shows **display units** in order: a synthetic PR description step first, then each planned unit. How units are built and validated is covered in [How a review plan works](/docs/how-it-works).
+
+For each unit you can:
+
+- Read the unit’s title and guidance (take summaries with a grain of salt — see the [FAQ](/docs/faq#does-the-ai-approve-prs))
+- See the linked hunks from the real diff (unified or split — `v u` / `v s`, or the toolbar)
+- Move next / previous with the footer or [keyboard shortcuts](/docs/keyboard-shortcuts)
+
+The model chooses order and commentary; it does **not** supply the code lines you see. Hunk ids that don’t match the parsed diff are dropped.
+
+## Leave comments and submit
+
+As you walk:
+
+1. Press `c` to enter comment mode, select lines, and [draft line comments](/docs/leave-comments). Drafts stay local until you submit ([privacy](/docs/privacy-and-data#what-stays-local)).
+2. When you’re ready, press `⌘/Ctrl` + `Enter` (or use **Submit review**) to choose Comment / Approve / Request Changes and [send the review](/docs/submit-review).
+
+Submit needs [GitHub connected](/docs/connect-github). Walking the plan and drafting do not. Full shortcut list: [Keyboard shortcuts](/docs/keyboard-shortcuts).
+
+## Resume later
+
+Sessions (diff, plan, PR context, current step, drafts) are stored in `chrome.storage.session`, keyed by **owner/repo#number** — not the full URL — so you can switch between Conversation and Files changed tabs and resume the same plan until the browser session ends. Limits and clears: [Troubleshooting](/docs/troubleshooting#session-and-resume).
+
+If something fails mid-flight, see [Troubleshooting](/docs/troubleshooting).

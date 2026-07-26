@@ -84,7 +84,7 @@ export function DescriptionPane({ prContext, diff }: DescriptionPaneProps) {
               · {summary.files} file{summary.files === 1 ? "" : "s"}
             </span>
           </p>
-          <ul className="m-0 flex max-h-[min(60vh,520px)] list-none flex-col gap-0.5 overflow-y-auto p-0">
+          <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
             {summary.fileSummaries.map((file) => (
               <DiffSummaryFileRow key={fileKey(file)} file={file} />
             ))}

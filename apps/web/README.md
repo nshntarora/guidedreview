@@ -4,11 +4,16 @@ Marketing site for Guided Review (Next.js App Router, SSG by default).
 
 ## Routes
 
-| Path       | Page           |
-| ---------- | -------------- |
-| `/`        | Landing        |
-| `/privacy` | Privacy policy |
-| `/terms`   | Terms of use   |
+| Path           | Page                      |
+| -------------- | ------------------------- |
+| `/`            | Landing                   |
+| `/docs`        | Documentation (MDX index) |
+| `/docs/[slug]` | Documentation page        |
+| `/privacy`     | Privacy policy            |
+| `/terms`       | Terms of use              |
+| `/cookies`     | Cookie policy             |
+
+Docs are authored as MDX under `content/help/`. Register pages in `config/help-pages.ts` and sidebar order in `config/help-navigation.ts`.
 
 ## Dev
 

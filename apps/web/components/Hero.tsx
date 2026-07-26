@@ -1,36 +1,49 @@
+import type { CSSProperties } from "react";
 import { InstallButton, StarOnGitHubButton } from "./CtaButtons";
-import { ProductVideo } from "./ProductVideo";
+// Video will be added once it is ready.
+// import { ProductVideo } from "./ProductVideo";
+
+function riseDelay(seconds: number): CSSProperties {
+  return { "--gr-delay": `${seconds}s` } as CSSProperties;
+}
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden px-6 py-20 text-center sm:py-28">
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-        aria-hidden="true"
-      >
-        <div className="absolute left-1/2 top-16 h-64 w-[30rem] -translate-x-1/2 rounded-full bg-opt-accent/8 blur-[100px] sm:top-20" />
-      </div>
-
+    <section className="relative overflow-hidden px-6 pb-20 pt-16 text-center sm:pb-28 sm:pt-24">
       <div className="mx-auto max-w-5xl">
-        <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-bold tracking-tight text-balance sm:text-6xl font-brand">
-          A better way for humans to review{" "}
-          <span className="bg-[linear-gradient(90deg,var(--opt-accent),color-mix(in_srgb,var(--opt-accent)_55%,var(--opt-text)))] bg-clip-text text-transparent">
-            AI generated code
+        <h1
+          className="gr-rise-in mx-auto max-w-3xl text-4xl leading-[1.35] font-bold tracking-tight text-balance sm:text-6xl sm:leading-[1.3] font-brand"
+          style={riseDelay(0.1)}
+        >
+          A better way for humans to{" "}
+          <span className="rounded-md bg-opt-accent px-2 py-0.5 text-opt-accent-on [box-decoration-break:clone] [-webkit-box-decoration-break:clone]">
+            review AI generated code
           </span>
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-opt-muted text-balance">
-          Guided Review is a browser extension that makes "reading code" wayyyy better with things
-          like clustered file changes, summaries, and a keyboard first experience.
+
+        <p
+          className="gr-rise-in mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-opt-muted text-balance sm:text-xl"
+          style={riseDelay(0.2)}
+        >
+          Guided Review is a Chrome extension that makes &ldquo;reading code&rdquo; wayyyy better
+          with clustered file changes, summaries, and a keyboard-first experience.
         </p>
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+
+        <div
+          className="gr-rise-in mt-10 flex flex-wrap items-center justify-center gap-3"
+          style={riseDelay(0.3)}
+        >
           <InstallButton />
           <StarOnGitHubButton />
         </div>
-        <p className="mt-4 font-mono text-xs text-opt-muted">
+        <p className="gr-rise-in mt-4 font-mono text-xs text-opt-muted" style={riseDelay(0.35)}>
           Free · Open source · Bring your own LLM key
         </p>
 
-        <ProductVideo />
+        {/* Video will be added once it is ready. */}
+        {/* <div className="gr-rise-in" style={riseDelay(0.45)}>
+          <ProductVideo />
+        </div> */}
       </div>
     </section>
   );
