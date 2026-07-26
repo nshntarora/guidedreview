@@ -155,7 +155,7 @@ states, match this voice — do not invent a more corporate or more hype-y regis
 ### Who we sound like
 
 A senior engineer who built the tool for themselves and is talking to peers. First-person founder
-energy is allowed on the site ("That's why I built…"); product UI can stay second-person ("you")
+energy is allowed on the site ("That's why I built…") but it should be rare and used only for emphasis; product UI can stay second-person ("you")
 without becoming impersonal SaaS.
 
 - **Honest about AI.** AI helps structure the review; humans still read the code and have the final

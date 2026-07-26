@@ -34,7 +34,9 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       );
     },
 
-    // Tables — filter whitespace text nodes which are invalid direct children of <table>
+    // Tables — MDX/GFM emits whitespace text nodes between tags. Those are invalid
+    // direct children of <table>, <thead>, <tbody>, <tfoot>, and <tr> in HTML, and
+    // cause React hydration errors. Keep only element children for those tags.
     table: ({ children, ...props }: HTMLAttributes<HTMLTableElement>) => {
       const validChildren = Children.toArray(children).filter(isValidElement);
       return (
@@ -43,6 +45,18 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
         </div>
       );
     },
+    thead: ({ children, ...props }: HTMLAttributes<HTMLTableSectionElement>) => (
+      <thead {...props}>{Children.toArray(children).filter(isValidElement)}</thead>
+    ),
+    tbody: ({ children, ...props }: HTMLAttributes<HTMLTableSectionElement>) => (
+      <tbody {...props}>{Children.toArray(children).filter(isValidElement)}</tbody>
+    ),
+    tfoot: ({ children, ...props }: HTMLAttributes<HTMLTableSectionElement>) => (
+      <tfoot {...props}>{Children.toArray(children).filter(isValidElement)}</tfoot>
+    ),
+    tr: ({ children, ...props }: HTMLAttributes<HTMLTableRowElement>) => (
+      <tr {...props}>{Children.toArray(children).filter(isValidElement)}</tr>
+    ),
     th: ({ children, ...props }: ThHTMLAttributes<HTMLTableCellElement>) => (
       <th {...props}>{children}</th>
     ),

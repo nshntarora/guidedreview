@@ -28,7 +28,7 @@ export function DocsPager({ slug, basePath = "/docs" }: DocsPagerProps) {
       {prev ? (
         <Link
           href={getHref(prev.slug, basePath)}
-          className="group flex h-auto flex-col items-start gap-1 rounded-lg border border-opt-border bg-opt-subtle/40 p-4 no-underline transition-colors hover:border-opt-muted hover:bg-opt-subtle"
+          className="group inline-flex h-auto flex-col items-start gap-1 rounded-lg border border-opt-border bg-opt-subtle/40 p-4 no-underline transition-colors hover:border-opt-muted hover:bg-opt-subtle"
         >
           <span className="flex items-center gap-1 text-xs uppercase tracking-widest text-opt-muted">
             ← Previous
@@ -43,7 +43,7 @@ export function DocsPager({ slug, basePath = "/docs" }: DocsPagerProps) {
       {next ? (
         <Link
           href={getHref(next.slug, basePath)}
-          className="group flex h-auto flex-col items-end gap-1 rounded-lg border border-opt-border bg-opt-subtle/40 p-4 no-underline transition-colors hover:border-opt-muted hover:bg-opt-subtle"
+          className="group inline-flex h-auto flex-col items-end gap-1 rounded-lg border border-opt-border bg-opt-subtle/40 p-4 no-underline transition-colors hover:border-opt-muted hover:bg-opt-subtle"
         >
           <span className="flex items-center gap-1 text-xs uppercase tracking-widest text-opt-muted">
             Next →

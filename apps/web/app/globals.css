@@ -264,25 +264,11 @@ body::before {
   color: var(--opt-text);
 }
 
-.docs-content a {
-  color: var(--opt-text);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-color: color-mix(in srgb, var(--opt-text) 35%, transparent);
-}
-
-.docs-content a:hover {
-  text-decoration-color: var(--opt-text);
-}
+/* Links inherit the site-wide text-link treatment from @layer base
+   (accent color, no underline, bottom border on hover). */
 
 .docs-content .callout p {
   color: inherit;
-}
-
-.docs-content .callout a {
-  color: inherit;
-  font-weight: 600;
-  text-decoration: underline;
 }
 
 .docs-content .callout strong {
