@@ -21,3 +21,25 @@ export async function getProviderSettings(): Promise<ProviderSettings> {
 export async function setProviderSettings(settings: ProviderSettings): Promise<void> {
   await chrome.storage.local.set({ [STORAGE_KEY]: settings });
 }
+
+/**
+ * Watch for provider settings changes (e.g. the user saving a key in the
+ * options tab while the overlay is open). Returns an unsubscribe function.
+ */
+export function onProviderSettingsChanged(
+  listener: (settings: ProviderSettings) => void,
+): () => void {
+  const handler = (
+    changes: Record<string, chrome.storage.StorageChange>,
+    areaName: string,
+  ): void => {
+    if (areaName !== "local") return;
+    const change = changes[STORAGE_KEY];
+    if (!change) return;
+    const next = change.newValue as Partial<ProviderSettings> | undefined;
+    listener(next ? normalizeProviderSettings(next) : FALLBACK_SETTINGS);
+  };
+
+  chrome.storage.onChanged.addListener(handler);
+  return () => chrome.storage.onChanged.removeListener(handler);
+}

@@ -14,7 +14,7 @@ export default function TermsPage() {
       meta={
         <>
           Effective date: July 2026 &nbsp;·&nbsp; Artery Ventures, LLP &nbsp;·&nbsp;{" "}
-          <a href="mailto:support@guidedreview.com">support@guidedreview.com</a>
+          <a href="mailto:support@guidedreview.dev">support@guidedreview.dev</a>
         </>
       }
     >
@@ -24,7 +24,7 @@ export default function TermsPage() {
           These Terms of Use constitute a legally binding agreement made between you, whether
           personally or on behalf of an entity (&quot;you&quot;), and Artery Ventures, LLP
           (&quot;Company&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;), concerning your
-          access to and use of the <a href="https://guidedreview.com">https://guidedreview.com</a>{" "}
+          access to and use of the <a href="https://guidedreview.dev">https://guidedreview.dev</a>{" "}
           website and the Guided Review Chrome browser extension, as well as any other media form,
           media channel, mobile website, or application related, linked, or otherwise connected
           thereto (collectively, the &quot;Site&quot; or &quot;Service&quot;).
@@ -101,7 +101,7 @@ export default function TermsPage() {
           repositories (for example on GitHub). Rights to use, modify, and redistribute that source
           code are governed by the applicable open-source license (if any) and notices in the
           repository, not solely by the limited Site license in this section. Trademarks and hosted
-          branding for guidedreview.com are not licensed merely because source code is available.
+          branding for guidedreview.dev are not licensed merely because source code is available.
         </p>
       </section>
 
@@ -341,7 +341,7 @@ export default function TermsPage() {
         <h2>15. Privacy policy</h2>
         <p>
           We care about data privacy and security. Please review our Privacy Policy at{" "}
-          <a href="https://guidedreview.com/privacy">https://guidedreview.com/privacy</a>. By using
+          <a href="https://guidedreview.dev/privacy">https://guidedreview.dev/privacy</a>. By using
           the Site, you agree to be bound by our Privacy Policy, which is incorporated into these
           Terms of Use. The Site may be hosted on servers located outside India. If you access the
           Site from any region with laws governing personal data collection, use, or disclosure that

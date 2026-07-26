@@ -15,7 +15,7 @@ export default function PrivacyPage() {
       meta={
         <>
           Last updated: July 2026 &nbsp;·&nbsp; Artery Ventures, LLP &nbsp;·&nbsp;{" "}
-          <a href="mailto:support@guidedreview.com">support@guidedreview.com</a>
+          <a href="mailto:support@guidedreview.dev">support@guidedreview.dev</a>
         </>
       }
     >
@@ -23,7 +23,7 @@ export default function PrivacyPage() {
         <p>
           We, Artery Ventures, LLP (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;,
           &quot;Company&quot;) are the owners of the website{" "}
-          <a href="https://guidedreview.com">guidedreview.com</a> (&quot;Website&quot;) and the
+          <a href="https://guidedreview.dev">guidedreview.dev</a> (&quot;Website&quot;) and the
           Guided Review Chrome browser extension (&quot;Extension&quot;). The Website and the
           Extension are collectively referred to as the &quot;Platform&quot;. The Website describes
           the Extension and its features. The Extension helps users structure GitHub pull request
@@ -40,7 +40,7 @@ export default function PrivacyPage() {
           WITH THE TERMS OF THIS PRIVACY POLICY. IF YOU DO NOT AGREE TO THIS PRIVACY POLICY, YOU MAY
           WITHDRAW YOUR CONSENT OR ALTERNATIVELY CHOOSE NOT TO PROVIDE YOUR PERSONAL INFORMATION ON
           THE PLATFORM. SUCH AN INTIMATION TO WITHDRAW YOUR CONSENT CAN BE PROVIDED BY EMAIL AT{" "}
-          <a href="mailto:support@guidedreview.com">support@guidedreview.com</a>.
+          <a href="mailto:support@guidedreview.dev">support@guidedreview.dev</a>.
         </p>
         <p>
           IF YOU ARE ACCESSING THE PLATFORM ON BEHALF OF A THIRD PARTY, YOU REPRESENT THAT YOU HAVE
@@ -139,7 +139,7 @@ export default function PrivacyPage() {
           use anonymous analytics on the Website to understand aggregate traffic and improve the
           site. The Extension is not designed to send analytics or usage telemetry to us; it
           communicates with GitHub and your configured LLM Provider as described above. See our{" "}
-          <a href="https://guidedreview.com/cookies">Cookies Policy</a> for more detail.
+          <a href="https://guidedreview.dev/cookies">Cookies Policy</a> for more detail.
         </p>
         <p>
           <strong>Payment Information</strong> — The Platform is currently offered without a paid
@@ -155,7 +155,7 @@ export default function PrivacyPage() {
           The Website may use cookies and similar technologies, including for anonymous analytics
           and essential site operation. You may choose to disable cookies through your browser
           settings. For more information, please refer to our Cookies Policy at{" "}
-          <a href="https://guidedreview.com/cookies">guidedreview.com/cookies</a>. The Extension
+          <a href="https://guidedreview.dev/cookies">guidedreview.dev/cookies</a>. The Extension
           primarily uses browser extension storage rather than website cookies for its settings and
           session data.
         </p>
@@ -264,7 +264,7 @@ export default function PrivacyPage() {
           the right to object to our use of Personal Information, and the right to withdraw consent
           at any time where we rely on consent to process your Personal Information. If you would
           like to exercise any of these rights regarding data we hold, please contact{" "}
-          <a href="mailto:support@guidedreview.com">support@guidedreview.com</a>.
+          <a href="mailto:support@guidedreview.dev">support@guidedreview.dev</a>.
         </p>
         <p>
           For data stored only in your browser by the Extension, you can delete or modify it
@@ -280,7 +280,7 @@ export default function PrivacyPage() {
           We may send you communications if you contact us or if we later offer optional product
           updates or newsletters you opt into. You may opt out of promotional emails by following
           unsubscribe instructions in those emails, or by emailing{" "}
-          <a href="mailto:support@guidedreview.com">support@guidedreview.com</a> with your request.
+          <a href="mailto:support@guidedreview.dev">support@guidedreview.dev</a> with your request.
         </p>
       </section>
 
@@ -304,7 +304,7 @@ export default function PrivacyPage() {
           be processed outside the EU and UK (including by hosting or analytics providers, or by LLM
           Providers you choose). We collect and transfer Personal Information we control in
           accordance with applicable law. If you have questions, please contact{" "}
-          <a href="mailto:support@guidedreview.com">support@guidedreview.com</a>.
+          <a href="mailto:support@guidedreview.dev">support@guidedreview.dev</a>.
         </p>
         <p>
           <strong>Your rights (EU and UK residents)</strong> — In addition to the rights described
@@ -312,7 +312,7 @@ export default function PrivacyPage() {
           residents have the right to make a complaint to the Information Commissioner&apos;s Office
           (&quot;ICO&quot;) at <a href="https://www.ico.org.uk">www.ico.org.uk</a>. We would
           appreciate the chance to address your concerns before you approach the ICO, so please
-          contact us first at <a href="mailto:support@guidedreview.com">support@guidedreview.com</a>
+          contact us first at <a href="mailto:support@guidedreview.dev">support@guidedreview.dev</a>
           .
         </p>
         <p>
@@ -351,7 +351,7 @@ export default function PrivacyPage() {
           consent of a legal representative. If you are under 18, please do not provide any Personal
           Information on this Platform. If a legal representative discovers that a child has
           provided us with Personal Information, please contact us at{" "}
-          <a href="mailto:support@guidedreview.com">support@guidedreview.com</a> to have the
+          <a href="mailto:support@guidedreview.dev">support@guidedreview.dev</a> to have the
           information deleted.
         </p>
       </section>

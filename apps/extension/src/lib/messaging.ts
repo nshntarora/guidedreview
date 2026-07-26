@@ -14,6 +14,8 @@ import type {
   GitHubDevicePollResponse,
   GitHubDeviceStartRequest,
   GitHubDeviceStartResponse,
+  OpenOptionsRequest,
+  OpenOptionsResponse,
   ParsedDiff,
   PRContext,
   ProviderSettings,
@@ -110,6 +112,16 @@ export function streamReviewPlan(
 /** Options-page-side helper: ask the background worker to test a provider config. */
 export async function testConnection(settings: ProviderSettings): Promise<TestConnectionResponse> {
   const request: TestConnectionRequest = { type: "TEST_CONNECTION", settings };
+  return chrome.runtime.sendMessage(request);
+}
+
+/**
+ * Content-script-side helper: open the extension's options page. Content
+ * scripts have no access to `chrome.runtime.openOptionsPage`, so the worker
+ * does it for them.
+ */
+export async function openOptionsPage(): Promise<OpenOptionsResponse> {
+  const request: OpenOptionsRequest = { type: "OPEN_OPTIONS" };
   return chrome.runtime.sendMessage(request);
 }
 

@@ -59,8 +59,9 @@ After the monorepo move, remove any old root `dist/` entry from `chrome://extens
 ### Marketing site deploy (Cloudflare Pages)
 
 The marketing site (`apps/web`) is a static export deployed to **Cloudflare
-Pages** by `.github/workflows/deploy-web.yml` on pushes/PRs that touch the web
-app or shared UI package (`wrangler pages deploy` → `*.pages.dev`).
+Pages** by `.github/workflows/deploy.yml` after **Lint and test** succeeds when
+the web app or shared UI package changes (`wrangler pages deploy` →
+`*.pages.dev`).
 
 Set these GitHub Actions secrets before the first deploy:
 

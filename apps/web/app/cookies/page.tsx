@@ -14,7 +14,7 @@ export default function CookiesPage() {
       meta={
         <>
           Effective date: July 2026 &nbsp;·&nbsp; Artery Ventures, LLP &nbsp;·&nbsp;{" "}
-          <a href="mailto:support@guidedreview.com">support@guidedreview.com</a>
+          <a href="mailto:support@guidedreview.dev">support@guidedreview.dev</a>
         </>
       }
     >
@@ -23,11 +23,11 @@ export default function CookiesPage() {
         <p>
           We, Artery Ventures, LLP (&quot;Company&quot;, &quot;we&quot;, &quot;us&quot;,
           &quot;our&quot;) may use cookies or similar technologies to understand how visitors use
-          our website <a href="https://guidedreview.com">https://guidedreview.com</a>{" "}
+          our website <a href="https://guidedreview.dev">https://guidedreview.dev</a>{" "}
           (&quot;Website&quot;). We are committed to protecting the privacy and security of your
           personal information. We advise you to carefully read this cookie policy
           (&quot;Policy&quot;), together with the Company&apos;s Privacy Policy at{" "}
-          <a href="https://guidedreview.com/privacy">guidedreview.com/privacy</a>, so that you are
+          <a href="https://guidedreview.dev/privacy">guidedreview.dev/privacy</a>, so that you are
           aware of the cookies and technologies used as well as how we treat your personal
           information.
         </p>
@@ -141,7 +141,7 @@ export default function CookiesPage() {
         <h2>Contact us</h2>
         <p>
           If you have any questions or concerns regarding this Policy, you can contact us at{" "}
-          <a href="mailto:support@guidedreview.com">support@guidedreview.com</a>.
+          <a href="mailto:support@guidedreview.dev">support@guidedreview.dev</a>.
         </p>
       </section>
     </LegalDocument>

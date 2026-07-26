@@ -1,4 +1,5 @@
 import type { ReviewErrorInfo, ReviewUnit } from "../../../lib/types";
+import { ConnectProviderPrompt } from "./ConnectProviderPrompt";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { Button, Spinner } from "@guided-review/ui";
 import { missingMetadataHint, PR_DESCRIPTION_HINT } from "../missingMetadata";
@@ -13,6 +14,8 @@ interface ContextPanelProps {
   /** Whether the PR has a non-empty description. Used when the description unit is active. */
   hasDescription?: boolean;
   error?: ReviewErrorInfo | null;
+  /** No AI provider configured — prompt to connect one instead of erroring. */
+  needsProvider?: boolean;
   loading?: boolean;
   /** Retry the failed API / review build step. */
   onRetry?: () => void;
@@ -23,9 +26,17 @@ export function ContextPanel({
   hasTitle = true,
   hasDescription = true,
   error,
+  needsProvider,
   loading,
   onRetry,
 }: ContextPanelProps) {
+  // Takes precedence over `error`: a missing key is a setup step, not a failure.
+  // Units built locally have no context to show; a restored AI unit still does,
+  // so never cover real commentary with the prompt.
+  if (needsProvider && !unit?.context.trim()) {
+    return <ConnectProviderPrompt />;
+  }
+
   if (error) {
     return (
       <div

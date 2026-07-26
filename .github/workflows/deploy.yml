@@ -1,0 +1,112 @@
+# Deploy the marketing site (apps/web) to Cloudflare Pages.
+#
+# Runs only after the "Lint and test" workflow succeeds (or via workflow_dispatch).
+# Static Next export (`apps/web/out`) is uploaded with `wrangler pages deploy`.
+# Production (main / workflow_dispatch) deploys to the production branch;
+# PRs deploy as preview deployments on the PR branch.
+#
+# Required GitHub secrets (repo Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN   — Account API token with Cloudflare Pages:Edit
+#   CLOUDFLARE_ACCOUNT_ID  — Cloudflare account ID
+#
+# Pages project name: guidedreview (change --project-name below if yours differs).
+#
+# Action docs: https://github.com/cloudflare/wrangler-action
+
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [Lint and test]
+    types:
+      - completed
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.event.workflow_run.head_branch || github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  deployments: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    # Only proceed when Lint and test succeeded (or this was a manual run).
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    outputs:
+      web: ${{ github.event_name == 'workflow_dispatch' && 'true' || steps.filter.outputs.web }}
+    steps:
+      - uses: actions/checkout@v4
+        if: github.event_name == 'workflow_run'
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      # Push to main: diff the tip commit against its parent so merge/squash
+      # deploys still see the right paths. PR: diff against the default branch.
+      - uses: dorny/paths-filter@v4
+        id: filter
+        if: github.event_name == 'workflow_run'
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          base: ${{ github.event.workflow_run.event == 'push' && 'HEAD~1' || github.event.repository.default_branch }}
+          filters: |
+            web:
+              - 'apps/web/**'
+              - 'packages/ui/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig.base.json'
+              - '.github/workflows/deploy.yml'
+
+  deploy:
+    name: Deploy marketing site
+    runs-on: ubuntu-latest
+    needs: changes
+    # Fork PRs do not receive repo secrets; skip rather than fail.
+    if: |
+      needs.changes.outputs.web == 'true' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        github.event.workflow_run.event != 'pull_request' ||
+        github.event.workflow_run.head_repository.full_name == github.repository
+      )
+    environment:
+      name: ${{ github.event_name == 'workflow_dispatch' && 'production' || (github.event.workflow_run.event == 'pull_request' && 'preview' || 'production') }}
+      url: ${{ steps.deploy.outputs.deployment-url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build marketing site
+        run: npm run build -w @guided-review/web
+
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/web
+          # Monorepo uses root package-lock.json; pin npm so the action does not
+          # guess wrong from apps/web alone. Installed wrangler (npm ci) is reused.
+          packageManager: npm
+          # Production branch → production deploy. Other branches → preview.
+          # See: "Deploy your Pages site" in wrangler-action README.
+          command: pages deploy out --project-name=guidedreview --branch=${{ github.event_name == 'workflow_dispatch' && github.ref_name || github.event.workflow_run.head_branch }}
+          # Optional: create GitHub Deployments from the action.
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

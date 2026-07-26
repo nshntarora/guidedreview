@@ -136,6 +136,12 @@ export interface ReviewErrorInfo {
 }
 
 /**
+ * Error code for "no AI provider configured". Not a failure the user should see
+ * as an error — the overlay turns it into the connect-a-provider prompt.
+ */
+export const NO_API_KEY_ERROR_CODE = "no_api_key";
+
+/**
  * Progressive events on the `annotate-review` port from background → content.
  * Complete, validated units are pushed as they become available; DONE carries
  * the final merged plan; ERROR ends the stream with structured error details.
@@ -153,6 +159,18 @@ export interface TestConnectionRequest {
 export interface TestConnectionResponse {
   ok: boolean;
   error?: string;
+}
+
+/**
+ * Content scripts can't call `chrome.runtime.openOptionsPage` themselves, so
+ * the overlay asks the background worker to open Settings on its behalf.
+ */
+export interface OpenOptionsRequest {
+  type: "OPEN_OPTIONS";
+}
+
+export interface OpenOptionsResponse {
+  ok: boolean;
 }
 
 export interface FetchDiffRequest {
@@ -251,6 +269,7 @@ export type SubmitReviewResponse =
 /** One-shot request/response messages (annotate uses a port instead). */
 export type BackgroundRequest =
   | TestConnectionRequest
+  | OpenOptionsRequest
   | FetchDiffRequest
   | GitHubDeviceStartRequest
   | GitHubDevicePollRequest

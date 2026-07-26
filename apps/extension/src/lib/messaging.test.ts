@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   clearGitHubAuthSession,
   getGitHubAuthStatus,
+  openOptionsPage,
   submitPullRequestReview,
   pollGitHubDeviceAuth,
   requestPRDiff,
@@ -24,6 +25,15 @@ describe("messaging", () => {
       pr: { owner: "acme", repo: "widgets", number: 1 },
     });
     expect(result).toEqual(response);
+  });
+
+  it("openOptionsPage sends a typed OPEN_OPTIONS message", async () => {
+    vi.mocked(chrome.runtime.sendMessage).mockResolvedValueOnce({ ok: true });
+
+    const result = await openOptionsPage();
+
+    expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({ type: "OPEN_OPTIONS" });
+    expect(result).toEqual({ ok: true });
   });
 
   it("streamReviewPlan opens an annotate-review port and posts ANNOTATE_REVIEW", () => {

@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { parsePRUrl, type PRIdentity } from "../lib/github/diffFetch";
 import { fetchConversationDescription, scrapePRContext } from "../lib/github/prContext";
 import { requestPRDiff, streamReviewPlan } from "../lib/messaging";
+import { getProviderSettings, onProviderSettingsChanged } from "../lib/settings";
 import type { ContentRequest, ParsedDiff, PRContext } from "../lib/types";
 import { ensureFallbackHost, FALLBACK_HOST_ID, findButtonAnchor } from "./buttonAnchor";
 import { Overlay } from "./overlay/Overlay";
@@ -42,6 +43,14 @@ function init(): void {
     if (message?.type === "START_GUIDED_REVIEW") {
       void onStartReview();
     }
+  });
+
+  // The connect-provider prompt sends the user to the options tab; when they
+  // save a key there, start the review they were already waiting on.
+  onProviderSettingsChanged((settings) => {
+    if (!settings.apiKey) return;
+    if (!useReviewStore.getState().needsProvider) return;
+    void onStartReview();
   });
 
   // GitHub is a SPA — the PR page doesn't reload between "Conversation" /
@@ -205,6 +214,10 @@ async function onStartReview(): Promise<void> {
   const streamGeneration = useReviewStore.getState().streamGeneration;
 
   try {
+    // Checked before the restore so a resumed session still knows whether the
+    // AI features are available.
+    const hasProvider = Boolean((await getProviderSettings()).apiKey);
+
     const restored = await restoreSession(sessionKey);
     if (restored) return;
 
@@ -235,6 +248,14 @@ async function onStartReview(): Promise<void> {
     // Store the diff early so header stats and unit resolution work while the
     // plan is still streaming in.
     useReviewStore.getState().setDiff(diff);
+
+    // Without a provider there's no plan to stream: fall back to one unit per
+    // changed file so the diff, comments and submit flow all still work.
+    if (!hasProvider) {
+      useReviewStore.getState().setNeedsProvider();
+      return;
+    }
+
     useReviewStore.getState().beginStreaming(streamGeneration);
 
     const latestContext = useReviewStore.getState().prContext ?? prContext;

@@ -29,6 +29,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   const isOpen = useReviewStore((s) => s.isOpen);
   const status = useReviewStore((s) => s.status);
   const error = useReviewStore((s) => s.error);
+  const needsProvider = useReviewStore((s) => s.needsProvider);
   const diff = useReviewStore((s) => s.diff);
   const plan = useReviewStore((s) => s.plan);
   const prContext = useReviewStore((s) => s.prContext);
@@ -190,6 +191,12 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     if (status === "error" && error) {
       return `Error: ${error.message}`;
     }
+    if (needsProvider && status === "ready" && plan) {
+      return `${displayUnitCount(plan)} steps, one per changed file. Connect an AI provider for guided ordering and context.`;
+    }
+    if (needsProvider) {
+      return "Connect an AI provider to enable the AI features.";
+    }
     if (status === "loading") {
       return "Loading pull request diff…";
     }
@@ -203,7 +210,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
       return `Review plan ready. ${displayUnitCount(plan)} steps.`;
     }
     return "";
-  }, [status, error, plan]);
+  }, [status, error, plan, needsProvider]);
 
   if (!isOpen) return null;
 
@@ -276,6 +283,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
                   prContext?.description?.trim() || prContext?.descriptionHtml?.trim(),
                 )}
                 error={status === "error" ? error : null}
+                needsProvider={needsProvider}
                 loading={showBuildingSpinner && isDescriptionUnit}
                 onRetry={status === "error" ? onRetry : undefined}
               />

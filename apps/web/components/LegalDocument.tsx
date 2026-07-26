@@ -37,9 +37,9 @@ export function LegalContactBlock() {
       India
       <br />
       <br />
-      Email: <a href="mailto:support@guidedreview.com">support@guidedreview.com</a>
+      Email: <a href="mailto:support@guidedreview.dev">support@guidedreview.dev</a>
       <br />
-      Website: <a href="https://guidedreview.com">https://guidedreview.com</a>
+      Website: <a href="https://guidedreview.dev">https://guidedreview.dev</a>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-name: CI
+name: Lint and test
 
 on:
   push:
@@ -13,7 +13,7 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: lint-and-test-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -55,7 +55,7 @@ jobs:
               - 'package-lock.json'
 
   lint:
-    name: Lint & typecheck
+    name: Lint and typecheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -96,7 +96,7 @@ jobs:
       - name: Run unit tests
         run: npm test
 
-  e2e-extension:
+  e2e:
     name: End-to-end tests
     runs-on: ubuntu-latest
     needs: changes

@@ -5,7 +5,12 @@ import { vi } from "vitest";
  * touches. Real `chrome.storage.*` is promise-based (as used throughout the
  * codebase), so this mirrors that rather than the older callback style.
  */
-function createStorageArea() {
+type StorageChanges = Record<string, { oldValue?: unknown; newValue?: unknown }>;
+
+function createStorageArea(
+  areaName: string,
+  emitChanged: (changes: StorageChanges, areaName: string) => void,
+) {
   let store: Record<string, unknown> = {};
 
   return {
@@ -20,12 +25,20 @@ function createStorageArea() {
       return result;
     }),
     set: vi.fn(async (items: Record<string, unknown>) => {
+      const changes: StorageChanges = {};
+      for (const [key, newValue] of Object.entries(items)) {
+        changes[key] = { oldValue: store[key], newValue };
+      }
       store = { ...store, ...items };
+      emitChanged(changes, areaName);
     }),
     remove: vi.fn(async (keys: string | string[]) => {
+      const changes: StorageChanges = {};
       for (const key of Array.isArray(keys) ? keys : [keys]) {
+        changes[key] = { oldValue: store[key] };
         delete store[key];
       }
+      emitChanged(changes, areaName);
     }),
     clear: vi.fn(async () => {
       store = {};
@@ -92,10 +105,24 @@ export function createChromeMock() {
     return port;
   }
 
+  const onChangedListeners = new Set<(changes: StorageChanges, areaName: string) => void>();
+  const emitChanged = (changes: StorageChanges, areaName: string): void => {
+    for (const listener of onChangedListeners) listener(changes, areaName);
+  };
+
   return {
     storage: {
-      local: createStorageArea(),
-      session: createStorageArea(),
+      local: createStorageArea("local", emitChanged),
+      session: createStorageArea("session", emitChanged),
+      onChanged: {
+        addListener: vi.fn((listener: (changes: StorageChanges, areaName: string) => void) => {
+          onChangedListeners.add(listener);
+        }),
+        removeListener: vi.fn((listener: (changes: StorageChanges, areaName: string) => void) => {
+          onChangedListeners.delete(listener);
+        }),
+        __listeners: onChangedListeners,
+      },
     },
     runtime: {
       sendMessage: vi.fn(async (_message: unknown) => undefined),

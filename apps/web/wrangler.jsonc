@@ -1,7 +1,7 @@
 /**
  * Optional local Wrangler config. CI deploys via Cloudflare Pages
  * (`wrangler pages deploy out --project-name=guidedreview` in
- * `.github/workflows/deploy-web.yml` and package scripts).
+ * `.github/workflows/deploy.yml` and package scripts).
  *
  * This file is not required for Pages direct upload. Keep it only if you need
  * local `wrangler` helpers; production hosting is the Pages project.

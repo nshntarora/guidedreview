@@ -6,6 +6,8 @@ import type {
   ReviewPlan,
   ReviewUnit,
 } from "../../lib/types";
+import { NO_API_KEY_ERROR_CODE } from "../../lib/types";
+import { buildFileReviewPlan } from "../../lib/review/fileReviewPlan";
 import {
   displayLineNumber,
   linesInSelection,
@@ -57,6 +59,12 @@ interface ReviewState {
   isOpen: boolean;
   status: ReviewStatus;
   error: ReviewErrorInfo | null;
+  /**
+   * No AI provider configured. Orthogonal to `status`: the review still runs
+   * on a locally built file-per-unit plan, with the context panel prompting
+   * the user to connect a provider for ordering and commentary.
+   */
+  needsProvider: boolean;
   diff: ParsedDiff | null;
   plan: ReviewPlan | null;
   prContext: PRContext | null;
@@ -97,6 +105,12 @@ interface ReviewState {
   appendUnit: (unit: ReviewUnit, generation: number) => void;
   setReady: (diff: ParsedDiff, plan: ReviewPlan, generation?: number) => void;
   setError: (error: ReviewErrorInfo | string, generation?: number) => void;
+  /**
+   * No AI provider key: prompt to connect one instead of erroring. When the
+   * diff is already available, also swaps in the local file-per-unit plan so
+   * the walkthrough still works.
+   */
+  setNeedsProvider: () => void;
   goToUnit: (index: number) => void;
   goNext: () => void;
   goPrev: () => void;
@@ -145,6 +159,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   isOpen: false,
   status: "idle",
   error: null,
+  needsProvider: false,
   diff: null,
   plan: null,
   prContext: null,
@@ -165,6 +180,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
     set((state) => ({
       status: "loading",
       error: null,
+      needsProvider: false,
       currentUnitIndex: 0,
       plan: null,
       diff: null,
@@ -228,7 +244,32 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
 
   setError: (error, generation) => {
     if (generation !== undefined && get().streamGeneration !== generation) return;
-    set({ status: "error", error: normalizeError(error) });
+    const normalized = normalizeError(error);
+    // A missing provider key isn't a failure the user should read as an error —
+    // both the content-script pre-check and the background backstop land here.
+    if (normalized.code === NO_API_KEY_ERROR_CODE) {
+      get().setNeedsProvider();
+      return;
+    }
+    set({ status: "error", error: normalized });
+  },
+
+  setNeedsProvider: () => {
+    const { diff } = get();
+    if (!diff) {
+      set({ needsProvider: true, error: null });
+      return;
+    }
+    // Diff already fetched (or the background backstop fired mid-stream):
+    // fall back to the file-per-unit plan so the walkthrough still works.
+    set({
+      needsProvider: true,
+      error: null,
+      status: "ready",
+      plan: buildFileReviewPlan(diff),
+      currentUnitIndex: 0,
+      ...clearCommentUi(),
+    });
   },
 
   goToUnit: (index) => {
@@ -443,9 +484,20 @@ export function resetDiffViewModeHydrationForTests(): void {
  * review flow.
  */
 export async function persistSession(): Promise<void> {
-  const { status, diff, plan, prContext, currentUnitIndex, sessionKey, draftComments } =
-    useReviewStore.getState();
+  const {
+    status,
+    needsProvider,
+    diff,
+    plan,
+    prContext,
+    currentUnitIndex,
+    sessionKey,
+    draftComments,
+  } = useReviewStore.getState();
   if (status !== "ready" || !diff || !plan || !sessionKey) return;
+  // The file-per-unit fallback is cheap to rebuild and would otherwise be
+  // resumed in place of the AI plan once a provider is configured.
+  if (needsProvider) return;
 
   const payload: PersistedSession = {
     diff,
@@ -482,6 +534,8 @@ export async function restoreSession(sessionKey: string): Promise<boolean> {
 
   useReviewStore.setState({
     status: "ready",
+    // Persisted sessions are always AI-built (see persistSession).
+    needsProvider: false,
     diff: saved.diff,
     plan: saved.plan,
     prContext: saved.prContext ?? null,

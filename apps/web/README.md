@@ -32,7 +32,7 @@ Uses `@guided-review/ui` via `transpilePackages` and Tailwind `@source` of `pack
 
 ## Hosting
 
-**Cloudflare Pages** via GitHub Actions (`.github/workflows/deploy-web.yml`).
+**Cloudflare Pages** via GitHub Actions (`.github/workflows/deploy.yml`).
 
 The site is a pure static export (`output: "export"` in `next.config.ts`).
 `npm run build` writes to `apps/web/out/`, which Wrangler uploads with
@@ -41,11 +41,14 @@ domain you attach in the Pages project).
 
 ### CI deploy
 
-| Event                              | What deploys                                         |
-| ---------------------------------- | ---------------------------------------------------- |
-| Push to `main` (web-related paths) | Production (`pages deploy` on branch `main`)         |
-| PR touching web-related paths      | Preview deployment (`pages deploy` on the PR branch) |
-| `workflow_dispatch`                | Manual production deploy                             |
+Deploy runs only after the **Lint and test** workflow succeeds (or via manual
+`workflow_dispatch`).
+
+| Event                                        | What deploys                                         |
+| -------------------------------------------- | ---------------------------------------------------- |
+| Push to `main` (web-related paths, after CI) | Production (`pages deploy` on branch `main`)         |
+| PR touching web-related paths (after CI)     | Preview deployment (`pages deploy` on the PR branch) |
+| `workflow_dispatch`                          | Manual production deploy                             |
 
 **GitHub secrets** (repo → Settings → Secrets and variables → Actions):
 
@@ -58,7 +61,7 @@ Pages **project name** is `guidedreview` (set via `--project-name` in the
 workflow and package scripts). First deploy creates the project if it does not
 exist yet.
 
-Attach `guidedreview.com` as a custom domain on that Pages project in the
+Attach `guidedreview.dev` as a custom domain on that Pages project in the
 dashboard.
 
 ### Local deploy

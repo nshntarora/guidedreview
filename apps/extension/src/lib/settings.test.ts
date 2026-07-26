@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { getProviderSettings, setProviderSettings } from "./settings";
+import { describe, expect, it, vi } from "vitest";
+import { getProviderSettings, onProviderSettingsChanged, setProviderSettings } from "./settings";
 import { DEFAULT_MODELS } from "./types";
 
 describe("settings", () => {
@@ -24,5 +24,32 @@ describe("settings", () => {
     });
     const settings = await getProviderSettings();
     expect(settings.model).toBe(DEFAULT_MODELS.grok);
+  });
+
+  it("onProviderSettingsChanged fires with normalized settings on save", async () => {
+    const listener = vi.fn();
+    const unsubscribe = onProviderSettingsChanged(listener);
+
+    await setProviderSettings({ provider: "openai", model: "gpt-4.1", apiKey: "sk-new" });
+
+    expect(listener).toHaveBeenCalledWith({
+      provider: "openai",
+      model: "gpt-4.1",
+      apiKey: "sk-new",
+    });
+
+    unsubscribe();
+    await setProviderSettings({ provider: "openai", model: "gpt-4.1", apiKey: "sk-later" });
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it("onProviderSettingsChanged ignores changes to unrelated keys", async () => {
+    const listener = vi.fn();
+    const unsubscribe = onProviderSettingsChanged(listener);
+
+    await chrome.storage.local.set({ "guidedReview.somethingElse": 1 });
+
+    expect(listener).not.toHaveBeenCalled();
+    unsubscribe();
   });
 });

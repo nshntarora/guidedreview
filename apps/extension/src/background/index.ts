@@ -12,6 +12,7 @@ import type {
   GitHubDevicePollRequest,
   GitHubDevicePollResponse,
   GitHubDeviceStartResponse,
+  OpenOptionsResponse,
   ReviewErrorInfo,
   ReviewPlan,
   ReviewUnit,
@@ -20,6 +21,7 @@ import type {
   TestConnectionRequest,
   TestConnectionResponse,
 } from "../lib/types";
+import { NO_API_KEY_ERROR_CODE } from "../lib/types";
 import { clearGitHubAuth, getGitHubAuth, setGitHubAuth } from "../lib/github/authStorage";
 import { fetchGitHubUser, pollAccessToken, requestDeviceCode } from "../lib/github/deviceOAuth";
 import {
@@ -56,6 +58,17 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, _sender, sendR
         const response: TestConnectionResponse = { ok: false, error: describeErrorMessage(error) };
         sendResponse(response);
       });
+    return true;
+  }
+
+  if (message.type === "OPEN_OPTIONS") {
+    try {
+      chrome.runtime.openOptionsPage();
+      sendResponse({ ok: true } satisfies OpenOptionsResponse);
+    } catch (error: unknown) {
+      console.error("OPEN_OPTIONS failed:", error);
+      sendResponse({ ok: false } satisfies OpenOptionsResponse);
+    }
     return true;
   }
 
@@ -169,11 +182,15 @@ async function handleAnnotateReviewStream(
 ): Promise<void> {
   const settings = await getProviderSettings();
 
+  // The content script pre-checks this before opening the port; this is the
+  // backstop. The code lets the overlay render the connect-a-provider prompt
+  // rather than a red error box.
   if (!settings.apiKey) {
     postEvent(port, {
       type: "ERROR",
       error: {
         message: "No API key configured. Open the extension settings to add one.",
+        code: NO_API_KEY_ERROR_CODE,
       },
     });
     return;

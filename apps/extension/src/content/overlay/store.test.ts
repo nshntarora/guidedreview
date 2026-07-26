@@ -41,6 +41,7 @@ function resetStore(): void {
     isOpen: false,
     status: "idle",
     error: null,
+    needsProvider: false,
     diff: null,
     plan: null,
     prContext: null,
@@ -206,6 +207,66 @@ describe("useReviewStore", () => {
       statusCode: 401,
       code: "authentication_error",
     });
+  });
+
+  it("setNeedsProvider flags the state without a plan when no diff is available yet", () => {
+    resetStore();
+    useReviewStore.setState({
+      status: "loading",
+      error: { message: "boom" },
+      prContext: prContextFixture(),
+    });
+    useReviewStore.getState().setNeedsProvider();
+    const state = useReviewStore.getState();
+    expect(state.needsProvider).toBe(true);
+    expect(state.error).toBeNull();
+    expect(state.plan).toBeNull();
+    expect(state.prContext).toEqual(prContextFixture());
+  });
+
+  it("setNeedsProvider builds a file-per-unit plan once the diff is available", () => {
+    resetStore();
+    const diff: ParsedDiff = {
+      files: [
+        { path: "src/a.ts", status: "modified", isBinaryOrElided: false, hunks: [] },
+        { path: "src/b.test.ts", status: "added", isBinaryOrElided: false, hunks: [] },
+      ],
+    };
+    useReviewStore.setState({ status: "loading", diff });
+
+    useReviewStore.getState().setNeedsProvider();
+
+    const state = useReviewStore.getState();
+    expect(state.needsProvider).toBe(true);
+    expect(state.status).toBe("ready");
+    expect(state.plan?.units.map((u) => u.title)).toEqual(["src/a.ts", "src/b.test.ts"]);
+    expect(state.diff).toBe(diff);
+  });
+
+  it("setError with a no_api_key code flags needsProvider instead of erroring", () => {
+    resetStore();
+    useReviewStore.getState().setError({
+      message: "No API key configured. Open the extension settings to add one.",
+      code: "no_api_key",
+    });
+    expect(useReviewStore.getState().needsProvider).toBe(true);
+    expect(useReviewStore.getState().status).not.toBe("error");
+    expect(useReviewStore.getState().error).toBeNull();
+  });
+
+  it("persistSession skips the locally built fallback plan", async () => {
+    resetStore();
+    useReviewStore.setState({
+      status: "ready",
+      needsProvider: true,
+      diff: diffFixture(),
+      plan: planFixture(1),
+      sessionKey: SESSION_KEY,
+    });
+
+    await persistSession();
+
+    expect(await chrome.storage.session.get(STORAGE_KEY)).toEqual({});
   });
 
   it("beginRetry bumps generation, clears error/plan, keeps diff, and returns the new generation", () => {

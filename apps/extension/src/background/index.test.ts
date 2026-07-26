@@ -11,6 +11,34 @@ async function loadHandleGitHubAuthGet() {
   return handleGitHubAuthGet;
 }
 
+type MessageListener = (
+  message: unknown,
+  sender: unknown,
+  sendResponse: (response?: unknown) => void,
+) => boolean | void;
+
+/** Deliver a message to the worker's registered onMessage listeners. */
+async function sendToBackground(message: unknown): Promise<unknown> {
+  await import("./index");
+  const listeners = [
+    ...(chrome.runtime.onMessage as unknown as { __listeners: Set<MessageListener> }).__listeners,
+  ];
+  return new Promise((resolve) => {
+    for (const listener of listeners) {
+      listener(message, {}, resolve);
+    }
+  });
+}
+
+describe("OPEN_OPTIONS", () => {
+  it("opens the options page and acknowledges", async () => {
+    const response = await sendToBackground({ type: "OPEN_OPTIONS" });
+
+    expect(chrome.runtime.openOptionsPage).toHaveBeenCalledTimes(1);
+    expect(response).toEqual({ ok: true });
+  });
+});
+
 describe("handleGitHubAuthGet", () => {
   it("never returns the access token or token type to the caller", async () => {
     const auth: GitHubAuthState = {

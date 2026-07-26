@@ -24,7 +24,7 @@ const newsreader = Newsreader({
 const logoSrc = typeof logoSvg === "string" ? logoSvg : (logoSvg as { src: string }).src;
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://guidedreview.com"),
+  metadataBase: new URL("https://guidedreview.dev"),
   title: {
     default: "Guided Review",
     template: "%s · Guided Review",

@@ -6,7 +6,7 @@ import { DocsPageWrapper } from "@/components/docs/DocsPageWrapper";
 
 type Props = { params: Promise<{ slug: string }> };
 
-const SITE_URL = "https://guidedreview.com";
+const SITE_URL = "https://guidedreview.dev";
 
 function getPageTitle(slug: string): string {
   const navItem = helpNavigation.find((item) => item.type !== "heading" && item.slug === slug);

@@ -6,6 +6,7 @@ import { DEFAULT_DIFF_VIEW_MODE } from "./diffViewMode";
 import { useReviewStore } from "./store";
 import { PR_DESCRIPTION_UNIT_TITLE } from "./displayUnits";
 import { VIEW_CHORD_WINDOW_MS } from "./viewModeChord";
+import { buildFileReviewPlan } from "../../lib/review/fileReviewPlan";
 import type { ParsedDiff, PRContext, ReviewPlan } from "../../lib/types";
 import * as messaging from "../../lib/messaging";
 import * as oauthConfig from "../../lib/github/oauthConfig";
@@ -22,6 +23,7 @@ vi.mock("../../lib/messaging", () => ({
   getGitHubAuthStatus: vi.fn(),
   startGitHubDeviceAuth: vi.fn(),
   pollGitHubDeviceAuth: vi.fn(),
+  openOptionsPage: vi.fn(),
 }));
 
 // CI has no .env with VITE_GITHUB_CLIENT_ID; mock configured so the connect
@@ -87,6 +89,7 @@ function resetStore(): void {
     isOpen: false,
     status: "idle",
     error: null,
+    needsProvider: false,
     diff: null,
     plan: null,
     prContext: null,
@@ -260,6 +263,71 @@ describe("Overlay", () => {
 
     screen.getByRole("button", { name: /^retry$/i }).click();
     expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it("walks the diff with file-per-unit steps and prompts to connect a provider", () => {
+    const diff = diffFixture();
+    useReviewStore.setState({
+      isOpen: true,
+      status: "ready",
+      needsProvider: true,
+      diff,
+      plan: buildFileReviewPlan(diff),
+      prContext: prContextFixture(),
+      currentUnitIndex: 0,
+    });
+    const onRetry = vi.fn();
+    render(<Overlay onRetry={onRetry} />);
+
+    expect(screen.getByTestId("connect-provider-prompt")).toBeInTheDocument();
+    expect(screen.queryByTestId("context-panel-error")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^retry$/i })).not.toBeInTheDocument();
+    expect(screen.queryAllByTestId("unit-skeleton")).toHaveLength(0);
+
+    // Description unit still shows the PR body and the Changes summary.
+    expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
+    expect(screen.getByLabelText(/diff summary/i)).toBeInTheDocument();
+
+    // One navigable step per changed file, after the description.
+    expect(screen.getByText(/2 of 2|1 of 2/i)).toBeInTheDocument();
+    const live = screen.getByTestId("overlay-status-live");
+    expect(live).toHaveTextContent(/one per changed file/i);
+    expect(live).not.toHaveTextContent(/^Error:/);
+  });
+
+  it("shows the file diff on a locally built unit, with the prompt still in the context panel", () => {
+    const diff = diffFixture();
+    useReviewStore.setState({
+      isOpen: true,
+      status: "ready",
+      needsProvider: true,
+      diff,
+      plan: buildFileReviewPlan(diff),
+      prContext: prContextFixture(),
+      currentUnitIndex: 1,
+    });
+    render(<Overlay />);
+
+    // The unit is the file itself: its diff renders, titled by path.
+    expect(screen.getByTestId("diff-unit-title")).toHaveTextContent("src/foo.ts");
+    expect(screen.getByTestId("connect-provider-prompt")).toBeInTheDocument();
+  });
+
+  it("keeps restored AI context visible even when the provider key is gone", () => {
+    useReviewStore.setState({
+      isOpen: true,
+      status: "ready",
+      needsProvider: true,
+      diff: diffFixture(),
+      plan: planFixture(),
+      prContext: prContextFixture(),
+      currentUnitIndex: 1,
+    });
+    render(<Overlay />);
+
+    expect(screen.getByText("because it needed updating")).toBeInTheDocument();
+    expect(screen.queryByTestId("connect-provider-prompt")).not.toBeInTheDocument();
   });
 
   it("still shows the PR description unit when the plan has no code units", () => {
