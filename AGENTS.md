@@ -146,10 +146,10 @@ Next.js App Router with **static export** (`output: "export"`) for `/`, `/docs`,
 GFM), registered in `config/help-pages.ts` / `config/help-navigation.ts`, rendered at `/docs` and
 `/docs/[slug]`. Dev on port 3000. Production build writes to `apps/web/out/`.
 
-**Hosting:** Cloudflare Pages via Direct Upload. `.github/workflows/deploy-web.yml` builds and
-deploys on main/PR path changes under `apps/web` / `packages/ui`. Secrets:
-`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` (optional var `CLOUDFLARE_PAGES_PROJECT`, default
-`guidedreview`).
+**Hosting:** Cloudflare Workers static assets (`apps/web/wrangler.jsonc` → `*.workers.dev`).
+`.github/workflows/deploy-web.yml` builds and deploys on main/PR path changes under `apps/web` /
+`packages/ui`. Secrets: `CLOUDFLARE_API_TOKEN` (Workers Scripts:Edit), `CLOUDFLARE_ACCOUNT_ID`.
+Worker name defaults to `guidedreview` in wrangler config.
 
 ## Voice and tone
 

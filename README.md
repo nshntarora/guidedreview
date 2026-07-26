@@ -56,18 +56,19 @@ After the monorepo move, remove any old root `dist/` entry from `chrome://extens
 | Extension Vite / crx HMR | 5173 |
 | Marketing Next.js        | 3000 |
 
-### Marketing site deploy (Cloudflare Pages)
+### Marketing site deploy (Cloudflare Workers)
 
-The marketing site (`apps/web`) is a static export deployed to **Cloudflare Pages**
-by `.github/workflows/deploy-web.yml` on pushes/PRs that touch the web app or
-shared UI package.
+The marketing site (`apps/web`) is a static export deployed as a **Cloudflare
+Worker with static assets** (unified Workers dashboard → `*.workers.dev`) by
+`.github/workflows/deploy-web.yml` on pushes/PRs that touch the web app or
+shared UI package. Config: `apps/web/wrangler.jsonc`.
 
 Set these GitHub Actions secrets before the first deploy:
 
-- `CLOUDFLARE_API_TOKEN` — token with **Cloudflare Pages:Edit**
+- `CLOUDFLARE_API_TOKEN` — token with **Workers Scripts:Edit**
 - `CLOUDFLARE_ACCOUNT_ID` — your Cloudflare account ID
 
-Optional variable: `CLOUDFLARE_PAGES_PROJECT` (defaults to `guidedreview`).
+Worker name defaults to `guidedreview` (edit `wrangler.jsonc` if yours differs).
 
 See [`apps/web/README.md`](apps/web/README.md) for full hosting notes.
 

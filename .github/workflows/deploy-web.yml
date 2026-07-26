@@ -1,15 +1,18 @@
-# Deploy the marketing site (apps/web) to Cloudflare Pages.
+# Deploy the marketing site (apps/web) to Cloudflare Workers (static assets).
+#
+# Cloudflare has merged the Workers + Pages dashboard; static sites now deploy
+# as Workers with an assets directory and get a *.workers.dev URL. This uses
+# `wrangler deploy` / `wrangler versions upload`, not `wrangler pages deploy`.
 #
 # Required GitHub secrets (repo Settings → Secrets and variables → Actions):
-#   CLOUDFLARE_API_TOKEN   — Account API token with Cloudflare Pages:Edit
+#   CLOUDFLARE_API_TOKEN   — Account API token with Workers Scripts:Edit
 #   CLOUDFLARE_ACCOUNT_ID  — Cloudflare account ID
 #
-# Create an empty Pages project named "guidedreview" (or set
-# vars.CLOUDFLARE_PAGES_PROJECT) in the Cloudflare dashboard first, or let
-# the first deploy create it via Direct Upload.
+# Worker name is set in apps/web/wrangler.jsonc (default: guidedreview). Rename
+# there if your dashboard Worker uses a different name.
 #
-# Production: push to main when web-related paths change.
-# Preview:    pull requests that touch the same paths.
+# Production: push to main when web-related paths change → wrangler deploy
+# Preview:    pull requests → wrangler versions upload (preview URL)
 
 name: Deploy web
 
@@ -66,12 +69,13 @@ jobs:
       - name: Build marketing site
         run: npm run build -w @guided-review/web
 
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy to Cloudflare Workers
         id: deploy
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # Static export output (next.config.ts → output: "export")
-          command: pages deploy apps/web/out --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT || 'guidedreview' }}
+          workingDirectory: apps/web
+          # Production branch → full deploy. PRs → version upload (preview URL).
+          command: ${{ github.event_name == 'pull_request' && 'versions upload' || 'deploy' }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}

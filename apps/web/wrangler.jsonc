@@ -1,0 +1,23 @@
+/**
+ * Cloudflare Workers (static assets) for the marketing site.
+ *
+ * Cloudflare's dashboard has unified Workers + Pages under Workers; new
+ * projects get a *.workers.dev URL. Deploy with:
+ *   npm run build -w @guided-review/web && npx wrangler deploy -c apps/web/wrangler.jsonc
+ *
+ * Name must match the Worker in the Cloudflare dashboard.
+ */
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "guidedreview",
+  "compatibility_date": "2026-07-24",
+  // Pure static export (next.config.ts → output: "export"). No Worker script.
+  "assets": {
+    "directory": "./out",
+    // Next writes 404.html; use that for unknown routes (not SPA fallback).
+    "not_found_handling": "404-page"
+  },
+  "workers_dev": true,
+  // Version preview URLs for non-production uploads (PR deploys).
+  "preview_urls": true
+}

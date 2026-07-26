@@ -1,4 +1,5 @@
-# Cloudflare Pages headers (https://developers.cloudflare.com/pages/configuration/headers/)
+# Cloudflare Workers static asset headers
+# https://developers.cloudflare.com/workers/static-assets/headers/
 # Next static export writes opengraph-image without a .png extension.
 
 /opengraph-image

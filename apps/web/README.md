@@ -32,36 +32,44 @@ Uses `@guided-review/ui` via `transpilePackages` and Tailwind `@source` of `pack
 
 ## Hosting
 
-**Cloudflare Pages** via Direct Upload from GitHub Actions
+**Cloudflare Workers** (static assets) via GitHub Actions
 (`.github/workflows/deploy-web.yml`).
 
+Cloudflare has merged the Workers + Pages UI. Static sites deploy as a Worker
+with an `assets` directory (`apps/web/wrangler.jsonc`) and get a
+`*.workers.dev` URL (custom domains attach on the same Worker).
+
 The site is a pure static export (`output: "export"` in `next.config.ts`).
-`npm run build` writes assets to `apps/web/out/`, which Wrangler uploads.
+`npm run build` writes to `apps/web/out/`, which Wrangler uploads.
 
 ### CI deploy
 
-| Event                              | What deploys                        |
-| ---------------------------------- | ----------------------------------- |
-| Push to `main` (web-related paths) | Production                          |
-| PR touching web-related paths      | Preview URL                         |
-| `workflow_dispatch`                | Manual production/preview by branch |
+| Event                              | What deploys                                 |
+| ---------------------------------- | -------------------------------------------- |
+| Push to `main` (web-related paths) | Production (`wrangler deploy`)               |
+| PR touching web-related paths      | Preview version (`wrangler versions upload`) |
+| `workflow_dispatch`                | Manual production deploy                     |
 
 **GitHub secrets** (repo → Settings → Secrets and variables → Actions):
 
-| Secret                  | Value                                              |
-| ----------------------- | -------------------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`  | Account API token with **Cloudflare Pages → Edit** |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID                              |
+| Secret                  | Value                                             |
+| ----------------------- | ------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Account API token with **Workers Scripts → Edit** |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID                             |
 
-Optional repo **variable**: `CLOUDFLARE_PAGES_PROJECT` (default `guidedreview`).
+Worker **name** is `guidedreview` in `wrangler.jsonc` — change it there if your
+dashboard Worker uses a different name. First `wrangler deploy` creates the
+Worker if it does not exist yet.
 
-Create the Pages project in the Cloudflare dashboard (empty Direct Upload project
-is fine), attach the custom domain, then push a change under `apps/web/` or
-`packages/ui/` — or run **Deploy web** → **Run workflow**.
+Attach `guidedreview.com` as a custom domain on that Worker in the dashboard.
 
-Local production preview of the export:
+### Local deploy
 
 ```bash
+# from monorepo root
+npm run deploy -w @guided-review/web
+
+# or static preview without Cloudflare
 npm run build:web
-npx serve apps/web/out   # or any static file server
+npx serve apps/web/out
 ```
