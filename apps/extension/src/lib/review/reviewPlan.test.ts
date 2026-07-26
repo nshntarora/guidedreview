@@ -1,28 +1,26 @@
 import { describe, expect, it } from "vitest";
 import { isCompleteReviewUnit, prefixChunkUnitId, validateAndCleanUnit } from "./reviewPlan";
-import type { ParsedDiff, ReviewUnit } from "../types";
+import type { DiffFile, ReviewUnit } from "../types";
 
-function diffFixture(): ParsedDiff {
-  return {
-    files: [
+/** The known-files map `validateAndCleanUnit` validates against. */
+function diffFixture(): Map<string, DiffFile> {
+  const file: DiffFile = {
+    path: "src/foo.ts",
+    status: "modified",
+    isBinaryOrElided: false,
+    hunks: [
       {
-        path: "src/foo.ts",
-        status: "modified",
-        isBinaryOrElided: false,
-        hunks: [
-          {
-            id: "src/foo.ts#0",
-            header: "@@ -1,1 +1,1 @@",
-            oldStart: 1,
-            oldLines: 1,
-            newStart: 1,
-            newLines: 1,
-            lines: [],
-          },
-        ],
+        id: "src/foo.ts#0",
+        header: "@@ -1,1 +1,1 @@",
+        oldStart: 1,
+        oldLines: 1,
+        newStart: 1,
+        newLines: 1,
+        lines: [],
       },
     ],
   };
+  return new Map([[file.path, file]]);
 }
 
 describe("validateAndCleanUnit", () => {
@@ -67,18 +65,6 @@ describe("validateAndCleanUnit", () => {
     );
 
     expect(cleaned).toBeNull();
-  });
-
-  it("accepts a prebuilt known-files map as well as a diff", () => {
-    const diff = diffFixture();
-    const knownFiles = new Map(diff.files.map((f) => [f.path, f]));
-
-    const cleaned = validateAndCleanUnit(
-      unitWith([{ fileId: "src/foo.ts", hunkIds: [], role: "core_logic" }]),
-      knownFiles,
-    );
-
-    expect(cleaned?.id).toBe("u1");
   });
 
   it("falls back to core_logic for an unrecognized role", () => {

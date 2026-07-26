@@ -10,14 +10,6 @@ Follow these review-structuring conventions:
 Never invent code that isn't in the diff. Every fileId and hunkId you reference must come from the diff exactly as given.`;
 
 /**
- * Render a parsed diff into a compact, LLM-readable text form, with hunk ids
- * annotated so the model can reference them exactly in its structured output.
- */
-export function renderDiffForPrompt(diff: ParsedDiff): string {
-  return diff.files.map(renderFile).join("\n\n");
-}
-
-/**
  * Rendering is pure per file, and chunkDiffByFile measures every file before
  * buildUserPrompt renders the same files again — cache so a large diff is
  * only walked once.
@@ -99,7 +91,8 @@ export function buildUserPrompt(diff: ParsedDiff, prContext: PRContext): string 
       : "",
     "",
     "Diff:",
-    renderDiffForPrompt(diff),
+    // Hunk ids are annotated inline so the model can reference them exactly.
+    diff.files.map(renderFile).join("\n\n"),
   ]
     .filter(Boolean)
     .join("\n\n");

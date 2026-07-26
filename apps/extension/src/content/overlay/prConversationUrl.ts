@@ -4,19 +4,6 @@ export function prConversationUrl(pr: { owner: string; repo: string; number: num
 }
 
 /**
- * True when `pathname` is already the PR conversation tab
- * (not /files, /commits, /checks, etc.).
- */
-export function isPrConversationPath(
-  pathname: string,
-  pr: { owner: string; repo: string; number: number },
-): boolean {
-  const normalized = pathname.replace(/\/+$/, "") || "/";
-  const expected = `/${pr.owner}/${pr.repo}/pull/${pr.number}`;
-  return normalized === expected;
-}
-
-/**
  * True when `pathname` is the PR Files changed / Changes tab
  * (`.../pull/N/files` or `.../pull/N/changes`, optional trailing segments).
  * GitHub's classic UI uses `/files`; the newer PR UI uses `/changes`.
@@ -36,6 +23,8 @@ export function navigateToPrConversation(pr: {
   repo: string;
   number: number;
 }): void {
-  if (isPrConversationPath(window.location.pathname, pr)) return;
+  // Already on the conversation tab (not /files, /commits, /checks, …).
+  const normalized = window.location.pathname.replace(/\/+$/, "") || "/";
+  if (normalized === `/${pr.owner}/${pr.repo}/pull/${pr.number}`) return;
   window.location.assign(prConversationUrl(pr));
 }

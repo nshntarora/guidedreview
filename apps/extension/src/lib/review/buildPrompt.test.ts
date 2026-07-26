@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildUserPrompt, chunkDiffByFile, renderDiffForPrompt } from "./buildPrompt";
+import { buildUserPrompt, chunkDiffByFile } from "./buildPrompt";
 import type { DiffFile, ParsedDiff, PRContext } from "../types";
 
 function fileFixture(path: string, extraLineCount = 0): DiffFile {
@@ -27,31 +27,6 @@ function fileFixture(path: string, extraLineCount = 0): DiffFile {
     ],
   };
 }
-
-describe("renderDiffForPrompt", () => {
-  it("annotates each hunk with its stable id", () => {
-    const diff: ParsedDiff = { files: [fileFixture("src/foo.ts")] };
-    const text = renderDiffForPrompt(diff);
-    expect(text).toContain("[hunk id: src/foo.ts#0]");
-    expect(text).toContain("### File: src/foo.ts (modified)");
-  });
-
-  it("marks binary files without dumping hunk content", () => {
-    const diff: ParsedDiff = {
-      files: [{ path: "logo.png", status: "modified", isBinaryOrElided: true, hunks: [] }],
-    };
-    const text = renderDiffForPrompt(diff);
-    expect(text).toContain("binary or elided");
-  });
-
-  it("labels a renamed file with both paths", () => {
-    const diff: ParsedDiff = {
-      files: [{ ...fileFixture("new.ts"), status: "renamed", previousPath: "old.ts" }],
-    };
-    const text = renderDiffForPrompt(diff);
-    expect(text).toContain("renamed from old.ts to new.ts");
-  });
-});
 
 describe("chunkDiffByFile", () => {
   it("keeps small diffs in a single chunk", () => {
@@ -133,5 +108,27 @@ describe("buildUserPrompt", () => {
   it("omits the merge line when either ref is missing", () => {
     const prompt = buildUserPrompt({ files: [] }, { ...prContext, baseRef: "", headRef: "" });
     expect(prompt).not.toContain("Merging");
+  });
+
+  it("annotates each hunk with its stable id", () => {
+    const prompt = buildUserPrompt({ files: [fileFixture("src/foo.ts")] }, prContext);
+    expect(prompt).toContain("[hunk id: src/foo.ts#0]");
+    expect(prompt).toContain("### File: src/foo.ts (modified)");
+  });
+
+  it("marks binary files without dumping hunk content", () => {
+    const prompt = buildUserPrompt(
+      { files: [{ path: "logo.png", status: "modified", isBinaryOrElided: true, hunks: [] }] },
+      prContext,
+    );
+    expect(prompt).toContain("binary or elided");
+  });
+
+  it("labels a renamed file with both paths", () => {
+    const prompt = buildUserPrompt(
+      { files: [{ ...fileFixture("new.ts"), status: "renamed", previousPath: "old.ts" }] },
+      prContext,
+    );
+    expect(prompt).toContain("renamed from old.ts to new.ts");
   });
 });

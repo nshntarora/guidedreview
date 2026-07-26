@@ -1,5 +1,5 @@
 import { useEffect, useRef, type MutableRefObject, type RefObject } from "react";
-import { confirmationHandlesKey, getConfirmationDialogElement } from "./components/confirmation";
+import { getConfirmationDialogElement, isConfirmationOpen } from "./components/confirmation";
 import type { SelectableLine } from "./commentTypes";
 import { trapTabKey } from "./focusTrap";
 import { recordViewChordKey, type ViewChordPending } from "./viewModeChord";
@@ -143,11 +143,10 @@ export function useOverlayKeyboard({
      * it doesn't act on), so any true here means the caller should return.
      */
     function handleModalKeys(event: KeyboardEvent): boolean {
-      // Confirmation dialog: Enter = OK, Esc = cancel (highest priority modal).
-      if (confirmationHandlesKey(event)) {
-        event.preventDefault();
-        return true;
-      }
+      // Confirmation dialog owns every key while open (highest priority modal).
+      // It runs Enter/Esc from its own capture listener, so we only need to stop
+      // the key here before it reaches the other modals or navigate mode.
+      if (isConfirmationOpen()) return true;
 
       // Success modal: Enter / Esc exit the review (single CTA dialog).
       if (submitSuccessRef.current) {

@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ConfirmationHost,
   confirm,
-  confirmationHandlesKey,
   getConfirmationDialogElement,
   isConfirmationOpen,
   resetConfirmationQueueForTests,
@@ -18,11 +17,17 @@ function OpenProbe() {
 
 describe("confirmation", () => {
   beforeEach(() => {
-    resetConfirmationQueueForTests();
+    // Notify subscribers (ConfirmationHost) under act so residual queue state
+    // never re-renders outside React's test act boundary.
+    act(() => {
+      resetConfirmationQueueForTests();
+    });
   });
 
   afterEach(() => {
-    resetConfirmationQueueForTests();
+    act(() => {
+      resetConfirmationQueueForTests();
+    });
   });
 
   it("does not throw when confirm is called without a host", () => {
@@ -245,7 +250,14 @@ describe("confirmation", () => {
     consoleError.mockRestore();
   });
 
-  it("handles Enter as OK and Escape as cancel via confirmationHandlesKey", async () => {
+  /** Dispatch a real window keydown, the way the browser delivers one. */
+  function pressKey(init: KeyboardEventInit): void {
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, ...init }));
+    });
+  }
+
+  it("handles Enter as OK and Escape as cancel", async () => {
     const okButtonHandler = vi.fn();
     const cancelButtonHandler = vi.fn();
     render(<ConfirmationHost />);
@@ -262,10 +274,7 @@ describe("confirmation", () => {
     await screen.findByTestId("confirmation-dialog");
     expect(getConfirmationDialogElement()).toBeInstanceOf(HTMLElement);
 
-    act(() => {
-      const handled = confirmationHandlesKey(new KeyboardEvent("keydown", { key: "Escape" }));
-      expect(handled).toBe(true);
-    });
+    pressKey({ key: "Escape" });
 
     await waitFor(() => {
       expect(cancelButtonHandler).toHaveBeenCalledTimes(1);
@@ -282,10 +291,7 @@ describe("confirmation", () => {
 
     await screen.findByTestId("confirmation-dialog");
 
-    act(() => {
-      const handled = confirmationHandlesKey(new KeyboardEvent("keydown", { key: "Enter" }));
-      expect(handled).toBe(true);
-    });
+    pressKey({ key: "Enter" });
 
     await waitFor(() => {
       expect(okButtonHandler).toHaveBeenCalledTimes(1);
@@ -306,17 +312,31 @@ describe("confirmation", () => {
 
     await screen.findByTestId("confirmation-dialog");
 
-    act(() => {
-      expect(
-        confirmationHandlesKey(new KeyboardEvent("keydown", { key: "Enter", metaKey: true })),
-      ).toBe(false);
-      expect(
-        confirmationHandlesKey(new KeyboardEvent("keydown", { key: "Enter", ctrlKey: true })),
-      ).toBe(false);
-    });
+    pressKey({ key: "Enter", metaKey: true });
+    pressKey({ key: "Enter", ctrlKey: true });
+    pressKey({ key: "Enter", altKey: true });
 
     expect(okButtonHandler).not.toHaveBeenCalled();
     expect(screen.getByTestId("confirmation-dialog")).toBeInTheDocument();
+  });
+
+  it("runs the handler only once when Enter is pressed repeatedly", async () => {
+    const okButtonHandler = vi.fn();
+    render(<ConfirmationHost />);
+
+    act(() => {
+      confirm({ title: "Once", body: "Only once", okButtonHandler });
+    });
+
+    await screen.findByTestId("confirmation-dialog");
+
+    pressKey({ key: "Enter" });
+    pressKey({ key: "Enter" });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("confirmation-dialog")).not.toBeInTheDocument();
+    });
+    expect(okButtonHandler).toHaveBeenCalledTimes(1);
   });
 
   it("useConfirmationOpen tracks queue state", async () => {

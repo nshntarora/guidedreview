@@ -1,15 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { REVIEW_PLAN_JSON_SCHEMA } from "./reviewSchema";
 import { validateAndCleanUnit } from "./reviewPlan";
-import { FILE_ROLES, type ParsedDiff, type ReviewUnit } from "../types";
+import { FILE_ROLES, type DiffFile, type ReviewUnit } from "../types";
 
 const roleSchema =
   REVIEW_PLAN_JSON_SCHEMA.properties.units.items.properties.files.items.properties.role;
 
-function diffWith(path: string): ParsedDiff {
-  return {
-    files: [{ path, status: "modified", isBinaryOrElided: false, hunks: [] }],
-  };
+function diffWith(path: string): Map<string, DiffFile> {
+  return new Map([[path, { path, status: "modified", isBinaryOrElided: false, hunks: [] }]]);
 }
 
 describe("REVIEW_PLAN_JSON_SCHEMA", () => {

@@ -1,21 +1,29 @@
 import type { ProviderSettings } from "./types";
-import { DEFAULT_MODELS } from "./types";
-import { normalizeProviderSettings } from "./providers/catalog";
+import { defaultModelFor, normalizeProviderSettings } from "./providers/catalog";
+import { watchLocal } from "./storage";
 
 const STORAGE_KEY = "guidedReview.providerSettings";
 
 const FALLBACK_SETTINGS: ProviderSettings = {
   provider: "anthropic",
-  model: DEFAULT_MODELS.anthropic,
+  model: defaultModelFor("anthropic"),
   apiKey: "",
 };
+
+function parseSettings(raw: unknown): ProviderSettings {
+  if (!raw) return FALLBACK_SETTINGS;
+  return normalizeProviderSettings(raw as Partial<ProviderSettings>);
+}
+
+// Both accessors below deliberately skip the swallow-and-warn helpers in
+// `storage.ts`: a failed read must not look like "no API key configured", and
+// the options page reports a failed save to the user. Only the change listener
+// is shared.
 
 /** Read the user's configured provider settings from chrome.storage.local. */
 export async function getProviderSettings(): Promise<ProviderSettings> {
   const result = await chrome.storage.local.get(STORAGE_KEY);
-  const stored = result[STORAGE_KEY] as Partial<ProviderSettings> | undefined;
-  if (!stored) return FALLBACK_SETTINGS;
-  return normalizeProviderSettings(stored);
+  return parseSettings(result[STORAGE_KEY]);
 }
 
 export async function setProviderSettings(settings: ProviderSettings): Promise<void> {
@@ -29,17 +37,5 @@ export async function setProviderSettings(settings: ProviderSettings): Promise<v
 export function onProviderSettingsChanged(
   listener: (settings: ProviderSettings) => void,
 ): () => void {
-  const handler = (
-    changes: Record<string, chrome.storage.StorageChange>,
-    areaName: string,
-  ): void => {
-    if (areaName !== "local") return;
-    const change = changes[STORAGE_KEY];
-    if (!change) return;
-    const next = change.newValue as Partial<ProviderSettings> | undefined;
-    listener(next ? normalizeProviderSettings(next) : FALLBACK_SETTINGS);
-  };
-
-  chrome.storage.onChanged.addListener(handler);
-  return () => chrome.storage.onChanged.removeListener(handler);
+  return watchLocal(STORAGE_KEY, parseSettings, listener);
 }

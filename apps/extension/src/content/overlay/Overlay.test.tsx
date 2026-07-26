@@ -4,7 +4,6 @@ import { Overlay } from "./Overlay";
 import { resetConfirmationQueueForTests } from "./components/confirmation";
 import { DEFAULT_DIFF_VIEW_MODE } from "./diffViewMode";
 import { useReviewStore } from "./store";
-import { PR_DESCRIPTION_UNIT_TITLE } from "./displayUnits";
 import { VIEW_CHORD_WINDOW_MS } from "./viewModeChord";
 import { buildFileReviewPlan } from "../../lib/review/fileReviewPlan";
 import type { ParsedDiff, PRContext, ReviewPlan } from "../../lib/types";
@@ -157,7 +156,7 @@ describe("Overlay", () => {
     render(<Overlay />);
 
     // Title in left pane + entry in the unit list.
-    expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
     expect(screen.getByText(/building remaining units/i)).toBeInTheDocument();
     expect(screen.getByRole("status", { name: /building remaining units/i })).toBeInTheDocument();
@@ -258,7 +257,7 @@ describe("Overlay", () => {
     expect(screen.getByTestId("error-message")).toHaveTextContent("Invalid API key");
     expect(screen.getByTestId("error-status-code")).toHaveTextContent("401");
     expect(screen.getByTestId("error-code")).toHaveTextContent("authentication_error");
-    expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
 
     screen.getByRole("button", { name: /^retry$/i }).click();
@@ -285,7 +284,7 @@ describe("Overlay", () => {
     expect(screen.queryAllByTestId("unit-skeleton")).toHaveLength(0);
 
     // Description unit still shows the PR body and the Changes summary.
-    expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
     expect(screen.getByLabelText(/diff summary/i)).toBeInTheDocument();
 
@@ -340,7 +339,7 @@ describe("Overlay", () => {
       currentUnitIndex: 0,
     });
     render(<Overlay />);
-    expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText(/no review units were generated/i)).not.toBeInTheDocument();
   });
 
@@ -354,7 +353,7 @@ describe("Overlay", () => {
       currentUnitIndex: 1,
     });
     render(<Overlay />);
-    expect(screen.getAllByText(PR_DESCRIPTION_UNIT_TITLE).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByTestId("diff-unit-title")).toHaveTextContent("Update foo");
     expect(screen.getByText("because it needed updating")).toBeInTheDocument();
   });

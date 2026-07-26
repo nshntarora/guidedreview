@@ -36,8 +36,6 @@ const queueListeners = new Set<() => void>();
 const openListeners = new Set<() => void>();
 
 let dialogElement: HTMLElement | null = null;
-let okAction: (() => void) | null = null;
-let cancelAction: (() => void) | null = null;
 
 function notifyQueue(): void {
   for (const l of queueListeners) l();
@@ -120,33 +118,11 @@ export function getConfirmationDialogElement(): HTMLElement | null {
   return dialogElement;
 }
 
-/**
- * Handle overlay-level keyboard when a confirmation is open.
- * Returns true if the event was consumed (caller should preventDefault / return).
- */
-export function confirmationHandlesKey(event: KeyboardEvent): boolean {
-  if (confirmationQueue.length === 0) return false;
-
-  if (event.key === "Escape") {
-    cancelAction?.();
-    return true;
-  }
-
-  if (event.key === "Enter" && !event.metaKey && !event.ctrlKey && !event.altKey) {
-    okAction?.();
-    return true;
-  }
-
-  return false;
-}
-
 /** Test helper: drain the queue without running handlers. */
 export function resetConfirmationQueueForTests(): void {
   const hadItems = confirmationQueue.length > 0;
   confirmationQueue = [];
   dialogElement = null;
-  okAction = null;
-  cancelAction = null;
   // Only notify when something was cleared — avoids noisy re-renders in parallel tests.
   if (hadItems) {
     notifyQueue();
@@ -191,6 +167,7 @@ function ConfirmationDialog({
   cancelHandlerRef.current = cancelButtonHandler;
   onCloseRef.current = onClose;
 
+  /** Set once the dialog has resolved, so a second Enter/Esc can't re-run a handler. */
   const settledRef = useRef(false);
 
   const handleOk = useCallback(async () => {
@@ -220,24 +197,19 @@ function ConfirmationDialog({
     onCloseRef.current();
   }, []);
 
-  // Register dialog + actions for overlay keyboard / Tab trap.
+  // Register the panel element for the overlay's Tab focus trap.
   useEffect(() => {
-    dialogElement = dialogRef.current;
-    okAction = () => {
-      void handleOk();
-    };
-    cancelAction = () => {
-      void handleCancel();
-    };
+    const panel = dialogRef.current;
+    dialogElement = panel;
     return () => {
-      if (dialogElement === dialogRef.current) dialogElement = null;
-      okAction = null;
-      cancelAction = null;
+      // Only clear if a newer dialog hasn't already claimed the slot.
+      if (dialogElement === panel) dialogElement = null;
     };
-  }, [handleOk, handleCancel]);
+  }, []);
 
-  // Own capture listener so Enter/Esc work outside the overlay (e.g. options page).
-  // Overlay also routes keys via confirmationHandlesKey; settledRef prevents double-fire.
+  // Sole Enter/Esc handler for the dialog. Capture phase so it works both under
+  // the overlay (which stops propagation on every key) and on the options page,
+  // where there is no overlay keyboard at all.
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
       if (event.key === "Escape") {

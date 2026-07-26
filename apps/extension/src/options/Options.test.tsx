@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { Options } from "./Options";
-import { DEFAULT_MODELS } from "../lib/types";
+import { defaultModelFor } from "../lib/providers/catalog";
 
 async function chooseOption(
   user: ReturnType<typeof userEvent.setup>,
@@ -63,7 +63,7 @@ describe("Options", () => {
     const stored = await chrome.storage.local.get("guidedReview.providerSettings");
     expect(stored["guidedReview.providerSettings"]).toEqual({
       provider: "anthropic",
-      model: DEFAULT_MODELS.anthropic,
+      model: defaultModelFor("anthropic"),
       apiKey: "sk-new-key",
     });
   });

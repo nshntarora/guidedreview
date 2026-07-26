@@ -1,14 +1,7 @@
 import type { ReviewPlan, ReviewUnit } from "../../lib/types";
 
-export const PR_DESCRIPTION_UNIT_ID = "__pr_description";
-export const PR_DESCRIPTION_UNIT_TITLE = "PR Description";
-
 export type DisplayUnit =
-  | {
-      kind: "pr_description";
-      id: typeof PR_DESCRIPTION_UNIT_ID;
-      title: typeof PR_DESCRIPTION_UNIT_TITLE;
-    }
+  | { kind: "pr_description"; id: "__pr_description"; title: "PR Description" }
   | { kind: "review"; id: string; title: string; unit: ReviewUnit; planIndex: number };
 
 /**
@@ -20,8 +13,8 @@ export type DisplayUnit =
 export function buildDisplayUnits(plan: ReviewPlan | null): DisplayUnit[] {
   const description: DisplayUnit = {
     kind: "pr_description",
-    id: PR_DESCRIPTION_UNIT_ID,
-    title: PR_DESCRIPTION_UNIT_TITLE,
+    id: "__pr_description",
+    title: "PR Description",
   };
 
   if (!plan) return [description];

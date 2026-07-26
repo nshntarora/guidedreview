@@ -58,13 +58,6 @@ export function displayLineNumber(line: SelectableLine): number | undefined {
   return line.side === "LEFT" ? line.oldLine : line.newLine;
 }
 
-export function selectionBounds(sel: LineSelection): { start: number; end: number } {
-  return {
-    start: Math.min(sel.anchorIndex, sel.focusIndex),
-    end: Math.max(sel.anchorIndex, sel.focusIndex),
-  };
-}
-
 /**
  * Lines included in the current selection: same file + side as the anchor,
  * with flat indices between anchor and focus (inclusive).
@@ -73,7 +66,8 @@ export function linesInSelection(lines: SelectableLine[], sel: LineSelection): S
   if (lines.length === 0) return [];
   const anchor = lines[sel.anchorIndex];
   if (!anchor) return [];
-  const { start, end } = selectionBounds(sel);
+  const start = Math.min(sel.anchorIndex, sel.focusIndex);
+  const end = Math.max(sel.anchorIndex, sel.focusIndex);
   return lines
     .slice(start, end + 1)
     .filter((l) => l.filePath === anchor.filePath && l.side === anchor.side);

@@ -1,4 +1,4 @@
-import type { ParsedDiff, ReviewUnit, ReviewUnitFileRef } from "../types";
+import type { DiffFile, ReviewUnit, ReviewUnitFileRef } from "../types";
 import { DEFAULT_FILE_ROLE, FILE_ROLES } from "../types";
 
 const KNOWN_FILE_ROLES: ReadonlySet<string> = new Set(FILE_ROLES);
@@ -26,13 +26,8 @@ export function prefixChunkUnitId(chunkIndex: number, unitId: string): string {
  */
 export function validateAndCleanUnit(
   unit: ReviewUnit,
-  diffOrKnownFiles: ParsedDiff | Map<string, ParsedDiff["files"][number]>,
+  knownFiles: Map<string, DiffFile>,
 ): ReviewUnit | null {
-  const knownFiles =
-    diffOrKnownFiles instanceof Map
-      ? diffOrKnownFiles
-      : new Map(diffOrKnownFiles.files.map((f) => [f.path, f]));
-
   const files: ReviewUnitFileRef[] = [];
 
   for (const ref of unit.files) {

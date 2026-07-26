@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  isPrConversationPath,
   isPrFilesChangedPath,
   navigateToPrConversation,
   prConversationUrl,
@@ -11,26 +10,6 @@ describe("prConversationUrl", () => {
     expect(prConversationUrl({ owner: "acme", repo: "widgets", number: 42 })).toBe(
       "https://github.com/acme/widgets/pull/42",
     );
-  });
-});
-
-describe("isPrConversationPath", () => {
-  const pr = { owner: "acme", repo: "widgets", number: 1 };
-
-  it("matches the conversation path", () => {
-    expect(isPrConversationPath("/acme/widgets/pull/1", pr)).toBe(true);
-    expect(isPrConversationPath("/acme/widgets/pull/1/", pr)).toBe(true);
-  });
-
-  it("rejects other PR tabs", () => {
-    expect(isPrConversationPath("/acme/widgets/pull/1/files", pr)).toBe(false);
-    expect(isPrConversationPath("/acme/widgets/pull/1/commits", pr)).toBe(false);
-    expect(isPrConversationPath("/acme/widgets/pull/1/checks", pr)).toBe(false);
-  });
-
-  it("rejects other PRs", () => {
-    expect(isPrConversationPath("/acme/widgets/pull/2", pr)).toBe(false);
-    expect(isPrConversationPath("/other/widgets/pull/1", pr)).toBe(false);
   });
 });
 
@@ -80,13 +59,41 @@ describe("navigateToPrConversation", () => {
     expect(assign).not.toHaveBeenCalled();
   });
 
-  it("navigates from the files tab", () => {
+  it("treats a trailing slash as already on the conversation tab", () => {
     const assign = vi.fn();
     Object.defineProperty(window, "location", {
       configurable: true,
-      value: { pathname: "/acme/widgets/pull/1/files", assign },
+      value: { pathname: "/acme/widgets/pull/1/", assign },
     });
     navigateToPrConversation({ owner: "acme", repo: "widgets", number: 1 });
-    expect(assign).toHaveBeenCalledWith("https://github.com/acme/widgets/pull/1");
+    expect(assign).not.toHaveBeenCalled();
+  });
+
+  it("navigates from every other PR tab", () => {
+    for (const pathname of [
+      "/acme/widgets/pull/1/files",
+      "/acme/widgets/pull/1/commits",
+      "/acme/widgets/pull/1/checks",
+    ]) {
+      const assign = vi.fn();
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: { pathname, assign },
+      });
+      navigateToPrConversation({ owner: "acme", repo: "widgets", number: 1 });
+      expect(assign, pathname).toHaveBeenCalledWith("https://github.com/acme/widgets/pull/1");
+    }
+  });
+
+  it("navigates when the path is a different PR or repo", () => {
+    for (const pathname of ["/acme/widgets/pull/2", "/other/widgets/pull/1"]) {
+      const assign = vi.fn();
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: { pathname, assign },
+      });
+      navigateToPrConversation({ owner: "acme", repo: "widgets", number: 1 });
+      expect(assign, pathname).toHaveBeenCalledWith("https://github.com/acme/widgets/pull/1");
+    }
   });
 });

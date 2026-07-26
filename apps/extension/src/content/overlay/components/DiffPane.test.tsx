@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { sha256Hex } from "../../../lib/github/prFileDiffUrl";
+import { buildPRFileDiffUrl } from "../../../lib/github/prFileDiffUrl";
 import type { DiffFile, DiffHunk, PRContext } from "../../../lib/types";
 import { buildSelectableLines } from "../buildSelectableLines";
 import { DEFAULT_DIFF_VIEW_MODE } from "../diffViewMode";
@@ -231,7 +231,10 @@ describe("DiffPane", () => {
 
   it("links binary/elided files to the GitHub Files changed deep link", async () => {
     const filePath = "assets/logo.png";
-    const expectedHex = await sha256Hex(filePath);
+    const expectedHref = await buildPRFileDiffUrl(
+      { owner: "acme", repo: "widgets", number: 42 },
+      filePath,
+    );
     useReviewStore.setState({ prContext: prContextFixture() });
     const file = fileFixture({
       path: filePath,
@@ -244,10 +247,7 @@ describe("DiffPane", () => {
     // URL is built async via crypto.subtle — wait for the link to appear.
     const link = await screen.findByTestId("binary-elided-github-link");
 
-    expect(link).toHaveAttribute(
-      "href",
-      `https://github.com/acme/widgets/pull/42/files#diff-${expectedHex}`,
-    );
+    expect(link).toHaveAttribute("href", expectedHref);
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
     expect(link).toHaveTextContent("View File Diff on GitHub");

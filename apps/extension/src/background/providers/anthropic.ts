@@ -1,65 +1,50 @@
 import type { ProviderSettings } from "../../lib/types";
 import { buildUserPrompt, SYSTEM_PROMPT } from "../../lib/review/buildPrompt";
 import { REVIEW_PLAN_JSON_SCHEMA } from "../../lib/review/reviewSchema";
-import { isAbortError, parseProviderHttpError } from "./http";
+import { postProviderJson } from "./http";
 import { readSseJsonStream } from "./sse";
 import type { AnnotateReviewInput, AnnotateStreamEvent, ProviderClient } from "./types";
 import { ProviderError } from "./types";
 
 const API_URL = "https://api.anthropic.com/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
+
+function headers(apiKey: string): Record<string, string> {
+  return {
+    "x-api-key": apiKey,
+    "anthropic-version": "2023-06-01",
+    // Documented "bring your own API key" browser-CORS opt-in, which lets the
+    // background worker call the Messages API directly.
+    "anthropic-dangerous-direct-browser-access": "true",
+  };
+}
 
 /**
- * Claude implementation. Uses `anthropic-dangerous-direct-browser-access` to
- * call the Messages API directly from the extension's background worker
- * (this is the documented "bring your own API key" browser-CORS opt-in) and
- * `output_config.format` to force a schema-valid ReviewPlan rather than
- * parsing free text. Streams text deltas so the UI can surface units early.
+ * Claude implementation. Uses `output_config.format` to force a schema-valid
+ * ReviewPlan rather than parsing free text, and streams text deltas so the UI
+ * can surface units early.
  */
 export const anthropicProvider: ProviderClient = {
   async *annotateReviewStream(
     { diff, prContext, settings }: AnnotateReviewInput,
     options?: { signal?: AbortSignal },
   ): AsyncGenerator<AnnotateStreamEvent, void, unknown> {
-    const body = {
-      model: settings.model,
-      max_tokens: 8000,
-      stream: true,
-      system: SYSTEM_PROMPT,
-      output_config: {
-        effort: "medium",
-        format: { type: "json_schema", schema: REVIEW_PLAN_JSON_SCHEMA },
-      },
-      messages: [{ role: "user", content: buildUserPrompt(diff, prContext) }],
-    };
-
-    let response: Response;
-    try {
-      response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-api-key": settings.apiKey,
-          "anthropic-version": ANTHROPIC_VERSION,
-          "anthropic-dangerous-direct-browser-access": "true",
+    const response = await postProviderJson(
+      API_URL,
+      headers(settings.apiKey),
+      {
+        model: settings.model,
+        max_tokens: 8000,
+        stream: true,
+        system: SYSTEM_PROMPT,
+        output_config: {
+          effort: "medium",
+          format: { type: "json_schema", schema: REVIEW_PLAN_JSON_SCHEMA },
         },
-        body: JSON.stringify(body),
-        signal: options?.signal,
-      });
-    } catch (error) {
-      if (isAbortError(error)) throw error;
-      throw new ProviderError(
-        error instanceof Error ? error.message : "Failed to reach the Claude API.",
-      );
-    }
-
-    if (!response.ok) {
-      const detail = await parseProviderHttpError(response);
-      throw new ProviderError(detail.message, {
-        statusCode: response.status,
-        code: detail.code,
-      });
-    }
+        messages: [{ role: "user", content: buildUserPrompt(diff, prContext) }],
+      },
+      "Claude",
+      options?.signal,
+    );
 
     if (!response.body) {
       throw new ProviderError("Claude returned an empty stream.");
@@ -99,36 +84,15 @@ export const anthropicProvider: ProviderClient = {
   },
 
   async testConnection(settings: ProviderSettings): Promise<void> {
-    let response: Response;
-    try {
-      response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-api-key": settings.apiKey,
-          "anthropic-version": ANTHROPIC_VERSION,
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
-        body: JSON.stringify({
-          model: settings.model,
-          max_tokens: 8,
-          messages: [{ role: "user", content: "Reply with OK." }],
-        }),
-      });
-    } catch (error) {
-      // Same wrapping as the streaming path: a bare fetch rejection would
-      // surface as "Failed to fetch" with no hint of which provider failed.
-      throw new ProviderError(
-        error instanceof Error ? error.message : "Failed to reach the Claude API.",
-      );
-    }
-
-    if (!response.ok) {
-      const detail = await parseProviderHttpError(response);
-      throw new ProviderError(detail.message, {
-        statusCode: response.status,
-        code: detail.code,
-      });
-    }
+    await postProviderJson(
+      API_URL,
+      headers(settings.apiKey),
+      {
+        model: settings.model,
+        max_tokens: 8,
+        messages: [{ role: "user", content: "Reply with OK." }],
+      },
+      "Claude",
+    );
   },
 };

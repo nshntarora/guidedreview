@@ -1,8 +1,7 @@
 "use client";
 
 import { Fragment, useSyncExternalStore } from "react";
-import { Kbd, KbdGroup } from "@guided-review/ui";
-import { isMacPlatform } from "../lib/platform";
+import { isMacPlatform, Kbd, KbdGroup } from "@guided-review/ui";
 
 function subscribe() {
   return () => {};

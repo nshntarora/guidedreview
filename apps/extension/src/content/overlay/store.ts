@@ -28,9 +28,6 @@ import {
 export type ReviewStatus = "idle" | "loading" | "streaming" | "ready" | "error";
 export type { DiffViewMode };
 
-/** Stable identity for a PR, independent of which GitHub tab/URL the user is on. */
-export type SessionPRIdentity = PRIdentity;
-
 interface PersistedSession {
   diff: ParsedDiff;
   plan: ReviewPlan;
@@ -47,10 +44,6 @@ const COMMENT_UI_RESET = {
   composerOpen: false,
   selectableLines: [] as SelectableLine[],
 };
-
-function normalizeError(error: ReviewErrorInfo | string): ReviewErrorInfo {
-  return typeof error === "string" ? { message: error } : error;
-}
 
 interface ReviewState {
   isOpen: boolean;
@@ -133,7 +126,7 @@ interface ReviewState {
  * Build a stable session key for a PR. Same PR on Conversation vs Files changed
  * (or any other tab URL) must map to the same key so resume works.
  */
-export function buildSessionKey(pr: SessionPRIdentity): string {
+export function buildSessionKey(pr: PRIdentity): string {
   return `${pr.owner}/${pr.repo}#${pr.number}`;
 }
 
@@ -146,10 +139,6 @@ function newDraftId(): string {
     return crypto.randomUUID();
   }
   return `draft-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
-function clearCommentUi(): typeof COMMENT_UI_RESET {
-  return { ...COMMENT_UI_RESET };
 }
 
 export const useReviewStore = create<ReviewState>((set, get) => ({
@@ -171,7 +160,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   draftComments: [],
 
   open: () => set({ isOpen: true }),
-  close: () => set({ isOpen: false, ...clearCommentUi() }),
+  close: () => set({ isOpen: false, ...COMMENT_UI_RESET }),
 
   startLoading: (sessionKey) =>
     set((state) => ({
@@ -184,7 +173,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       sessionKey,
       streamGeneration: state.streamGeneration + 1,
       draftComments: [],
-      ...clearCommentUi(),
+      ...COMMENT_UI_RESET,
     })),
 
   setPRContext: (prContext) => set({ prContext }),
@@ -207,7 +196,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       // prompt must not survive into the new attempt.
       needsProvider: false,
       plan: hasDiff ? { units: [] } : null,
-      ...clearCommentUi(),
+      ...COMMENT_UI_RESET,
     });
     return nextGeneration;
   },
@@ -244,7 +233,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
 
   setError: (error, generation) => {
     if (generation !== undefined && get().streamGeneration !== generation) return;
-    const normalized = normalizeError(error);
+    const normalized = typeof error === "string" ? { message: error } : error;
     // A missing provider key isn't a failure the user should read as an error —
     // both the content-script pre-check and the background backstop land here.
     if (normalized.code === NO_API_KEY_ERROR_CODE) {
@@ -268,28 +257,28 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       status: "ready",
       plan: buildFileReviewPlan(diff),
       currentUnitIndex: 0,
-      ...clearCommentUi(),
+      ...COMMENT_UI_RESET,
     });
   },
 
   goToUnit: (index) => {
     const total = displayUnitCount(get().plan);
     if (index < 0 || index >= total) return;
-    set({ currentUnitIndex: index, ...clearCommentUi() });
+    set({ currentUnitIndex: index, ...COMMENT_UI_RESET });
   },
 
   goNext: () => {
     const { currentUnitIndex, plan } = get();
     const total = displayUnitCount(plan);
     if (currentUnitIndex < total - 1) {
-      set({ currentUnitIndex: currentUnitIndex + 1, ...clearCommentUi() });
+      set({ currentUnitIndex: currentUnitIndex + 1, ...COMMENT_UI_RESET });
     }
   },
 
   goPrev: () => {
     const { currentUnitIndex } = get();
     if (currentUnitIndex > 0) {
-      set({ currentUnitIndex: currentUnitIndex - 1, ...clearCommentUi() });
+      set({ currentUnitIndex: currentUnitIndex - 1, ...COMMENT_UI_RESET });
     }
   },
 
@@ -311,7 +300,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
     });
   },
 
-  exitCommentMode: () => set(clearCommentUi()),
+  exitCommentMode: () => set({ ...COMMENT_UI_RESET }),
 
   setSelectableLines: (lines) => {
     const { uiMode, lineSelection, selectableLines: prevLines } = get();
@@ -320,7 +309,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       return;
     }
     if (lines.length === 0) {
-      set(clearCommentUi());
+      set({ ...COMMENT_UI_RESET });
       return;
     }
 
@@ -543,7 +532,7 @@ export async function restoreSession(sessionKey: string): Promise<boolean> {
     sessionKey,
     error: null,
     draftComments: saved.draftComments ?? [],
-    ...clearCommentUi(),
+    ...COMMENT_UI_RESET,
   });
   return true;
 }

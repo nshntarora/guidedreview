@@ -107,11 +107,10 @@ export interface ReviewPlan {
 }
 
 // ---- Provider / settings -----------------------------------------------------
-// ProviderId and DEFAULT_MODELS live in the catalog so the options UI and
-// background clients share one registry of providers/models.
+// ProviderId lives in the catalog so the options UI and background clients
+// share one registry of providers/models.
 
 export type { ProviderId } from "./providers/catalog";
-export { DEFAULT_MODELS } from "./providers/catalog";
 import type { ProviderId } from "./providers/catalog";
 
 export interface ProviderSettings {

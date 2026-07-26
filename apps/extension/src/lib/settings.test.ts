@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import { getProviderSettings, onProviderSettingsChanged, setProviderSettings } from "./settings";
-import { DEFAULT_MODELS } from "./types";
+import { defaultModelFor } from "./providers/catalog";
 
 describe("settings", () => {
   it("returns fallback settings when nothing is stored", async () => {
     const settings = await getProviderSettings();
     expect(settings).toEqual({
       provider: "anthropic",
-      model: DEFAULT_MODELS.anthropic,
+      model: defaultModelFor("anthropic"),
       apiKey: "",
     });
   });
@@ -23,7 +23,7 @@ describe("settings", () => {
       "guidedReview.providerSettings": { provider: "grok", apiKey: "x" },
     });
     const settings = await getProviderSettings();
-    expect(settings.model).toBe(DEFAULT_MODELS.grok);
+    expect(settings.model).toBe(defaultModelFor("grok"));
   });
 
   it("onProviderSettingsChanged fires with normalized settings on save", async () => {
