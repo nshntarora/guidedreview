@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import { getAutoOpenOnFilesTab, onAutoOpenOnFilesTabChanged } from "../lib/autoOpenOnFilesTab";
 import { parsePRUrl, type PRIdentity } from "../lib/github/diffFetch";
 import { fetchConversationDescription, scrapePRContext } from "../lib/github/prContext";
 import { requestPRDiff, streamReviewPlan } from "../lib/messaging";
@@ -6,6 +7,7 @@ import { getProviderSettings, onProviderSettingsChanged } from "../lib/settings"
 import type { ContentRequest, ParsedDiff, PRContext } from "../lib/types";
 import { ensureFallbackHost, FALLBACK_HOST_ID, findButtonAnchor } from "./buttonAnchor";
 import { Overlay } from "./overlay/Overlay";
+import { isPrFilesChangedPath } from "./overlay/prConversationUrl";
 import overlayStyles from "./overlay/styles/overlay.css?inline";
 import { useReviewStore, restoreSession, buildSessionKey } from "./overlay/store";
 
@@ -18,6 +20,15 @@ const ACCENT_HOVER = "#b6e64e";
 let currentPR: PRIdentity | null = null;
 /** Active stream cancel handle so restart / close can abort the worker. */
 let activeStreamCancel: (() => void) | null = null;
+/** Whether Options → "Automatically open when I go to Files changed tab in a PR" is enabled. */
+let autoOpenEnabled = false;
+/**
+ * Pathname of the Files/Changes tab visit we already auto-opened (or skipped
+ * because the overlay was already open). Cleared when the user leaves that tab
+ * so re-entry can open again; stays set after a manual close so we don't loop.
+ * Matches both classic `/files` and newer `/changes` PR paths.
+ */
+let autoOpenedForFilesPath: string | null = null;
 
 init();
 
@@ -36,6 +47,7 @@ function ensureButtonStyles(): void {
 function init(): void {
   ensureButtonStyles();
   tryInjectButton();
+  void hydrateAutoOpenPreference();
 
   // Toolbar icon click is handled in the background worker; when the active
   // tab is a PR page it forwards START_GUIDED_REVIEW here.
@@ -53,11 +65,54 @@ function init(): void {
     void onStartReview();
   });
 
+  onAutoOpenOnFilesTabChanged((enabled) => {
+    autoOpenEnabled = enabled;
+    // Opting in while already on Files should open once (don't treat a prior
+    // visit while the setting was off as "already handled").
+    if (enabled) autoOpenedForFilesPath = null;
+    maybeAutoOpenOnFilesTab();
+  });
+
   // GitHub is a SPA — the PR page doesn't reload between "Conversation" /
   // "Files changed" / re-renders after data loads, so watch for DOM changes
   // and re-inject if our button gets removed (or the PR identity changes).
-  const observer = new MutationObserver(() => tryInjectButton());
+  // The same observer is our cheap hook for SPA tab switches (path changes
+  // without a full navigation).
+  const observer = new MutationObserver(() => {
+    tryInjectButton();
+    maybeAutoOpenOnFilesTab();
+  });
   observer.observe(document.body, { childList: true, subtree: true });
+}
+
+async function hydrateAutoOpenPreference(): Promise<void> {
+  autoOpenEnabled = await getAutoOpenOnFilesTab();
+  maybeAutoOpenOnFilesTab();
+}
+
+/**
+ * If the preference is on and the user just landed on Files changed
+ * (`/files` or `/changes`), open (or resume) the review once for this visit.
+ */
+function maybeAutoOpenOnFilesTab(): void {
+  const pathname = window.location.pathname;
+  // Always clear when leaving Files/Changes so re-entry can open again — even
+  // if the preference is currently off (so path state doesn't go stale).
+  if (!isPrFilesChangedPath(pathname)) {
+    autoOpenedForFilesPath = null;
+    return;
+  }
+
+  if (!autoOpenEnabled) return;
+  if (autoOpenedForFilesPath === pathname) return;
+
+  if (useReviewStore.getState().isOpen) {
+    autoOpenedForFilesPath = pathname;
+    return;
+  }
+
+  autoOpenedForFilesPath = pathname;
+  void onStartReview();
 }
 
 function removeStartButton(): void {

@@ -57,10 +57,11 @@ If the test fails, step through [Troubleshooting → Provider and API key](/docs
 
 ## Where settings live
 
-| Setting                  | Storage                  | Used by                          |
-| ------------------------ | ------------------------ | -------------------------------- |
-| Provider, model, API key | `chrome.storage.local`   | Background worker                |
-| Active review session    | `chrome.storage.session` | Content overlay (session-scoped) |
+| Setting                               | Storage                  | Used by                          |
+| ------------------------------------- | ------------------------ | -------------------------------- |
+| Provider, model, API key              | `chrome.storage.local`   | Background worker                |
+| Automatically open on Files changed   | `chrome.storage.local`   | Content script (auto-open)       |
+| Active review session                 | `chrome.storage.session` | Content overlay (session-scoped) |
 
 Session resume behavior: [Your first review → Resume later](/docs/first-review#resume-later) and [Troubleshooting](/docs/troubleshooting#session-and-resume).
 

@@ -6,6 +6,7 @@ import {
   modelsForProvider,
   PROVIDERS,
 } from "../lib/providers/catalog";
+import { getAutoOpenOnFilesTab, setAutoOpenOnFilesTab } from "../lib/autoOpenOnFilesTab";
 import { getProviderSettings, setProviderSettings } from "../lib/settings";
 import { testConnection } from "../lib/messaging";
 import { ProviderIcon } from "./components/ProviderIcon";
@@ -30,11 +31,13 @@ function OptionRow({ icon, label }: { icon: ProviderId; label: string }) {
 
 export function Options() {
   const [settings, setSettings] = useState<ProviderSettings | null>(null);
+  const [autoOpenOnFilesTab, setAutoOpenOnFilesTabState] = useState(false);
   const [saveStatus, setSaveStatus] = useState<ActionStatus>({ kind: "idle" });
   const [connection, setConnection] = useState<ActionStatus>({ kind: "idle" });
 
   useEffect(() => {
     void getProviderSettings().then(setSettings);
+    void getAutoOpenOnFilesTab().then(setAutoOpenOnFilesTabState);
   }, []);
 
   const providerOptions: SelectOption<ProviderId>[] = useMemo(
@@ -88,6 +91,11 @@ export function Options() {
       const message = error instanceof Error ? error.message : "Failed to save settings.";
       setSaveStatus({ kind: "error", message });
     }
+  };
+
+  const onAutoOpenChange = async (enabled: boolean) => {
+    setAutoOpenOnFilesTabState(enabled);
+    await setAutoOpenOnFilesTab(enabled);
   };
 
   const onTestConnection = async () => {
@@ -201,6 +209,29 @@ export function Options() {
               : statusMessage.message}
           </span>
         )}
+      </div>
+
+      <h2 className="mb-4 mt-8 text-base font-semibold text-opt-text">Review</h2>
+      <div className="mb-2">
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            id="autoOpenOnFilesTab"
+            type="checkbox"
+            className="mt-1 size-4 shrink-0 rounded border-opt-border accent-opt-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent"
+            checked={autoOpenOnFilesTab}
+            onChange={(e) => void onAutoOpenChange(e.target.checked)}
+            aria-describedby="autoOpenOnFilesTab-hint"
+          />
+          <span className="min-w-0">
+            <span className="block text-base font-semibold text-opt-text">
+              Automatically open when I go to Files changed tab in a PR
+            </span>
+            <span id="autoOpenOnFilesTab-hint" className="mt-1 block text-sm text-opt-muted">
+              When enabled, Guided Review opens (or resumes) automatically on a PR’s Files changed /
+              Changes tab. You can still start it from the button anytime.
+            </span>
+          </span>
+        </label>
       </div>
 
       <nav className="mt-8 border-t border-opt-border pt-6" aria-label="About">

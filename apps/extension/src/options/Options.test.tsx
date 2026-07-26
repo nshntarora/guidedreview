@@ -173,4 +173,33 @@ describe("Options", () => {
     const about = screen.getByRole("link", { name: /about guided review/i });
     expect(about).toHaveAttribute("href", "#about");
   });
+
+  it("defaults the Files changed auto-open checkbox to off", async () => {
+    render(<Options />);
+
+    const checkbox = await screen.findByRole("checkbox", {
+      name: /automatically open when i go to files changed tab in a pr/i,
+    });
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it("hydrates and persists the Files changed auto-open preference", async () => {
+    const user = userEvent.setup();
+    await chrome.storage.local.set({ "guidedReview.autoOpenOnFilesTab": true });
+
+    render(<Options />);
+
+    const checkbox = await screen.findByRole("checkbox", {
+      name: /automatically open when i go to files changed tab in a pr/i,
+    });
+    expect(checkbox).toBeChecked();
+
+    await user.click(checkbox);
+    expect(checkbox).not.toBeChecked();
+
+    await waitFor(async () => {
+      const stored = await chrome.storage.local.get("guidedReview.autoOpenOnFilesTab");
+      expect(stored["guidedReview.autoOpenOnFilesTab"]).toBe(false);
+    });
+  });
 });
