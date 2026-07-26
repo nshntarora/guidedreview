@@ -1,6 +1,6 @@
 import { GITHUB_REPO_URL } from "../lib/links";
-import { CheckShieldIcon, GitHubIcon } from "./icons";
-import { WindowFrame } from "./WindowFrame";
+import { NoBackendIllustration } from "./FeatureIllustrations";
+import { GitHubIcon } from "./icons";
 
 type TrustBandProps = {
   /** GitHub stargazer count, or null if it couldn't be fetched. */
@@ -24,31 +24,9 @@ export function TrustBand({ starCount }: TrustBandProps) {
           keys, or your code — because there&apos;s nothing on our end to see them with.
         </p>
 
-        <WindowFrame label="network — zsh" className="mt-10 text-left" bodyClassName="p-0">
-          <div className="space-y-3 p-6 font-mono text-sm leading-relaxed sm:p-8">
-            <p className="m-0 text-opt-muted">
-              <span className="text-opt-accent">$</span> curl -s api.guidedreview.com/telemetry
-            </p>
-            <p className="m-0 pl-4 text-opt-error">
-              curl: (6) Could not resolve host: api.guidedreview.com
-            </p>
-            <p className="m-0 pl-4 text-opt-muted">
-              <span className="inline-flex items-center gap-1.5 text-opt-ok">
-                <CheckShieldIcon className="h-4 w-4" />
-                no backend. no servers. not even the serverless kind.
-              </span>
-            </p>
-            <p className="m-0 pt-3 text-opt-muted">
-              <span className="text-opt-accent">$</span> gh repo view nshntarora/guidedreview --json
-              stargazerCount
-            </p>
-            <p className="m-0 pl-4 text-opt-text">
-              {starCount !== null
-                ? `{ "stargazerCount": ${starCount} }`
-                : `{ "stargazerCount": "open source, go check" }`}
-            </p>
-          </div>
-        </WindowFrame>
+        <div className="mx-auto mt-10 flex items-center justify-center rounded-lg bg-opt-bg/60 p-6">
+          <NoBackendIllustration className="h-auto w-full max-w-[320px]" />
+        </div>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
           <a
@@ -64,9 +42,12 @@ export function TrustBand({ starCount }: TrustBandProps) {
               <span>Open source on GitHub</span>
             )}
           </a>
-          <span className="rounded-md border border-opt-border bg-opt-subtle/60 px-5 py-2.5 text-sm font-medium text-opt-text">
+          <a
+            href="/docs/configure-provider"
+            className="inline-flex items-center gap-2 rounded-md border border-opt-border bg-opt-subtle/60 px-5 py-2.5 text-sm font-medium text-opt-text transition-colors hover:border-opt-accent/60 hover:bg-opt-subtle"
+          >
             Bring your own LLM key
-          </span>
+          </a>
         </div>
       </div>
     </section>

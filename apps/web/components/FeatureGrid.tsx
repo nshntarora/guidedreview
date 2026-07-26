@@ -4,7 +4,6 @@ import {
   ApprovedToolsIllustration,
   ClusteredChangesIllustration,
   KeyboardFirstIllustration,
-  NoBackendIllustration,
   SummariesIllustration,
 } from "./FeatureIllustrations";
 
@@ -45,16 +44,6 @@ const features: Feature[] = [
       "Model companies apparently block your API keys if you do not implement summarisation. Seriously.",
   },
   {
-    file: "no-backend.sh",
-    Illustration: NoBackendIllustration,
-    title: "We didn't even build a backend",
-    body: [
-      "Your extension never pushes any code to our systems. You configure your AI provider and the extension calls their APIs directly.",
-      "You connect your GitHub account without hitting any of our APIs.",
-    ],
-    footnote: "We don't even have servers. Not even the serverless kind.",
-  },
-  {
     file: "approved-tools.json",
     Illustration: ApprovedToolsIllustration,
     title: "Tools corporate security has already approved",
@@ -68,6 +57,7 @@ const features: Feature[] = [
 
 export function FeatureGrid() {
   const [lead, ...rest] = features;
+  const last = rest.pop();
 
   return (
     <section id="features" className="relative px-6 py-20 sm:py-28">
@@ -89,6 +79,11 @@ export function FeatureGrid() {
               <FeatureCard feature={f} />
             </li>
           ))}
+          {last ? (
+            <li className="md:col-span-2">
+              <FeatureCard feature={last} wide />
+            </li>
+          ) : null}
         </ul>
       </div>
     </section>
