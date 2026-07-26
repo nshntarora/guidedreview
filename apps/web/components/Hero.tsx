@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { InstallButton, StarOnGitHubButton } from "./CtaButtons";
-import { ProductVideo } from "./ProductVideo";
+// Video will be added once it is ready.
+// import { ProductVideo } from "./ProductVideo";
 
 function riseDelay(seconds: number): CSSProperties {
   return { "--gr-delay": `${seconds}s` } as CSSProperties;
@@ -24,7 +25,7 @@ export function Hero() {
           className="gr-rise-in mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-opt-muted text-balance sm:text-xl"
           style={riseDelay(0.2)}
         >
-          Guided Review is a browser extension that makes &ldquo;reading code&rdquo; wayyyy better
+          Guided Review is a Chrome extension that makes &ldquo;reading code&rdquo; wayyyy better
           with clustered file changes, summaries, and a keyboard-first experience.
         </p>
 
@@ -39,9 +40,10 @@ export function Hero() {
           Free · Open source · Bring your own LLM key
         </p>
 
-        <div className="gr-rise-in" style={riseDelay(0.45)}>
+        {/* Video will be added once it is ready. */}
+        {/* <div className="gr-rise-in" style={riseDelay(0.45)}>
           <ProductVideo />
-        </div>
+        </div> */}
       </div>
     </section>
   );

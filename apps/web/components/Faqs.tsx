@@ -23,39 +23,62 @@ const faqs: Faq[] = [
     answer: [
       <>
         Once the <FaqLink href={CHROME_WEB_STORE_URL}>Chrome extension</FaqLink> is installed, it
-        injects a start review button on the <FaqLink href="https://github.com">GitHub</FaqLink> PR
-        page, you click that it takes you to a different experience.
+        adds a Start Guided Review button to the <FaqLink href="https://github.com">GitHub</FaqLink>{" "}
+        PR page. Click it and the review opens as an overlay on top of GitHub.
       </>,
-      "We open the UI as an overlay on the GitHub review experience, read the diff that is generated in the PR, make an API call to your configured AI provider to get the review units/changes and summaries, map them to diffs and show them to you for review.",
+      "We read the diff from the PR, send it to your configured AI provider to get review units and summaries, map those back to the diff, and show you the result.",
     ],
     plainAnswer:
-      "Once the Chrome extension is installed, it injects a start review button on the GitHub PR page. Clicking it opens the UI as an overlay on the GitHub review experience, reads the diff generated in the PR, calls your configured AI provider to get review units/changes and summaries, maps them to diffs, and shows them to you for review.",
+      "Once the Chrome extension is installed, it adds a Start Guided Review button to the GitHub PR page. Click it and the review opens as an overlay on top of GitHub. We read the diff from the PR, send it to your configured AI provider to get review units and summaries, map those back to the diff, and show you the result.",
+  },
+  {
+    question: "Which AI providers work?",
+    answer: [
+      <>
+        Claude (Anthropic), OpenAI, and Grok (xAI). You pick the provider and model in the
+        extension&apos;s <a href="/docs/configure-provider">options page</a> and paste your own API
+        key. We&apos;ll keep adding more providers —{" "}
+        <FaqLink href={GITHUB_REPO_URL}>request one on the GitHub repo</FaqLink>, or open a PR that
+        adds yours.
+      </>,
+    ],
+    plainAnswer:
+      "Claude (Anthropic), OpenAI, and Grok (xAI). You pick the provider and model in the extension's options page and paste your own API key. We'll keep adding more providers — request one on the GitHub repo, or open a PR that adds yours.",
+  },
+  {
+    question: "Will this run up my API bill?",
+    answer: [
+      "Starting a review makes one call to your provider to cluster the diff into review units and summarize them. Cost scales with how big the diff is and which model you picked — a small PR on a cheap model is fractions of a cent, a huge PR on a frontier model is not.",
+      "You're paying your provider directly, so whatever it costs shows up on their dashboard, not ours. We never see it.",
+    ],
+    plainAnswer:
+      "Starting a review makes one call to your provider to cluster the diff into review units and summarize them. Cost scales with how big the diff is and which model you picked. You're paying your provider directly, so it shows up on their dashboard, not ours.",
   },
   {
     question: "So you don't track anything at all?",
     answer: [
       <>
-        Yes, there&apos;s only an anonymous analytics script on this website, the extension
-        doesn&apos;t track anything at all. It doesn&apos;t talk to any third party servers at all
-        (other than <FaqLink href="https://github.com">GitHub</FaqLink> and your AI provider).
+        Yes. There&apos;s an anonymous analytics script on this website, and that&apos;s it. The
+        extension doesn&apos;t track anything and doesn&apos;t talk to any third-party servers other
+        than <FaqLink href="https://github.com">GitHub</FaqLink> and your AI provider.
       </>,
     ],
     plainAnswer:
-      "Yes, there's only an anonymous analytics script on this website — the extension doesn't track anything at all. It doesn't talk to any third party servers other than GitHub and your AI provider.",
+      "Yes. There's an anonymous analytics script on this website, and that's it. The extension doesn't track anything and doesn't talk to any third-party servers other than GitHub and your AI provider.",
   },
   {
     question: "Is it free forever?",
     answer: [
       <>
-        Forever is a long time. It is free until it can be maintained for free, if demand for the
+        Forever is a long time. It is free until it can be maintained for free. If demand for the
         tool increases and it takes a lot of my bandwidth to maintain, I will introduce some way to
-        be compensated for the extra time, but since it&apos;s{" "}
-        <FaqLink href={GITHUB_REPO_URL}>open source</FaqLink> you can fork it if you find I&apos;m
+        be compensated for the extra time. But since it&apos;s{" "}
+        <FaqLink href={GITHUB_REPO_URL}>open source</FaqLink>, you can fork it if you find I&apos;m
         not a good person.
       </>,
     ],
     plainAnswer:
-      "Forever is a long time. It is free until it can be maintained for free — if demand increases and it takes a lot of bandwidth to maintain, some way to be compensated may be introduced. Since it's open source, you can fork it if needed.",
+      "Forever is a long time. It is free until it can be maintained for free. If demand for the tool increases and it takes a lot of my bandwidth to maintain, I will introduce some way to be compensated for the extra time. But since it's open source, you can fork it if you find I'm not a good person.",
   },
   {
     question: "Who are you?",

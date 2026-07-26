@@ -461,11 +461,10 @@ export function SummariesIllustration(props: IllustProps) {
  * the key stays local. No shield, no padlock, no stock-security metaphor.
  * ------------------------------------------------------------------ */
 
-const PROVIDER_CHIPS: { label: string; w: number; custom?: boolean }[] = [
+const PROVIDER_CHIPS: { label: string; w: number }[] = [
   { label: "OpenAI", w: 56 },
   { label: "Anthropic", w: 72 },
-  { label: "xAI", w: 40 },
-  { label: "+ custom", w: 66, custom: true },
+  { label: "Grok", w: 46 },
 ];
 
 export function ApprovedToolsIllustration(props: IllustProps) {
@@ -512,21 +511,13 @@ export function ApprovedToolsIllustration(props: IllustProps) {
         chipX += chip.w + chipGap;
         return (
           <g key={chip.label}>
-            <Panel
-              x={x}
-              y={132}
-              w={chip.w}
-              h={22}
-              r={11}
-              className={INSET}
-              strokeDasharray={chip.custom ? "3 2.5" : undefined}
-            />
+            <Panel x={x} y={132} w={chip.w} h={22} r={11} className={INSET} />
             <Txt
               x={x + chip.w / 2}
               y={146}
               size={8}
               anchor="middle"
-              className={chip.custom ? "fill-[var(--opt-muted)]" : "fill-[var(--opt-text)]"}
+              className="fill-[var(--opt-text)]"
             >
               {chip.label}
             </Txt>

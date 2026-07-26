@@ -19,9 +19,9 @@ const features: Feature[] = [
   {
     file: "clustered-changes.diff",
     Illustration: ClusteredChangesIllustration,
-    title: "Review changes not files",
+    title: "Review changes, not files",
     body: [
-      "Instead of showing just a diff of all the files that have changed in alphabetical order and letting you figure out how they connect together, we use AI to cluster related changes together.",
+      "GitHub gives you every changed file in alphabetical order and leaves you to work out how they connect. We use AI to cluster related changes into review units, so you read the change, not the file list.",
     ],
   },
   {
@@ -30,7 +30,7 @@ const features: Feature[] = [
     title: "Read and navigate how you write",
     body: [
       "We've designed the whole code review experience to be keyboard first.",
-      "You will not need to lift your hands from your keyboard to browse, comment, review.",
+      "You will not need to lift your hands from your keyboard to browse, comment, or review.",
     ],
   },
   {
@@ -41,14 +41,14 @@ const features: Feature[] = [
       "Get a 2 line overview of every change. Sometimes it's really helpful, sometimes it's not. Take it with a grain of salt.",
     ],
     footnote:
-      "Model companies apparently block your API keys if you do not implement summarisation. Seriously.",
+      "Model companies apparently block your API keys if you do not implement summarization. Seriously.",
   },
   {
     file: "approved-tools.json",
     Illustration: ApprovedToolsIllustration,
     title: "Tools corporate security has already approved",
     body: [
-      "Just add your already approved AI provider with an API key. Want to read the code? Add a custom AI provider? It's open source (without VC funding).",
+      "Bring the AI provider your company already approved — Claude, OpenAI, or Grok — and your own API key. Want to read the code that handles that key? It's open source (without VC funding), so you can read it, or fork it and point it somewhere else, or modify it for your own workflow.",
     ],
     footnote:
       "Please check with your employer if they've policies about this. If you're a 2 person startup, you're (probably) fine.",

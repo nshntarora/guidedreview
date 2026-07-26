@@ -17,13 +17,12 @@ export function Why() {
           <div className="grid gap-8 font-serif text-lg leading-relaxed text-opt-muted sm:grid-cols-2 sm:gap-10 sm:text-xl">
             <div className="space-y-4">
               <p>
-                AI agents are writing code for you, and you have PRs pending your review. You had
-                imagined when you installed the new hot code review agent on github, it is going to
-                make the job easy for you. You&apos;ll just click &quot;approve&quot; and move on to
-                the next PR.
+                AI agents are writing code for you, and you have PRs pending your review. When you
+                installed the new hot code review agent on GitHub, you imagined it would make the
+                job easy. You&apos;d click &quot;approve&quot; and move on to the next PR.
               </p>
               <p>
-                Unfortunately, agents writing code, and agents reviewing code are not a replacement
+                Unfortunately, agents writing code and agents reviewing code are not a replacement
                 for you (congrats, your job is safe). You have more context. You know people,
                 business, and the product better than your coding agent.
               </p>
@@ -36,16 +35,12 @@ export function Why() {
               </p>
             </div>
             <div className="space-y-4">
-              <p>What if, we used AI to help us review code and not review it for us?</p>
+              <p>What if we used AI to help us review code, and not review it for us?</p>
               <p>
-                That&apos;s why I built Guided Review. It gives you a brand new experience to review
-                pull requests. An experience that&apos;s designed for humans, and uses AI in just
-                the right places (not too little, not too much).
+                That&apos;s why I built Guided Review. It&apos;s an experience designed for humans,
+                that uses AI in just the right places (not too little, not too much).
               </p>
-              <p>
-                Reading your code is more important than ever, now that you cannot trust the LLM
-                loops creating the PR.
-              </p>
+              <p>Reading the code matters more than ever now that you didn&apos;t write it.</p>
             </div>
           </div>
         </WindowFrame>

@@ -30,21 +30,21 @@ export const metadata: Metadata = {
     template: "%s · Guided Review",
   },
   description:
-    "AI-structured review plans for GitHub pull requests — walk through schema, logic, call-sites, and tests in order.",
+    "A better way for humans to review AI generated code. Clustered changes, summaries, keyboard-first — free, open source, bring your own LLM key.",
   icons: {
     icon: "/favicon.ico",
   },
   openGraph: {
     title: "Guided Review",
     description:
-      "AI-structured review plans for GitHub pull requests — walk through schema, logic, call-sites, and tests in order.",
+      "A better way for humans to review AI generated code. Clustered changes, summaries, keyboard-first — free, open source, bring your own LLM key.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "Guided Review",
     description:
-      "AI-structured review plans for GitHub pull requests — walk through schema, logic, call-sites, and tests in order.",
+      "A better way for humans to review AI generated code. Clustered changes, summaries, keyboard-first — free, open source, bring your own LLM key.",
   },
 };
 
