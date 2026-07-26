@@ -52,6 +52,7 @@ describe("GitHubAuthSection", () => {
   it("shows Connect when disconnected", async () => {
     render(<GitHubAuthSection />);
     expect(await screen.findByRole("button", { name: /connect github/i })).toBeInTheDocument();
+    expect(screen.getByTestId("github-auth-logo")).toBeInTheDocument();
   });
 
   it("shows the connected account when auth is stored", async () => {

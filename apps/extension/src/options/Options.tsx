@@ -10,9 +10,13 @@ import { getAutoOpenOnFilesTab, setAutoOpenOnFilesTab } from "../lib/autoOpenOnF
 import { getProviderSettings, setProviderSettings } from "../lib/settings";
 import { testConnection } from "../lib/messaging";
 import { ProviderIcon } from "./components/ProviderIcon";
-import { BrandHeader } from "./BrandHeader";
 import { GitHubAuthSection } from "./GitHubAuthSection";
-import { Button, Input, Label, Select, Spinner, cn, type SelectOption } from "@guided-review/ui";
+import { SettingsCard } from "./SettingsCard";
+import { StatusCallout } from "./StatusCallout";
+import { Toggle } from "./Toggle";
+import { Button, Input, Label, Select, Spinner, type SelectOption } from "@guided-review/ui";
+
+const CONFIGURE_PROVIDER_DOCS_URL = "https://guidedreview.dev/docs/configure-provider";
 
 type ActionStatus =
   | { kind: "idle" }
@@ -128,120 +132,141 @@ export function Options() {
         : null;
 
   return (
-    <main id="main-content" className="mx-auto max-w-[480px] px-6 py-8">
-      <BrandHeader />
-      <p className="mb-6 text-base text-opt-muted">
-        Connect GitHub and choose an AI provider. Keys and tokens stay in this browser only.
-      </p>
-
-      <GitHubAuthSection />
-
-      <h2 className="mb-4 text-base font-semibold text-opt-text">AI Provider</h2>
-
-      <div className="mb-4">
-        <Label id="provider-label" htmlFor="provider">
-          Provider
-        </Label>
-        <Select
-          id="provider"
-          aria-labelledby="provider-label"
-          value={settings.provider}
-          options={providerOptions}
-          onChange={onProviderChange}
-          disabled={busy}
-        />
-      </div>
-
-      <div className="mb-4">
-        <Label id="model-label" htmlFor="model">
-          Model
-        </Label>
-        <Select
-          id="model"
-          aria-labelledby="model-label"
-          value={settings.model}
-          options={modelOptions}
-          onChange={onModelChange}
-          disabled={busy}
-        />
-      </div>
-
-      <div className="mb-4">
-        <Label htmlFor="apiKey">API Key</Label>
-        <Input
-          id="apiKey"
-          type="password"
-          autoComplete="off"
-          placeholder={providerDef.keyPlaceholder}
-          value={settings.apiKey}
-          onChange={(e) => onApiKeyChange(e.target.value)}
-          disabled={busy}
-          aria-describedby="apiKey-hint"
-        />
-        <p id="apiKey-hint" className="mt-1 text-sm text-opt-muted">
-          Stored locally on this device via chrome.storage.local — never synced.
+    <main id="main-content">
+      <header className="mb-8">
+        <h1 className="m-0 font-brand text-2xl font-bold tracking-tight text-opt-text">Settings</h1>
+        <p className="mt-2 m-0 text-base leading-relaxed text-opt-muted text-balance">
+          Connect GitHub and choose an AI provider. Keys and tokens stay in this browser only.
         </p>
-      </div>
+      </header>
 
-      <div className="mt-6 flex flex-wrap items-center gap-2.5">
-        <Button onClick={onSave} disabled={busy}>
-          {saveStatus.kind === "working" && <Spinner surface="app" size={14} label="Saving" />}
-          {saveStatus.kind === "working" ? "Saving…" : "Save"}
-        </Button>
-        <Button variant="secondary" onClick={onTestConnection} disabled={!settings.apiKey || busy}>
-          {connection.kind === "working" && (
-            <Spinner surface="app" size={14} label="Testing connection" />
-          )}
-          {connection.kind === "working" ? "Testing…" : "Test Connection"}
-        </Button>
-        {statusMessage && (
-          <span
-            role="status"
-            aria-live="polite"
-            className={cn(
-              "text-base",
-              statusMessage.kind === "ok" && "text-opt-ok",
-              statusMessage.kind === "error" && "text-opt-error",
-            )}
-          >
-            {statusMessage.kind === "error"
-              ? `Error: ${statusMessage.message}`
-              : statusMessage.message}
-          </span>
-        )}
-      </div>
+      <div className="flex flex-col gap-4">
+        <GitHubAuthSection />
 
-      <h2 className="mb-4 mt-8 text-base font-semibold text-opt-text">Review</h2>
-      <div className="mb-2">
-        <label className="flex cursor-pointer items-start gap-3">
-          <input
-            id="autoOpenOnFilesTab"
-            type="checkbox"
-            className="mt-1 size-4 shrink-0 rounded border-opt-border accent-opt-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent"
-            checked={autoOpenOnFilesTab}
-            onChange={(e) => void onAutoOpenChange(e.target.checked)}
-            aria-describedby="autoOpenOnFilesTab-hint"
-          />
-          <span className="min-w-0">
-            <span className="block text-base font-semibold text-opt-text">
-              Automatically open when I go to Files changed tab in a PR
-            </span>
-            <span id="autoOpenOnFilesTab-hint" className="mt-1 block text-sm text-opt-muted">
-              When enabled, Guided Review opens (or resumes) automatically on a PR’s Files changed /
-              Changes tab. You can still start it from the button anytime.
-            </span>
-          </span>
-        </label>
-      </div>
-
-      <nav className="mt-8 border-t border-opt-border pt-6" aria-label="About">
-        <a
-          href="#about"
-          className="text-base font-semibold text-opt-muted no-underline hover:text-opt-text hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent"
+        <SettingsCard
+          title="AI Provider"
+          titleId="ai-provider-heading"
+          description={
+            <>
+              Bring your own key for Claude, OpenAI, or Grok.{" "}
+              <a
+                href={CONFIGURE_PROVIDER_DOCS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent"
+              >
+                Setup docs
+              </a>
+            </>
+          }
         >
-          About Guided Review
-        </a>
-      </nav>
+          <div className="space-y-4">
+            <div>
+              <Label id="provider-label" htmlFor="provider">
+                Provider
+              </Label>
+              <Select
+                id="provider"
+                aria-labelledby="provider-label"
+                value={settings.provider}
+                options={providerOptions}
+                onChange={onProviderChange}
+                disabled={busy}
+              />
+            </div>
+
+            <div>
+              <Label id="model-label" htmlFor="model">
+                Model
+              </Label>
+              <Select
+                id="model"
+                aria-labelledby="model-label"
+                value={settings.model}
+                options={modelOptions}
+                onChange={onModelChange}
+                disabled={busy}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="apiKey">API Key</Label>
+              <Input
+                id="apiKey"
+                type="password"
+                autoComplete="off"
+                placeholder={providerDef.keyPlaceholder}
+                value={settings.apiKey}
+                onChange={(e) => onApiKeyChange(e.target.value)}
+                disabled={busy}
+                aria-describedby="apiKey-hint"
+              />
+              <p id="apiKey-hint" className="mt-1.5 m-0 text-sm text-opt-muted">
+                Stored locally on this device via{" "}
+                <code className="rounded bg-opt-bg/80 px-1 py-0.5 font-mono text-sm text-opt-text">
+                  chrome.storage.local
+                </code>{" "}
+                — never synced.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5 pt-1">
+              <Button onClick={onSave} disabled={busy}>
+                {saveStatus.kind === "working" && (
+                  <Spinner surface="app" size={14} label="Saving" />
+                )}
+                {saveStatus.kind === "working" ? "Saving…" : "Save"}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={onTestConnection}
+                disabled={!settings.apiKey || busy}
+              >
+                {connection.kind === "working" && (
+                  <Spinner surface="app" size={14} label="Testing connection" />
+                )}
+                {connection.kind === "working" ? "Testing…" : "Test Connection"}
+              </Button>
+            </div>
+
+            {statusMessage && (
+              <StatusCallout kind={statusMessage.kind} message={statusMessage.message} />
+            )}
+          </div>
+        </SettingsCard>
+
+        <SettingsCard
+          title="Review"
+          titleId="review-heading"
+          description="How Guided Review behaves when you open a pull request."
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <p
+                id="autoOpenOnFilesTab-label"
+                className="m-0 font-brand text-base font-bold tracking-tight text-opt-text"
+              >
+                Automatically open on Files changed
+              </p>
+              <p id="autoOpenOnFilesTab-hint" className="mt-1 m-0 text-sm text-opt-muted">
+                When enabled, Guided Review opens (or resumes) automatically on a PR’s Files changed
+                / Changes tab. You can still start it from the button anytime.
+              </p>
+            </div>
+            <Toggle
+              id="autoOpenOnFilesTab"
+              checked={autoOpenOnFilesTab}
+              onChange={(enabled) => void onAutoOpenChange(enabled)}
+              aria-labelledby="autoOpenOnFilesTab-label"
+              aria-describedby="autoOpenOnFilesTab-hint"
+            />
+          </div>
+        </SettingsCard>
+      </div>
+
+      <p className="mt-6 m-0 text-sm leading-relaxed text-opt-muted">
+        Keys and tokens stay in this browser. Diffs go only to GitHub and the provider you choose.
+      </p>
     </main>
   );
 }

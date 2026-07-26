@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { About } from "./About";
 import { Options } from "./Options";
+import { OptionsShell } from "./OptionsShell";
+import type { OptionsRoute } from "./routes";
 
-export type OptionsRoute = "settings" | "about";
+export type { OptionsRoute };
 
 function parseHash(hash: string): OptionsRoute {
   const path = hash.replace(/^#\/?/, "").toLowerCase();
@@ -39,5 +41,5 @@ export function App() {
     document.title = TITLES[route];
   }, [route]);
 
-  return route === "about" ? <About /> : <Options />;
+  return <OptionsShell route={route}>{route === "about" ? <About /> : <Options />}</OptionsShell>;
 }

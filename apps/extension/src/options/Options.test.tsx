@@ -166,21 +166,23 @@ describe("Options", () => {
     expect(within(listbox).getByRole("option", { name: /Claude Haiku 4\.5/i })).toBeInTheDocument();
   });
 
-  it("links to the about page", async () => {
-    render(<Options />);
+  it("links to the about page via the shell nav when rendered in App", async () => {
+    // About nav lives in OptionsShell (App); Options alone is the settings body.
+    const { App } = await import("./App");
+    render(<App />);
 
     await screen.findByRole("combobox", { name: /provider/i });
-    const about = screen.getByRole("link", { name: /about guided review/i });
+    const about = screen.getByRole("link", { name: "About" });
     expect(about).toHaveAttribute("href", "#about");
   });
 
-  it("defaults the Files changed auto-open checkbox to off", async () => {
+  it("defaults the Files changed auto-open switch to off", async () => {
     render(<Options />);
 
-    const checkbox = await screen.findByRole("checkbox", {
-      name: /automatically open when i go to files changed tab in a pr/i,
+    const toggle = await screen.findByRole("switch", {
+      name: /automatically open on files changed/i,
     });
-    expect(checkbox).not.toBeChecked();
+    expect(toggle).toHaveAttribute("aria-checked", "false");
   });
 
   it("hydrates and persists the Files changed auto-open preference", async () => {
@@ -189,13 +191,13 @@ describe("Options", () => {
 
     render(<Options />);
 
-    const checkbox = await screen.findByRole("checkbox", {
-      name: /automatically open when i go to files changed tab in a pr/i,
+    const toggle = await screen.findByRole("switch", {
+      name: /automatically open on files changed/i,
     });
-    expect(checkbox).toBeChecked();
+    expect(toggle).toHaveAttribute("aria-checked", "true");
 
-    await user.click(checkbox);
-    expect(checkbox).not.toBeChecked();
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-checked", "false");
 
     await waitFor(async () => {
       const stored = await chrome.storage.local.get("guidedReview.autoOpenOnFilesTab");

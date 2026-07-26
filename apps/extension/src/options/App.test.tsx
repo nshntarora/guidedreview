@@ -13,10 +13,7 @@ describe("App", () => {
     render(<App />);
 
     expect(await screen.findByRole("combobox", { name: /provider/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /about guided review/i })).toHaveAttribute(
-      "href",
-      "#about",
-    );
+    expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("href", "#about");
     expect(document.title).toBe("Guided Review — Settings");
   });
 
@@ -34,12 +31,12 @@ describe("App", () => {
     render(<App />);
 
     await screen.findByRole("combobox", { name: /provider/i });
-    await user.click(screen.getByRole("link", { name: /about guided review/i }));
+    await user.click(screen.getByRole("link", { name: "About" }));
 
     expect(await screen.findByRole("heading", { name: "What It Does" })).toBeInTheDocument();
     await waitFor(() => expect(window.location.hash).toBe("#about"));
 
-    await user.click(screen.getByRole("link", { name: /settings/i }));
+    await user.click(screen.getByRole("link", { name: "Settings" }));
     expect(await screen.findByRole("combobox", { name: /provider/i })).toBeInTheDocument();
     await waitFor(() => expect(window.location.hash).toBe("#settings"));
   });

@@ -1,3 +1,16 @@
 /* Tailwind must scan shared UI components (workspace package lives outside this app tree). */
 @source "../../../../packages/ui/src/**/*.{ts,tsx}";
+
+/* Brand mono — same family as marketing site headings (Victor Mono via next/font there).
+   Self-hosted for the extension so CSP stays on 'self' (no remote fonts). */
+@import "@fontsource/victor-mono/latin-400.css";
+@import "@fontsource/victor-mono/latin-700.css";
+
 @import "@guided-review/ui/theme.css";
+
+/* Marketing-aligned type tokens (scoped to options; not in shared theme). */
+@theme {
+  --font-victor-mono: "Victor Mono";
+  --font-brand:
+    var(--font-victor-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
