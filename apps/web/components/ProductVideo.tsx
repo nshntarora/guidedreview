@@ -233,14 +233,14 @@ export function ProductVideo() {
   );
 
   return (
-    <div className="mx-auto mt-16 max-w-3xl overflow-hidden rounded-xl border border-gr-border bg-gr-chrome text-left shadow-2xl">
-      <div className="flex items-center gap-1.5 border-b border-gr-border bg-gr-bg px-4 py-3">
-        <span className="h-2.5 w-2.5 rounded-full bg-gr-danger" aria-hidden="true" />
-        <span className="h-2.5 w-2.5 rounded-full bg-gr-syntax-variable" aria-hidden="true" />
-        <span className="h-2.5 w-2.5 rounded-full bg-gr-add-text" aria-hidden="true" />
-        <span className="ml-3 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-gr-muted">
+    <div className="mx-auto mt-16 max-w-3xl overflow-hidden rounded-xl border border-border bg-background text-left shadow-2xl">
+      <div className="flex items-center gap-1.5 border-b border-border bg-surface px-4 py-3">
+        <span className="h-2.5 w-2.5 rounded-full bg-danger" aria-hidden="true" />
+        <span className="h-2.5 w-2.5 rounded-full bg-syntax-variable" aria-hidden="true" />
+        <span className="h-2.5 w-2.5 rounded-full bg-diff-add" aria-hidden="true" />
+        <span className="ml-3 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-muted">
           <span>Product demo</span>
-          <span className="inline-flex items-center gap-1.5 text-gr-faint">
+          <span className="inline-flex items-center gap-1.5 text-faint">
             <ShortcutChord keyLabel="v" />
             <span>to play</span>
           </span>
@@ -248,7 +248,7 @@ export function ProductVideo() {
       </div>
 
       <div
-        className="relative aspect-video bg-gr-canvas select-none"
+        className="relative aspect-video bg-surface-raised select-none"
         onMouseMove={started ? revealControls : undefined}
         onMouseLeave={
           started
@@ -273,10 +273,10 @@ export function ProductVideo() {
             <button
               type="button"
               onClick={startPlayback}
-              className="absolute inset-0 flex cursor-pointer items-center justify-center bg-gr-chrome/25 transition-colors hover:bg-gr-chrome/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-gr-accent"
+              className="absolute inset-0 flex cursor-pointer items-center justify-center bg-background/25 transition-colors hover:bg-background/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-primary"
               aria-label="Play product demo video"
             >
-              <span className="flex h-16 w-16 items-center justify-center rounded-full border border-gr-accent bg-gr-accent text-gr-accent-on shadow-[0_8px_32px_rgba(0,0,0,0.45)] transition-transform hover:scale-105 sm:h-20 sm:w-20">
+              <span className="flex h-16 w-16 items-center justify-center rounded-full border border-primary bg-primary text-primary-foreground shadow-[0_8px_32px_rgba(0,0,0,0.45)] transition-transform hover:scale-105 sm:h-20 sm:w-20">
                 <PlayIcon className="ml-1 h-8 w-8 sm:h-9 sm:w-9" />
               </span>
             </button>
@@ -317,10 +317,10 @@ export function ProductVideo() {
               <button
                 type="button"
                 onClick={togglePlay}
-                className="absolute inset-0 z-10 flex cursor-pointer items-center justify-center bg-gr-chrome/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-gr-accent"
+                className="absolute inset-0 z-10 flex cursor-pointer items-center justify-center bg-background/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-primary"
                 aria-label="Play video"
               >
-                <span className="flex h-16 w-16 items-center justify-center rounded-full border border-gr-accent bg-gr-accent text-gr-accent-on shadow-[0_8px_32px_rgba(0,0,0,0.45)] sm:h-20 sm:w-20">
+                <span className="flex h-16 w-16 items-center justify-center rounded-full border border-primary bg-primary text-primary-foreground shadow-[0_8px_32px_rgba(0,0,0,0.45)] sm:h-20 sm:w-20">
                   <PlayIcon className="ml-1 h-8 w-8 sm:h-9 sm:w-9" />
                 </span>
               </button>
@@ -328,7 +328,7 @@ export function ProductVideo() {
 
             <div
               className={[
-                "absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-gr-chrome via-gr-chrome/85 to-transparent px-3 pb-3 pt-10 transition-opacity duration-200",
+                "absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-background via-background/85 to-transparent px-3 pb-3 pt-10 transition-opacity duration-200",
                 controlsVisible || scrubbing || !playing
                   ? "opacity-100"
                   : "pointer-events-none opacity-0",
@@ -347,7 +347,7 @@ export function ProductVideo() {
                 aria-valuemax={Math.round(duration) || 0}
                 aria-valuenow={Math.round(currentTime)}
                 aria-valuetext={`${formatTime(currentTime)} of ${formatTime(duration)}`}
-                className="group relative mb-2.5 h-1.5 cursor-pointer rounded-full bg-gr-border-muted touch-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gr-accent"
+                className="group relative mb-2.5 h-1.5 cursor-pointer rounded-full bg-border-strong touch-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 onPointerDown={onScrubPointerDown}
                 onPointerMove={onScrubPointerMove}
                 onPointerUp={onScrubPointerUp}
@@ -376,11 +376,11 @@ export function ProductVideo() {
                 }}
               >
                 <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-gr-accent"
+                  className="absolute inset-y-0 left-0 rounded-full bg-primary"
                   style={{ width: `${progress * 100}%` }}
                 />
                 <div
-                  className="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full border-2 border-gr-accent-on bg-gr-accent shadow-sm opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+                  className="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full border-2 border-primary-foreground bg-primary shadow-sm opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
                   style={{ left: `calc(${progress * 100}% - 7px)` }}
                 />
               </div>
@@ -389,7 +389,7 @@ export function ProductVideo() {
                 <button
                   type="button"
                   onClick={togglePlay}
-                  className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border border-gr-border bg-gr-bg text-gr-text transition-colors hover:bg-gr-subtle hover:text-gr-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gr-accent"
+                  className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border border-border bg-surface text-foreground transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   aria-label={playing ? "Pause" : "Play"}
                 >
                   {playing ? (
@@ -402,15 +402,15 @@ export function ProductVideo() {
                 <button
                   type="button"
                   onClick={toggleMute}
-                  className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border border-gr-border bg-gr-bg text-gr-muted transition-colors hover:bg-gr-subtle hover:text-gr-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gr-accent"
+                  className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border border-border bg-surface text-muted transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   aria-label={muted ? "Unmute" : "Mute"}
                 >
                   <VolumeIcon muted={muted} className="h-4 w-4" />
                 </button>
 
-                <span className="ml-1 font-mono text-xs tabular-nums text-gr-muted">
-                  <span className="text-gr-text">{formatTime(currentTime)}</span>
-                  <span className="mx-1 text-gr-faint">/</span>
+                <span className="ml-1 font-mono text-xs tabular-nums text-muted">
+                  <span className="text-foreground">{formatTime(currentTime)}</span>
+                  <span className="mx-1 text-faint">/</span>
                   {formatTime(duration)}
                 </span>
               </div>

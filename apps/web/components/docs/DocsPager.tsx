@@ -24,16 +24,16 @@ export function DocsPager({ slug, basePath = "/docs" }: DocsPagerProps) {
   if (!prev && !next) return null;
 
   return (
-    <div className="mt-12 grid grid-cols-2 gap-4 border-t border-opt-border pt-6">
+    <div className="mt-12 grid grid-cols-2 gap-4 border-t border-border pt-6">
       {prev ? (
         <Link
           href={getHref(prev.slug, basePath)}
-          className="group inline-flex h-auto flex-col items-start gap-1 rounded-lg border border-opt-border bg-opt-subtle/40 p-4 no-underline transition-colors hover:border-opt-muted hover:bg-opt-subtle"
+          className="group inline-flex h-auto flex-col items-start gap-1 rounded-lg border border-border bg-surface-raised/40 p-4 no-underline transition-colors hover:border-muted hover:bg-surface-raised"
         >
-          <span className="flex items-center gap-1 text-xs uppercase tracking-widest text-opt-muted">
+          <span className="flex items-center gap-1 text-xs uppercase tracking-widest text-muted">
             ← Previous
           </span>
-          <span className="text-sm font-medium text-opt-text group-hover:text-opt-text">
+          <span className="text-sm font-medium text-foreground group-hover:text-foreground">
             {prev.title}
           </span>
         </Link>
@@ -43,12 +43,12 @@ export function DocsPager({ slug, basePath = "/docs" }: DocsPagerProps) {
       {next ? (
         <Link
           href={getHref(next.slug, basePath)}
-          className="group inline-flex h-auto flex-col items-end gap-1 rounded-lg border border-opt-border bg-opt-subtle/40 p-4 no-underline transition-colors hover:border-opt-muted hover:bg-opt-subtle"
+          className="group inline-flex h-auto flex-col items-end gap-1 rounded-lg border border-border bg-surface-raised/40 p-4 no-underline transition-colors hover:border-muted hover:bg-surface-raised"
         >
-          <span className="flex items-center gap-1 text-xs uppercase tracking-widest text-opt-muted">
+          <span className="flex items-center gap-1 text-xs uppercase tracking-widest text-muted">
             Next →
           </span>
-          <span className="text-sm font-medium text-opt-text group-hover:text-opt-text">
+          <span className="text-sm font-medium text-foreground group-hover:text-foreground">
             {next.title}
           </span>
         </Link>

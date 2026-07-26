@@ -68,15 +68,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <LineGutter />
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-gr-accent focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-gr-accent-on"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground"
         >
           Skip to content
         </a>
-        <header className="sticky top-0 z-40 border-b border-gr-border bg-gr-chrome/95 backdrop-blur-sm">
+        <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3.5 sm:gap-4 sm:px-6">
             <Link
               href="/"
-              className="shrink-0 rounded-sm border-b-0 no-underline hover:border-b-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gr-accent"
+              className="shrink-0 rounded-sm border-b-0 no-underline hover:border-b-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               aria-label="Guided Review home"
             >
               <img
@@ -93,18 +93,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             >
               <Link
                 href="/#features"
-                className="hidden text-gr-text hover:text-gr-accent md:inline"
+                className="hidden text-foreground hover:text-primary md:inline"
               >
                 Features
               </Link>
-              <Link href="/docs" className="hidden text-gr-text hover:text-gr-accent md:inline">
+              <Link href="/docs" className="hidden text-foreground hover:text-primary md:inline">
                 Docs
               </Link>
-              <Link href="/#faqs" className="hidden text-gr-text hover:text-gr-accent md:inline">
+              <Link href="/#faqs" className="hidden text-foreground hover:text-primary md:inline">
                 FAQ
               </Link>
-              <StarOnGitHubButton size="sm" surface="overlay" compact />
-              <InstallButton size="sm" surface="overlay" compact />
+              <StarOnGitHubButton size="sm" compact />
+              <InstallButton size="sm" compact />
             </nav>
           </div>
         </header>

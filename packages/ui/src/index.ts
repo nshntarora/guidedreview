@@ -1,6 +1,5 @@
 export { cn } from "./cn";
 export { isMacPlatform } from "./platform";
-export type { Surface } from "./surface";
 
 export { Spinner } from "./components/Spinner";
 export { Kbd, KbdGroup } from "./components/Kbd";

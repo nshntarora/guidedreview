@@ -11,22 +11,22 @@ export type CalloutProps = {
 
 const config: Record<CalloutType, { className: string; titleDefault: string }> = {
   note: {
-    className: "border-opt-border bg-opt-subtle text-opt-text",
+    className: "border-border bg-surface-raised text-foreground",
     titleDefault: "Note",
   },
   tip: {
     className:
-      "border-[color-mix(in_srgb,var(--opt-ok)_40%,var(--opt-border))] bg-[color-mix(in_srgb,var(--opt-ok)_10%,var(--opt-bg))] text-opt-text",
+      "border-[color-mix(in_srgb,var(--color-success)_40%,var(--color-border))] bg-[color-mix(in_srgb,var(--color-success)_10%,var(--color-background))] text-foreground",
     titleDefault: "Tip",
   },
   warning: {
     className:
-      "border-[color-mix(in_srgb,#d4a72c_45%,var(--opt-border))] bg-[color-mix(in_srgb,#d4a72c_12%,var(--opt-bg))] text-opt-text",
+      "border-[color-mix(in_srgb,#d4a72c_45%,var(--color-border))] bg-[color-mix(in_srgb,#d4a72c_12%,var(--color-background))] text-foreground",
     titleDefault: "Warning",
   },
   danger: {
     className:
-      "border-[color-mix(in_srgb,var(--opt-error)_40%,var(--opt-border))] bg-[color-mix(in_srgb,var(--opt-error)_10%,var(--opt-bg))] text-opt-text",
+      "border-[color-mix(in_srgb,var(--color-danger)_40%,var(--color-border))] bg-[color-mix(in_srgb,var(--color-danger)_10%,var(--color-background))] text-foreground",
     titleDefault: "Danger",
   },
 };
@@ -45,7 +45,7 @@ export function Callout({ type = "note", title, children }: CalloutProps) {
     >
       <div className="min-w-0 flex-1">
         <div className="mb-1 text-sm font-semibold">{label}</div>
-        <div className="text-sm leading-relaxed text-opt-muted [&>p]:m-0 [&>p]:leading-relaxed">
+        <div className="text-sm leading-relaxed text-muted [&>p]:m-0 [&>p]:leading-relaxed">
           {children}
         </div>
       </div>

@@ -61,18 +61,18 @@ function ShortcutRowKeys({ row }: { row: ShortcutRow }) {
 export function KeyboardShortcuts() {
   return (
     <section
-      className="mt-4 border-t border-gr-border-muted pt-3"
+      className="mt-4 border-t border-border-strong pt-3"
       aria-labelledby="keyboard-shortcuts-heading"
     >
       <h2
         id="keyboard-shortcuts-heading"
-        className="mb-2 text-xs font-semibold tracking-[0.04em] text-gr-muted uppercase"
+        className="mb-2 text-xs font-semibold tracking-[0.04em] text-muted uppercase"
       >
         Keyboard Shortcuts
       </h2>
       <ul className="m-0 flex list-none flex-col gap-2 p-0">
         {SHORTCUTS.map((row) => (
-          <li key={row.description} className="flex items-center gap-3 text-base text-gr-muted">
+          <li key={row.description} className="flex items-center gap-3 text-base text-muted">
             <span className="inline-flex min-w-[72px] shrink-0 items-center gap-1">
               <ShortcutRowKeys row={row} />
             </span>

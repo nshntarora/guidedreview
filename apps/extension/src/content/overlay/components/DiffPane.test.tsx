@@ -343,20 +343,20 @@ describe("DiffPane", () => {
     const focus = screen.getByTestId("diff-line-focus");
     expect(focus).toHaveAttribute("data-line-id", addId);
     // Row wash + brand line-number gutter both mark focus.
-    expect(focus.className).toMatch(/bg-gr-accent-subtle/);
-    expect(focus.className).not.toMatch(/bg-gr-add-bg/);
+    expect(focus.className).toMatch(/bg-primary-muted/);
+    expect(focus.className).not.toMatch(/bg-diff-add-bg/);
 
     const focusNumbers = screen.getAllByTestId("diff-line-number-highlight");
     expect(focusNumbers.length).toBeGreaterThan(0);
     for (const num of focusNumbers) {
-      expect(num.className).toMatch(/bg-gr-accent/);
-      expect(num.className).toMatch(/text-gr-accent-on/);
+      expect(num.className).toMatch(/bg-primary/);
+      expect(num.className).toMatch(/text-primary-foreground/);
     }
 
     // Unfocused del line still uses del background.
     const delLine = document.querySelector(`[data-line-id="${delId}"]`);
-    expect(delLine?.className).toMatch(/bg-gr-del-bg/);
-    expect(delLine?.className).not.toMatch(/bg-gr-accent-subtle/);
+    expect(delLine?.className).toMatch(/bg-diff-del-bg/);
+    expect(delLine?.className).not.toMatch(/bg-primary-muted/);
   });
 
   it("highlights line numbers for every line in a multi-line selection", async () => {
@@ -403,8 +403,8 @@ describe("DiffPane", () => {
     expect(firstNums.length).toBeGreaterThan(0);
     expect(secondNums.length).toBeGreaterThan(0);
     for (const num of [...firstNums, ...secondNums]) {
-      expect(num.className).toMatch(/bg-gr-accent/);
-      expect(num.className).toMatch(/text-gr-accent-on/);
+      expect(num.className).toMatch(/bg-primary/);
+      expect(num.className).toMatch(/text-primary-foreground/);
     }
   });
 
@@ -468,9 +468,9 @@ describe("DiffPane", () => {
     renderPane();
 
     const card = screen.getByTestId("draft-comment");
-    expect(card.className).toMatch(/bg-gr-bg/);
-    expect(card.className).toMatch(/border-gr-border/);
-    expect(card.className).not.toMatch(/bg-gr-accent-subtle/);
+    expect(card.className).toMatch(/bg-surface/);
+    expect(card.className).toMatch(/border-border/);
+    expect(card.className).not.toMatch(/bg-primary-muted/);
     expect(card).toHaveTextContent("Looks good");
 
     await act(async () => {

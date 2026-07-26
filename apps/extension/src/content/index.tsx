@@ -14,7 +14,7 @@ import { useReviewStore, restoreSession, buildSessionKey } from "./overlay/store
 const BUTTON_ID = "guided-review-start-btn";
 const BUTTON_STYLE_ID = "guided-review-start-btn-styles";
 const HOST_ID = "guided-review-overlay-host";
-/** Brand accent hover — keep in sync with `--color-gr-accent-hover` in theme.css. */
+/** Brand accent hover — keep in sync with `--color-primary-hover` in theme.css. */
 const ACCENT_HOVER = "#b6e64e";
 
 let currentPR: PRIdentity | null = null;

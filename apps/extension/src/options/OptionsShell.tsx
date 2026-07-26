@@ -5,7 +5,7 @@ import type { OptionsRoute } from "./routes";
 const DOCS_URL = "https://guidedreview.dev/docs";
 
 const NAV_ITEM_CLASS =
-  "rounded-md border-b-0 px-3 py-1.5 text-base font-medium no-underline transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent";
+  "rounded-md border-b-0 px-3 py-1.5 text-base font-medium no-underline transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 const NAV: { route: OptionsRoute; href: string; label: string }[] = [
   { route: "settings", href: "#settings", label: "Settings" },
@@ -28,12 +28,12 @@ export function OptionsShell({ route, children }: OptionsShellProps) {
     <div className="relative min-h-screen">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-opt-accent focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-opt-accent-on"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground"
       >
         Skip to content
       </a>
 
-      <header className="sticky top-0 z-40 border-b border-gr-border bg-gr-chrome/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-5 py-3.5 sm:px-6">
           <img
             src={logoUrl}
@@ -54,8 +54,8 @@ export function OptionsShell({ route, children }: OptionsShellProps) {
                   className={cn(
                     NAV_ITEM_CLASS,
                     active
-                      ? "bg-opt-subtle text-opt-text"
-                      : "text-opt-muted hover:bg-opt-subtle/60 hover:text-opt-text",
+                      ? "bg-surface-raised text-foreground"
+                      : "text-muted hover:bg-surface-raised/60 hover:text-foreground",
                   )}
                 >
                   {item.label}
@@ -68,7 +68,7 @@ export function OptionsShell({ route, children }: OptionsShellProps) {
               rel="noopener noreferrer"
               className={cn(
                 NAV_ITEM_CLASS,
-                "text-opt-muted hover:bg-opt-subtle/60 hover:text-opt-text",
+                "text-muted hover:bg-surface-raised/60 hover:text-foreground",
               )}
             >
               Docs

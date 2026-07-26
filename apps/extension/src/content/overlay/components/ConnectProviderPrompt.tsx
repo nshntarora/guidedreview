@@ -5,12 +5,12 @@ import { openOptionsPage } from "../../../lib/messaging";
 const CONFIGURE_PROVIDER_DOCS_URL = "https://guidedreview.dev/docs/configure-provider";
 
 /** Raised panel — one step above the context-pane background. */
-const SURFACE = "fill-[var(--color-gr-subtle)] stroke-[var(--color-gr-border)]";
+const SURFACE = "fill-[var(--color-surface-muted)] stroke-[var(--color-border)]";
 /** Recessed area (code pane, placeholder bars) sitting inside a surface. */
-const INSET = "fill-[var(--color-gr-bg)] stroke-[var(--color-gr-border)]";
+const INSET = "fill-[var(--color-surface)] stroke-[var(--color-border)]";
 /** The single accent moment: the context column waiting to be filled. */
 const ACCENT_WASH =
-  "fill-[color-mix(in_srgb,var(--color-gr-accent)_10%,transparent)] stroke-[var(--color-gr-accent)]";
+  "fill-[color-mix(in_srgb,var(--color-primary)_10%,transparent)] stroke-[var(--color-primary)]";
 
 /**
  * Review window with its AI context column empty and unconnected — same
@@ -29,15 +29,15 @@ function DisconnectedProviderArt() {
     >
       {/* Window chrome */}
       <rect x="8" y="10" width="224" height="120" rx="10" className={SURFACE} strokeWidth="1.25" />
-      <circle cx="22" cy="24" r="2.5" className="fill-[var(--color-gr-border)]" />
-      <circle cx="31" cy="24" r="2.5" className="fill-[var(--color-gr-border)]" />
-      <circle cx="40" cy="24" r="2.5" className="fill-[var(--color-gr-border)]" />
+      <circle cx="22" cy="24" r="2.5" className="fill-[var(--color-border)]" />
+      <circle cx="31" cy="24" r="2.5" className="fill-[var(--color-border)]" />
+      <circle cx="40" cy="24" r="2.5" className="fill-[var(--color-border)]" />
       <line
         x1="8"
         y1="38"
         x2="232"
         y2="38"
-        className="stroke-[var(--color-gr-border)]"
+        className="stroke-[var(--color-border)]"
         strokeWidth="1.25"
       />
 
@@ -51,20 +51,20 @@ function DisconnectedProviderArt() {
           width={[76, 58, 84, 46, 66][i]}
           height="5"
           rx="2.5"
-          className="fill-[var(--color-gr-border-muted)]"
+          className="fill-[var(--color-border-strong)]"
         />
       ))}
 
       {/* Broken link between the review and its context */}
       <path
         d="M136 84h6"
-        className="stroke-[var(--color-gr-accent)]"
+        className="stroke-[var(--color-primary)]"
         strokeWidth="1.5"
         strokeLinecap="round"
       />
       <path
         d="M150 84h6"
-        className="stroke-[var(--color-gr-accent)]"
+        className="stroke-[var(--color-primary)]"
         strokeWidth="1.5"
         strokeLinecap="round"
       />
@@ -82,7 +82,7 @@ function DisconnectedProviderArt() {
       />
       <path
         d="M190 66l3.2 7.3 7.3 3.2-7.3 3.2-3.2 7.3-3.2-7.3-7.3-3.2 7.3-3.2z"
-        className="fill-[var(--color-gr-accent)]"
+        className="fill-[var(--color-primary)]"
       />
       <rect
         x="172"
@@ -90,7 +90,7 @@ function DisconnectedProviderArt() {
         width="36"
         height="4"
         rx="2"
-        className="fill-[var(--color-gr-accent)] opacity-40"
+        className="fill-[var(--color-primary)] opacity-40"
       />
       <rect
         x="178"
@@ -98,7 +98,7 @@ function DisconnectedProviderArt() {
         width="24"
         height="4"
         rx="2"
-        className="fill-[var(--color-gr-accent)] opacity-25"
+        className="fill-[var(--color-primary)] opacity-25"
       />
     </svg>
   );
@@ -119,15 +119,14 @@ export function ConnectProviderPrompt() {
     >
       <DisconnectedProviderArt />
 
-      <h2 className="m-0 text-lg font-semibold text-gr-text">Connect an AI provider</h2>
+      <h2 className="m-0 text-lg font-semibold text-foreground">Connect an AI provider</h2>
 
-      <p className="m-0 text-base leading-relaxed text-gr-muted">
+      <p className="m-0 text-base leading-relaxed text-muted">
         You&rsquo;re reviewing this PR file by file. Setup AI and get your review done faster.
       </p>
 
       <div className="flex flex-col items-center gap-2">
         <Button
-          surface="overlay"
           size="sm"
           onClick={() => void openOptionsPage()}
           data-testid="connect-provider-open-settings"
@@ -141,7 +140,6 @@ export function ConnectProviderPrompt() {
           className={buttonClassName({
             variant: "ghost",
             size: "sm",
-            surface: "overlay",
           })}
           data-testid="connect-provider-learn-more"
         >

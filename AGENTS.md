@@ -125,12 +125,12 @@ registering it there — everything downstream (schema, chunking, validation) is
 Source-only package (no emit/`build` script). Apps import `@guided-review/ui` and transpile via Vite /
 Next `transpilePackages`.
 
-- Tokens: `@guided-review/ui/theme.css`
+- Tokens: `@guided-review/ui/theme.css` — single dark palette (`background`, `surface`,
+  `surface-raised`, `surface-muted`, `foreground`, `muted`, `faint`, `border`, `primary*`,
+  `success`/`danger`, `diff-*`, `syntax-*`). Same tokens for marketing, options, welcome, and
+  overlay (Tailwind utilities + `var(--color-*)` in SCSS).
 - Components: `cn`, `Spinner`, `Kbd`, `BrandMark`, `Button` / `buttonClassName`, `Input`, `Textarea`,
   `Label`, `Select` (chrome-free; brand mark takes `iconSrc`)
-- Surfaces: form controls accept `surface?: "app" | "overlay"` — `app` uses dark `opt-*` tokens
-  (options + marketing), `overlay` uses dark `gr-*` tokens (review overlay). Defaults: form controls
-  → `app`; `Spinner` → `overlay`.
 - Assets: `@guided-review/ui/assets/*` (canonical brand). Extension syncs into `public/` via
   `apps/extension/scripts/sync-ui-assets.mjs` on `predev`/`prebuild`.
 

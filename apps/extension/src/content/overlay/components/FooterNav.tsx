@@ -15,12 +15,12 @@ export function FooterNav({ currentIndex, total, onPrev, onNext }: FooterNavProp
 
   return (
     <footer
-      className="flex shrink-0 items-center justify-between gap-3 border-t border-gr-border bg-gr-chrome px-5 py-3"
+      className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-background px-5 py-3"
       aria-label="Review navigation"
     >
       <button
         type="button"
-        className={cn(navBtnBase, "border-gr-border bg-gr-bg text-gr-text")}
+        className={cn(navBtnBase, "border-border bg-surface text-foreground")}
         onClick={onPrev}
         disabled={currentIndex === 0 || total === 0}
         aria-label="Previous step"
@@ -30,7 +30,7 @@ export function FooterNav({ currentIndex, total, onPrev, onNext }: FooterNavProp
       </button>
 
       <p
-        className="m-0 min-w-0 text-center text-base tabular-nums text-gr-muted"
+        className="m-0 min-w-0 text-center text-base tabular-nums text-muted"
         role="status"
         aria-live="polite"
         aria-atomic="true"
@@ -43,8 +43,8 @@ export function FooterNav({ currentIndex, total, onPrev, onNext }: FooterNavProp
         type="button"
         className={cn(
           navBtnBase,
-          "border-gr-accent bg-gr-accent text-gr-accent-on transition-colors",
-          "not-disabled:hover:border-gr-accent-hover not-disabled:hover:bg-gr-accent-hover",
+          "border-primary bg-primary text-primary-foreground transition-colors",
+          "not-disabled:hover:border-primary-hover not-disabled:hover:bg-primary-hover",
           "[&_[data-slot=kbd]]:bg-[rgba(13,8,6,0.12)] [&_[data-slot=kbd]]:text-inherit",
         )}
         onClick={onNext}

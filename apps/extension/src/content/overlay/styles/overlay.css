@@ -87,7 +87,7 @@
     [contenteditable="true"],
     [tabindex]:not([tabindex="-1"])
   ):focus-visible {
-    outline: 2px solid var(--color-gr-accent, #caff57);
+    outline: 2px solid var(--color-primary, #caff57);
     outline-offset: 2px;
   }
 }

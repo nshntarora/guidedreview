@@ -20,10 +20,10 @@ const STATUS_BADGE: Record<FileChangeStatus, { letter: string; label: string }> 
 };
 
 const STATUS_BADGE_CLASS: Record<FileChangeStatus, string> = {
-  added: "bg-gr-add-bg text-gr-add-text",
-  modified: "bg-gr-subtle text-gr-muted",
-  removed: "bg-gr-del-bg text-gr-del-text",
-  renamed: "bg-gr-subtle text-gr-syntax-entity",
+  added: "bg-diff-add-bg text-diff-add",
+  modified: "bg-surface-muted text-muted",
+  removed: "bg-diff-del-bg text-diff-del",
+  renamed: "bg-surface-muted text-syntax-entity",
 };
 
 /**
@@ -49,21 +49,21 @@ export function DescriptionPane({ prContext, diff }: DescriptionPaneProps) {
       data-testid="description-pane"
     >
       <div className="min-w-0 max-w-[720px] flex-1">
-        <h2 className="mb-5 text-[1.375rem] font-semibold leading-snug tracking-[-0.01em] text-gr-text">
+        <h2 className="mb-5 text-[1.375rem] font-semibold leading-snug tracking-[-0.01em] text-foreground">
           PR Description
         </h2>
         {descriptionHtml ? (
           <div
-            className="markdown-body text-[0.9375rem] leading-[1.7] break-words text-gr-text"
+            className="markdown-body text-[0.9375rem] leading-[1.7] break-words text-foreground"
             dangerouslySetInnerHTML={{ __html: descriptionHtml }}
           />
         ) : description ? (
-          <div className="text-[0.9375rem] leading-[1.7] break-words whitespace-pre-wrap text-gr-text">
+          <div className="text-[0.9375rem] leading-[1.7] break-words whitespace-pre-wrap text-foreground">
             {description}
           </div>
         ) : (
           <p
-            className="m-0 text-[0.9375rem] leading-relaxed text-gr-muted"
+            className="m-0 text-[0.9375rem] leading-relaxed text-muted"
             data-testid="description-pane-empty"
           >
             {emptyDescriptionCopy(hasTitle)}
@@ -73,13 +73,13 @@ export function DescriptionPane({ prContext, diff }: DescriptionPaneProps) {
 
       {summary && (
         <section
-          className="w-[min(100%,360px)] shrink-0 max-w-[400px] border-l border-gr-border pl-6"
+          className="w-[min(100%,360px)] shrink-0 max-w-[400px] border-l border-border pl-6"
           aria-label="Diff summary"
         >
-          <h3 className="mb-2.5 text-lg font-semibold text-gr-text">Changes</h3>
-          <p className="mb-3.5 text-[0.9375rem] text-gr-muted tabular-nums">
-            <span className="mr-2 font-semibold text-gr-add-text">+{summary.additions}</span>
-            <span className="mr-2 font-semibold text-gr-del-text">−{summary.deletions}</span>
+          <h3 className="mb-2.5 text-lg font-semibold text-foreground">Changes</h3>
+          <p className="mb-3.5 text-[0.9375rem] text-muted tabular-nums">
+            <span className="mr-2 font-semibold text-diff-add">+{summary.additions}</span>
+            <span className="mr-2 font-semibold text-diff-del">−{summary.deletions}</span>
             <span>
               · {summary.files} file{summary.files === 1 ? "" : "s"}
             </span>
@@ -114,22 +114,22 @@ function DiffSummaryFileRow({ file }: { file: FileDiffSummary }) {
       >
         {badge.letter}
       </span>
-      <span className="min-w-0 truncate text-gr-text" title={pathLabel}>
+      <span className="min-w-0 truncate text-foreground" title={pathLabel}>
         {pathLabel}
       </span>
       <span className="inline-flex min-w-[4.5rem] shrink-0 items-center justify-end gap-1.5 text-right tabular-nums">
         {file.isBinaryOrElided ? (
-          <span className="text-[0.8125rem] text-gr-faint">binary</span>
+          <span className="text-[0.8125rem] text-faint">binary</span>
         ) : (
           <>
             {file.additions > 0 && (
-              <span className="font-medium text-gr-add-text">+{file.additions}</span>
+              <span className="font-medium text-diff-add">+{file.additions}</span>
             )}
             {file.deletions > 0 && (
-              <span className="font-medium text-gr-del-text">−{file.deletions}</span>
+              <span className="font-medium text-diff-del">−{file.deletions}</span>
             )}
             {file.additions === 0 && file.deletions === 0 && (
-              <span className="text-[0.8125rem] text-gr-faint">0</span>
+              <span className="text-[0.8125rem] text-faint">0</span>
             )}
           </>
         )}

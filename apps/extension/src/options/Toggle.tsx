@@ -35,9 +35,9 @@ export function Toggle({
       onClick={() => onChange(!checked)}
       className={cn(
         "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border transition-colors",
-        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent",
+        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
         "disabled:cursor-not-allowed disabled:opacity-60",
-        checked ? "border-opt-accent bg-opt-accent" : "border-opt-border bg-opt-subtle",
+        checked ? "border-primary bg-primary" : "border-border bg-surface-raised",
         className,
       )}
     >
@@ -45,7 +45,7 @@ export function Toggle({
         aria-hidden="true"
         className={cn(
           "pointer-events-none absolute top-0.5 left-0.5 size-4 rounded-full shadow-sm transition-transform",
-          checked ? "translate-x-5 bg-opt-accent-on" : "translate-x-0 bg-opt-muted",
+          checked ? "translate-x-5 bg-primary-foreground" : "translate-x-0 bg-muted",
         )}
       />
     </button>

@@ -234,8 +234,8 @@ export function SubmitReviewModal({
         "data-step": step,
       }}
     >
-      <div className="flex items-center justify-between gap-3 border-b border-gr-border px-4 py-3">
-        <h2 id={titleId} className="m-0 text-lg font-semibold text-gr-text">
+      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+        <h2 id={titleId} className="m-0 text-lg font-semibold text-foreground">
           Submit Review
         </h2>
         <CloseButton onClick={onClose} disabled={submitting} testId="submit-review-close" />
@@ -244,7 +244,7 @@ export function SubmitReviewModal({
       {step === "choose" ? (
         <>
           <div className="flex flex-col gap-3 px-4 py-4">
-            <p className="m-0 text-base text-gr-muted">Choose a review type.</p>
+            <p className="m-0 text-base text-muted">Choose a review type.</p>
             <div
               ref={listboxRef}
               role="listbox"
@@ -268,21 +268,19 @@ export function SubmitReviewModal({
                     className={[
                       "cursor-pointer rounded-md border px-3 py-2.5 transition-colors",
                       highlighted
-                        ? "border-gr-accent bg-gr-subtle"
-                        : "border-gr-border bg-gr-bg hover:bg-gr-subtle",
+                        ? "border-primary bg-surface-muted"
+                        : "border-border bg-surface hover:bg-surface-muted",
                     ].join(" ")}
                     onClick={() => confirmMode(index)}
                     onMouseEnter={() => setHighlight(index)}
                   >
-                    <div className="text-base font-semibold text-gr-text">{opt.label}</div>
-                    <div className="mt-0.5 text-sm leading-snug text-gr-muted">
-                      {opt.description}
-                    </div>
+                    <div className="text-base font-semibold text-foreground">{opt.label}</div>
+                    <div className="mt-0.5 text-sm leading-snug text-muted">{opt.description}</div>
                   </div>
                 );
               })}
             </div>
-            <div className="flex items-center gap-2 text-sm text-gr-faint">
+            <div className="flex items-center gap-2 text-sm text-faint">
               <KbdGroup>
                 <Kbd>↑</Kbd>
                 <Kbd>↓</Kbd>
@@ -294,9 +292,8 @@ export function SubmitReviewModal({
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 border-t border-gr-border px-4 py-3">
+          <div className="flex items-center justify-end gap-2 border-t border-border px-4 py-3">
             <Button
-              surface="overlay"
               variant="secondary"
               size="sm"
               onClick={onClose}
@@ -312,7 +309,6 @@ export function SubmitReviewModal({
           <div className="flex flex-col gap-4 px-4 py-4">
             <Textarea
               ref={textareaRef}
-              surface="overlay"
               className="min-h-[100px]"
               placeholder="Review summary (markdown supported)…"
               value={body}
@@ -324,12 +320,12 @@ export function SubmitReviewModal({
             />
 
             <div
-              className="rounded-md border border-gr-border bg-gr-bg px-3 py-2.5"
+              className="rounded-md border border-border bg-surface px-3 py-2.5"
               data-testid="submit-review-selected-event"
               data-event={selectedOpt.value}
             >
-              <div className="text-base font-semibold text-gr-text">{selectedOpt.label}</div>
-              <div className="mt-0.5 text-sm leading-snug text-gr-muted">
+              <div className="text-base font-semibold text-foreground">{selectedOpt.label}</div>
+              <div className="mt-0.5 text-sm leading-snug text-muted">
                 {selectedOpt.description}
               </div>
             </div>
@@ -345,9 +341,8 @@ export function SubmitReviewModal({
             ) : null}
           </div>
 
-          <div className="flex items-center justify-between gap-2 border-t border-gr-border px-4 py-3">
+          <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3">
             <Button
-              surface="overlay"
               variant="secondary"
               size="sm"
               onClick={goBack}
@@ -358,7 +353,6 @@ export function SubmitReviewModal({
             </Button>
             <div className="flex items-center gap-2">
               <Button
-                surface="overlay"
                 variant="secondary"
                 size="sm"
                 onClick={onClose}
@@ -369,7 +363,6 @@ export function SubmitReviewModal({
                 <Kbd>Esc</Kbd>
               </Button>
               <Button
-                surface="overlay"
                 size="sm"
                 onClick={handleSubmit}
                 disabled={submitting}

@@ -30,7 +30,7 @@ export function ProgressHeader({
   const logomarkUrl = chrome.runtime.getURL("logomark.svg");
 
   return (
-    <header className="flex shrink-0 flex-col gap-1.5 border-b border-gr-border bg-gr-chrome px-5 py-3.5">
+    <header className="flex shrink-0 flex-col gap-1.5 border-b border-border bg-background px-5 py-3.5">
       <div className="flex items-center justify-between gap-4">
         <div className="flex min-w-0 flex-1 items-center gap-3.5">
           <img
@@ -47,22 +47,22 @@ export function ProgressHeader({
                 {title}
               </h1>
               {prContext && (
-                <span className="shrink-0 text-base text-gr-muted">#{prContext.number}</span>
+                <span className="shrink-0 text-base text-muted">#{prContext.number}</span>
               )}
             </div>
             {prContext && (prContext.author || prContext.baseRef || prContext.headRef || stats) && (
-              <div className="flex items-center gap-2.5 text-sm text-gr-muted">
+              <div className="flex items-center gap-2.5 text-sm text-muted">
                 {prContext.author && <span>@{prContext.author}</span>}
                 {(prContext.baseRef || prContext.headRef) && (
-                  <span className="inline-block rounded-full border border-gr-border bg-gr-bg px-2.5 py-px font-mono text-xs text-gr-text">
+                  <span className="inline-block rounded-full border border-border bg-surface px-2.5 py-px font-mono text-xs text-foreground">
                     {prContext.baseRef || "?"} ← {prContext.headRef || "?"}
                   </span>
                 )}
                 {stats && (
                   <span>
                     {stats.files} file{stats.files === 1 ? "" : "s"} changed
-                    <span className="ml-1 text-gr-add-text"> +{stats.additions}</span>
-                    <span className="ml-1 text-gr-del-text"> −{stats.deletions}</span>
+                    <span className="ml-1 text-diff-add"> +{stats.additions}</span>
+                    <span className="ml-1 text-diff-del"> −{stats.deletions}</span>
                   </span>
                 )}
               </div>
@@ -72,7 +72,7 @@ export function ProgressHeader({
         <div className="flex shrink-0 items-center gap-3">
           <button
             type="button"
-            className={`${headerBtn} border-gr-accent bg-gr-accent text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover [&_[data-slot=kbd]]:bg-[rgba(13,8,6,0.12)] [&_[data-slot=kbd]]:text-inherit`}
+            className={`${headerBtn} border-primary bg-primary text-primary-foreground hover:border-primary-hover hover:bg-primary-hover [&_[data-slot=kbd]]:bg-[rgba(13,8,6,0.12)] [&_[data-slot=kbd]]:text-inherit`}
             onClick={onSubmitReview}
             data-testid="submit-review-button"
           >
@@ -81,7 +81,7 @@ export function ProgressHeader({
           </button>
           <button
             type="button"
-            className={`${headerBtn} gap-2 border-gr-border bg-gr-bg text-gr-text hover:bg-gr-subtle`}
+            className={`${headerBtn} gap-2 border-border bg-surface text-foreground hover:bg-surface-muted`}
             onClick={onExit}
           >
             Exit

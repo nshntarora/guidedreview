@@ -27,21 +27,31 @@ import {
   Label,
   Select,
 } from "@guided-review/ui";
-import type { Surface, SelectOption } from "@guided-review/ui";
+import type { SelectOption } from "@guided-review/ui";
 import "@guided-review/ui/theme.css";
 import iconUrl from "@guided-review/ui/assets/icon.png";
 ```
 
-### Surfaces
+### Design tokens
 
-Shared controls accept `surface?: "app" | "overlay"`:
+One dark palette in `src/styles/theme.css` (`@theme` → Tailwind utilities + `var(--color-*)`):
 
-| Surface   | Tokens  | Used by                           |
-| --------- | ------- | --------------------------------- |
-| `app`     | `opt-*` | Options page, marketing site      |
-| `overlay` | `gr-*`  | Review overlay (dark-only chrome) |
+| Token                                                                | Utilities           | Role                       |
+| -------------------------------------------------------------------- | ------------------- | -------------------------- |
+| `background`                                                         | `bg-background`     | Page / chrome root         |
+| `surface`                                                            | `bg-surface`        | Main panels                |
+| `surface-raised`                                                     | `bg-surface-raised` | Cards, inputs              |
+| `surface-muted`                                                      | `bg-surface-muted`  | Hover / inset              |
+| `foreground`                                                         | `text-foreground`   | Body text                  |
+| `muted`                                                              | `text-muted`        | Secondary text             |
+| `faint`                                                              | `text-faint`        | Placeholders, line numbers |
+| `border` / `border-strong`                                           | `border-border`     | UI borders                 |
+| `primary` / `primary-hover` / `primary-foreground` / `primary-muted` | `bg-primary`, …     | Brand lime                 |
+| `success` / `danger` / `danger-muted`                                | `text-success`, …   | Status                     |
+| `diff-add` / `diff-del` (+ `-bg`)                                    | `text-diff-add`, …  | Diff chrome                |
+| `syntax-*`                                                           | —                   | highlight.js (SCSS)        |
 
-Defaults: form controls default to `app`; `Spinner` defaults to `overlay` for back-compat.
+Used by the marketing site, options page, welcome page, and review overlay.
 
 ### Form controls
 

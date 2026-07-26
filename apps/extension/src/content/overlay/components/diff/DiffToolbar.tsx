@@ -16,14 +16,14 @@ export function DiffViewToggle({
       aria-label="Diff view"
       data-testid="diff-view-toggle"
     >
-      <div className="inline-flex overflow-hidden rounded-md border border-gr-border bg-gr-bg">
+      <div className="inline-flex overflow-hidden rounded-md border border-border bg-surface">
         <button
           type="button"
           className={cn(
             "inline-flex cursor-pointer items-center gap-1.5 px-3 py-1.5 text-base transition-colors",
             mode === "unified"
-              ? "bg-gr-subtle text-gr-text"
-              : "bg-transparent text-gr-muted hover:bg-gr-subtle hover:text-gr-text",
+              ? "bg-surface-muted text-foreground"
+              : "bg-transparent text-muted hover:bg-surface-muted hover:text-foreground",
           )}
           aria-pressed={mode === "unified"}
           onClick={() => onChange("unified")}
@@ -36,10 +36,10 @@ export function DiffViewToggle({
         <button
           type="button"
           className={cn(
-            "inline-flex cursor-pointer items-center gap-1.5 border-l border-gr-border px-3 py-1.5 text-base transition-colors",
+            "inline-flex cursor-pointer items-center gap-1.5 border-l border-border px-3 py-1.5 text-base transition-colors",
             mode === "split"
-              ? "bg-gr-subtle text-gr-text"
-              : "bg-transparent text-gr-muted hover:bg-gr-subtle hover:text-gr-text",
+              ? "bg-surface-muted text-foreground"
+              : "bg-transparent text-muted hover:bg-surface-muted hover:text-foreground",
           )}
           aria-pressed={mode === "split"}
           onClick={() => onChange("split")}
@@ -57,11 +57,11 @@ export function DiffViewToggle({
 export function CommentModeChip() {
   return (
     <span
-      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-gr-accent/40 bg-gr-accent-subtle px-2.5 py-1 text-sm text-gr-accent"
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-primary/40 bg-primary-muted px-2.5 py-1 text-sm text-primary"
       data-testid="comment-mode-chip"
     >
       Comment Mode
-      <span className="inline-flex items-center gap-1 text-gr-muted">
+      <span className="inline-flex items-center gap-1 text-muted">
         · <Kbd>Esc</Kbd> exits
       </span>
     </span>
@@ -79,10 +79,10 @@ export function AddCommentButton({
     <button
       type="button"
       className={cn(
-        "inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gr-border px-3 py-1.5 text-base transition-colors",
+        "inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-base transition-colors",
         disabled
-          ? "cursor-not-allowed bg-gr-bg text-gr-faint opacity-60"
-          : "cursor-pointer bg-gr-bg text-gr-text hover:bg-gr-subtle",
+          ? "cursor-not-allowed bg-surface text-faint opacity-60"
+          : "cursor-pointer bg-surface text-foreground hover:bg-surface-muted",
       )}
       disabled={disabled}
       data-testid="enter-comment-mode"

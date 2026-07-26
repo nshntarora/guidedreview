@@ -134,8 +134,10 @@ export function Options() {
   return (
     <main id="main-content">
       <header className="mb-8">
-        <h1 className="m-0 font-brand text-2xl font-bold tracking-tight text-opt-text">Settings</h1>
-        <p className="mt-2 m-0 text-base leading-relaxed text-opt-muted text-balance">
+        <h1 className="m-0 font-brand text-2xl font-bold tracking-tight text-foreground">
+          Settings
+        </h1>
+        <p className="mt-2 m-0 text-base leading-relaxed text-muted text-balance">
           Connect GitHub and choose an AI provider. Keys and tokens stay in this browser only.
         </p>
       </header>
@@ -153,7 +155,7 @@ export function Options() {
                 href={CONFIGURE_PROVIDER_DOCS_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent"
+                className="font-medium focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
                 Setup docs
               </a>
@@ -201,9 +203,9 @@ export function Options() {
                 disabled={busy}
                 aria-describedby="apiKey-hint"
               />
-              <p id="apiKey-hint" className="mt-1.5 m-0 text-sm text-opt-muted">
+              <p id="apiKey-hint" className="mt-1.5 m-0 text-sm text-muted">
                 Stored locally on this device via{" "}
-                <code className="rounded bg-opt-bg/80 px-1 py-0.5 font-mono text-sm text-opt-text">
+                <code className="rounded bg-background/80 px-1 py-0.5 font-mono text-sm text-foreground">
                   chrome.storage.local
                 </code>{" "}
                 — never synced.
@@ -212,9 +214,7 @@ export function Options() {
 
             <div className="flex flex-wrap items-center gap-2.5 pt-1">
               <Button onClick={onSave} disabled={busy}>
-                {saveStatus.kind === "working" && (
-                  <Spinner surface="app" size={14} label="Saving" />
-                )}
+                {saveStatus.kind === "working" && <Spinner size={14} label="Saving" />}
                 {saveStatus.kind === "working" ? "Saving…" : "Save"}
               </Button>
               <Button
@@ -222,9 +222,7 @@ export function Options() {
                 onClick={onTestConnection}
                 disabled={!settings.apiKey || busy}
               >
-                {connection.kind === "working" && (
-                  <Spinner surface="app" size={14} label="Testing connection" />
-                )}
+                {connection.kind === "working" && <Spinner size={14} label="Testing connection" />}
                 {connection.kind === "working" ? "Testing…" : "Test Connection"}
               </Button>
             </div>
@@ -244,11 +242,11 @@ export function Options() {
             <div className="min-w-0 flex-1">
               <p
                 id="autoOpenOnFilesTab-label"
-                className="m-0 font-brand text-base font-bold tracking-tight text-opt-text"
+                className="m-0 font-brand text-base font-bold tracking-tight text-foreground"
               >
                 Automatically open on Files changed
               </p>
-              <p id="autoOpenOnFilesTab-hint" className="mt-1 m-0 text-sm text-opt-muted">
+              <p id="autoOpenOnFilesTab-hint" className="mt-1 m-0 text-sm text-muted">
                 When enabled, Guided Review opens (or resumes) automatically on a PR’s Files changed
                 / Changes tab. You can still start it from the button anytime.
               </p>
@@ -264,7 +262,7 @@ export function Options() {
         </SettingsCard>
       </div>
 
-      <p className="mt-6 m-0 text-sm leading-relaxed text-opt-muted">
+      <p className="mt-6 m-0 text-sm leading-relaxed text-muted">
         Keys and tokens stay in this browser. Diffs go only to GitHub and the provider you choose.
       </p>
     </main>

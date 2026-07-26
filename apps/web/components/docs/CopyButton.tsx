@@ -27,7 +27,7 @@ export function CopyButton({ text, className }: CopyButtonProps) {
       onClick={handleCopy}
       aria-label={copied ? "Copied" : "Copy code"}
       className={cn(
-        buttonClassName({ variant: "secondary", size: "sm", surface: "app" }),
+        buttonClassName({ variant: "secondary", size: "sm" }),
         "px-2 py-1 text-xs",
         className,
       )}

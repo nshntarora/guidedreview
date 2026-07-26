@@ -11,7 +11,7 @@ export function CloseButton({
   return (
     <button
       type="button"
-      className="inline-flex cursor-pointer items-center justify-center rounded-md border border-gr-border bg-gr-bg p-1.5 text-gr-muted hover:bg-gr-subtle hover:text-gr-text disabled:cursor-not-allowed disabled:opacity-50"
+      className="inline-flex cursor-pointer items-center justify-center rounded-md border border-border bg-surface p-1.5 text-muted hover:bg-surface-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
       onClick={onClick}
       disabled={disabled}
       aria-label="Close"
