@@ -8,8 +8,8 @@
     "build": "next build",
     "start": "next start --port 3000",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "deploy": "npm run build && wrangler deploy",
-    "preview:cf": "npm run build && wrangler versions upload"
+    "deploy": "npm run build && wrangler pages deploy out --project-name=guidedreview",
+    "preview:cf": "npm run build && wrangler pages deploy out --project-name=guidedreview --branch=preview"
   },
   "dependencies": {
     "@guided-review/ui": "*",
