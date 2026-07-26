@@ -16,6 +16,7 @@ const victorMono = Victor_Mono({
 const logoSrc = typeof logoSvg === "string" ? logoSvg : (logoSvg as { src: string }).src;
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://guidedreview.com"),
   title: {
     default: "Guided Review",
     template: "%s · Guided Review",
@@ -27,6 +28,12 @@ export const metadata: Metadata = {
     description:
       "AI-structured review plans for GitHub pull requests — walk through schema, logic, call-sites, and tests in order.",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Guided Review",
+    description:
+      "AI-structured review plans for GitHub pull requests — walk through schema, logic, call-sites, and tests in order.",
   },
 };
 

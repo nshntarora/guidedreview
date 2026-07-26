@@ -4,6 +4,8 @@ import { CHROME_WEB_STORE_URL, GITHUB_REPO_URL } from "../lib/links";
 type Faq = {
   question: string;
   answer: ReactNode[];
+  /** Plain-text version of `answer`, used for FAQPage structured data. */
+  plainAnswer: string;
 };
 
 function FaqLink({ href, children }: { href: string; children: ReactNode }) {
@@ -25,6 +27,8 @@ const faqs: Faq[] = [
       </>,
       "We open the UI as an overlay on the GitHub review experience, read the diff that is generated in the PR, make an API call to your configured AI provider to get the review units/changes and summaries, map them to diffs and show them to you for review.",
     ],
+    plainAnswer:
+      "Once the Chrome extension is installed, it injects a start review button on the GitHub PR page. Clicking it opens the UI as an overlay on the GitHub review experience, reads the diff generated in the PR, calls your configured AI provider to get review units/changes and summaries, maps them to diffs, and shows them to you for review.",
   },
   {
     question: "So you don't track anything at all?",
@@ -35,6 +39,8 @@ const faqs: Faq[] = [
         (other than <FaqLink href="https://github.com">GitHub</FaqLink> and your AI provider).
       </>,
     ],
+    plainAnswer:
+      "Yes, there's only an anonymous analytics script on this website — the extension doesn't track anything at all. It doesn't talk to any third party servers other than GitHub and your AI provider.",
   },
   {
     question: "Is it free forever?",
@@ -47,6 +53,8 @@ const faqs: Faq[] = [
         not a good person.
       </>,
     ],
+    plainAnswer:
+      "Forever is a long time. It is free until it can be maintained for free — if demand increases and it takes a lot of bandwidth to maintain, some way to be compensated may be introduced. Since it's open source, you can fork it if needed.",
   },
   {
     question: "Who are you?",
@@ -58,12 +66,34 @@ const faqs: Faq[] = [
         and here&apos;s my credit card number - 4242 4242 4242 4242
       </>,
     ],
+    plainAnswer:
+      "I'm Nishant. Website: nishantarora.org. Twitter/X: @nshntarora. LinkedIn: aroranishant.",
   },
 ];
+
+function faqJsonLd(items: Faq[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.plainAnswer,
+      },
+    })),
+  };
+}
 
 export function Faqs() {
   return (
     <section id="faqs" className="relative overflow-hidden px-6 py-20 sm:py-28">
+      {/* Static, locally-authored JSON (not user input) — safe to inject directly. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd(faqs)) }}
+      />
       <div
         className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
         aria-hidden="true"
