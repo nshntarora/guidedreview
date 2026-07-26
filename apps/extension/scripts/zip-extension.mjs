@@ -13,9 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const extensionRoot = path.resolve(__dirname, "..");
 const distDir = path.join(extensionRoot, "dist");
 
-const pkg = JSON.parse(
-  fs.readFileSync(path.join(extensionRoot, "package.json"), "utf8"),
-);
+const pkg = JSON.parse(fs.readFileSync(path.join(extensionRoot, "package.json"), "utf8"));
 const version = pkg.version;
 const zipName = `guided-review-${version}.zip`;
 const zipPath = path.join(extensionRoot, zipName);
