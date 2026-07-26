@@ -60,10 +60,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
         <header className="sticky top-0 z-40 border-b border-gr-border bg-gr-chrome/95 backdrop-blur-sm">
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-3.5">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3.5 sm:gap-4 sm:px-6">
             <Link
               href="/"
-              className="rounded-sm border-b-0 no-underline hover:border-b-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gr-accent"
+              className="shrink-0 rounded-sm border-b-0 no-underline hover:border-b-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gr-accent"
               aria-label="Guided Review home"
             >
               <img
@@ -74,17 +74,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 height={49}
               />
             </Link>
-            <nav className="flex items-center gap-5 text-base" aria-label="Primary">
+            <nav
+              className="flex shrink-0 items-center gap-2 text-base sm:gap-3 md:gap-5"
+              aria-label="Primary"
+            >
               <Link
                 href="/#features"
-                className="hidden text-gr-text hover:text-gr-accent sm:inline"
+                className="hidden text-gr-text hover:text-gr-accent md:inline"
               >
                 Features
               </Link>
-              <Link href="/docs" className="hidden text-gr-text hover:text-gr-accent sm:inline">
+              <Link href="/docs" className="hidden text-gr-text hover:text-gr-accent md:inline">
                 Docs
               </Link>
-              <Link href="/#faqs" className="hidden text-gr-text hover:text-gr-accent sm:inline">
+              <Link href="/#faqs" className="hidden text-gr-text hover:text-gr-accent md:inline">
                 FAQ
               </Link>
               <StarOnGitHubButton size="sm" surface="overlay" compact />

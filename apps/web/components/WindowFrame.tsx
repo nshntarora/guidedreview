@@ -28,7 +28,7 @@ export function WindowFrame({ label, children, className, bodyClassName }: Windo
         <span className="h-2.5 w-2.5 rounded-full bg-gr-add-text/70" aria-hidden="true" />
         <span className="ml-2.5 truncate font-mono text-xs text-opt-muted">{label}</span>
       </div>
-      <div className={cn("p-6 sm:p-8", bodyClassName)}>{children}</div>
+      <div className={cn("p-4 sm:p-6 md:p-8", bodyClassName)}>{children}</div>
     </div>
   );
 }

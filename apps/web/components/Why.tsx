@@ -2,7 +2,7 @@ import { WindowFrame } from "./WindowFrame";
 
 export function Why() {
   return (
-    <section id="why" className="relative px-6 py-20 sm:py-28">
+    <section id="why" className="relative px-4 py-16 sm:px-6 sm:py-28">
       <div className="mx-auto max-w-5xl">
         <h2 className="m-0 text-center text-2xl font-bold tracking-tight text-opt-accent font-brand sm:text-3xl">
           Why?

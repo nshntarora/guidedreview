@@ -112,7 +112,7 @@ function faqJsonLd(items: Faq[]) {
 
 export function Faqs() {
   return (
-    <section id="faqs" className="relative px-6 py-20 sm:py-28">
+    <section id="faqs" className="relative px-4 py-16 sm:px-6 sm:py-28">
       {/* Static, locally-authored JSON (not user input) — safe to inject directly. */}
       <script
         type="application/ld+json"
@@ -132,7 +132,7 @@ export function Faqs() {
             {faqs.map((faq) => (
               <li key={faq.question}>
                 <details className="group [&_summary::-webkit-details-marker]:hidden">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-6 text-lg font-semibold tracking-tight transition-colors hover:text-opt-accent sm:p-8 sm:text-xl">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 text-base font-semibold tracking-tight transition-colors hover:text-opt-accent sm:gap-4 sm:p-6 sm:text-lg md:p-8 md:text-xl">
                     {faq.question}
                     <svg
                       aria-hidden="true"
@@ -147,7 +147,7 @@ export function Faqs() {
                       <path d="m6 9 6 6 6-6" />
                     </svg>
                   </summary>
-                  <div className="space-y-3 px-6 pb-6 text-base leading-relaxed text-opt-muted sm:px-8 sm:pb-8 sm:text-lg">
+                  <div className="space-y-3 px-4 pb-4 text-base leading-relaxed text-opt-muted sm:px-6 sm:pb-6 sm:text-lg md:px-8 md:pb-8">
                     {faq.answer.map((paragraph, index) => (
                       <p key={index} className="m-0">
                         {paragraph}

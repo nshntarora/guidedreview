@@ -20,7 +20,7 @@ export function ShortcutChord({ keyLabel }: { keyLabel: string }) {
   const keys = [isMac ? "⌘" : "Ctrl", keyLabel.toUpperCase()];
 
   return (
-    <KbdGroup aria-hidden="true">
+    <KbdGroup aria-hidden="true" className="max-sm:hidden">
       {keys.map((key, i) => (
         <Fragment key={`${key}-${i}`}>
           {i > 0 ? (

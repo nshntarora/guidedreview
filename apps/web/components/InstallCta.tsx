@@ -6,7 +6,7 @@ const iconSrc = typeof iconSvg === "string" ? iconSvg : (iconSvg as { src: strin
 
 export function InstallCta() {
   return (
-    <section id="install" className="mx-auto my-16 max-w-5xl px-6">
+    <section id="install" className="mx-auto my-12 max-w-5xl px-4 sm:my-16 sm:px-6">
       <WindowFrame label="install.sh">
         <div className="mx-auto max-w-2xl text-center">
           <img

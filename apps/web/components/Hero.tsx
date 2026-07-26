@@ -9,10 +9,10 @@ function riseDelay(seconds: number): CSSProperties {
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden px-6 pb-20 pt-16 text-center sm:pb-28 sm:pt-24">
+    <section className="relative overflow-hidden px-4 pb-16 pt-12 text-center sm:px-6 sm:pb-28 sm:pt-24">
       <div className="mx-auto max-w-5xl">
         <h1
-          className="gr-rise-in mx-auto max-w-3xl text-4xl leading-[1.35] font-bold tracking-tight text-balance sm:text-6xl sm:leading-[1.3] font-brand"
+          className="gr-rise-in mx-auto max-w-3xl text-3xl leading-[1.35] font-bold tracking-tight text-balance sm:text-5xl sm:leading-[1.3] md:text-6xl font-brand"
           style={riseDelay(0.1)}
         >
           A better way for humans to{" "}
