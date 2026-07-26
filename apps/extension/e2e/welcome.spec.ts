@@ -14,7 +14,7 @@ test.describe("Welcome page", () => {
     await expect(page.getByRole("navigation", { name: "Product links" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Website" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Docs" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "GitHub" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "GitHub", exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "Privacy" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Terms" })).toBeVisible();
   });
