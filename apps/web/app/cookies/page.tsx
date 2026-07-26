@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { LegalDocument } from "../../components/LegalDocument";
+import { openGraphSite } from "../../lib/site";
 
 export const metadata: Metadata = {
   title: "Cookies Policy",
   description: "How Guided Review uses cookies and similar technologies on the marketing website.",
   alternates: { canonical: "/cookies" },
+  openGraph: { ...openGraphSite, url: "/cookies" },
 };
 
 export default function CookiesPage() {

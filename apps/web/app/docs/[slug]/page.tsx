@@ -3,14 +3,26 @@ import { notFound } from "next/navigation";
 import { helpPages } from "@/config/help-pages";
 import { helpNavigation } from "@/config/help-navigation";
 import { DocsPageWrapper } from "@/components/docs/DocsPageWrapper";
+import { JsonLd } from "@/components/JsonLd";
+import { openGraphSite, SITE_NAME, SITE_URL } from "@/lib/site";
 
 type Props = { params: Promise<{ slug: string }> };
 
-const SITE_URL = "https://guidedreview.dev";
+function getNavPage(slug: string) {
+  return helpNavigation.find((item) => item.type !== "heading" && item.slug === slug);
+}
 
 function getPageTitle(slug: string): string {
-  const navItem = helpNavigation.find((item) => item.type !== "heading" && item.slug === slug);
+  const navItem = getNavPage(slug);
   return navItem && navItem.type !== "heading" ? navItem.title : slug;
+}
+
+function getPageDescription(slug: string, pageTitle: string): string {
+  const navItem = getNavPage(slug);
+  if (navItem && navItem.type !== "heading" && navItem.description) {
+    return navItem.description;
+  }
+  return `${SITE_NAME} documentation: ${pageTitle}.`;
 }
 
 export async function generateStaticParams() {
@@ -22,12 +34,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!helpPages[slug]) return {};
 
   const pageTitle = getPageTitle(slug);
+  const description = getPageDescription(slug, pageTitle);
 
   return {
     title: pageTitle,
-    description: `Guided Review documentation: ${pageTitle}. Learn how to use this feature.`,
+    description,
     alternates: { canonical: `/docs/${slug}` },
-    openGraph: { type: "article", url: `/docs/${slug}` },
+    openGraph: { ...openGraphSite, type: "article", url: `/docs/${slug}` },
   };
 }
 
@@ -39,14 +52,26 @@ export default async function DocsSlugPage({ params }: Props) {
   const mod = await loader();
   const Content = mod.default;
   const pageTitle = getPageTitle(slug);
+  const description = getPageDescription(slug, pageTitle);
+  const pageUrl = `${SITE_URL}/docs/${slug}`;
 
   const techArticleSchema = {
     "@context": "https://schema.org",
     "@type": "TechArticle",
     headline: pageTitle,
-    description: `Guided Review documentation: ${pageTitle}.`,
-    url: `${SITE_URL}/docs/${slug}`,
-    isPartOf: { "@type": "WebSite", url: SITE_URL, name: "Guided Review" },
+    description,
+    url: pageUrl,
+    author: {
+      "@type": "Organization",
+      name: SITE_NAME,
+      url: SITE_URL,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: SITE_NAME,
+      url: SITE_URL,
+    },
+    isPartOf: { "@type": "WebSite", url: SITE_URL, name: SITE_NAME },
   };
 
   const breadcrumbSchema = {
@@ -63,21 +88,15 @@ export default async function DocsSlugPage({ params }: Props) {
         "@type": "ListItem",
         position: 2,
         name: pageTitle,
-        item: `${SITE_URL}/docs/${slug}`,
+        item: pageUrl,
       },
     ],
   };
 
   return (
     <DocsPageWrapper slug={slug}>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(techArticleSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
+      <JsonLd data={techArticleSchema} />
+      <JsonLd data={breadcrumbSchema} />
       <Content />
     </DocsPageWrapper>
   );

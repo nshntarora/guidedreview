@@ -4,8 +4,11 @@ import logoSvg from "@guided-review/ui/assets/logo.svg";
 import Link from "next/link";
 import { InstallButton, StarOnGitHubButton } from "../components/CtaButtons";
 import { Footer } from "../components/Footer";
+import { JsonLd } from "../components/JsonLd";
 import { LineGutter } from "../components/LineGutter";
 import { SiteShortcuts } from "../components/SiteShortcuts";
+import { GITHUB_REPO_URL } from "../lib/links";
+import { DEFAULT_DESCRIPTION, openGraphSite, SITE_NAME, SITE_URL } from "../lib/site";
 import "./globals.css";
 
 const victorMono = Victor_Mono({
@@ -24,34 +27,44 @@ const newsreader = Newsreader({
 const logoSrc = typeof logoSvg === "string" ? logoSvg : (logoSvg as { src: string }).src;
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://guidedreview.dev"),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Guided Review",
-    template: "%s · Guided Review",
+    default: SITE_NAME,
+    template: `%s · ${SITE_NAME}`,
   },
-  description:
-    "A better way for humans to review AI generated code. Clustered changes, summaries, keyboard-first — free, open source, bring your own LLM key.",
+  description: DEFAULT_DESCRIPTION,
+  robots: {
+    index: true,
+    follow: true,
+  },
   icons: {
     icon: "/favicon.ico",
   },
+  // Do not hardcode openGraph/twitter title or description here — page-level
+  // title and description cascade into share previews when these are omitted.
   openGraph: {
-    title: "Guided Review",
-    description:
-      "A better way for humans to review AI generated code. Clustered changes, summaries, keyboard-first — free, open source, bring your own LLM key.",
+    ...openGraphSite,
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Guided Review",
-    description:
-      "A better way for humans to review AI generated code. Clustered changes, summaries, keyboard-first — free, open source, bring your own LLM key.",
   },
+};
+
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: SITE_NAME,
+  url: SITE_URL,
+  logo: `${SITE_URL}/favicon.ico`,
+  sameAs: [GITHUB_REPO_URL, "https://x.com/nshntarora"],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${victorMono.variable} ${newsreader.variable}`}>
       <body className="min-h-screen antialiased">
+        <JsonLd data={organizationSchema} />
         <LineGutter />
         <a
           href="#main"

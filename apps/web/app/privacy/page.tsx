@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { LegalContactBlock, LegalDocument } from "../../components/LegalDocument";
+import { openGraphSite } from "../../lib/site";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
     "How Guided Review collects, uses, and protects personal data across the website and Chrome extension.",
   alternates: { canonical: "/privacy" },
+  openGraph: { ...openGraphSite, url: "/privacy" },
 };
 
 export default function PrivacyPage() {
