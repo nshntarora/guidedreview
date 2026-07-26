@@ -78,6 +78,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               >
                 Features
               </Link>
+              <Link href="/docs" className="hidden text-gr-text hover:text-gr-accent sm:inline">
+                Docs
+              </Link>
               <Link href="/#faqs" className="hidden text-gr-text hover:text-gr-accent sm:inline">
                 FAQ
               </Link>

@@ -1,0 +1,39 @@
+export const toc = [
+  { id: "what-is-guided-review", label: "What is Guided Review?", level: 2 },
+  { id: "what-youll-find-here", label: "What you'll find here", level: 2 },
+  { id: "quick-start", label: "Quick start", level: 2 },
+];
+
+# Introduction
+
+Guided Review turns a GitHub pull request into an ordered walkthrough — schema first, then logic, call-sites, and tests — so you can review with intent instead of scrolling a raw diff.
+
+## What is Guided Review?
+
+Guided Review is a Chrome extension for GitHub pull requests. On a PR page it adds a **Start Guided Review** button. When you start a review, the extension:
+
+1. Reads the PR’s unified diff (fetched through the extension’s background worker)
+2. Sends that diff to **your** configured AI provider (Anthropic, OpenAI, or Grok)
+3. Turns the response into a sequence of **review units** — logical groups of hunks with short commentary
+4. Shows those units in an overlay so you can step through the change set in a sensible order
+
+You stay on GitHub. Your API key stays in the extension. The model plans structure and commentary; the code you see always comes from the real parsed diff.
+
+## What you'll find here
+
+- **[Install the extension](/docs/install)** — Chrome Web Store or load unpacked for development
+- **[Your first review](/docs/first-review)** — from a PR page to walking units
+- **[Configure AI provider](/docs/configure-provider)** — API keys, models, and connection checks
+- **[Connect GitHub](/docs/connect-github)** — optional auth for submitting reviews from the overlay
+- **[How a review plan works](/docs/how-it-works)** — units, chunking, and what the model is allowed to invent
+- **[Keyboard shortcuts](/docs/keyboard-shortcuts)** — move through a review without leaving the keyboard
+- **[Privacy & data](/docs/privacy-and-data)** — what leaves your machine and what doesn’t
+
+## Quick start
+
+1. [Install](/docs/install) the extension.
+2. Open the options page and [configure a provider](/docs/configure-provider).
+3. Open any GitHub pull request and click **Start Guided Review**.
+4. Step through the plan — see [Your first review](/docs/first-review) for details.
+
+> **Open source.** Guided Review is Apache-2.0. Source and issues live on [GitHub](https://github.com/nshntarora/guidedreview).

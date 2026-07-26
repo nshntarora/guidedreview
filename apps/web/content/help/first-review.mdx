@@ -1,0 +1,44 @@
+export const toc = [
+  { id: "open-a-pull-request", label: "Open a pull request", level: 2 },
+  { id: "start-guided-review", label: "Start Guided Review", level: 2 },
+  { id: "walk-the-plan", label: "Walk the plan", level: 2 },
+  { id: "leave-comments-and-submit", label: "Leave comments and submit", level: 2 },
+  { id: "resume-later", label: "Resume later", level: 2 },
+];
+
+# Your first review
+
+From a normal GitHub PR page to a structured walkthrough in a few clicks.
+
+## Open a pull request
+
+Navigate to any pull request on `github.com` (Conversation, Files changed, or Commits). The content script is injected on `https://github.com/*` so SPA navigation from the PR list still shows the button when you land on a PR.
+
+## Start Guided Review
+
+1. Click **Start Guided Review** on the PR page.
+2. The overlay opens in a Shadow DOM host so its styles don’t fight GitHub’s CSS.
+3. The extension fetches the PR diff, builds a prompt, and streams a review plan from your configured provider.
+4. Units appear progressively as the stream completes each chunk; the final merged plan is what you step through.
+
+> **No provider configured?** You’ll be prompted to open Options and [add an API key](/docs/configure-provider) first.
+
+## Walk the plan
+
+The overlay shows **display units** in order: a synthetic PR description step first, then each planned unit.
+
+For each unit you can:
+
+- Read the unit’s title and guidance
+- See the linked hunks from the real diff (unified or split view)
+- Move next / previous with the footer or [keyboard shortcuts](/docs/keyboard-shortcuts)
+
+The model chooses order and commentary; it does **not** supply the code lines you see. Hunk ids that don’t match the parsed diff are dropped.
+
+## Leave comments and submit
+
+If you’ve [connected GitHub](/docs/connect-github), you can draft line comments from the overlay and submit a review (comment / approve / request changes) without leaving the guided flow. Submitted reviews use the GitHub API via your authorized token.
+
+## Resume later
+
+Sessions (diff, plan, PR context, current step) are stored in `chrome.storage.session`, keyed by **owner/repo#number** — not the full URL — so you can switch between Conversation and Files changed tabs and resume the same plan until the browser session ends.

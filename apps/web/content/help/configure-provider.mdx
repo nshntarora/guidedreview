@@ -1,0 +1,47 @@
+export const toc = [
+  { id: "supported-providers", label: "Supported providers", level: 2 },
+  { id: "set-your-api-key", label: "Set your API key", level: 2 },
+  { id: "pick-a-model", label: "Pick a model", level: 2 },
+  { id: "test-connection", label: "Test connection", level: 2 },
+  { id: "where-settings-live", label: "Where settings live", level: 2 },
+];
+
+# Configure AI provider
+
+Guided Review calls **your** LLM account. There is no Guided Review cloud that holds your key or rewrites diffs for you.
+
+## Supported providers
+
+| Provider | Notes |
+| --- | --- |
+| **Anthropic** | Claude models via Anthropic’s API |
+| **OpenAI** | OpenAI-compatible chat completions |
+| **Grok** | xAI’s OpenAI-compatible API |
+
+OpenAI and Grok share the same client shape; Anthropic uses its own streaming endpoint. Structured output for the review plan is enforced with a shared JSON schema so behavior stays consistent across backends.
+
+## Set your API key
+
+1. Open the extension **Options** page.
+2. Choose a provider.
+3. Paste an API key from that provider’s console.
+4. Save.
+
+Keys are stored in `chrome.storage.local` and are only used from the **background service worker** when annotating a review or testing the connection. Content scripts never hold the key for outbound LLM calls.
+
+## Pick a model
+
+Select a model available on your account. Prefer a model that handles long contexts well if you review large PRs — Guided Review chunks oversized diffs by file (~60k characters per chunk) so no single call is expected to swallow an entire monorepo change set, but each chunk still benefits from a capable model.
+
+## Test connection
+
+Use **Test connection** on the options page. That runs the same provider path as a lightweight health check and surfaces user-safe error messages if the key, model, or network path fails.
+
+## Where settings live
+
+| Setting | Storage | Used by |
+| --- | --- | --- |
+| Provider, model, API key | `chrome.storage.local` | Background worker |
+| Active review session | `chrome.storage.session` | Content overlay (session-scoped) |
+
+> **Billing.** Token usage and cost are entirely between you and your provider. Guided Review does not meter or resell LLM usage.

@@ -11,6 +11,7 @@ export function Footer() {
             <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
               GitHub
             </a>
+            <Link href="/docs">Docs</Link>
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>
             <Link href="/cookies">Cookies</Link>
