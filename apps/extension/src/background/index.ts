@@ -347,7 +347,12 @@ async function handleGitHubDevicePoll(
 
 async function handleGitHubAuthGet(): Promise<GitHubAuthGetResponse> {
   const auth = await getGitHubAuth();
-  return { ok: true, auth };
+  if (!auth) return { ok: true, auth: null };
+  // Strip the access token before it leaves the background worker — neither
+  // the options page nor the content script needs it; SUBMIT_REVIEW reads it
+  // from storage directly, background-side.
+  const { accessToken: _accessToken, tokenType: _tokenType, ...publicAuth } = auth;
+  return { ok: true, auth: publicAuth };
 }
 
 async function handleGitHubAuthClear(): Promise<GitHubAuthClearResponse> {
