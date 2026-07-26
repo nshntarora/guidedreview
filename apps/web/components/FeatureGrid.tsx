@@ -116,7 +116,7 @@ function FeatureCard({ feature: f, wide = false }: { feature: Feature; wide?: bo
           wide ? "md:w-[min(46%,26rem)]" : "mt-auto"
         }`}
       >
-        <f.Illustration className="h-auto w-full max-w-[320px]" />
+        <f.Illustration className="h-auto w-full max-w-[360px]" />
       </div>
     </WindowFrame>
   );

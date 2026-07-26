@@ -42,7 +42,7 @@
   --color-gr-syntax-deleted: #ffdcd7;
   --color-gr-syntax-inserted: #aff5b4;
 
-  /* Options page — light defaults; dark overridden via CSS vars below */
+  /* Options + marketing surfaces (dark-only) */
   --color-opt-bg: var(--opt-bg);
   --color-opt-subtle: var(--opt-subtle);
   --color-opt-border: var(--opt-border);
@@ -83,35 +83,20 @@
   }
 }
 
-/* Options light/dark tokens (referenced by @theme above) */
+/* Options + marketing tokens (dark-only; referenced by @theme above) */
 :root {
-  color-scheme: light dark;
-  --opt-bg: #fefefe;
-  --opt-subtle: #f6f8fa;
+  color-scheme: dark;
+  --opt-bg: #0d0806;
+  --opt-subtle: #16120f;
   /* ≥ 3:1 against opt-bg for control borders (1.4.11) */
-  --opt-border: #8b949e;
-  --opt-text: #0d0806;
-  --opt-muted: #59636e;
+  --opt-border: #312d29;
+  --opt-text: #fefefe;
+  --opt-muted: #fefefea1;
   --opt-accent: #caff57;
   --opt-accent-hover: #b6e64e;
   --opt-accent-on: #0d0806;
-  --opt-ok: #1a7f37;
-  --opt-error: #cf222e;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --opt-bg: #0d0806;
-    --opt-subtle: #16120f;
-    --opt-border: #312d29;
-    --opt-text: #fefefe;
-    --opt-muted: #fefefea1;
-    --opt-accent: #caff57;
-    --opt-accent-hover: #b6e64e;
-    --opt-accent-on: #0d0806;
-    --opt-ok: #3fb950;
-    --opt-error: #ff7b72;
-  }
+  --opt-ok: #3fb950;
+  --opt-error: #ff7b72;
 }
 
 /* WCAG 2.3.3 — respect reduced-motion preference (overlay + options import this file) */

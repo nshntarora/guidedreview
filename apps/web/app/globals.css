@@ -11,6 +11,13 @@
   --font-serif: var(--font-newsreader), "Iowan Old Style", "Palatino Linotype", Georgia, serif;
 }
 
+/* Accent as *ink* on dark surfaces (illustrations, labels, hairline strokes).
+   Same lime as --opt-accent; kept as a named token so SVG stroke/fill can
+   reference it without fighting fill-only accent usage. */
+:root {
+  --gr-accent-ink: var(--opt-accent);
+}
+
 html,
 body {
   margin: 0;
@@ -25,8 +32,8 @@ html {
 body {
   position: relative;
   font-family: var(--font-sans, system-ui, sans-serif);
-  background: var(--opt-bg, #fefefe);
-  color: var(--opt-text, #0d0806);
+  background: var(--opt-bg, #0d0806);
+  color: var(--opt-text, #fefefe);
 }
 
 /* Faint grain for texture — replaces the flat/grid look used elsewhere. */

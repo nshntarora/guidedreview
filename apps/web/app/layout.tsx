@@ -31,6 +31,9 @@ export const metadata: Metadata = {
   },
   description:
     "AI-structured review plans for GitHub pull requests — walk through schema, logic, call-sites, and tests in order.",
+  icons: {
+    icon: "/favicon.ico",
+  },
   openGraph: {
     title: "Guided Review",
     description:

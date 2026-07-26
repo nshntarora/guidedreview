@@ -10,8 +10,8 @@ interface ProviderIconProps {
 }
 
 /**
- * Decorative provider logo. OpenAI's monochrome mark is inverted in dark mode
- * so it stays visible on both options-page themes.
+ * Decorative provider logo. OpenAI's monochrome mark is inverted so it stays
+ * visible on the dark-only options page.
  */
 export function ProviderIcon({ provider, size = 16, className }: ProviderIconProps) {
   const def = getProvider(provider);
@@ -30,8 +30,8 @@ export function ProviderIcon({ provider, size = 16, className }: ProviderIconPro
       aria-hidden="true"
       className={cn(
         "shrink-0 object-contain",
-        // OpenAI asset is dark-on-transparent; invert for dark color scheme.
-        provider === "openai" && "dark:invert",
+        // OpenAI asset is dark-on-transparent; invert for the dark surface.
+        provider === "openai" && "invert",
         className,
       )}
       style={{ width: size, height: size }}

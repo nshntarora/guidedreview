@@ -25,7 +25,7 @@ export function TrustBand({ starCount }: TrustBandProps) {
         </p>
 
         <div className="mx-auto mt-10 flex items-center justify-center rounded-lg bg-opt-bg/60 p-6">
-          <NoBackendIllustration className="h-auto w-full max-w-[320px]" />
+          <NoBackendIllustration className="h-auto w-full max-w-[480px]" />
         </div>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">

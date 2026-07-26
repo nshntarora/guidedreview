@@ -126,7 +126,7 @@ Next `transpilePackages`.
 - Tokens: `@guided-review/ui/theme.css`
 - Components: `cn`, `Spinner`, `Kbd`, `BrandMark`, `Button` / `buttonClassName`, `Input`, `Textarea`,
   `Label`, `Select` (chrome-free; brand mark takes `iconSrc`)
-- Surfaces: form controls accept `surface?: "app" | "overlay"` — `app` uses adaptive `opt-*` tokens
+- Surfaces: form controls accept `surface?: "app" | "overlay"` — `app` uses dark `opt-*` tokens
   (options + marketing), `overlay` uses dark `gr-*` tokens (review overlay). Defaults: form controls
   → `app`; `Spinner` → `overlay`.
 - Assets: `@guided-review/ui/assets/*` (canonical brand). Extension syncs into `public/` via

@@ -11,16 +11,12 @@ export function Hero() {
     <section className="relative overflow-hidden px-6 pb-20 pt-16 text-center sm:pb-28 sm:pt-24">
       <div className="mx-auto max-w-5xl">
         <h1
-          className="gr-rise-in mx-auto max-w-3xl text-4xl font-bold tracking-tight text-balance sm:text-6xl font-brand"
+          className="gr-rise-in mx-auto max-w-3xl text-4xl leading-[1.35] font-bold tracking-tight text-balance sm:text-6xl sm:leading-[1.3] font-brand"
           style={riseDelay(0.1)}
         >
-          A better way for humans to review{" "}
-          <span className="relative whitespace-nowrap">
-            <span className="relative z-10 text-opt-text">AI generated code</span>
-            <span
-              className="absolute inset-x-0 bottom-0.5 -z-0 h-[0.35em] bg-opt-accent/70 sm:bottom-1.5"
-              aria-hidden="true"
-            />
+          A better way for humans to{" "}
+          <span className="rounded-md bg-opt-accent px-2 py-0.5 text-opt-accent-on [box-decoration-break:clone] [-webkit-box-decoration-break:clone]">
+            review AI generated code
           </span>
         </h1>
 
