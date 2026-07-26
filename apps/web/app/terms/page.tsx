@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { LegalContactBlock, LegalDocument } from "../../components/LegalDocument";
+import { openGraphSite } from "../../lib/site";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
   description: "Terms governing use of the Guided Review Chrome extension and website.",
   alternates: { canonical: "/terms" },
+  openGraph: { ...openGraphSite, url: "/terms" },
 };
 
 export default function TermsPage() {
