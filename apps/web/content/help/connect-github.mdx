@@ -1,0 +1,39 @@
+export const toc = [
+  { id: "why-connect-github", label: "Why connect GitHub?", level: 2 },
+  { id: "device-flow", label: "Device flow", level: 2 },
+  { id: "what-we-request", label: "What we request", level: 2 },
+  { id: "disconnect", label: "Disconnect", level: 2 },
+];
+
+# Connect GitHub
+
+Connecting GitHub is **optional** for reading a PR and generating a guided plan. It is required if you want to **submit a review** (comments, approve, request changes) from the overlay.
+
+## Why connect GitHub?
+
+Without GitHub auth, Guided Review can still:
+
+- Detect the PR from the page
+- Fetch the public diff path the extension uses for review planning
+- Stream a plan and walk units
+
+With auth, the overlay can also post your drafted line comments and overall review decision through the GitHub API as you.
+
+## Device flow
+
+Guided Review uses GitHub’s **device OAuth** flow from the options page (and prompts in the overlay when submit needs a token):
+
+1. Open Options → GitHub section (or the connect modal when submitting).
+2. Start the device flow and open the verification URL GitHub shows.
+3. Enter the code and approve access in the browser.
+4. Return to the extension — tokens are stored locally for subsequent API calls.
+
+## What we request
+
+Scopes are limited to what submit-review needs (reading PR context and writing review comments). Tokens stay in extension storage; they are not sent to Guided Review servers because there are none for the product path.
+
+> **Org policies.** Some organizations require approving third-party OAuth apps. If device flow fails with an org restriction, approve the app in GitHub settings or complete the review on github.com itself.
+
+## Disconnect
+
+Use **Disconnect** / sign-out in Options to clear stored GitHub credentials. You can still generate guided plans; only submit-from-overlay stops working until you connect again.

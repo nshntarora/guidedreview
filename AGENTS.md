@@ -141,5 +141,7 @@ are not scanned by default).
 
 ## Marketing site (`apps/web`)
 
-Next.js App Router with SSG for `/`, `/privacy`, `/terms`. Dev on port 3000. Hosting deferred — CI
-runs `next build` only.
+Next.js App Router with SSG for `/`, `/docs`, `/privacy`, `/terms`, `/cookies`. Product docs are
+MDX under `apps/web/content/help/` (`@next/mdx` + `mdxRs` GFM), registered in
+`config/help-pages.ts` / `config/help-navigation.ts`, rendered at `/docs` and `/docs/[slug]`. Dev
+on port 3000. Hosting deferred — CI runs `next build` only.
