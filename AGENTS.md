@@ -149,10 +149,10 @@ GFM), registered in `config/help-pages.ts` / `config/help-navigation.ts`, render
 `/docs/[slug]`. Dev on port 3000. Production build writes to `apps/web/out/`.
 
 **Hosting:** Cloudflare Pages (`wrangler pages deploy` of `apps/web/out` → `*.pages.dev`).
-`.github/workflows/deploy.yml` builds and deploys after **Lint and test** succeeds when main/PR
-changes touch `apps/web` / `packages/ui` (or via `workflow_dispatch`). Secrets:
-`CLOUDFLARE_API_TOKEN` (Cloudflare Pages:Edit), `CLOUDFLARE_ACCOUNT_ID`. Pages project name defaults
-to `guidedreview`.
+`.github/workflows/deploy.yml` builds and deploys after **Lint and test** succeeds on a **push to
+main** when changes touch `apps/web` / `packages/ui` (or via `workflow_dispatch`). PRs and other
+branches never deploy. Secrets: `CLOUDFLARE_API_TOKEN` (Cloudflare Pages:Edit),
+`CLOUDFLARE_ACCOUNT_ID`. Pages project name defaults to `guidedreview`.
 
 ## Voice and tone
 

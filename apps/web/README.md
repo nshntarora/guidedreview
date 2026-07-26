@@ -56,14 +56,13 @@ domain you attach in the Pages project).
 
 ### CI deploy
 
-Deploy runs only after the **Lint and test** workflow succeeds (or via manual
-`workflow_dispatch`).
+Deploy runs only after **Lint and test** succeeds on a **push to `main`** (or
+via manual `workflow_dispatch`). PR and non-main test runs never deploy.
 
-| Event                                        | What deploys                                         |
-| -------------------------------------------- | ---------------------------------------------------- |
-| Push to `main` (web-related paths, after CI) | Production (`pages deploy` on branch `main`)         |
-| PR touching web-related paths (after CI)     | Preview deployment (`pages deploy` on the PR branch) |
-| `workflow_dispatch`                          | Manual production deploy                             |
+| Event                                        | What deploys                                 |
+| -------------------------------------------- | -------------------------------------------- |
+| Push to `main` (web-related paths, after CI) | Production (`pages deploy` on branch `main`) |
+| `workflow_dispatch`                          | Manual production deploy                     |
 
 **GitHub secrets** (repo → Settings → Secrets and variables → Actions):
 
