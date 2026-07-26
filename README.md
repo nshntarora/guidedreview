@@ -55,3 +55,7 @@ After the monorepo move, remove any old root `dist/` entry from `chrome://extens
 | ------------------------ | ---- |
 | Extension Vite / crx HMR | 5173 |
 | Marketing Next.js        | 3000 |
+
+## License
+
+Licensed under the [Apache License, Version 2.0](LICENSE).
