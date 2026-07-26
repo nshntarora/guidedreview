@@ -12,9 +12,10 @@ const nextConfig: NextConfig = {
       mdxType: "gfm",
     },
   },
-  // Uncomment only when hosting is pure-static and no Next server features are needed:
-  // output: "export",
-  // images: { unoptimized: true },
+  // Static HTML export for Cloudflare Pages (no Node server at runtime).
+  output: "export",
+  // next/image optimizer needs a server; site uses plain <img> / public assets.
+  images: { unoptimized: true },
 };
 
 const withMDX = createMDX({});

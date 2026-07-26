@@ -56,6 +56,21 @@ After the monorepo move, remove any old root `dist/` entry from `chrome://extens
 | Extension Vite / crx HMR | 5173 |
 | Marketing Next.js        | 3000 |
 
+### Marketing site deploy (Cloudflare Pages)
+
+The marketing site (`apps/web`) is a static export deployed to **Cloudflare Pages**
+by `.github/workflows/deploy-web.yml` on pushes/PRs that touch the web app or
+shared UI package.
+
+Set these GitHub Actions secrets before the first deploy:
+
+- `CLOUDFLARE_API_TOKEN` — token with **Cloudflare Pages:Edit**
+- `CLOUDFLARE_ACCOUNT_ID` — your Cloudflare account ID
+
+Optional variable: `CLOUDFLARE_PAGES_PROJECT` (defaults to `guidedreview`).
+
+See [`apps/web/README.md`](apps/web/README.md) for full hosting notes.
+
 ## License
 
 Licensed under the [Apache License, Version 2.0](LICENSE).

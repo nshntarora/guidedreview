@@ -32,7 +32,36 @@ Uses `@guided-review/ui` via `transpilePackages` and Tailwind `@source` of `pack
 
 ## Hosting
 
-Deferred. CI runs `next build` only. When a host is chosen:
+**Cloudflare Pages** via Direct Upload from GitHub Actions
+(`.github/workflows/deploy-web.yml`).
 
-- Node/platform host: deploy `.next/` + `next start` (or adapter)
-- Pure static: set `output: "export"` in `next.config.ts` (and usually `images.unoptimized: true`)
+The site is a pure static export (`output: "export"` in `next.config.ts`).
+`npm run build` writes assets to `apps/web/out/`, which Wrangler uploads.
+
+### CI deploy
+
+| Event                              | What deploys                        |
+| ---------------------------------- | ----------------------------------- |
+| Push to `main` (web-related paths) | Production                          |
+| PR touching web-related paths      | Preview URL                         |
+| `workflow_dispatch`                | Manual production/preview by branch |
+
+**GitHub secrets** (repo → Settings → Secrets and variables → Actions):
+
+| Secret                  | Value                                              |
+| ----------------------- | -------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Account API token with **Cloudflare Pages → Edit** |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID                              |
+
+Optional repo **variable**: `CLOUDFLARE_PAGES_PROJECT` (default `guidedreview`).
+
+Create the Pages project in the Cloudflare dashboard (empty Direct Upload project
+is fine), attach the custom domain, then push a change under `apps/web/` or
+`packages/ui/` — or run **Deploy web** → **Run workflow**.
+
+Local production preview of the export:
+
+```bash
+npm run build:web
+npx serve apps/web/out   # or any static file server
+```

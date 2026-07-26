@@ -141,10 +141,15 @@ are not scanned by default).
 
 ## Marketing site (`apps/web`)
 
-Next.js App Router with SSG for `/`, `/docs`, `/privacy`, `/terms`, `/cookies`. Product docs are
-MDX under `apps/web/content/help/` (`@next/mdx` + `mdxRs` GFM), registered in
-`config/help-pages.ts` / `config/help-navigation.ts`, rendered at `/docs` and `/docs/[slug]`. Dev
-on port 3000. Hosting deferred — CI runs `next build` only.
+Next.js App Router with **static export** (`output: "export"`) for `/`, `/docs`, `/privacy`,
+`/terms`, `/cookies`. Product docs are MDX under `apps/web/content/help/` (`@next/mdx` + `mdxRs`
+GFM), registered in `config/help-pages.ts` / `config/help-navigation.ts`, rendered at `/docs` and
+`/docs/[slug]`. Dev on port 3000. Production build writes to `apps/web/out/`.
+
+**Hosting:** Cloudflare Pages via Direct Upload. `.github/workflows/deploy-web.yml` builds and
+deploys on main/PR path changes under `apps/web` / `packages/ui`. Secrets:
+`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` (optional var `CLOUDFLARE_PAGES_PROJECT`, default
+`guidedreview`).
 
 ## Voice and tone
 

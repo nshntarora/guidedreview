@@ -7,9 +7,10 @@ const GITHUB_REPO_PATH = "nshntarora/guidedreview";
  */
 export async function getGitHubStarCount(): Promise<number | null> {
   try {
+    // Build-time fetch only (static export). Re-fetched on each Cloudflare Pages deploy.
     const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO_PATH}`, {
       headers: { Accept: "application/vnd.github+json" },
-      next: { revalidate: 3600 },
+      cache: "force-cache",
     });
     if (!res.ok) return null;
     const data: unknown = await res.json();
