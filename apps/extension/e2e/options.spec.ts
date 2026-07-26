@@ -59,12 +59,12 @@ test.describe("Options page", () => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/src/options/index.html`);
 
-    await page.getByRole("link", { name: /about guided review/i }).click();
-    await expect(page.getByRole("heading", { name: "What It Does" })).toBeVisible();
+    await page.getByRole("link", { name: "About" }).click();
+    await expect(page.getByRole("heading", { name: "How it works" })).toBeVisible();
     await expect(page).toHaveURL(/#about$/);
     await expect(page).toHaveTitle(/About/);
 
-    await page.getByRole("link", { name: /settings/i }).click();
+    await page.getByRole("link", { name: "Settings" }).click();
     await expect(page.getByRole("combobox", { name: "Provider" })).toBeVisible();
     await expect(page).toHaveURL(/#settings$/);
   });
