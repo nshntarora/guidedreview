@@ -1,22 +1,21 @@
-import { buttonClassName, type ButtonSize, type Surface } from "@guided-review/ui";
+import { buttonClassName, type ButtonSize } from "@guided-review/ui";
 import { ariaKeyShortcuts, SITE_SHORTCUTS } from "../lib/shortcuts";
 import { GitHubIcon } from "./icons";
 import { ShortcutChord } from "./ShortcutChord";
 
 type CtaButtonProps = {
   size?: ButtonSize;
-  surface?: Surface;
   /** Shorter label for tight header nav. */
   compact?: boolean;
 };
 
-export function InstallButton({ size = "lg", surface = "app", compact = false }: CtaButtonProps) {
+export function InstallButton({ size = "lg", compact = false }: CtaButtonProps) {
   const { key, href, label } = SITE_SHORTCUTS.install;
   const displayLabel = compact ? "Install" : label;
   return (
     <a
       href={href}
-      className={buttonClassName({ size, surface })}
+      className={buttonClassName({ size })}
       target="_blank"
       rel="noopener noreferrer"
       aria-keyshortcuts={ariaKeyShortcuts(key)}
@@ -28,16 +27,12 @@ export function InstallButton({ size = "lg", surface = "app", compact = false }:
   );
 }
 
-export function StarOnGitHubButton({
-  size = "lg",
-  surface = "app",
-  compact = false,
-}: CtaButtonProps) {
+export function StarOnGitHubButton({ size = "lg", compact = false }: CtaButtonProps) {
   const { key, href, label } = SITE_SHORTCUTS.star;
   return (
     <a
       href={href}
-      className={buttonClassName({ variant: "secondary", size, surface })}
+      className={buttonClassName({ variant: "secondary", size })}
       target="_blank"
       rel="noopener noreferrer"
       aria-keyshortcuts={ariaKeyShortcuts(key)}

@@ -5,7 +5,7 @@ const TERMS_URL = `${SITE_URL}/terms`;
 const GITHUB_REPO_URL = "https://github.com/nshntarora/guidedreview";
 
 const textLink =
-  "font-medium focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent";
+  "font-medium focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 const LINKS = [
   { href: SITE_URL, label: "Website" },
@@ -34,17 +34,17 @@ export function About() {
           className="mx-auto block h-12 w-auto sm:h-14"
           aria-hidden="true"
         />
-        <h1 className="mt-5 m-0 font-brand text-2xl font-bold tracking-tight text-opt-text sm:text-3xl">
+        <h1 className="mt-5 m-0 font-brand text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           Guided Review
         </h1>
         {version ? (
-          <p className="mt-2 m-0 font-mono text-xs text-opt-muted tabular-nums">v{version}</p>
+          <p className="mt-2 m-0 font-mono text-xs text-muted tabular-nums">v{version}</p>
         ) : null}
-        <p className="mt-5 m-0 text-base leading-relaxed text-opt-muted text-balance sm:text-lg">
+        <p className="mt-5 m-0 text-base leading-relaxed text-muted text-balance sm:text-lg">
           A Chrome extension that makes reading code better — clustered changes, short summaries,
           and a keyboard-first review overlay for GitHub pull requests.
         </p>
-        <p className="mt-3 m-0 font-mono text-xs text-opt-muted">
+        <p className="mt-3 m-0 font-mono text-xs text-muted">
           Free · Open source · Bring your own LLM key
         </p>
       </header>
@@ -52,14 +52,14 @@ export function About() {
       <section className="mt-12 text-left" aria-labelledby="about-how">
         <h2
           id="about-how"
-          className="m-0 font-brand text-lg font-bold tracking-tight text-opt-text"
+          className="m-0 font-brand text-lg font-bold tracking-tight text-foreground"
         >
           How it works
         </h2>
-        <ol className="mt-4 m-0 list-decimal space-y-3 pl-5 text-base leading-relaxed text-opt-muted">
+        <ol className="mt-4 m-0 list-decimal space-y-3 pl-5 text-base leading-relaxed text-muted">
           <li>Open a pull request on GitHub.</li>
           <li>
-            Click <strong className="font-semibold text-opt-text">Start Guided Review</strong> on
+            Click <strong className="font-semibold text-foreground">Start Guided Review</strong> on
             the PR page.
           </li>
           <li>
@@ -76,14 +76,14 @@ export function About() {
       <section className="mt-12 text-left" aria-labelledby="about-privacy">
         <h2
           id="about-privacy"
-          className="m-0 font-brand text-lg font-bold tracking-tight text-opt-text"
+          className="m-0 font-brand text-lg font-bold tracking-tight text-foreground"
         >
           Privacy
         </h2>
-        <p className="mt-4 m-0 text-base leading-relaxed text-opt-muted">
+        <p className="mt-4 m-0 text-base leading-relaxed text-muted">
           Your code never touches our infrastructure — we don&apos;t have any. Diffs and prompts go
           only to the provider you choose. Your API key stays in this browser via{" "}
-          <code className="rounded bg-opt-subtle px-1 py-0.5 font-mono text-sm text-opt-text">
+          <code className="rounded bg-surface-raised px-1 py-0.5 font-mono text-sm text-foreground">
             chrome.storage.local
           </code>
           .
@@ -97,7 +97,7 @@ export function About() {
         {LINKS.map((link, i) => (
           <span key={link.href} className="inline-flex items-center gap-x-3">
             {i > 0 ? (
-              <span className="text-opt-muted/50" aria-hidden="true">
+              <span className="text-muted/50" aria-hidden="true">
                 ·
               </span>
             ) : null}

@@ -23,17 +23,17 @@ export function DocsMobileNav() {
   }, [open]);
 
   return (
-    <div className="sticky top-[3.6rem] z-30 flex items-center gap-3 border-b border-opt-border bg-opt-bg/95 px-4 py-3 backdrop-blur-sm lg:hidden">
+    <div className="sticky top-[3.6rem] z-30 flex items-center gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-sm lg:hidden">
       <button
         type="button"
-        className={cn(buttonClassName({ variant: "ghost", size: "sm", surface: "app" }), "gap-2")}
+        className={cn(buttonClassName({ variant: "ghost", size: "sm" }), "gap-2")}
         onClick={() => setOpen(true)}
         aria-expanded={open}
         aria-controls="docs-mobile-drawer"
       >
         Menu
       </button>
-      <span className="text-sm text-opt-muted">Documentation</span>
+      <span className="text-sm text-muted">Documentation</span>
 
       {open ? (
         <div
@@ -44,21 +44,21 @@ export function DocsMobileNav() {
         >
           <button
             type="button"
-            className="absolute inset-0 border-0 bg-opt-text/30"
+            className="absolute inset-0 border-0 bg-foreground/30"
             aria-label="Close menu"
             onClick={() => setOpen(false)}
           />
           <div
             id="docs-mobile-drawer"
-            className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col border-r border-opt-border bg-opt-bg shadow-lg"
+            className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col border-r border-border bg-background shadow-lg"
           >
-            <div className="flex items-center justify-between border-b border-opt-border px-4 py-3">
-              <p id={titleId} className="m-0 text-sm font-semibold text-opt-text">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <p id={titleId} className="m-0 text-sm font-semibold text-foreground">
                 Docs
               </p>
               <button
                 type="button"
-                className={buttonClassName({ variant: "ghost", size: "sm", surface: "app" })}
+                className={buttonClassName({ variant: "ghost", size: "sm" })}
                 onClick={() => setOpen(false)}
               >
                 Close

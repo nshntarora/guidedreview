@@ -2,7 +2,7 @@
 
 .hljs-comment,
 .hljs-quote {
-  color: var(--color-gr-syntax-comment);
+  color: var(--color-syntax-comment);
   font-style: italic;
 }
 
@@ -10,7 +10,7 @@
 .hljs-selector-tag,
 .hljs-subst,
 .hljs-operator {
-  color: var(--color-gr-syntax-keyword);
+  color: var(--color-syntax-keyword);
 }
 
 .hljs-title,
@@ -20,7 +20,7 @@
 .hljs-selector-class,
 .hljs-selector-id,
 .hljs-doctag {
-  color: var(--color-gr-syntax-entity);
+  color: var(--color-syntax-entity);
 }
 
 .hljs-string,
@@ -28,7 +28,7 @@
 .hljs-symbol,
 .hljs-bullet,
 .hljs-link {
-  color: var(--color-gr-syntax-string);
+  color: var(--color-syntax-string);
 }
 
 .hljs-variable,
@@ -36,7 +36,7 @@
 .hljs-selector-attr,
 .hljs-selector-pseudo,
 .hljs-attr {
-  color: var(--color-gr-syntax-variable);
+  color: var(--color-syntax-variable);
 }
 
 .hljs-number,
@@ -44,29 +44,29 @@
 .hljs-type,
 .hljs-built_in,
 .hljs-class .hljs-title {
-  color: var(--color-gr-syntax-constant);
+  color: var(--color-syntax-constant);
 }
 
 .hljs-tag,
 .hljs-name {
-  color: var(--color-gr-syntax-tag);
+  color: var(--color-syntax-tag);
 }
 
 .hljs-attribute {
-  color: var(--color-gr-syntax-attr);
+  color: var(--color-syntax-attr);
 }
 
 .hljs-meta,
 .hljs-meta .hljs-keyword {
-  color: var(--color-gr-syntax-meta);
+  color: var(--color-syntax-meta);
 }
 
 .hljs-deletion {
-  color: var(--color-gr-syntax-deleted);
+  color: var(--color-syntax-deleted);
 }
 
 .hljs-addition {
-  color: var(--color-gr-syntax-inserted);
+  color: var(--color-syntax-inserted);
 }
 
 .hljs-emphasis {

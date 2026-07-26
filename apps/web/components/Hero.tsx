@@ -16,13 +16,13 @@ export function Hero() {
           style={riseDelay(0.1)}
         >
           A better way for humans to{" "}
-          <span className="rounded-md bg-opt-accent px-2 py-0.5 text-opt-accent-on [box-decoration-break:clone] [-webkit-box-decoration-break:clone]">
+          <span className="rounded-md bg-primary px-2 py-0.5 text-primary-foreground [box-decoration-break:clone] [-webkit-box-decoration-break:clone]">
             review AI generated code
           </span>
         </h1>
 
         <p
-          className="gr-rise-in mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-opt-muted text-balance sm:text-xl"
+          className="gr-rise-in mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted text-balance sm:text-xl"
           style={riseDelay(0.2)}
         >
           Guided Review is a Chrome extension that makes &ldquo;reading code&rdquo; wayyyy better
@@ -36,7 +36,7 @@ export function Hero() {
           <InstallButton />
           <StarOnGitHubButton />
         </div>
-        <p className="gr-rise-in mt-4 font-mono text-xs text-opt-muted" style={riseDelay(0.35)}>
+        <p className="gr-rise-in mt-4 font-mono text-xs text-muted" style={riseDelay(0.35)}>
           Free · Open source · Bring your own LLM key
         </p>
 

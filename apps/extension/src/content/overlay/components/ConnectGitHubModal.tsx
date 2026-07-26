@@ -108,29 +108,26 @@ export function ConnectGitHubModal({
         "data-flow": flow.kind,
       }}
     >
-      <div className="flex items-center justify-end border-b border-gr-border px-4 py-3">
+      <div className="flex items-center justify-end border-b border-border px-4 py-3">
         <CloseButton onClick={onCancel} testId="connect-github-close" />
       </div>
 
       <div className="flex flex-col items-center gap-4 px-6 py-6 text-center">
         <div
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-gr-accent-subtle text-gr-accent"
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-muted text-primary"
           aria-hidden="true"
         >
           <GitHubLogo data-testid="connect-github-logo" />
         </div>
 
-        <h2 id={titleId} className="m-0 w-full text-center text-lg font-semibold text-gr-text">
+        <h2 id={titleId} className="m-0 w-full text-center text-lg font-semibold text-foreground">
           Connect GitHub
         </h2>
 
         {!configured ? (
-          <p
-            className="m-0 w-full text-center text-base leading-relaxed text-gr-muted"
-            role="status"
-          >
+          <p className="m-0 w-full text-center text-base leading-relaxed text-muted" role="status">
             GitHub connection isn’t configured in this build. Set{" "}
-            <code className="rounded bg-gr-bg px-1 py-0.5 text-sm text-gr-text">
+            <code className="rounded bg-surface px-1 py-0.5 text-sm text-foreground">
               {GITHUB_CLIENT_ID_ENV_VAR}
             </code>{" "}
             and rebuild.
@@ -147,13 +144,12 @@ export function ConnectGitHubModal({
           <div className="w-full space-y-3 text-left" data-testid="connect-github-awaiting">
             <div className="flex flex-wrap items-center justify-center gap-2 my-4">
               <code
-                className="rounded-md border border-gr-border bg-gr-bg px-3 py-2 font-mono text-lg tracking-widest text-gr-text"
+                className="rounded-md border border-border bg-surface px-3 py-2 font-mono text-lg tracking-widest text-foreground"
                 data-testid="connect-github-user-code"
               >
                 {flow.userCode}
               </code>
               <Button
-                surface="overlay"
                 variant="secondary"
                 size="sm"
                 onClick={() => void copyUserCode(flow.userCode)}
@@ -163,13 +159,13 @@ export function ConnectGitHubModal({
               </Button>
             </div>
             <p
-              className="m-0 text-center text-base leading-relaxed text-gr-muted"
+              className="m-0 text-center text-base leading-relaxed text-muted"
               data-testid="connect-github-copy-hint"
             >
               Copy this code, then paste it on the GitHub tab.
             </p>
             <span
-              className="flex items-center justify-center gap-2 text-base text-gr-muted"
+              className="flex items-center justify-center gap-2 text-base text-muted"
               role="status"
             >
               <Spinner label="Waiting for GitHub authorization" size={16} />
@@ -178,7 +174,7 @@ export function ConnectGitHubModal({
           </div>
         ) : (
           <p
-            className="m-0 w-full text-center text-base leading-relaxed text-gr-muted"
+            className="m-0 w-full text-center text-base leading-relaxed text-muted"
             data-testid="connect-github-prompt"
           >
             Connect GitHub to submit this review. Uses device sign-in; the token stays in this
@@ -187,9 +183,8 @@ export function ConnectGitHubModal({
         )}
       </div>
 
-      <div className="flex items-center justify-end gap-2 border-t border-gr-border px-4 py-3">
+      <div className="flex items-center justify-end gap-2 border-t border-border px-4 py-3">
         <Button
-          surface="overlay"
           variant="secondary"
           size="sm"
           onClick={onCancel}
@@ -200,7 +195,6 @@ export function ConnectGitHubModal({
         </Button>
         {configured && flow.kind === "error" ? (
           <Button
-            surface="overlay"
             size="sm"
             onClick={() => void startConnect()}
             disabled={busy}
@@ -220,7 +214,6 @@ export function ConnectGitHubModal({
           </Button>
         ) : configured && flow.kind === "awaiting" ? (
           <Button
-            surface="overlay"
             size="sm"
             onClick={() => void openVerificationUri(flow.verificationUri)}
             data-testid="connect-github-enter-code"
@@ -231,7 +224,6 @@ export function ConnectGitHubModal({
         ) : configured ? (
           <Button
             ref={connectButtonRef}
-            surface="overlay"
             size="sm"
             onClick={() => void startConnect()}
             disabled={busy}

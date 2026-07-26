@@ -32,10 +32,10 @@ export function selectionClasses(
   if (!lineId) return "";
   // Focus keeps the row wash; brand line-number gutter is layered on top.
   if (focusId === lineId) {
-    return "bg-gr-accent-subtle";
+    return "bg-primary-muted";
   }
   if (selectedIds.has(lineId)) {
-    return "bg-gr-accent-subtle/70";
+    return "bg-primary-muted/70";
   }
   return "";
 }
@@ -47,7 +47,7 @@ export function selectionClasses(
 export function lineNumberClasses(isHighlighted: boolean): string {
   return cn(
     "w-10 shrink-0 select-none pr-3 text-right",
-    isHighlighted ? "bg-gr-accent font-medium text-gr-accent-on" : "text-gr-faint",
+    isHighlighted ? "bg-primary font-medium text-primary-foreground" : "text-faint",
   );
 }
 

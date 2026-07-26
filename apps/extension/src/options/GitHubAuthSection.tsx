@@ -104,7 +104,7 @@ export function GitHubAuthSection() {
       titleId="github-heading"
       icon={
         <span
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gr-accent-subtle text-opt-accent"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-muted text-primary"
           aria-hidden="true"
         >
           <GitHubLogo size={18} data-testid="github-auth-logo" />
@@ -114,9 +114,9 @@ export function GitHubAuthSection() {
       data-testid="github-auth-section"
     >
       {!configured && (
-        <p className="m-0 text-base text-opt-muted" role="status">
+        <p className="m-0 text-base text-muted" role="status">
           GitHub connection isn’t configured in this build. Set{" "}
-          <code className="rounded bg-opt-bg/80 px-1 py-0.5 font-mono text-sm text-opt-text">
+          <code className="rounded bg-background/80 px-1 py-0.5 font-mono text-sm text-foreground">
             {GITHUB_CLIENT_ID_ENV_VAR}
           </code>{" "}
           and rebuild.
@@ -124,8 +124,8 @@ export function GitHubAuthSection() {
       )}
 
       {configured && session.kind === "loading" && flow.kind === "idle" && !showError && (
-        <p className="m-0 flex items-center gap-2 text-base text-opt-muted" role="status">
-          <Spinner surface="app" size={14} label="Loading GitHub connection" />
+        <p className="m-0 flex items-center gap-2 text-base text-muted" role="status">
+          <Spinner size={14} label="Loading GitHub connection" />
           Loading…
         </p>
       )}
@@ -139,10 +139,10 @@ export function GitHubAuthSection() {
             }}
             disabled={busy}
           >
-            {busy && <Spinner surface="app" size={14} label="Connecting to GitHub" />}
+            {busy && <Spinner size={14} label="Connecting to GitHub" />}
             {busy ? "Connecting…" : "Connect GitHub"}
           </Button>
-          <span className="text-sm text-opt-muted">Requests repo and read:user access.</span>
+          <span className="text-sm text-muted">Requests repo and read:user access.</span>
         </div>
       )}
 
@@ -150,7 +150,7 @@ export function GitHubAuthSection() {
         <div className="space-y-3" data-testid="github-auth-awaiting">
           <div className="flex flex-wrap items-center gap-2">
             <code
-              className="rounded-md border border-opt-border bg-opt-bg/60 px-3 py-2 font-mono text-lg tracking-widest text-opt-text"
+              className="rounded-md border border-border bg-background/60 px-3 py-2 font-mono text-lg tracking-widest text-foreground"
               data-testid="github-user-code"
             >
               {flow.userCode}
@@ -163,12 +163,12 @@ export function GitHubAuthSection() {
               {copied ? "Copied" : "Copy Code"}
             </Button>
           </div>
-          <p className="m-0 text-base text-opt-muted" data-testid="github-copy-hint">
+          <p className="m-0 text-base text-muted" data-testid="github-copy-hint">
             Copy this code, then paste it on the GitHub tab.
           </p>
           <div className="flex flex-wrap items-center gap-2.5">
-            <span className="flex items-center gap-2 text-base text-opt-muted" role="status">
-              <Spinner surface="app" size={14} label="Waiting for GitHub authorization" />
+            <span className="flex items-center gap-2 text-base text-muted" role="status">
+              <Spinner size={14} label="Waiting for GitHub authorization" />
               Waiting for authorization…
             </span>
             <Button variant="secondary" onClick={onCancel}>
@@ -186,7 +186,7 @@ export function GitHubAuthSection() {
 
       {configured && session.kind === "connected" && flow.kind === "idle" && !showError && (
         <div
-          className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-opt-border bg-opt-bg/60 p-3"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-background/60 p-3"
           data-testid="github-auth-connected"
         >
           <div className="flex min-w-0 items-center gap-3">
@@ -196,29 +196,29 @@ export function GitHubAuthSection() {
                 alt=""
                 width={36}
                 height={36}
-                className="h-9 w-9 rounded-full border border-opt-border"
+                className="h-9 w-9 rounded-full border border-border"
               />
             ) : (
               <div
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-opt-border bg-opt-subtle text-xs font-semibold text-opt-muted"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface-raised text-xs font-semibold text-muted"
                 aria-hidden
               >
                 {session.auth.login.slice(0, 1).toUpperCase()}
               </div>
             )}
             <div className="min-w-0">
-              <p className="m-0 truncate text-base font-semibold text-opt-text">
+              <p className="m-0 truncate text-base font-semibold text-foreground">
                 @{session.auth.login}
               </p>
               {session.auth.name ? (
-                <p className="m-0 truncate text-sm text-opt-muted">{session.auth.name}</p>
+                <p className="m-0 truncate text-sm text-muted">{session.auth.name}</p>
               ) : (
-                <p className="m-0 text-sm text-opt-ok">Connected</p>
+                <p className="m-0 text-sm text-success">Connected</p>
               )}
             </div>
           </div>
           <Button variant="secondary" onClick={requestDisconnect} disabled={busy}>
-            {disconnectBusy && <Spinner surface="app" size={14} label="Disconnecting" />}
+            {disconnectBusy && <Spinner size={14} label="Disconnecting" />}
             Disconnect
           </Button>
         </div>
@@ -226,7 +226,7 @@ export function GitHubAuthSection() {
 
       {configured && showError && (
         <div className="space-y-3" role="alert">
-          <p className={cn("m-0 text-base text-opt-error")}>{showError}</p>
+          <p className={cn("m-0 text-base text-danger")}>{showError}</p>
           <Button
             onClick={() => {
               setDisconnectError(null);

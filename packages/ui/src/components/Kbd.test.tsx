@@ -10,20 +10,12 @@ describe("Kbd", () => {
     expect(el).toHaveAttribute("data-slot", "kbd");
   });
 
-  it("applies overlay tokens by default", () => {
+  it("applies shared surface tokens", () => {
     render(<Kbd>Esc</Kbd>);
     const el = screen.getByText("Esc");
-    expect(el.className).toContain("border-gr-border");
-    expect(el.className).toContain("bg-gr-subtle");
-    expect(el.className).toContain("text-gr-muted");
-  });
-
-  it("applies app tokens when surface is app", () => {
-    render(<Kbd surface="app">⌘</Kbd>);
-    const el = screen.getByText("⌘");
-    expect(el.className).toContain("border-opt-border");
-    expect(el.className).toContain("bg-opt-subtle");
-    expect(el.className).toContain("text-opt-muted");
+    expect(el.className).toContain("border-border");
+    expect(el.className).toContain("bg-surface-muted");
+    expect(el.className).toContain("text-muted");
   });
 
   it("merges className", () => {

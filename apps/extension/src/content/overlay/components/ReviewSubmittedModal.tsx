@@ -60,7 +60,7 @@ export function ReviewSubmittedModal({
       }}
     >
       <div
-        className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-gr-accent text-gr-accent-on"
+        className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground"
         data-testid="review-submitted-icon"
         aria-hidden="true"
       >
@@ -78,12 +78,12 @@ export function ReviewSubmittedModal({
         </svg>
       </div>
 
-      <h2 id={titleId} className="m-0 text-center text-lg font-semibold text-gr-text">
+      <h2 id={titleId} className="m-0 text-center text-lg font-semibold text-foreground">
         Review Submitted
       </h2>
 
       <p
-        className="mt-2 mb-0 text-center text-base leading-relaxed text-gr-muted"
+        className="mt-2 mb-0 text-center text-base leading-relaxed text-muted"
         data-testid="review-submitted-summary"
       >
         {eventSummary(event, commentCount)}
@@ -91,7 +91,6 @@ export function ReviewSubmittedModal({
 
       <Button
         ref={exitButtonRef}
-        surface="overlay"
         className="mt-7"
         onClick={onExit}
         data-testid="review-submitted-exit"

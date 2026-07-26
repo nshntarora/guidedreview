@@ -22,7 +22,7 @@ export function DocsSidebar({ basePath = "/docs", onNavigate }: DocsSidebarProps
               <li
                 key={`h-${idx}`}
                 className={cn(
-                  "mb-1.5 text-[0.65rem] font-semibold uppercase tracking-widest text-opt-muted",
+                  "mb-1.5 text-[0.65rem] font-semibold uppercase tracking-widest text-muted",
                   idx === 0 ? "mt-0" : "mt-5",
                 )}
               >
@@ -42,8 +42,8 @@ export function DocsSidebar({ basePath = "/docs", onNavigate }: DocsSidebarProps
                 className={cn(
                   "mb-0.5 block rounded-md border-b-0 px-2.5 py-1.5 text-sm no-underline transition-colors hover:border-b-transparent",
                   active
-                    ? "bg-opt-subtle font-medium text-opt-text"
-                    : "text-opt-muted hover:bg-opt-subtle/70 hover:text-opt-text",
+                    ? "bg-surface-raised font-medium text-foreground"
+                    : "text-muted hover:bg-surface-raised/70 hover:text-foreground",
                 )}
                 aria-current={active ? "page" : undefined}
               >

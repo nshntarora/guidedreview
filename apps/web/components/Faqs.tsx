@@ -123,21 +123,21 @@ export function Faqs() {
         <h2 className="m-0 text-center text-3xl font-bold tracking-tight sm:text-4xl font-brand">
           FAQs
         </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-opt-muted text-balance sm:text-xl">
+        <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-muted text-balance sm:text-xl">
           The questions everyone asks before installing.
         </p>
 
         <WindowFrame label="faq.md" className="mt-14 sm:mt-20" bodyClassName="p-0">
-          <ul className="m-0 list-none divide-y divide-opt-border p-0">
+          <ul className="m-0 list-none divide-y divide-border p-0">
             {faqs.map((faq) => (
               <li key={faq.question}>
                 <details className="group [&_summary::-webkit-details-marker]:hidden">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 text-base font-semibold tracking-tight transition-colors hover:text-opt-accent sm:gap-4 sm:p-6 sm:text-lg md:p-8 md:text-xl">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 text-base font-semibold tracking-tight transition-colors hover:text-primary sm:gap-4 sm:p-6 sm:text-lg md:p-8 md:text-xl">
                     {faq.question}
                     <svg
                       aria-hidden="true"
                       viewBox="0 0 24 24"
-                      className="h-5 w-5 flex-shrink-0 text-opt-muted transition-transform duration-300 group-open:rotate-180"
+                      className="h-5 w-5 flex-shrink-0 text-muted transition-transform duration-300 group-open:rotate-180"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
@@ -147,7 +147,7 @@ export function Faqs() {
                       <path d="m6 9 6 6 6-6" />
                     </svg>
                   </summary>
-                  <div className="space-y-3 px-4 pb-4 text-base leading-relaxed text-opt-muted sm:px-6 sm:pb-6 sm:text-lg md:px-8 md:pb-8">
+                  <div className="space-y-3 px-4 pb-4 text-base leading-relaxed text-muted sm:px-6 sm:pb-6 sm:text-lg md:px-8 md:pb-8">
                     {faq.answer.map((paragraph, index) => (
                       <p key={index} className="m-0">
                         {paragraph}

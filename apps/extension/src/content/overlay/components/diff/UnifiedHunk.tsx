@@ -43,8 +43,8 @@ export function UnifiedHunk({
               aria-current={isFocus ? "true" : undefined}
               className={cn(
                 DIFF_LINE_WRAP,
-                showDiffBg && line.type === "add" && "bg-gr-add-bg",
-                showDiffBg && line.type === "del" && "bg-gr-del-bg",
+                showDiffBg && line.type === "add" && "bg-diff-add-bg",
+                showDiffBg && line.type === "del" && "bg-diff-del-bg",
                 selectionClasses(id, selectedIds, focusId),
               )}
             >
@@ -63,8 +63,8 @@ export function UnifiedHunk({
               <span
                 className={cn(
                   "w-4 shrink-0 opacity-70",
-                  line.type === "add" && "text-gr-add-text",
-                  line.type === "del" && "text-gr-del-text",
+                  line.type === "add" && "text-diff-add",
+                  line.type === "del" && "text-diff-del",
                 )}
               >
                 {line.type === "add" ? "+" : line.type === "del" ? "-" : ""}

@@ -29,7 +29,7 @@ export function SettingsCard({
   return (
     <section
       className={cn(
-        "rounded-lg border border-opt-border bg-opt-subtle/50 px-4 py-4 sm:px-5 sm:py-5",
+        "rounded-lg border border-border bg-surface-raised/50 px-4 py-4 sm:px-5 sm:py-5",
         className,
       )}
       aria-labelledby={titleId}
@@ -40,13 +40,13 @@ export function SettingsCard({
           {icon}
           <h2
             id={titleId}
-            className="m-0 font-brand text-lg font-bold tracking-tight text-opt-text"
+            className="m-0 font-brand text-lg font-bold tracking-tight text-foreground"
           >
             {title}
           </h2>
         </div>
         {description ? (
-          <div className="mt-1.5 text-sm leading-relaxed text-opt-muted">{description}</div>
+          <div className="mt-1.5 text-sm leading-relaxed text-muted">{description}</div>
         ) : null}
       </header>
       {children}

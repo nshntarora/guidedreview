@@ -28,7 +28,7 @@ export function ShortcutChord({ keyLabel }: { keyLabel: string }) {
               +
             </span>
           ) : null}
-          <Kbd surface="app">{key}</Kbd>
+          <Kbd>{key}</Kbd>
         </Fragment>
       ))}
     </KbdGroup>
