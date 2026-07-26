@@ -24,7 +24,7 @@ describe("Welcome", () => {
       "href",
       "https://guidedreview.dev/docs",
     );
-    expect(screen.getByRole("link", { name: "GitHub" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "GitHub", exact: true })).toHaveAttribute(
       "href",
       "https://github.com/nshntarora/guidedreview",
     );
