@@ -2,6 +2,11 @@ import type { ReactNode } from "react";
 import { cn } from "@guided-review/ui";
 import type { OptionsRoute } from "./routes";
 
+const DOCS_URL = "https://guidedreview.dev/docs";
+
+const NAV_ITEM_CLASS =
+  "rounded-md border-b-0 px-3 py-1.5 text-base font-medium no-underline transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent";
+
 const NAV: { route: OptionsRoute; href: string; label: string }[] = [
   { route: "settings", href: "#settings", label: "Settings" },
   { route: "about", href: "#about", label: "About" },
@@ -13,7 +18,7 @@ export interface OptionsShellProps {
 }
 
 /**
- * Shared chrome for the options page: sticky brand header + Settings/About nav.
+ * Shared chrome for the options page: sticky brand header + Settings/About/Docs nav.
  * Matches marketing/overlay page chrome without importing those apps.
  */
 export function OptionsShell({ route, children }: OptionsShellProps) {
@@ -47,8 +52,7 @@ export function OptionsShell({ route, children }: OptionsShellProps) {
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "rounded-md border-b-0 px-3 py-1.5 text-base font-medium no-underline transition-colors",
-                    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent",
+                    NAV_ITEM_CLASS,
                     active
                       ? "bg-opt-subtle text-opt-text"
                       : "text-opt-muted hover:bg-opt-subtle/60 hover:text-opt-text",
@@ -58,6 +62,17 @@ export function OptionsShell({ route, children }: OptionsShellProps) {
                 </a>
               );
             })}
+            <a
+              href={DOCS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                NAV_ITEM_CLASS,
+                "text-opt-muted hover:bg-opt-subtle/60 hover:text-opt-text",
+              )}
+            >
+              Docs
+            </a>
           </nav>
         </div>
       </header>

@@ -14,6 +14,10 @@ describe("App", () => {
 
     expect(await screen.findByRole("combobox", { name: /provider/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("href", "#about");
+    expect(screen.getByRole("link", { name: "Docs" })).toHaveAttribute(
+      "href",
+      "https://guidedreview.dev/docs",
+    );
     expect(document.title).toBe("Guided Review — Settings");
   });
 
@@ -21,7 +25,7 @@ describe("App", () => {
     window.location.hash = "#about";
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "What It Does" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "How it works" })).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: /provider/i })).not.toBeInTheDocument();
     expect(document.title).toBe("Guided Review — About");
   });
@@ -33,7 +37,7 @@ describe("App", () => {
     await screen.findByRole("combobox", { name: /provider/i });
     await user.click(screen.getByRole("link", { name: "About" }));
 
-    expect(await screen.findByRole("heading", { name: "What It Does" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "How it works" })).toBeInTheDocument();
     await waitFor(() => expect(window.location.hash).toBe("#about"));
 
     await user.click(screen.getByRole("link", { name: "Settings" }));

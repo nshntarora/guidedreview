@@ -1,90 +1,112 @@
-import { SettingsCard } from "./SettingsCard";
+const SITE_URL = "https://guidedreview.dev";
+const DOCS_URL = `${SITE_URL}/docs`;
+const PRIVACY_POLICY_URL = `${SITE_URL}/privacy`;
+const TERMS_URL = `${SITE_URL}/terms`;
+const GITHUB_REPO_URL = "https://github.com/nshntarora/guidedreview";
 
-const DOCS_URL = "https://guidedreview.dev/docs";
-const PRIVACY_POLICY_URL = "https://guidedreview.dev/privacy";
-const sectionBody = "m-0 text-base leading-relaxed text-opt-muted";
 const textLink =
   "font-medium focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent";
 
+const LINKS = [
+  { href: SITE_URL, label: "Website" },
+  { href: DOCS_URL, label: "Docs" },
+  { href: GITHUB_REPO_URL, label: "GitHub" },
+  { href: PRIVACY_POLICY_URL, label: "Privacy" },
+  { href: TERMS_URL, label: "Terms" },
+] as const;
+
 /**
- * Explains what Guided Review does, how a review works, and where data goes.
- * Linked from Settings via the options shell nav (`#about`).
+ * Minimal product overview — logomark, what it is, how a review works, privacy,
+ * and outbound links. Linked from Settings via the options shell nav (`#about`).
  */
 export function About() {
   const version = chrome.runtime.getManifest().version;
+  const logomarkUrl = chrome.runtime.getURL("logomark.svg");
 
   return (
-    <main id="main-content">
-      <header className="mb-8">
-        <div className="flex flex-wrap items-baseline gap-2">
-          <h1 className="m-0 font-brand text-2xl font-bold tracking-tight text-opt-text">About</h1>
-          {version ? (
-            <span className="rounded-full border border-opt-border bg-opt-subtle/60 px-2.5 py-px font-mono text-xs text-opt-muted tabular-nums">
-              v{version}
-            </span>
-          ) : null}
-        </div>
-        <p className="mt-2 m-0 text-base leading-relaxed text-opt-muted text-balance">
-          AI-structured review plans for GitHub pull requests
+    <main id="main-content" className="mx-auto max-w-xl">
+      <header className="text-center">
+        <img
+          src={logomarkUrl}
+          alt=""
+          width={343}
+          height={172}
+          className="mx-auto block h-12 w-auto sm:h-14"
+          aria-hidden="true"
+        />
+        <h1 className="mt-5 m-0 font-brand text-2xl font-bold tracking-tight text-opt-text sm:text-3xl">
+          Guided Review
+        </h1>
+        {version ? (
+          <p className="mt-2 m-0 font-mono text-xs text-opt-muted tabular-nums">v{version}</p>
+        ) : null}
+        <p className="mt-5 m-0 text-base leading-relaxed text-opt-muted text-balance sm:text-lg">
+          A Chrome extension that makes reading code better — clustered changes, short summaries,
+          and a keyboard-first review overlay for GitHub pull requests.
+        </p>
+        <p className="mt-3 m-0 font-mono text-xs text-opt-muted">
+          Free · Open source · Bring your own LLM key
         </p>
       </header>
 
-      <div className="flex flex-col gap-4">
-        <SettingsCard title="What It Does" titleId="about-what">
-          <p className={sectionBody}>
-            Guided Review turns a PR diff into an ordered review plan. You step through logical
-            units — schema and data model first, then core logic, call-sites, then tests — with
-            short context and risk notes per step.
-          </p>
-        </SettingsCard>
+      <section className="mt-12 text-left" aria-labelledby="about-how">
+        <h2
+          id="about-how"
+          className="m-0 font-brand text-lg font-bold tracking-tight text-opt-text"
+        >
+          How it works
+        </h2>
+        <ol className="mt-4 m-0 list-decimal space-y-3 pl-5 text-base leading-relaxed text-opt-muted">
+          <li>Open a pull request on GitHub.</li>
+          <li>
+            Click <strong className="font-semibold text-opt-text">Start Guided Review</strong> on
+            the PR page.
+          </li>
+          <li>
+            The extension fetches the diff and sends it to the AI provider you configured, which
+            clusters related changes into an ordered review plan.
+          </li>
+          <li>
+            Step through the plan in the overlay — real diff hunks, short context, you still judge
+            the code.
+          </li>
+        </ol>
+      </section>
 
-        <SettingsCard title="How a Review Works" titleId="about-how">
-          <ol className="m-0 list-decimal space-y-2 pl-5 text-base leading-relaxed text-opt-muted">
-            <li>Open a pull request on GitHub.</li>
-            <li>
-              Click <strong className="font-semibold text-opt-text">Start Guided Review</strong> on
-              the PR page (or use the extension icon while a PR tab is active).
-            </li>
-            <li>
-              The extension fetches the PR diff and sends it to the AI provider you configured,
-              which builds a structured review plan.
-            </li>
-            <li>
-              Step through the plan in the overlay: description first, then each review unit with
-              the real diff hunks resolved from the PR — the model plans structure and commentary
-              only; it does not invent the code you see.
-            </li>
-          </ol>
-        </SettingsCard>
+      <section className="mt-12 text-left" aria-labelledby="about-privacy">
+        <h2
+          id="about-privacy"
+          className="m-0 font-brand text-lg font-bold tracking-tight text-opt-text"
+        >
+          Privacy
+        </h2>
+        <p className="mt-4 m-0 text-base leading-relaxed text-opt-muted">
+          Your code never touches our infrastructure — we don&apos;t have any. Diffs and prompts go
+          only to the provider you choose. Your API key stays in this browser via{" "}
+          <code className="rounded bg-opt-subtle px-1 py-0.5 font-mono text-sm text-opt-text">
+            chrome.storage.local
+          </code>
+          .
+        </p>
+      </section>
 
-        <SettingsCard title="Privacy" titleId="about-privacy">
-          <p className={sectionBody}>
-            Your API key is stored only in this browser via{" "}
-            <code className="rounded bg-opt-bg/80 px-1 py-0.5 font-mono text-sm text-opt-text">
-              chrome.storage.local
-            </code>
-            . Diffs and prompts go only to the provider you choose (Anthropic, OpenAI, or xAI).
-            There is no Guided Review backend in the middle.
-          </p>
-          <p className={`${sectionBody} mt-3`}>
-            <a
-              href={PRIVACY_POLICY_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={textLink}
-            >
-              Privacy policy
+      <nav
+        className="mt-14 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-sm"
+        aria-label="Product links"
+      >
+        {LINKS.map((link, i) => (
+          <span key={link.href} className="inline-flex items-center gap-x-3">
+            {i > 0 ? (
+              <span className="text-opt-muted/50" aria-hidden="true">
+                ·
+              </span>
+            ) : null}
+            <a href={link.href} target="_blank" rel="noopener noreferrer" className={textLink}>
+              {link.label}
             </a>
-          </p>
-        </SettingsCard>
-      </div>
-
-      <p className="mt-6 m-0 text-sm text-opt-muted">
-        <a href={DOCS_URL} target="_blank" rel="noopener noreferrer" className={textLink}>
-          Full docs
-        </a>
-        <span className="text-opt-muted"> · guidedreview.dev</span>
-      </p>
+          </span>
+        ))}
+      </nav>
     </main>
   );
 }

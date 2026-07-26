@@ -166,14 +166,16 @@ describe("Options", () => {
     expect(within(listbox).getByRole("option", { name: /Claude Haiku 4\.5/i })).toBeInTheDocument();
   });
 
-  it("links to the about page via the shell nav when rendered in App", async () => {
-    // About nav lives in OptionsShell (App); Options alone is the settings body.
+  it("links to about and docs via the shell nav when rendered in App", async () => {
+    // About/Docs nav lives in OptionsShell (App); Options alone is the settings body.
     const { App } = await import("./App");
     render(<App />);
 
     await screen.findByRole("combobox", { name: /provider/i });
-    const about = screen.getByRole("link", { name: "About" });
-    expect(about).toHaveAttribute("href", "#about");
+    expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("href", "#about");
+    const docs = screen.getByRole("link", { name: "Docs" });
+    expect(docs).toHaveAttribute("href", "https://guidedreview.dev/docs");
+    expect(docs).toHaveAttribute("target", "_blank");
   });
 
   it("defaults the Files changed auto-open switch to off", async () => {
