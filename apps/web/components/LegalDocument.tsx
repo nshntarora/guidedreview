@@ -13,7 +13,7 @@ type LegalDocumentProps = {
  */
 export function LegalDocument({ title, meta, children }: LegalDocumentProps) {
   return (
-    <article className="mx-auto max-w-5xl px-6 py-16">
+    <article className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
       <div className="mx-auto max-w-3xl">
         <h1 className="m-0 text-3xl font-bold tracking-tight">{title}</h1>
         <p className="mt-2 text-sm text-opt-muted">{meta}</p>

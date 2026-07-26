@@ -14,7 +14,7 @@ function formatStarCount(count: number): string {
 
 export function TrustBand({ starCount }: TrustBandProps) {
   return (
-    <section className="relative px-6 py-20 sm:py-28">
+    <section className="relative px-4 py-16 sm:px-6 sm:py-28">
       <div className="mx-auto max-w-5xl text-center">
         <h2 className="m-0 text-2xl font-bold tracking-tight sm:text-3xl font-brand">
           Your code never touches our infrastructure

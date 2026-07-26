@@ -12,6 +12,7 @@ type CtaButtonProps = {
 
 export function InstallButton({ size = "lg", surface = "app", compact = false }: CtaButtonProps) {
   const { key, href, label } = SITE_SHORTCUTS.install;
+  const displayLabel = compact ? "Install" : label;
   return (
     <a
       href={href}
@@ -19,9 +20,9 @@ export function InstallButton({ size = "lg", surface = "app", compact = false }:
       target="_blank"
       rel="noopener noreferrer"
       aria-keyshortcuts={ariaKeyShortcuts(key)}
-      aria-label={`${label} (⌘/Ctrl+${key.toUpperCase()})`}
+      aria-label={displayLabel}
     >
-      {compact ? "Install" : label}
+      {displayLabel}
       <ShortcutChord keyLabel={key} />
     </a>
   );
@@ -40,7 +41,7 @@ export function StarOnGitHubButton({
       target="_blank"
       rel="noopener noreferrer"
       aria-keyshortcuts={ariaKeyShortcuts(key)}
-      aria-label={`${label} (⌘/Ctrl+${key.toUpperCase()})`}
+      aria-label={label}
     >
       <GitHubIcon className="h-4 w-4" />
       {compact ? <span className="hidden sm:inline">Star</span> : label}
