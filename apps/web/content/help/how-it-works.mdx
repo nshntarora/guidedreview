@@ -44,11 +44,11 @@ As text deltas arrive, complete units are extracted and validated. Progressive u
 
 ## What the model must not invent
 
-| Allowed | Not allowed |
-| --- | --- |
-| Order of review | Fabricating file paths |
-| Titles and commentary | Inventing hunk ids that aren’t in the prompt |
-| Grouping real hunks | Replacing real diff lines with model-generated code |
+| Allowed               | Not allowed                                         |
+| --------------------- | --------------------------------------------------- |
+| Order of review       | Fabricating file paths                              |
+| Titles and commentary | Inventing hunk ids that aren’t in the prompt        |
+| Grouping real hunks   | Replacing real diff lines with model-generated code |
 
 If a unit only references invalid hunks after cleanup, it won’t be shown. That keeps the overlay honest even when the model is imperfect.
 

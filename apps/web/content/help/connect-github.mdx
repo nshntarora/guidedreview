@@ -40,10 +40,10 @@ Stuck mid-flow? [Troubleshooting → GitHub connect and submit](/docs/troublesho
 
 ## What we request
 
-| Scope | Why |
-| --- | --- |
-| `repo` | Read PR context and write review comments on public **and** private repositories you can access |
-| `read:user` | Show who’s connected in the UI |
+| Scope       | Why                                                                                             |
+| ----------- | ----------------------------------------------------------------------------------------------- |
+| `repo`      | Read PR context and write review comments on public **and** private repositories you can access |
+| `read:user` | Show who’s connected in the UI                                                                  |
 
 Classic OAuth has no finer “only review private PRs” slice, so `repo` is intentionally broad. Tokens stay in extension storage. They are not sent to Guided Review servers — there are none for the product path. Full data picture: [Privacy & data](/docs/privacy-and-data).
 

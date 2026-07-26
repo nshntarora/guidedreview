@@ -16,11 +16,11 @@ You need a provider before [your first review](/docs/first-review). GitHub auth 
 
 ## Supported providers
 
-| Provider | Notes |
-| --- | --- |
-| **Claude (Anthropic)** | Anthropic’s API |
-| **OpenAI** | OpenAI chat completions |
-| **Grok (xAI)** | xAI’s OpenAI-compatible API |
+| Provider               | Notes                       |
+| ---------------------- | --------------------------- |
+| **Claude (Anthropic)** | Anthropic’s API             |
+| **OpenAI**             | OpenAI chat completions     |
+| **Grok (xAI)**         | xAI’s OpenAI-compatible API |
 
 OpenAI and Grok share the same client shape; Anthropic uses its own streaming endpoint. Structured output for the review plan is enforced with a shared JSON schema so behavior stays consistent across backends — see [How a review plan works](/docs/how-it-works).
 
@@ -41,11 +41,11 @@ Select a model available on your account. Prefer a model that handles long conte
 
 Models currently listed in Options (ids can change as providers ship or retire models):
 
-| Provider | Models |
-| --- | --- |
-| Anthropic | Claude Opus 4.8, Opus 4.7, Sonnet 5, Sonnet 4.6, Haiku 4.5 |
-| OpenAI | GPT-5, GPT-5 Mini, GPT-4.1, GPT-4.1 Mini, GPT-4o, o3, o4 Mini |
-| Grok | Grok 4, Grok 3, Grok 3 Mini |
+| Provider  | Models                                                        |
+| --------- | ------------------------------------------------------------- |
+| Anthropic | Claude Opus 4.8, Opus 4.7, Sonnet 5, Sonnet 4.6, Haiku 4.5    |
+| OpenAI    | GPT-5, GPT-5 Mini, GPT-4.1, GPT-4.1 Mini, GPT-4o, o3, o4 Mini |
+| Grok      | Grok 4, Grok 3, Grok 3 Mini                                   |
 
 If a stored model disappears from the catalog, Options falls back to that provider’s default.
 
@@ -57,10 +57,10 @@ If the test fails, step through [Troubleshooting → Provider and API key](/docs
 
 ## Where settings live
 
-| Setting | Storage | Used by |
-| --- | --- | --- |
-| Provider, model, API key | `chrome.storage.local` | Background worker |
-| Active review session | `chrome.storage.session` | Content overlay (session-scoped) |
+| Setting                  | Storage                  | Used by                          |
+| ------------------------ | ------------------------ | -------------------------------- |
+| Provider, model, API key | `chrome.storage.local`   | Background worker                |
+| Active review session    | `chrome.storage.session` | Content overlay (session-scoped) |
 
 Session resume behavior: [Your first review → Resume later](/docs/first-review#resume-later) and [Troubleshooting](/docs/troubleshooting#session-and-resume).
 

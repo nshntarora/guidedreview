@@ -33,7 +33,7 @@ export default async function OpengraphImage() {
       }}
     >
       {/* next/og's ImageResponse renders via satori, which requires <img>, not next/image. */}
-      <img src={logoSrc} width={72} height={72} alt="" style={{ borderRadius: 16 }} />
+      <img src={logoSrc} width={172.5} height={88} alt="" style={{ borderRadius: 0 }} />
       <div
         style={{
           display: "flex",
