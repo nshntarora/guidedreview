@@ -1,12 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  isCompleteReviewUnit,
-  mergePlans,
-  prefixChunkUnitId,
-  validateAndCleanPlan,
-  validateAndCleanUnit,
-} from "./reviewPlan";
-import type { ParsedDiff, ReviewPlan, ReviewUnit } from "../types";
+import { isCompleteReviewUnit, prefixChunkUnitId, validateAndCleanUnit } from "./reviewPlan";
+import type { ParsedDiff, ReviewUnit } from "../types";
 
 function diffFixture(): ParsedDiff {
   return {
@@ -31,122 +25,75 @@ function diffFixture(): ParsedDiff {
   };
 }
 
-describe("validateAndCleanPlan", () => {
-  it("keeps a unit whose file/hunk refs all exist in the diff", () => {
-    const plan: ReviewPlan = {
-      units: [
-        {
-          id: "u1",
-          title: "Update foo",
-          context: "because",
-          files: [{ fileId: "src/foo.ts", hunkIds: ["src/foo.ts#0"], role: "core_logic" }],
-        },
-      ],
-    };
+describe("validateAndCleanUnit", () => {
+  function unitWith(files: ReviewUnit["files"]): ReviewUnit {
+    return { id: "u1", title: "Update foo", context: "because", files };
+  }
 
-    const cleaned = validateAndCleanPlan(plan, diffFixture());
-    expect(cleaned.units).toHaveLength(1);
-    expect(cleaned.units[0].files[0].hunkIds).toEqual(["src/foo.ts#0"]);
+  it("keeps a unit whose file/hunk refs all exist in the diff", () => {
+    const cleaned = validateAndCleanUnit(
+      unitWith([{ fileId: "src/foo.ts", hunkIds: ["src/foo.ts#0"], role: "core_logic" }]),
+      diffFixture(),
+    );
+
+    expect(cleaned?.files[0].hunkIds).toEqual(["src/foo.ts#0"]);
   });
 
   it("drops hallucinated hunk ids but keeps the file ref if the file is real", () => {
-    const plan: ReviewPlan = {
-      units: [
-        {
-          id: "u1",
-          title: "Update foo",
-          context: "because",
-          files: [
-            {
-              fileId: "src/foo.ts",
-              hunkIds: ["src/foo.ts#0", "src/foo.ts#99"],
-              role: "core_logic",
-            },
-          ],
-        },
-      ],
-    };
+    const cleaned = validateAndCleanUnit(
+      unitWith([
+        { fileId: "src/foo.ts", hunkIds: ["src/foo.ts#0", "src/foo.ts#99"], role: "core_logic" },
+      ]),
+      diffFixture(),
+    );
 
-    const cleaned = validateAndCleanPlan(plan, diffFixture());
-    expect(cleaned.units[0].files[0].hunkIds).toEqual(["src/foo.ts#0"]);
-  });
-
-  it("drops a file ref entirely when the file doesn't exist in the diff", () => {
-    const plan: ReviewPlan = {
-      units: [
-        {
-          id: "u1",
-          title: "Hallucinated file",
-          context: "because",
-          files: [{ fileId: "src/does-not-exist.ts", hunkIds: [], role: "core_logic" }],
-        },
-      ],
-    };
-
-    const cleaned = validateAndCleanPlan(plan, diffFixture());
-    expect(cleaned.units).toHaveLength(0);
-  });
-
-  it("drops the whole unit when every file ref is invalid", () => {
-    const plan: ReviewPlan = {
-      units: [
-        {
-          id: "u1",
-          title: "All hallucinated",
-          context: "because",
-          files: [{ fileId: "nope.ts", hunkIds: [], role: "core_logic" }],
-        },
-        {
-          id: "u2",
-          title: "Real",
-          context: "because",
-          files: [{ fileId: "src/foo.ts", hunkIds: [], role: "core_logic" }],
-        },
-      ],
-    };
-
-    const cleaned = validateAndCleanPlan(plan, diffFixture());
-    expect(cleaned.units.map((u) => u.id)).toEqual(["u2"]);
+    expect(cleaned?.files[0].hunkIds).toEqual(["src/foo.ts#0"]);
   });
 
   it("treats an empty hunkIds list as a whole-file reference and keeps it", () => {
-    const plan: ReviewPlan = {
-      units: [
-        {
-          id: "u1",
-          title: "Whole file",
-          context: "because",
-          files: [{ fileId: "src/foo.ts", hunkIds: [], role: "core_logic" }],
-        },
-      ],
-    };
+    const cleaned = validateAndCleanUnit(
+      unitWith([{ fileId: "src/foo.ts", hunkIds: [], role: "core_logic" }]),
+      diffFixture(),
+    );
 
-    const cleaned = validateAndCleanPlan(plan, diffFixture());
-    expect(cleaned.units).toHaveLength(1);
-    expect(cleaned.units[0].files[0].hunkIds).toEqual([]);
+    expect(cleaned?.files).toHaveLength(1);
+    expect(cleaned?.files[0].hunkIds).toEqual([]);
   });
-});
 
-describe("validateAndCleanUnit", () => {
-  it("returns a cleaned unit or null when nothing real remains", () => {
-    const good: ReviewUnit = {
-      id: "u1",
-      title: "Update foo",
-      context: "because",
-      files: [
-        { fileId: "src/foo.ts", hunkIds: ["src/foo.ts#0", "src/foo.ts#99"], role: "core_logic" },
-      ],
-    };
-    const cleaned = validateAndCleanUnit(good, diffFixture());
-    expect(cleaned?.files[0].hunkIds).toEqual(["src/foo.ts#0"]);
+  it("returns null when every file ref is hallucinated", () => {
+    const cleaned = validateAndCleanUnit(
+      unitWith([{ fileId: "src/does-not-exist.ts", hunkIds: [], role: "core_logic" }]),
+      diffFixture(),
+    );
 
-    const bad: ReviewUnit = {
-      id: "u2",
-      title: "Nope",
-      context: "",
-      files: [{ fileId: "missing.ts", hunkIds: [], role: "core_logic" }],
-    };
-    expect(validateAndCleanUnit(bad, diffFixture())).toBeNull();
+    expect(cleaned).toBeNull();
+  });
+
+  it("accepts a prebuilt known-files map as well as a diff", () => {
+    const diff = diffFixture();
+    const knownFiles = new Map(diff.files.map((f) => [f.path, f]));
+
+    const cleaned = validateAndCleanUnit(
+      unitWith([{ fileId: "src/foo.ts", hunkIds: [], role: "core_logic" }]),
+      knownFiles,
+    );
+
+    expect(cleaned?.id).toBe("u1");
+  });
+
+  it("falls back to core_logic for an unrecognized role", () => {
+    const cleaned = validateAndCleanUnit(
+      unitWith([
+        {
+          fileId: "src/foo.ts",
+          hunkIds: [],
+          role: "not_a_real_role" as ReviewUnit["files"][number]["role"],
+        },
+      ]),
+      diffFixture(),
+    );
+
+    expect(cleaned?.files[0].role).toBe("core_logic");
   });
 });
 
@@ -169,24 +116,5 @@ describe("prefixChunkUnitId", () => {
   it("namespaces unit ids by chunk index", () => {
     expect(prefixChunkUnitId(0, "u1")).toBe("c0-u1");
     expect(prefixChunkUnitId(2, "add-field")).toBe("c2-add-field");
-  });
-});
-
-describe("mergePlans", () => {
-  it("prefixes unit ids per chunk so units from different chunks never collide", () => {
-    const planA: ReviewPlan = {
-      units: [{ id: "u1", title: "A", context: "", files: [] }],
-    };
-    const planB: ReviewPlan = {
-      units: [{ id: "u1", title: "B", context: "", files: [] }],
-    };
-
-    const merged = mergePlans([planA, planB]);
-    expect(merged.units.map((u) => u.id)).toEqual(["c0-u1", "c1-u1"]);
-    expect(merged.units.map((u) => u.title)).toEqual(["A", "B"]);
-  });
-
-  it("returns an empty plan for no input plans", () => {
-    expect(mergePlans([])).toEqual({ units: [] });
   });
 });

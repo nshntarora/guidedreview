@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef, useState, type MutableRefObject } from "react";
-import { isGitHubOAuthConfigured } from "../../../lib/github/oauthConfig";
+import { useEffect, useId, useRef, type MutableRefObject } from "react";
+import { GITHUB_CLIENT_ID_ENV_VAR, isGitHubOAuthConfigured } from "../../../lib/github/oauthConfig";
+import { useCopyToClipboard } from "../../../lib/useCopyToClipboard";
 import { openVerificationUri, useGitHubDeviceAuth } from "../../../lib/github/useGitHubDeviceAuth";
 import { CloseButton } from "./CloseButton";
 import { Button, Kbd, Spinner } from "@guided-review/ui";
@@ -50,7 +51,7 @@ export function ConnectGitHubModal({
 }: ConnectGitHubModalProps) {
   const titleId = useId();
   const configured = isGitHubOAuthConfigured();
-  const [copied, setCopied] = useState(false);
+  const { copied, copy: copyUserCode, resetCopied } = useCopyToClipboard();
   const connectButtonRef = useRef<HTMLButtonElement>(null);
 
   const { flow, busy, startConnect, cancel, reset } = useGitHubDeviceAuth({
@@ -64,9 +65,9 @@ export function ConnectGitHubModal({
   useEffect(() => {
     if (!open) {
       reset();
-      setCopied(false);
+      resetCopied();
     }
-  }, [open, reset]);
+  }, [open, reset, resetCopied]);
 
   useEffect(() => {
     if (!open) return;
@@ -110,18 +111,8 @@ export function ConnectGitHubModal({
 
   const onCancel = () => {
     cancel();
-    setCopied(false);
+    resetCopied();
     onClose();
-  };
-
-  const onCopyCode = async (code: string) => {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
   };
 
   return (
@@ -160,7 +151,7 @@ export function ConnectGitHubModal({
           >
             GitHub connection isn’t configured in this build. Set{" "}
             <code className="rounded bg-gr-bg px-1 py-0.5 text-sm text-gr-text">
-              VITE_GITHUB_CLIENT_ID
+              {GITHUB_CLIENT_ID_ENV_VAR}
             </code>{" "}
             and rebuild.
           </p>
@@ -185,7 +176,7 @@ export function ConnectGitHubModal({
                 surface="overlay"
                 variant="secondary"
                 size="sm"
-                onClick={() => void onCopyCode(flow.userCode)}
+                onClick={() => void copyUserCode(flow.userCode)}
                 data-testid="connect-github-copy-code"
               >
                 {copied ? "Copied" : "Copy Code"}

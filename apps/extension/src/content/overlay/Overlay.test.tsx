@@ -1024,6 +1024,19 @@ describe("Overlay", () => {
       expect(screen.getByTestId("diff-view-split")).toBeInTheDocument();
     });
 
+    it("disarms a pending v when an unrelated key lands inside the chord window", () => {
+      seedReadyReview(1);
+      render(<Overlay />);
+
+      fireEvent.keyDown(window, { key: "v" });
+      // Unrelated key: consumes the leader rather than staying armed for it.
+      fireEvent.keyDown(window, { key: "x" });
+      fireEvent.keyDown(window, { key: "u" });
+
+      expect(useReviewStore.getState().diffViewMode).toBe("split");
+      expect(screen.getByTestId("diff-view-split")).toBeInTheDocument();
+    });
+
     it("does not switch when the second key arrives after the chord window", () => {
       vi.useFakeTimers();
       try {

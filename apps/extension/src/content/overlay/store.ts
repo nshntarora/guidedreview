@@ -7,6 +7,7 @@ import type {
   ReviewUnit,
 } from "../../lib/types";
 import { NO_API_KEY_ERROR_CODE } from "../../lib/types";
+import type { PRIdentity } from "../../lib/github/diffFetch";
 import { buildFileReviewPlan } from "../../lib/review/fileReviewPlan";
 import {
   displayLineNumber,
@@ -28,11 +29,7 @@ export type ReviewStatus = "idle" | "loading" | "streaming" | "ready" | "error";
 export type { DiffViewMode };
 
 /** Stable identity for a PR, independent of which GitHub tab/URL the user is on. */
-export interface SessionPRIdentity {
-  owner: string;
-  repo: string;
-  number: number;
-}
+export type SessionPRIdentity = PRIdentity;
 
 interface PersistedSession {
   diff: ParsedDiff;
@@ -206,6 +203,9 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       streamGeneration: nextGeneration,
       status: hasDiff ? "streaming" : "loading",
       error: null,
+      // A retry always re-runs the annotate call, so the connect-provider
+      // prompt must not survive into the new attempt.
+      needsProvider: false,
       plan: hasDiff ? { units: [] } : null,
       ...clearCommentUi(),
     });

@@ -41,7 +41,6 @@ interface UseOverlayKeyboardOptions {
   currentUnitId: string | undefined;
   submitReviewOpen: boolean;
   connectGitHubOpen: boolean;
-  submittingReview: boolean;
   /** Truthy while the post-submit success modal should own the keyboard. */
   submitSuccess: object | null;
   submitReviewActionRef: MutableRefObject<(() => void) | null>;
@@ -60,8 +59,10 @@ interface UseOverlayKeyboardOptions {
  * (confirmation → success → connect-GitHub → submit-review), the comment
  * composer, view-mode chords (`v u` / `v s`), and navigate/comment mode keys.
  *
- * Extracted from Overlay as-is — the capture-on-window design and dependency
- * list are unchanged; only the location moved.
+ * Listens on window in the capture phase so the overlay sees keys before
+ * GitHub's own document-level shortcuts, and always stops propagation while
+ * open. Modal open flags are read through refs so the listener is current as
+ * soon as state commits, not only after the effect re-runs.
  */
 export function useOverlayKeyboard({
   isOpen,
@@ -73,8 +74,6 @@ export function useOverlayKeyboard({
   currentUnitId,
   submitReviewOpen,
   connectGitHubOpen,
-  // Kept in the options API for callers; close guards live in useSubmitReviewFlow.
-  submittingReview: _submittingReview,
   submitSuccess,
   submitReviewActionRef,
   submitReviewKeyRef,
@@ -111,7 +110,13 @@ export function useOverlayKeyboard({
     if (!isOpen) return;
 
     const SCROLL_STEP = 120;
-    viewChordRef.current = null;
+
+    /** Disarm a pending `v` leader so it cannot complete a chord later. */
+    function clearViewChord(): void {
+      viewChordRef.current = null;
+    }
+
+    clearViewChord();
 
     type Store = ReturnType<typeof useReviewStore.getState>;
 
@@ -141,13 +146,11 @@ export function useOverlayKeyboard({
       // Confirmation dialog: Enter = OK, Esc = cancel (highest priority modal).
       if (confirmationHandlesKey(event)) {
         event.preventDefault();
-        viewChordRef.current = null;
         return true;
       }
 
       // Success modal: Enter / Esc exit the review (single CTA dialog).
       if (submitSuccessRef.current) {
-        viewChordRef.current = null;
         if (event.key === "Enter" && !event.metaKey && !event.ctrlKey && !event.altKey) {
           event.preventDefault();
           exitAfterSubmitRef.current();
@@ -163,7 +166,6 @@ export function useOverlayKeyboard({
 
       // Connect GitHub modal: Esc closes; Enter runs Connect / Try again / open GitHub.
       if (connectGitHubOpenRef.current) {
-        viewChordRef.current = null;
         if (event.key === "Escape") {
           event.preventDefault();
           setConnectGitHubOpenRef.current(false);
@@ -180,7 +182,6 @@ export function useOverlayKeyboard({
       // ⌘/Ctrl+Enter submits on the compose step; ↑/↓/Enter drive the choose step.
       // Handled here because capture stopPropagation blocks element React handlers.
       if (submitReviewOpenRef.current) {
-        viewChordRef.current = null;
         if (event.key === "Escape") {
           event.preventDefault();
           closeSubmitReviewModalRef.current();
@@ -209,7 +210,6 @@ export function useOverlayKeyboard({
       const editable = isEditableEvent(event);
       if (!store.composerOpen && !editable) return false;
 
-      viewChordRef.current = null;
       if (event.key === "Escape") {
         event.preventDefault();
         if (store.composerOpen) store.closeComposer();
@@ -228,7 +228,7 @@ export function useOverlayKeyboard({
     /** View-mode chords: v+u (unified), v+s (split). Both navigate and comment mode. */
     function handleViewModeChord(event: KeyboardEvent, store: Store): boolean {
       if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) {
-        viewChordRef.current = null;
+        clearViewChord();
         return false;
       }
       const { next, mode, consumed } = recordViewChordKey(
@@ -247,32 +247,26 @@ export function useOverlayKeyboard({
       switch (event.key) {
         case "Escape":
           event.preventDefault();
-          viewChordRef.current = null;
           store.exitCommentMode();
           return;
         case "ArrowUp":
           event.preventDefault();
-          viewChordRef.current = null;
           store.moveLineCursor(-1, event.shiftKey);
           return;
         case "ArrowDown":
           event.preventDefault();
-          viewChordRef.current = null;
           store.moveLineCursor(1, event.shiftKey);
           return;
         case "Enter":
           event.preventDefault();
-          viewChordRef.current = null;
           store.openComposer();
           return;
         case "ArrowRight":
           event.preventDefault();
-          viewChordRef.current = null;
           store.goNext();
           return;
         case "ArrowLeft":
           event.preventDefault();
-          viewChordRef.current = null;
           store.goPrev();
           return;
         default:
@@ -284,17 +278,14 @@ export function useOverlayKeyboard({
       switch (event.key) {
         case "Escape":
           event.preventDefault();
-          viewChordRef.current = null;
           requestExitRef.current();
           return;
         case "ArrowRight":
           event.preventDefault();
-          viewChordRef.current = null;
           store.goNext();
           return;
         case "ArrowLeft":
           event.preventDefault();
-          viewChordRef.current = null;
           store.goPrev();
           return;
         case "ArrowUp":
@@ -317,7 +308,6 @@ export function useOverlayKeyboard({
         case "C":
           if (event.metaKey || event.ctrlKey || event.altKey) return;
           event.preventDefault();
-          viewChordRef.current = null;
           if (selectableForUnit.length > 0) {
             store.enterCommentMode(selectableForUnit);
           }
@@ -337,16 +327,27 @@ export function useOverlayKeyboard({
       event.stopPropagation();
 
       if (handleTabTrap(event)) return;
-      if (handleModalKeys(event)) return;
+
+      // A key claimed by a modal, the composer, or the submit shortcut never
+      // reaches handleViewModeChord, so those three paths disarm a pending `v`
+      // themselves. Everything else does reach it, and recordViewChordKey
+      // returns a null pending state for every key except `v`.
+      if (handleModalKeys(event)) {
+        clearViewChord();
+        return;
+      }
 
       const store = useReviewStore.getState();
 
-      if (handleComposerKeys(event, store)) return;
+      if (handleComposerKeys(event, store)) {
+        clearViewChord();
+        return;
+      }
 
       // ⌘/Ctrl+Enter opens Submit Review (or Connect GitHub if unauthenticated).
       if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
-        viewChordRef.current = null;
+        clearViewChord();
         void requestOpenSubmitReviewRef.current();
         return;
       }

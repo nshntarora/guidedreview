@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { GitHubPublicAuthState } from "../lib/types";
-import { isGitHubOAuthConfigured } from "../lib/github/oauthConfig";
+import { GITHUB_CLIENT_ID_ENV_VAR, isGitHubOAuthConfigured } from "../lib/github/oauthConfig";
+import { useCopyToClipboard } from "../lib/useCopyToClipboard";
 import { openVerificationUri, useGitHubDeviceAuth } from "../lib/github/useGitHubDeviceAuth";
 import { clearGitHubAuthSession, getGitHubAuthStatus } from "../lib/messaging";
 import { confirm, ConfirmationHost } from "../content/overlay/components/confirmation";
@@ -20,7 +21,7 @@ export function GitHubAuthSection() {
   const [session, setSession] = useState<SessionState>({ kind: "loading" });
   const [disconnectBusy, setDisconnectBusy] = useState(false);
   const [disconnectError, setDisconnectError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy: copyUserCode, resetCopied } = useCopyToClipboard();
 
   const {
     flow,
@@ -61,7 +62,7 @@ export function GitHubAuthSection() {
 
   const onCancel = () => {
     cancel();
-    setCopied(false);
+    resetCopied();
   };
 
   const performDisconnect = async () => {
@@ -92,16 +93,6 @@ export function GitHubAuthSection() {
     });
   };
 
-  const onCopyCode = async (code: string) => {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
-  };
-
   const busy = connectBusy || disconnectBusy;
   const showError = flow.kind === "error" ? flow.message : disconnectError;
 
@@ -117,7 +108,7 @@ export function GitHubAuthSection() {
         <p className="text-base text-opt-muted" role="status">
           GitHub connection isn’t configured in this build. Set{" "}
           <code className="rounded bg-opt-subtle px-1 py-0.5 text-sm text-opt-text">
-            VITE_GITHUB_CLIENT_ID
+            {GITHUB_CLIENT_ID_ENV_VAR}
           </code>{" "}
           and rebuild.
         </p>
@@ -157,7 +148,7 @@ export function GitHubAuthSection() {
             </code>
             <Button
               variant="secondary"
-              onClick={() => void onCopyCode(flow.userCode)}
+              onClick={() => void copyUserCode(flow.userCode)}
               data-testid="github-copy-code"
             >
               {copied ? "Copied" : "Copy Code"}

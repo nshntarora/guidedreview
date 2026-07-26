@@ -26,6 +26,7 @@ import { clearGitHubAuth, getGitHubAuth, setGitHubAuth } from "../lib/github/aut
 import { fetchGitHubUser, pollAccessToken, requestDeviceCode } from "../lib/github/deviceOAuth";
 import {
   GITHUB_OAUTH_CLIENT_ID,
+  GITHUB_OAUTH_NOT_CONFIGURED,
   GITHUB_OAUTH_SCOPES,
   isGitHubOAuthConfigured,
 } from "../lib/github/oauthConfig";
@@ -287,11 +288,7 @@ async function handleFetchDiff(request: FetchDiffRequest): Promise<FetchDiffResp
 
 async function handleGitHubDeviceStart(): Promise<GitHubDeviceStartResponse> {
   if (!isGitHubOAuthConfigured()) {
-    return {
-      ok: false,
-      error:
-        "GitHub connection isn’t configured in this build. Set VITE_GITHUB_CLIENT_ID and rebuild.",
-    };
+    return { ok: false, error: GITHUB_OAUTH_NOT_CONFIGURED };
   }
 
   const device = await requestDeviceCode(GITHUB_OAUTH_CLIENT_ID, GITHUB_OAUTH_SCOPES);
@@ -309,12 +306,7 @@ async function handleGitHubDevicePoll(
   request: GitHubDevicePollRequest,
 ): Promise<GitHubDevicePollResponse> {
   if (!isGitHubOAuthConfigured()) {
-    return {
-      ok: false,
-      status: "error",
-      error:
-        "GitHub connection isn’t configured in this build. Set VITE_GITHUB_CLIENT_ID and rebuild.",
-    };
+    return { ok: false, status: "error", error: GITHUB_OAUTH_NOT_CONFIGURED };
   }
 
   const result = await pollAccessToken(GITHUB_OAUTH_CLIENT_ID, request.deviceCode);

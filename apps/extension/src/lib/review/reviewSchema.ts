@@ -1,3 +1,5 @@
+import { FILE_ROLES } from "../types";
+
 /**
  * JSON schema for the structured `ReviewPlan` output. Shared by every
  * provider so behavior is consistent regardless of which model produced it.
@@ -45,13 +47,7 @@ export const REVIEW_PLAN_JSON_SCHEMA = {
                 },
                 role: {
                   type: "string",
-                  enum: [
-                    "schema_or_model",
-                    "core_logic",
-                    "consumer_or_call_site",
-                    "test",
-                    "config_or_generated",
-                  ],
+                  enum: FILE_ROLES,
                 },
               },
               required: ["fileId", "hunkIds", "role"],

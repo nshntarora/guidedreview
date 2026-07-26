@@ -17,7 +17,22 @@ export function renderDiffForPrompt(diff: ParsedDiff): string {
   return diff.files.map(renderFile).join("\n\n");
 }
 
+/**
+ * Rendering is pure per file, and chunkDiffByFile measures every file before
+ * buildUserPrompt renders the same files again — cache so a large diff is
+ * only walked once.
+ */
+const renderedFiles = new WeakMap<DiffFile, string>();
+
 function renderFile(file: DiffFile): string {
+  const cached = renderedFiles.get(file);
+  if (cached !== undefined) return cached;
+  const rendered = renderFileUncached(file);
+  renderedFiles.set(file, rendered);
+  return rendered;
+}
+
+function renderFileUncached(file: DiffFile): string {
   const statusLabel =
     file.status === "renamed" ? `renamed from ${file.previousPath} to ${file.path}` : file.status;
 

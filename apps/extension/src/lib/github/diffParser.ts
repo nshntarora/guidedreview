@@ -43,8 +43,8 @@ export function parseUnifiedDiff(raw: string): ParsedDiff {
       } else if (l.startsWith("rename from ")) {
         status = "renamed";
         previousPath = l.slice("rename from ".length);
-      } else if (l.startsWith("rename to ")) {
-        // pathB already carries the new path from the "diff --git" line
+        // No "rename to" branch: pathB already carries the new path from the
+        // "diff --git" line.
       } else if (l.startsWith("Binary files ") || l.startsWith("GIT binary patch")) {
         isBinaryOrElided = true;
       } else if (l.startsWith("--- ")) {

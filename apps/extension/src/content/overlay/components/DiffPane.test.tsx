@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { sha256Hex } from "../../../lib/github/prFileDiffUrl";
 import type { DiffFile, DiffHunk, PRContext } from "../../../lib/types";
+import { buildSelectableLines } from "../buildSelectableLines";
 import { DEFAULT_DIFF_VIEW_MODE } from "../diffViewMode";
 import { resetDiffViewModeHydrationForTests, useReviewStore } from "../store";
 import type { ResolvedUnitFile } from "../selectors";
@@ -84,9 +85,21 @@ describe("DiffPane", () => {
     resetStore();
   });
 
-  function renderPane(files = resolvedFiles(), unitTitle = "Update foo") {
-    return render(<DiffPane files={files} unitTitle={unitTitle} />);
+  function renderPane(
+    files = resolvedFiles(),
+    unitTitle = "Update foo",
+    selectableForUnit = buildSelectableLines(files, useReviewStore.getState().diffViewMode),
+  ) {
+    return render(
+      <DiffPane files={files} unitTitle={unitTitle} selectableForUnit={selectableForUnit} />,
+    );
   }
+
+  it("disables the add-comment button when the unit has no selectable lines", () => {
+    renderPane(resolvedFiles(), "Update foo", []);
+
+    expect(screen.getByTestId("enter-comment-mode")).toBeDisabled();
+  });
 
   it("renders the unit title on the left and the toggle on the right", async () => {
     renderPane(resolvedFiles(), "Wire up the new auth path");

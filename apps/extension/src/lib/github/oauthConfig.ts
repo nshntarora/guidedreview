@@ -23,3 +23,13 @@ export const GITHUB_OAUTH_SCOPES = "repo read:user";
 export function isGitHubOAuthConfigured(): boolean {
   return GITHUB_OAUTH_CLIENT_ID.length > 0;
 }
+
+/** Build-time env var that carries the client id. Referenced in user-facing copy. */
+export const GITHUB_CLIENT_ID_ENV_VAR = "VITE_GITHUB_CLIENT_ID";
+
+/**
+ * Shown when a build ships without a client id. The options page and the
+ * overlay modal render the same wording as JSX (with the env var in a `code`
+ * element); this is the plain-text form for message responses.
+ */
+export const GITHUB_OAUTH_NOT_CONFIGURED = `GitHub connection isn’t configured in this build. Set ${GITHUB_CLIENT_ID_ENV_VAR} and rebuild.`;

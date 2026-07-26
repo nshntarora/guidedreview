@@ -174,7 +174,6 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     currentUnitId,
     submitReviewOpen,
     connectGitHubOpen,
-    submittingReview,
     submitSuccess,
     submitReviewActionRef,
     submitReviewKeyRef,
@@ -262,6 +261,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
               files={resolvedFiles}
               unitTitle={currentReviewUnit?.title ?? ""}
               unitId={currentReviewUnit?.id}
+              selectableForUnit={selectableForUnit}
             />
           )}
         </main>

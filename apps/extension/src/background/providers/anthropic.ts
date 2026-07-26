@@ -99,20 +99,29 @@ export const anthropicProvider: ProviderClient = {
   },
 
   async testConnection(settings: ProviderSettings): Promise<void> {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": settings.apiKey,
-        "anthropic-version": ANTHROPIC_VERSION,
-        "anthropic-dangerous-direct-browser-access": "true",
-      },
-      body: JSON.stringify({
-        model: settings.model,
-        max_tokens: 8,
-        messages: [{ role: "user", content: "Reply with OK." }],
-      }),
-    });
+    let response: Response;
+    try {
+      response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": settings.apiKey,
+          "anthropic-version": ANTHROPIC_VERSION,
+          "anthropic-dangerous-direct-browser-access": "true",
+        },
+        body: JSON.stringify({
+          model: settings.model,
+          max_tokens: 8,
+          messages: [{ role: "user", content: "Reply with OK." }],
+        }),
+      });
+    } catch (error) {
+      // Same wrapping as the streaming path: a bare fetch rejection would
+      // surface as "Failed to fetch" with no hint of which provider failed.
+      throw new ProviderError(
+        error instanceof Error ? error.message : "Failed to reach the Claude API.",
+      );
+    }
 
     if (!response.ok) {
       const detail = await parseProviderHttpError(response);

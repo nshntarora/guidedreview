@@ -38,4 +38,32 @@ describe("highlightToLines", () => {
     expect(lines[0]).toContain("<span");
     expect(lines[0]).not.toContain("&lt;span");
   });
+
+  it("re-opens spans that straddle a newline so each line stands alone", () => {
+    const lines = highlightToLines("/* one\n two\n three */\nconst x = 1;", "javascript");
+
+    expect(lines).toHaveLength(4);
+    // Each line of the block comment must be independently valid HTML: the
+    // continuation lines re-open the comment span and close it at line end.
+    for (const line of lines.slice(0, 3)) {
+      expect(countOccurrences(line, "<span")).toBe(countOccurrences(line, "</span>"));
+    }
+    expect(lines[1]).toContain("<span");
+    expect(lines[1]).toContain("two");
+  });
+
+  it("handles a very long single line without truncating or reordering tags", () => {
+    // Guards the tag scanner: it walks per character, so a long line must not
+    // change the result (and must not degrade to quadratic slicing).
+    const long = `const s = "${"a".repeat(20_000)}";`;
+    const lines = highlightToLines(long, "javascript");
+
+    expect(lines).toHaveLength(1);
+    expect(countOccurrences(lines[0], "<span")).toBe(countOccurrences(lines[0], "</span>"));
+    expect(lines[0]).toContain("a".repeat(20_000));
+  });
 });
+
+function countOccurrences(haystack: string, needle: string): number {
+  return haystack.split(needle).length - 1;
+}

@@ -45,12 +45,6 @@ export async function parseProviderHttpError(response: Response): Promise<Provid
   }
 }
 
-/** @deprecated Prefer parseProviderHttpError — kept for any residual callers. */
-export async function safeErrorDetail(response: Response): Promise<string> {
-  const detail = await parseProviderHttpError(response);
-  return detail.message;
-}
-
 export function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError";
 }

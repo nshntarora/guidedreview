@@ -101,18 +101,27 @@ export function createOpenAICompatibleProvider(
     },
 
     async testConnection(settings: ProviderSettings): Promise<void> {
-      const response = await fetch(chatUrl, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          authorization: `Bearer ${settings.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: settings.model,
-          max_tokens: 8,
-          messages: [{ role: "user", content: "Reply with OK." }],
-        }),
-      });
+      let response: Response;
+      try {
+        response = await fetch(chatUrl, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${settings.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: settings.model,
+            max_tokens: 8,
+            messages: [{ role: "user", content: "Reply with OK." }],
+          }),
+        });
+      } catch (error) {
+        // Same wrapping as the streaming path: a bare fetch rejection would
+        // surface as "Failed to fetch" with no hint of which provider failed.
+        throw new ProviderError(
+          error instanceof Error ? error.message : `Failed to reach the ${displayName} API.`,
+        );
+      }
 
       if (!response.ok) {
         const detail = await parseProviderHttpError(response);
