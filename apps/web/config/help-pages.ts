@@ -9,7 +9,11 @@ export const helpPages: Record<
   "configure-provider": () => import("@/content/help/configure-provider.mdx"),
   "connect-github": () => import("@/content/help/connect-github.mdx"),
   "how-it-works": () => import("@/content/help/how-it-works.mdx"),
+  "leave-comments": () => import("@/content/help/leave-comments.mdx"),
+  "submit-review": () => import("@/content/help/submit-review.mdx"),
   "keyboard-shortcuts": () => import("@/content/help/keyboard-shortcuts.mdx"),
+  troubleshooting: () => import("@/content/help/troubleshooting.mdx"),
+  faq: () => import("@/content/help/faq.mdx"),
   "privacy-and-data": () => import("@/content/help/privacy-and-data.mdx"),
 };
 

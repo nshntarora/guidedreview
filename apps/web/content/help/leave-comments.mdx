@@ -1,0 +1,60 @@
+export const toc = [
+  { id: "enter-comment-mode", label: "Enter comment mode", level: 2 },
+  { id: "select-lines", label: "Select lines", level: 2 },
+  { id: "write-a-draft", label: "Write a draft", level: 2 },
+  { id: "edit-or-remove-drafts", label: "Edit or remove drafts", level: 2 },
+  { id: "what-gets-posted", label: "What gets posted", level: 2 },
+];
+
+# Leave line comments
+
+Draft GitHub-style line comments from the overlay while you walk the plan. Comments stay local until you [submit a review](/docs/submit-review).
+
+You need [GitHub connected](/docs/connect-github) only when you submit — drafting works either way.
+
+<TocCard toc={toc} />
+
+## Enter comment mode
+
+On a unit that has selectable diff lines:
+
+1. Press `c`, or use the comment affordance in the overlay.
+2. The UI switches to **comment mode**: arrow keys move a line cursor on the current unit’s hunks instead of only scrolling the pane.
+3. Press `Esc` (when the composer is closed) to leave comment mode and return to normal navigation.
+
+If a unit has no selectable lines (for example binary or empty context), comment mode has nothing to attach to.
+
+## Select lines
+
+| Action | How |
+| --- | --- |
+| Move the cursor | `↑` / `↓` |
+| Multi-line range | Hold `⇧` and press `↑` / `↓` |
+| Open composer | `Enter` on the selection |
+
+Selection is limited to lines the extension can map to a GitHub review comment on the current diff. Context-only lines may not all be selectable.
+
+## Write a draft
+
+1. With lines selected, press `Enter` to open the composer under that range.
+2. Write the comment body. Markdown is supported (same idea as github.com).
+3. Save with `⌘/Ctrl` + `Enter`, or cancel with `Esc`.
+
+Drafts appear under the line range as **Draft** cards. They are stored with the active review session until you submit or discard them.
+
+## Edit or remove drafts
+
+On a draft card:
+
+- **Edit** — reopen the body, then save with `⌘/Ctrl` + `Enter` or cancel with `Esc`.
+- **Remove** — drop that draft without posting.
+
+You can keep walking units and add more drafts before submitting once.
+
+## What gets posted
+
+Nothing is sent to GitHub until you open **Submit review** and confirm. Then every remaining draft is included as line comments on that review, along with the overall event type and optional summary.
+
+If the PR diff has changed since you drafted (rebase, force-push, new commits), GitHub may reject some line anchors — you’ll see an error on submit. Re-open the review, refresh the plan if needed, and re-draft on the current lines.
+
+> **Tip.** Prefer commenting as you go unit by unit, then submit once. That matches how GitHub review drafts work: one review, many line comments.

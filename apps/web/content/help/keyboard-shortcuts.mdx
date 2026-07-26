@@ -1,12 +1,16 @@
 export const toc = [
   { id: "overlay-navigation", label: "Overlay navigation", level: 2 },
   { id: "diff-view", label: "Diff view", level: 2 },
+  { id: "comment-mode", label: "Comment mode", level: 2 },
+  { id: "submit-and-modals", label: "Submit and modals", level: 2 },
   { id: "marketing-site", label: "Marketing site", level: 2 },
 ];
 
 # Keyboard shortcuts
 
-Move through a guided review without leaving the keyboard. Focus must not be in an editable field for most shortcuts.
+Move through a guided review without leaving the keyboard. Focus must not be in an editable field for most of these — when the comment composer is open, typing goes to the text field and only Esc / ⌘/Ctrl+Enter are intercepted.
+
+The overlay sidebar always lists the same shortcuts as the product.
 
 <TocCard toc={toc} />
 
@@ -14,19 +18,45 @@ Move through a guided review without leaving the keyboard. Focus must not be in 
 
 | Shortcut | Action |
 | --- | --- |
-| `→` / `j` | Next unit |
-| `←` / `k` | Previous unit |
-| `Esc` | Close overlay (when not in a nested modal) |
+| `→` | Next unit |
+| `←` | Previous unit |
+| `↑` / `↓` | Scroll the code pane |
+| `Esc` | Close the overlay (when not in comment mode or a modal) |
+| `c` | Enter [comment mode](/docs/leave-comments) (if the unit has selectable lines) |
+| `⌘/Ctrl` + `Enter` | Open [Submit review](/docs/submit-review) (or Connect GitHub if needed) |
 
-Exact bindings can evolve with the product; the overlay footer and help affordances always reflect the current set.
+While the overlay is open, keys are not passed through to GitHub’s page shortcuts.
 
 ## Diff view
 
 | Shortcut | Action |
 | --- | --- |
-| View-mode chord | Toggle unified / split (see on-screen hints in the overlay toolbar) |
+| `v` then `u` | Unified view |
+| `v` then `s` | Split view |
 
-Selection-based commenting uses the mouse (or pointer) on diff lines; keyboard focus management keeps modals and the composer accessible.
+Type `v`, then `u` or `s` within about a second. You can also toggle unified / split from the overlay toolbar.
+
+## Comment mode
+
+| Shortcut | Action |
+| --- | --- |
+| `↑` / `↓` | Move the line cursor |
+| `⇧` + `↑` / `↓` | Extend multi-line selection |
+| `Enter` | Open the comment composer on the selection |
+| `⌘/Ctrl` + `Enter` | Save draft (composer open) |
+| `Esc` | Close composer, or exit comment mode |
+| `←` / `→` | Previous / next unit (still works in comment mode) |
+
+Details and draft editing: [Leave line comments](/docs/leave-comments).
+
+## Submit and modals
+
+| Shortcut | Action |
+| --- | --- |
+| `Esc` | Close the topmost modal (submit, connect GitHub, confirmation) without exiting the whole review when a modal owns focus |
+| `↑` / `↓` / `Enter` | Choose review type on the submit dialog |
+| `⌘/Ctrl` + `Enter` | Submit from the compose step |
+| `Enter` / `Esc` | Dismiss the post-submit success dialog and exit |
 
 ## Marketing site
 
@@ -37,4 +67,4 @@ On [guidedreview.com](https://guidedreview.com):
 | `⌘/Ctrl` + `I` | Open install (Chrome Web Store) |
 | `⌘/Ctrl` + `G` | Open the GitHub repository |
 
-> **Tip.** Prefer keyboard navigation when reviewing large plans — it keeps context on the unit narrative instead of hunting scroll position on the PR page.
+> **Tip.** Prefer keyboard navigation on large plans — it keeps attention on the unit narrative instead of hunting scroll position on the PR page.

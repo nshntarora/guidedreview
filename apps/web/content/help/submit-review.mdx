@@ -1,0 +1,60 @@
+export const toc = [
+  { id: "before-you-submit", label: "Before you submit", level: 2 },
+  { id: "open-submit-review", label: "Open Submit review", level: 2 },
+  { id: "choose-a-review-type", label: "Choose a review type", level: 2 },
+  { id: "summary-and-send", label: "Summary and send", level: 2 },
+  { id: "after-submit", label: "After submit", level: 2 },
+];
+
+# Submit a review
+
+Post drafted line comments and an overall decision to the pull request through the GitHub API — without leaving the overlay.
+
+This path requires [GitHub connected](/docs/connect-github). Generating and walking a plan does **not**.
+
+<TocCard toc={toc} />
+
+## Before you submit
+
+1. Finish [walking the plan](/docs/first-review) and [draft any line comments](/docs/leave-comments) you want included.
+2. Confirm you’re signed into the extension with an account that can review that PR (collaborator / required reviewers, org SSO if applicable).
+3. Remember: you still have the final say. The model ordered the walkthrough; the approve / request-changes decision is yours.
+
+## Open Submit review
+
+- Press `⌘/Ctrl` + `Enter` from navigate or comment mode (not while typing in the composer — there it saves the draft).
+- Or use the **Submit review** control in the overlay.
+
+If GitHub isn’t connected, the **Connect GitHub** modal opens first. Complete device OAuth, then submit again.
+
+## Choose a review type
+
+The dialog mirrors GitHub’s review events:
+
+| Type | Effect |
+| --- | --- |
+| **Comment** | General feedback — no approve / request-changes. Summary optional. |
+| **Approve** | Approve the PR for merge. Summary optional. |
+| **Request Changes** | Block merge until addressed (per repo rules). Summary **required**. |
+
+Use `↑` / `↓` to highlight a type and `Enter` to continue, or click.
+
+## Summary and send
+
+1. Optionally write a top-level review summary (required for Request Changes).
+2. Press `⌘/Ctrl` + `Enter` or click submit.
+3. The extension posts the review and all current drafts as line comments via your stored token.
+
+Errors from GitHub (permissions, expired token, stale line anchors, SSO) surface in the modal with a short next step — see [Troubleshooting](/docs/troubleshooting).
+
+## After submit
+
+On success:
+
+1. Drafts for that submission are cleared.
+2. A short confirmation appears; `Enter` or `Esc` dismisses it and closes the guided review.
+3. You’re returned toward the PR conversation view so you can see the review on GitHub.
+
+You can start Guided Review again later if the PR gains new commits; that builds a new plan for the current diff.
+
+> **Note.** Guided Review never auto-approves. Submit only runs when you confirm the dialog.

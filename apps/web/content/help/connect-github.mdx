@@ -2,12 +2,13 @@ export const toc = [
   { id: "why-connect-github", label: "Why connect GitHub?", level: 2 },
   { id: "device-flow", label: "Device flow", level: 2 },
   { id: "what-we-request", label: "What we request", level: 2 },
+  { id: "private-repos-and-org-sso", label: "Private repos and org SSO", level: 2 },
   { id: "disconnect", label: "Disconnect", level: 2 },
 ];
 
 # Connect GitHub
 
-Connecting GitHub is **optional** for reading a PR and generating a guided plan. It is required if you want to **submit a review** (comments, approve, request changes) from the overlay.
+Connecting GitHub is **optional** for reading a PR and generating a guided plan. It is required if you want to **submit a review** (line comments, approve, request changes) from the overlay.
 
 <TocCard toc={toc} />
 
@@ -16,10 +17,11 @@ Connecting GitHub is **optional** for reading a PR and generating a guided plan.
 Without GitHub auth, Guided Review can still:
 
 - Detect the PR from the page
-- Fetch the public diff path the extension uses for review planning
+- Fetch the diff path the extension uses for review planning
 - Stream a plan and walk units
+- Draft line comments **locally** (they stay in the session until submit)
 
-With auth, the overlay can also post your drafted line comments and overall review decision through the GitHub API as you.
+With auth, the overlay can also post those drafts and your overall review decision through the GitHub API as you.
 
 ## Device flow
 
@@ -32,10 +34,23 @@ Guided Review uses GitHub’s **device OAuth** flow from the options page (and p
 
 ## What we request
 
-Scopes are limited to what submit-review needs (reading PR context and writing review comments). Tokens stay in extension storage; they are not sent to Guided Review servers because there are none for the product path.
+| Scope | Why |
+| --- | --- |
+| `repo` | Read PR context and write review comments on public **and** private repositories you can access |
+| `read:user` | Show who’s connected in the UI |
+
+Classic OAuth has no finer “only review private PRs” slice, so `repo` is intentionally broad. Tokens stay in extension storage. They are not sent to Guided Review servers — there are none for the product path.
 
 > **Org policies.** Some organizations require approving third-party OAuth apps. If device flow fails with an org restriction, approve the app in GitHub settings or complete the review on github.com itself.
 
+## Private repos and org SSO
+
+- **Private PRs** — Submit works when your GitHub user already has access and the token is authorized for that repo/org.
+- **SAML / SSO orgs** — After connecting, GitHub may still require you to **authorize the token for SSO**. Open GitHub → **Settings → Applications**, find the Guided Review authorization, and authorize access for the organization. Without that step, submit often fails with not-found or access errors even though you can open the PR in the browser.
+- If access still fails after SSO, disconnect and connect again in Options, then re-authorize SSO if prompted.
+
+More recovery steps: [Troubleshooting](/docs/troubleshooting).
+
 ## Disconnect
 
-Use **Disconnect** / sign-out in Options to clear stored GitHub credentials. You can still generate guided plans; only submit-from-overlay stops working until you connect again.
+Use **Disconnect** / sign-out in Options to clear stored GitHub credentials. You can still generate guided plans and draft comments; only submit-from-overlay stops working until you connect again.

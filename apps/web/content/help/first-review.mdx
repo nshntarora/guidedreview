@@ -32,15 +32,22 @@ The overlay shows **display units** in order: a synthetic PR description step fi
 For each unit you can:
 
 - Read the unit’s title and guidance
-- See the linked hunks from the real diff (unified or split view)
+- See the linked hunks from the real diff (unified or split — `v u` / `v s`, or the toolbar)
 - Move next / previous with the footer or [keyboard shortcuts](/docs/keyboard-shortcuts)
 
 The model chooses order and commentary; it does **not** supply the code lines you see. Hunk ids that don’t match the parsed diff are dropped.
 
 ## Leave comments and submit
 
-If you’ve [connected GitHub](/docs/connect-github), you can draft line comments from the overlay and submit a review (comment / approve / request changes) without leaving the guided flow. Submitted reviews use the GitHub API via your authorized token.
+As you walk:
+
+1. Press `c` to enter comment mode, select lines, and [draft line comments](/docs/leave-comments). Drafts stay local until you submit.
+2. When you’re ready, press `⌘/Ctrl` + `Enter` (or use **Submit review**) to choose Comment / Approve / Request Changes and [send the review](/docs/submit-review).
+
+Submit needs [GitHub connected](/docs/connect-github). Walking the plan and drafting do not.
 
 ## Resume later
 
-Sessions (diff, plan, PR context, current step) are stored in `chrome.storage.session`, keyed by **owner/repo#number** — not the full URL — so you can switch between Conversation and Files changed tabs and resume the same plan until the browser session ends.
+Sessions (diff, plan, PR context, current step, drafts) are stored in `chrome.storage.session`, keyed by **owner/repo#number** — not the full URL — so you can switch between Conversation and Files changed tabs and resume the same plan until the browser session ends.
+
+If something fails mid-flight, see [Troubleshooting](/docs/troubleshooting).

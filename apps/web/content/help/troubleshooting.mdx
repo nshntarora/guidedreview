@@ -1,0 +1,79 @@
+export const toc = [
+  { id: "no-start-button", label: "No Start Guided Review button", level: 2 },
+  { id: "provider-and-api-key", label: "Provider and API key", level: 2 },
+  { id: "plan-generation-fails", label: "Plan generation fails", level: 2 },
+  { id: "github-connect-and-submit", label: "GitHub connect and submit", level: 2 },
+  { id: "private-repos-and-sso", label: "Private repos and SSO", level: 2 },
+  { id: "session-and-resume", label: "Session and resume", level: 2 },
+  { id: "load-unpacked-stale-build", label: "Load unpacked / stale build", level: 2 },
+];
+
+# Troubleshooting
+
+Straight fixes for the problems that show up most often. If something fails, read the message in Options or the overlay first — provider and GitHub errors are often already specific enough to act on.
+
+<TocCard toc={toc} />
+
+## No Start Guided Review button
+
+1. Confirm the tab is a **pull request** URL on `github.com` (Conversation, Files changed, or Commits).
+2. Reload the page. SPA navigations from the PR list should still inject the button; a full reload clears stuck DOM.
+3. Check the extension is enabled and allowed on GitHub in `chrome://extensions`.
+4. If you loaded unpacked, confirm you selected **`apps/extension/dist`**, then **Reload** the extension and refresh the tab.
+
+## Provider and API key
+
+| Symptom | What to try |
+| --- | --- |
+| Prompted for a key on start | Open Options → [configure a provider](/docs/configure-provider) → paste a valid key → Save |
+| **Test connection** fails | Wrong key or model, expired key, or network/VPN blocking the provider. Fix the key, pick a model your account can use, retry |
+| Auth / invalid key from the provider | Regenerate the key in the provider console; don’t paste org-restricted keys your seat can’t use |
+
+Keys live only in `chrome.storage.local` and leave the machine toward **your** provider when annotating — not toward Guided Review servers.
+
+## Plan generation fails
+
+- **Mid-stream error** — Check the overlay message. Common causes: rate limits, insufficient quota, model unavailable, or a network blip. Wait and retry, or switch model/provider in Options.
+- **Empty or thin plan** — Very large or mostly binary PRs produce less useful structure. Chunking still runs by file; binary/elided files won’t get textual units.
+- **Lost connection to the worker** — Reload the extension and the PR tab, then start again.
+
+The model only supplies order and commentary. If hunks don’t match the real diff, those refs are dropped rather than shown as broken code.
+
+## GitHub connect and submit
+
+| Symptom | What to try |
+| --- | --- |
+| Device flow never completes | Finish the code at GitHub’s verification URL before it expires; don’t close Options mid-flow |
+| Org blocks the OAuth app | An org admin must approve the app, or complete the review on github.com |
+| Submit returns 401 / reconnect | Disconnect and connect again in Options so a fresh token is stored |
+| Submit returns 403 | Your user can’t review that PR, or the token lacks access |
+| Submit returns 404 | PR gone or inaccessible; for private org repos also check SSO (below) |
+| Submit returns 422 | Line comments no longer match the current diff — re-draft on the latest plan |
+
+See [Connect GitHub](/docs/connect-github) for scopes and disconnect.
+
+## Private repos and SSO
+
+- Diff fetch and submit use your browser session / token as appropriate. Private PR access follows whatever GitHub already allows for your account.
+- Many orgs require **SSO authorization** on third-party tokens. If submit fails with not-found or access errors on a private org repo:
+  1. Open GitHub → **Settings → Applications** (or the org’s SSO prompt).
+  2. Authorize the Guided Review / OAuth token for that organization.
+  3. Retry submit, or reconnect GitHub in Options if needed.
+
+## Session and resume
+
+- Active plans live in `chrome.storage.session`, keyed by `owner/repo#number`. Switching Conversation ↔ Files changed should resume the same step.
+- Closing the browser (or ending the session) clears the plan. Settings and API keys in local storage remain.
+- Starting Guided Review again on the same PR after a clear rebuilds a **new** plan for the current diff.
+
+## Load unpacked / stale build
+
+If you develop from source:
+
+1. Run `npm run build:extension` from the monorepo root after code changes.
+2. In `chrome://extensions`, hit **Reload** on the Guided Review card.
+3. Refresh the GitHub PR tab.
+
+Chrome loads **`apps/extension/dist`**, not a root-level `dist/`. A stale folder means you keep seeing old behavior even with `npm run dev` running.
+
+> **Still stuck?** Open an issue on [GitHub](https://github.com/nshntarora/guidedreview) with the exact error text (redact keys and private URLs).
