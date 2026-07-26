@@ -72,7 +72,7 @@ export function ProgressHeader({
         <div className="flex shrink-0 items-center gap-3">
           <button
             type="button"
-            className={`${headerBtn} border-gr-accent bg-gr-accent text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover [&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit`}
+            className={`${headerBtn} border-gr-accent bg-gr-accent text-gr-accent-on hover:border-gr-accent-hover hover:bg-gr-accent-hover [&_[data-slot=kbd]]:bg-[rgba(13,8,6,0.12)] [&_[data-slot=kbd]]:text-inherit`}
             onClick={onSubmitReview}
             data-testid="submit-review-button"
           >

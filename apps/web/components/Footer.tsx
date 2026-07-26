@@ -23,23 +23,12 @@ export function Footer() {
         >
           <p className="m-0">© {new Date().getFullYear()} Guided Review</p>
           <div className="flex gap-4">
-            <a
-              href={GITHUB_REPO_URL}
-              className="transition-colors hover:text-gr-text"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
               GitHub
             </a>
-            <Link href="/privacy" className="transition-colors hover:text-gr-text">
-              Privacy
-            </Link>
-            <Link href="/terms" className="transition-colors hover:text-gr-text">
-              Terms
-            </Link>
-            <Link href="/cookies" className="transition-colors hover:text-gr-text">
-              Cookies
-            </Link>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">Terms</Link>
+            <Link href="/cookies">Cookies</Link>
           </div>
         </div>
       </div>

@@ -20,11 +20,7 @@ export function FooterNav({ currentIndex, total, onPrev, onNext }: FooterNavProp
     >
       <button
         type="button"
-        className={cn(
-          navBtnBase,
-          "border-gr-border bg-gr-bg text-gr-text",
-          "[&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit",
-        )}
+        className={cn(navBtnBase, "border-gr-border bg-gr-bg text-gr-text")}
         onClick={onPrev}
         disabled={currentIndex === 0 || total === 0}
         aria-label="Previous step"
@@ -49,7 +45,7 @@ export function FooterNav({ currentIndex, total, onPrev, onNext }: FooterNavProp
           navBtnBase,
           "border-gr-accent bg-gr-accent text-gr-accent-on transition-colors",
           "not-disabled:hover:border-gr-accent-hover not-disabled:hover:bg-gr-accent-hover",
-          "[&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit",
+          "[&_[data-slot=kbd]]:bg-[rgba(13,8,6,0.12)] [&_[data-slot=kbd]]:text-inherit",
         )}
         onClick={onNext}
         disabled={total === 0 || currentIndex >= total - 1}

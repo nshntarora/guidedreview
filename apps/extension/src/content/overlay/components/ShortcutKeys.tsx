@@ -1,6 +1,6 @@
 import { Fragment } from "react";
+import { Kbd, KbdGroup } from "@guided-review/ui";
 import { modKeyLabel } from "../platform";
-import { Kbd } from "@guided-review/ui";
 
 /**
  * Token for a key badge. Pass `"mod"` for the OS-aware primary modifier
@@ -33,7 +33,7 @@ export function ShortcutKeys({ keys, join = "none", className }: ShortcutKeysPro
   const showPlus = join === "chord";
 
   return (
-    <span className={className ?? "inline-flex items-center gap-1"}>
+    <KbdGroup className={className}>
       {keys.map((key, i) => (
         <Fragment key={`${key}-${i}`}>
           {showPlus && i > 0 ? (
@@ -44,7 +44,7 @@ export function ShortcutKeys({ keys, join = "none", className }: ShortcutKeysPro
           <Kbd>{resolveKey(key)}</Kbd>
         </Fragment>
       ))}
-    </span>
+    </KbdGroup>
   );
 }
 

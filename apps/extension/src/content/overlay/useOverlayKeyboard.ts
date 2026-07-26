@@ -1,4 +1,4 @@
-import { useEffect, type MutableRefObject, type RefObject } from "react";
+import { useEffect, useRef, type MutableRefObject, type RefObject } from "react";
 import { confirmationHandlesKey, getConfirmationDialogElement } from "./components/confirmation";
 import type { SelectableLine } from "./commentTypes";
 import { trapTabKey } from "./focusTrap";
@@ -73,7 +73,8 @@ export function useOverlayKeyboard({
   currentUnitId,
   submitReviewOpen,
   connectGitHubOpen,
-  submittingReview,
+  // Kept in the options API for callers; close guards live in useSubmitReviewFlow.
+  submittingReview: _submittingReview,
   submitSuccess,
   submitReviewActionRef,
   submitReviewKeyRef,
@@ -85,6 +86,27 @@ export function useOverlayKeyboard({
   confirmationOpen,
   requestExit,
 }: UseOverlayKeyboardOptions): void {
+  // Mirror modal flags into refs on every render so the capture listener never
+  // sees a stale open state between React commit (modal paints) and this
+  // effect re-running. Without this, Esc right after open can fall through to
+  // requestExit while the modal is already visible.
+  const submitReviewOpenRef = useRef(submitReviewOpen);
+  submitReviewOpenRef.current = submitReviewOpen;
+  const connectGitHubOpenRef = useRef(connectGitHubOpen);
+  connectGitHubOpenRef.current = connectGitHubOpen;
+  const submitSuccessRef = useRef(submitSuccess);
+  submitSuccessRef.current = submitSuccess;
+  const exitAfterSubmitRef = useRef(exitAfterSubmit);
+  exitAfterSubmitRef.current = exitAfterSubmit;
+  const closeSubmitReviewModalRef = useRef(closeSubmitReviewModal);
+  closeSubmitReviewModalRef.current = closeSubmitReviewModal;
+  const setConnectGitHubOpenRef = useRef(setConnectGitHubOpen);
+  setConnectGitHubOpenRef.current = setConnectGitHubOpen;
+  const requestOpenSubmitReviewRef = useRef(requestOpenSubmitReview);
+  requestOpenSubmitReviewRef.current = requestOpenSubmitReview;
+  const requestExitRef = useRef(requestExit);
+  requestExitRef.current = requestExit;
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -103,7 +125,7 @@ export function useOverlayKeyboard({
       const confirmDialog = getConfirmationDialogElement();
       const trapRoot = confirmDialog
         ? confirmDialog
-        : submitReviewOpen
+        : submitReviewOpenRef.current
           ? submitModalDialogRef.current
           : overlayRef.current;
       if (trapRoot) trapTabKey(event, trapRoot);
@@ -124,27 +146,27 @@ export function useOverlayKeyboard({
       }
 
       // Success modal: Enter / Esc exit the review (single CTA dialog).
-      if (submitSuccess) {
+      if (submitSuccessRef.current) {
         viewChordRef.current = null;
         if (event.key === "Enter" && !event.metaKey && !event.ctrlKey && !event.altKey) {
           event.preventDefault();
-          exitAfterSubmit();
+          exitAfterSubmitRef.current();
           return true;
         }
         if (event.key === "Escape") {
           event.preventDefault();
-          exitAfterSubmit();
+          exitAfterSubmitRef.current();
           return true;
         }
         return true;
       }
 
       // Connect GitHub modal: Esc closes; Enter runs Connect / Try again / open GitHub.
-      if (connectGitHubOpen) {
+      if (connectGitHubOpenRef.current) {
         viewChordRef.current = null;
         if (event.key === "Escape") {
           event.preventDefault();
-          setConnectGitHubOpen(false);
+          setConnectGitHubOpenRef.current(false);
           return true;
         }
         if (event.key === "Enter" && !event.metaKey && !event.ctrlKey && !event.altKey) {
@@ -157,11 +179,11 @@ export function useOverlayKeyboard({
       // Submit-review modal: Esc closes the dialog only (not the whole overlay).
       // ⌘/Ctrl+Enter submits on the compose step; ↑/↓/Enter drive the choose step.
       // Handled here because capture stopPropagation blocks element React handlers.
-      if (submitReviewOpen) {
+      if (submitReviewOpenRef.current) {
         viewChordRef.current = null;
         if (event.key === "Escape") {
           event.preventDefault();
-          closeSubmitReviewModal();
+          closeSubmitReviewModalRef.current();
           return true;
         }
         if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
@@ -263,7 +285,7 @@ export function useOverlayKeyboard({
         case "Escape":
           event.preventDefault();
           viewChordRef.current = null;
-          requestExit();
+          requestExitRef.current();
           return;
         case "ArrowRight":
           event.preventDefault();
@@ -325,7 +347,7 @@ export function useOverlayKeyboard({
       if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
         viewChordRef.current = null;
-        void requestOpenSubmitReview();
+        void requestOpenSubmitReviewRef.current();
         return;
       }
 
@@ -345,15 +367,10 @@ export function useOverlayKeyboard({
     isOpen,
     selectableForUnit,
     currentUnitId,
-    submitReviewOpen,
-    connectGitHubOpen,
-    submittingReview,
-    submitSuccess,
-    exitAfterSubmit,
-    requestOpenSubmitReview,
-    closeSubmitReviewModal,
+    // Modal open flags / callbacks are read from refs (updated each render) so
+    // the listener is current as soon as state commits — not only after effect.
+    // confirmationOpen forces a rebind when the confirm dialog mounts (Tab trap).
     confirmationOpen,
-    requestExit,
     overlayRef,
     submitModalDialogRef,
     codeColRef,
@@ -361,6 +378,5 @@ export function useOverlayKeyboard({
     submitReviewActionRef,
     submitReviewKeyRef,
     connectGitHubActionRef,
-    setConnectGitHubOpen,
   ]);
 }

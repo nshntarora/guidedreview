@@ -8,12 +8,7 @@ type Faq = {
 
 function FaqLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <a
-      href={href}
-      className="text-opt-text underline decoration-opt-border underline-offset-2 transition-colors hover:decoration-opt-accent"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
+    <a href={href} target="_blank" rel="noopener noreferrer">
       {children}
     </a>
   );
@@ -87,8 +82,8 @@ export function Faqs() {
         <ul className="mt-14 m-0 grid list-none grid-cols-1 gap-4 p-0 sm:mt-20">
           {faqs.map((faq) => (
             <li key={faq.question}>
-              <details className="group rounded-3xl border border-opt-border bg-opt-subtle/60 p-6 transition-all duration-300 hover:border-opt-accent/60 hover:bg-opt-subtle sm:p-8 [&_summary::-webkit-details-marker]:hidden">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold tracking-tight sm:text-xl">
+              <details className="group rounded-3xl border border-opt-border bg-opt-subtle/60 transition-all duration-300 hover:border-opt-accent/60 hover:bg-opt-subtle [&_summary::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-6 text-lg font-semibold tracking-tight sm:p-8 sm:text-xl">
                   {faq.question}
                   <svg
                     aria-hidden="true"
@@ -103,7 +98,7 @@ export function Faqs() {
                     <path d="m6 9 6 6 6-6" />
                   </svg>
                 </summary>
-                <div className="mt-4 space-y-3 text-base leading-relaxed text-opt-muted sm:text-lg">
+                <div className="space-y-3 px-6 pb-6 text-base leading-relaxed text-opt-muted sm:px-8 sm:pb-8 sm:text-lg">
                   {faq.answer.map((paragraph, index) => (
                     <p key={index} className="m-0">
                       {paragraph}
