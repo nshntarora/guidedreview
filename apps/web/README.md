@@ -26,6 +26,21 @@ npm run start:web        # production preview
 
 Extension HMR uses port **5173**; this app uses **3000**.
 
+## E2E tests
+
+Playwright specs under `e2e/` exercise the **static export** (`out/`), not `next dev`.
+They check route smoke coverage, internal link/asset integrity (no external HTTP checks),
+Open Graph image bytes, SEO meta, and docs registry sync.
+
+```bash
+# from monorepo root
+npm run test:e2e:web                 # build + serve out/ + run specs
+npm run test:e2e:web:ui              # Playwright UI mode
+npm run test:e2e:install -w @guided-review/web   # install Chromium (CI/local once)
+```
+
+Specs use port **4173** for the static server so they do not clash with `dev:web`.
+
 ## Shared UI
 
 Uses `@guided-review/ui` via `transpilePackages` and Tailwind `@source` of `packages/ui` in `app/globals.css`.

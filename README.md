@@ -24,7 +24,8 @@ npm run build               # extension + web
 npm run build:extension     # → apps/extension/dist
 npm run build:web           # next build
 npm test                    # unit tests (extension + ui)
-npm run test:e2e            # Playwright e2e (builds extension first)
+npm run test:e2e            # Playwright e2e for the extension (builds first)
+npm run test:e2e:web        # Playwright e2e for the marketing site (builds first)
 npm run typecheck           # all workspaces
 npm run lint                # ESLint
 npm run format              # Prettier write

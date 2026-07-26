@@ -36,10 +36,12 @@ Root scripts proxy into workspaces. `npm run build` builds **extension then web*
 - `npm run typecheck` — all workspaces with a typecheck script.
 - `npm test` — extension unit tests + `@guided-review/ui` unit tests.
 - `npm run test:e2e` — Playwright e2e against the built extension (builds first).
+- `npm run test:e2e:web` — Playwright e2e against the marketing site static export (builds first).
 - `npm run lint` / `format` / `format:check` — root ESLint + Prettier.
 
 Unit tests live next to source as `apps/extension/src/**/*.test.{ts,tsx}` and
-`packages/ui/src/**/*.test.{ts,tsx}`; e2e specs live under `apps/extension/e2e/`.
+`packages/ui/src/**/*.test.{ts,tsx}`; extension e2e specs live under `apps/extension/e2e/`;
+website e2e specs live under `apps/web/e2e/` (serves `apps/web/out`).
 
 **Always run `npm run build:extension` after extension code changes**, even if `npm run dev` is
 running. **`apps/extension/dist/`** is what's loaded as the unpacked extension, so a stale build
