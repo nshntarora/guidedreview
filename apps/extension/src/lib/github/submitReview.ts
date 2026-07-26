@@ -6,10 +6,10 @@
  */
 
 import type { ReviewCommentInput, ReviewEvent, SubmitReviewResponse } from "../types";
+import { EMPTY_REVIEW_BODY_MESSAGE } from "../types";
+import type { PRIdentity } from "./diffFetch";
 
 type SubmitReviewFailure = Extract<SubmitReviewResponse, { ok: false }>;
-
-type PRIdentity = { owner: string; repo: string; number: number };
 
 const API_VERSION = "2022-11-28";
 const ACCEPT = "application/vnd.github+json";
@@ -39,10 +39,7 @@ export async function submitPullRequestReview(
     return {
       ok: false,
       code: "validation",
-      error:
-        event === "COMMENT"
-          ? "Add a review comment before submitting."
-          : "Add a summary explaining the requested changes before submitting.",
+      error: EMPTY_REVIEW_BODY_MESSAGE[event],
     };
   }
 

@@ -56,8 +56,35 @@ export interface PRContext {
 
 // ---- Review plan (LLM structured output) ------------------------------------
 
-export type FileRole =
-  "schema_or_model" | "core_logic" | "consumer_or_call_site" | "test" | "config_or_generated";
+/**
+ * The roles a changed file can play in a review unit, in review order.
+ * Single source of truth: the `FileRole` union, the runtime validation set in
+ * `review/reviewPlan.ts`, and the JSON Schema enum in `review/reviewSchema.ts`
+ * are all derived from this array.
+ */
+export const FILE_ROLES = [
+  "schema_or_model",
+  "core_logic",
+  "consumer_or_call_site",
+  "test",
+  "config_or_generated",
+] as const;
+
+export type FileRole = (typeof FILE_ROLES)[number];
+
+/** Role assigned when the model omits one or returns something unrecognized. */
+export const DEFAULT_FILE_ROLE: FileRole = "core_logic";
+
+/**
+ * Shown when a review that requires a summary is submitted without one. The
+ * overlay checks this before calling the background worker so the user gets
+ * the error without a round-trip; `submitReview.ts` enforces it again because
+ * it is the actual boundary to GitHub.
+ */
+export const EMPTY_REVIEW_BODY_MESSAGE: Record<"COMMENT" | "REQUEST_CHANGES", string> = {
+  COMMENT: "Add a review comment before submitting.",
+  REQUEST_CHANGES: "Add a summary explaining the requested changes before submitting.",
+};
 
 export interface ReviewUnitFileRef {
   fileId: string;
@@ -80,11 +107,10 @@ export interface ReviewPlan {
 }
 
 // ---- Provider / settings -----------------------------------------------------
-// ProviderId and DEFAULT_MODELS live in the catalog so the options UI and
-// background clients share one registry of providers/models.
+// ProviderId lives in the catalog so the options UI and background clients
+// share one registry of providers/models.
 
 export type { ProviderId } from "./providers/catalog";
-export { DEFAULT_MODELS } from "./providers/catalog";
 import type { ProviderId } from "./providers/catalog";
 
 export interface ProviderSettings {

@@ -83,15 +83,6 @@ export const MODELS: readonly ModelDefinition[] = [
   { id: "grok-3-mini", displayName: "Grok 3 Mini", provider: "grok" },
 ] as const;
 
-/** Default model id per provider (derived from PROVIDERS). */
-export const DEFAULT_MODELS: Record<ProviderId, string> = Object.fromEntries(
-  PROVIDERS.map((p) => [p.id, p.defaultModelId]),
-) as Record<ProviderId, string>;
-
-export function isKnownProvider(id: string): id is ProviderId {
-  return PROVIDERS.some((p) => p.id === id);
-}
-
 export function getProvider(id: ProviderId): ProviderDefinition {
   const found = PROVIDERS.find((p) => p.id === id);
   if (!found) {
@@ -109,22 +100,6 @@ export function defaultModelFor(id: ProviderId): string {
   return getProvider(id).defaultModelId;
 }
 
-export function getModel(id: string): ModelDefinition | undefined {
-  return MODELS.find((m) => m.id === id);
-}
-
-/**
- * Resolve a stored model id for a provider: keep it if it still exists in the
- * catalog for that provider, otherwise fall back to the provider default.
- */
-export function resolveModelForProvider(provider: ProviderId, modelId: string | undefined): string {
-  if (modelId) {
-    const model = getModel(modelId);
-    if (model && model.provider === provider) return model.id;
-  }
-  return defaultModelFor(provider);
-}
-
 /**
  * Normalize partially stored settings against the catalog (unknown provider →
  * anthropic; unknown/stale model → provider default).
@@ -134,11 +109,12 @@ export function normalizeProviderSettings(stored: {
   model?: string;
   apiKey?: string;
 }): { provider: ProviderId; model: string; apiKey: string } {
-  const raw = stored.provider ?? "";
-  const provider: ProviderId = isKnownProvider(raw) ? raw : "anthropic";
+  const provider = PROVIDERS.find((p) => p.id === stored.provider)?.id ?? "anthropic";
+  // Keep the stored model only if it still exists for this provider.
+  const model = MODELS.find((m) => m.id === stored.model && m.provider === provider);
   return {
     provider,
-    model: resolveModelForProvider(provider, stored.model),
+    model: model?.id ?? defaultModelFor(provider),
     apiKey: stored.apiKey ?? "",
   };
 }

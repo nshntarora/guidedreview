@@ -4,8 +4,6 @@ import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { Button, Spinner } from "@guided-review/ui";
 import { missingMetadataHint, PR_DESCRIPTION_HINT } from "../missingMetadata";
 
-export { missingMetadataHint, PR_DESCRIPTION_HINT } from "../missingMetadata";
-
 interface ContextPanelProps {
   /** When null, the synthetic PR-description unit is active. */
   unit: ReviewUnit | null;

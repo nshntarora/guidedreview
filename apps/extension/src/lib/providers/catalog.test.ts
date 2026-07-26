@@ -1,15 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
-  DEFAULT_MODELS,
   defaultModelFor,
-  getModel,
   getProvider,
-  isKnownProvider,
   modelsForProvider,
   MODELS,
   normalizeProviderSettings,
   PROVIDERS,
-  resolveModelForProvider,
 } from "./catalog";
 
 describe("provider catalog", () => {
@@ -19,10 +15,9 @@ describe("provider catalog", () => {
 
   it("exposes a default model for every provider that exists in MODELS", () => {
     for (const provider of PROVIDERS) {
-      const model = getModel(provider.defaultModelId);
+      const model = MODELS.find((m) => m.id === provider.defaultModelId);
       expect(model, `default for ${provider.id}`).toBeDefined();
       expect(model!.provider).toBe(provider.id);
-      expect(DEFAULT_MODELS[provider.id]).toBe(provider.defaultModelId);
       expect(defaultModelFor(provider.id)).toBe(provider.defaultModelId);
     }
   });
@@ -34,44 +29,52 @@ describe("provider catalog", () => {
     expect(openai.some((m) => m.id === "gpt-4.1")).toBe(true);
   });
 
-  it("narrows known provider ids", () => {
-    expect(isKnownProvider("anthropic")).toBe(true);
-    expect(isKnownProvider("gemini")).toBe(false);
-  });
-
-  it("looks up providers and models by id", () => {
+  it("looks up providers by id", () => {
     expect(getProvider("grok").displayName).toContain("Grok");
-    expect(getModel("claude-opus-4-8")?.displayName).toBe("Claude Opus 4.8");
-    expect(getModel("does-not-exist")).toBeUndefined();
   });
 
-  it("resolves stale model ids to the provider default", () => {
-    expect(resolveModelForProvider("openai", "gpt-4.1")).toBe("gpt-4.1");
-    expect(resolveModelForProvider("openai", "retired-model")).toBe(DEFAULT_MODELS.openai);
-    expect(resolveModelForProvider("anthropic", "gpt-4.1")).toBe(DEFAULT_MODELS.anthropic);
-    expect(resolveModelForProvider("grok", undefined)).toBe(DEFAULT_MODELS.grok);
+  it("keeps a stored model that still exists for its provider", () => {
+    expect(normalizeProviderSettings({ provider: "openai", model: "gpt-4.1" }).model).toBe(
+      "gpt-4.1",
+    );
+  });
+
+  it("resolves stale, cross-provider and missing model ids to the provider default", () => {
+    expect(normalizeProviderSettings({ provider: "openai", model: "retired-model" }).model).toBe(
+      defaultModelFor("openai"),
+    );
+    // A real model id, but belonging to a different provider.
+    expect(normalizeProviderSettings({ provider: "anthropic", model: "gpt-4.1" }).model).toBe(
+      defaultModelFor("anthropic"),
+    );
+    expect(normalizeProviderSettings({ provider: "grok" }).model).toBe(defaultModelFor("grok"));
   });
 
   it("normalizes partial stored settings", () => {
     expect(normalizeProviderSettings({})).toEqual({
       provider: "anthropic",
-      model: DEFAULT_MODELS.anthropic,
+      model: defaultModelFor("anthropic"),
       apiKey: "",
     });
     expect(
       normalizeProviderSettings({ provider: "openai", model: "gone", apiKey: "sk-x" }),
     ).toEqual({
       provider: "openai",
-      model: DEFAULT_MODELS.openai,
+      model: defaultModelFor("openai"),
       apiKey: "sk-x",
     });
-    expect(normalizeProviderSettings({ provider: "nope", model: "x" }).provider).toBe("anthropic");
   });
 
-  it("gives every model a non-empty display name", () => {
+  it("falls back to anthropic for an unrecognized provider id", () => {
+    expect(normalizeProviderSettings({ provider: "nope", model: "x" }).provider).toBe("anthropic");
+    expect(normalizeProviderSettings({ provider: "gemini" }).provider).toBe("anthropic");
+  });
+
+  it("gives every model a non-empty display name and a known provider", () => {
+    const knownProviderIds = PROVIDERS.map((p) => p.id);
     for (const model of MODELS) {
       expect(model.displayName.length).toBeGreaterThan(0);
-      expect(isKnownProvider(model.provider)).toBe(true);
+      expect(knownProviderIds).toContain(model.provider);
     }
   });
 });

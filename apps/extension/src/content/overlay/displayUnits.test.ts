@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  PR_DESCRIPTION_UNIT_ID,
-  PR_DESCRIPTION_UNIT_TITLE,
-  buildDisplayUnits,
-  displayUnitCount,
-} from "./displayUnits";
+import { buildDisplayUnits, displayUnitCount } from "./displayUnits";
 import type { ReviewPlan } from "../../lib/types";
 
 const plan: ReviewPlan = {
@@ -17,7 +12,7 @@ const plan: ReviewPlan = {
 describe("displayUnits", () => {
   it("always includes the PR description unit first", () => {
     expect(buildDisplayUnits(null)).toEqual([
-      { kind: "pr_description", id: PR_DESCRIPTION_UNIT_ID, title: PR_DESCRIPTION_UNIT_TITLE },
+      { kind: "pr_description", id: "__pr_description", title: "PR Description" },
     ]);
   });
 

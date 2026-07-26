@@ -49,8 +49,8 @@ function init(): void {
   tryInjectButton();
   void hydrateAutoOpenPreference();
 
-  // Toolbar icon click is handled in the background worker; when the active
-  // tab is a PR page it forwards START_GUIDED_REVIEW here.
+  // The toolbar icon opens the action popup (`src/popup/`); when the active tab
+  // is a PR page it sends START_GUIDED_REVIEW here instead of rendering.
   chrome.runtime.onMessage.addListener((message: ContentRequest) => {
     if (message?.type === "START_GUIDED_REVIEW") {
       void onStartReview();
@@ -269,10 +269,6 @@ async function onStartReview(): Promise<void> {
   const streamGeneration = useReviewStore.getState().streamGeneration;
 
   try {
-    // Checked before the restore so a resumed session still knows whether the
-    // AI features are available.
-    const hasProvider = Boolean((await getProviderSettings()).apiKey);
-
     const restored = await restoreSession(sessionKey);
     if (restored) return;
 
@@ -293,7 +289,9 @@ async function onStartReview(): Promise<void> {
         });
     }
 
-    const diffResponse = await requestPRDiff(pr);
+    // Neither depends on the other, and the provider check only matters once
+    // the diff has landed — so pay for one round-trip, not two.
+    const [diffResponse, settings] = await Promise.all([requestPRDiff(pr), getProviderSettings()]);
     if (!diffResponse.ok) {
       useReviewStore.getState().setError(diffResponse.error, streamGeneration);
       return;
@@ -306,7 +304,7 @@ async function onStartReview(): Promise<void> {
 
     // Without a provider there's no plan to stream: fall back to one unit per
     // changed file so the diff, comments and submit flow all still work.
-    if (!hasProvider) {
+    if (!settings.apiKey) {
       useReviewStore.getState().setNeedsProvider();
       return;
     }

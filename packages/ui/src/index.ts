@@ -1,4 +1,5 @@
 export { cn } from "./cn";
+export { isMacPlatform } from "./platform";
 export type { Surface } from "./surface";
 
 export { Spinner } from "./components/Spinner";
@@ -10,10 +11,10 @@ export type { BrandMarkProps } from "./components/BrandMark";
 export { Button, buttonClassName } from "./components/Button";
 export type { ButtonProps, ButtonVariant, ButtonSize } from "./components/Button";
 
-export { Input, inputClassName } from "./components/Input";
+export { Input } from "./components/Input";
 export type { InputProps } from "./components/Input";
 
-export { Textarea, textareaClassName } from "./components/Textarea";
+export { Textarea } from "./components/Textarea";
 export type { TextareaProps } from "./components/Textarea";
 
 export { Label } from "./components/Label";

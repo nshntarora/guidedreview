@@ -14,65 +14,6 @@ function base(props: SVGProps<SVGSVGElement>) {
   };
 }
 
-export function LayersIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg {...base(props)}>
-      <path d="M12 2 2 7l10 5 10-5-10-5Z" />
-      <path d="m2 17 10 5 10-5" />
-      <path d="m2 12 10 5 10-5" />
-    </svg>
-  );
-}
-
-export function DiffIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg {...base(props)}>
-      <path d="M9 3v12" />
-      <path d="M9 15h6a3 3 0 0 0 3-3V9" />
-      <path d="m6 6 3-3 3 3" />
-      <path d="m15 12 3-3 3 3" />
-    </svg>
-  );
-}
-
-export function PlugIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg {...base(props)}>
-      <path d="M12 22v-5" />
-      <path d="M9 8V2" />
-      <path d="M15 8V2" />
-      <path d="M18 8v3a6 6 0 0 1-12 0V8Z" />
-    </svg>
-  );
-}
-
-export function CheckShieldIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg {...base(props)}>
-      <path d="M12 2 4 5v6c0 5 3.4 8.5 8 11 4.6-2.5 8-6 8-11V5l-8-3Z" />
-      <path d="m9 12 2 2 4-4" />
-    </svg>
-  );
-}
-
-export function KeyboardIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg {...base(props)}>
-      <rect x="2" y="6" width="20" height="12" rx="2" />
-      <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10" />
-    </svg>
-  );
-}
-
-export function SparkleIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg {...base({ ...props, fill: "currentColor", stroke: "none" })}>
-      <path d="M12 2c.6 3.6 2.4 5.4 6 6-3.6.6-5.4 2.4-6 6-.6-3.6-2.4-5.4-6-6 3.6-.6 5.4-2.4 6-6Z" />
-      <path d="M19 15c.3 1.6 1.1 2.4 2.7 2.7-1.6.3-2.4 1.1-2.7 2.7-.3-1.6-1.1-2.4-2.7-2.7 1.6-.3 2.4-1.1 2.7-2.7Z" />
-    </svg>
-  );
-}
-
 export function GitHubIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg {...base({ ...props, fill: "currentColor", stroke: "none" })}>

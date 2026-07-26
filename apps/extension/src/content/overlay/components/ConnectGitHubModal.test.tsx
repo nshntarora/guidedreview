@@ -11,7 +11,10 @@ vi.mock("../../../lib/messaging", () => ({
   pollGitHubDeviceAuth: vi.fn(),
 }));
 
-vi.mock("../../../lib/github/oauthConfig", () => ({
+// Only the configured check is stubbed — the copy constants come from the real
+// module so a wording/name change is caught here rather than mocked away.
+vi.mock("../../../lib/github/oauthConfig", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../../lib/github/oauthConfig")>()),
   isGitHubOAuthConfigured: vi.fn(() => true),
 }));
 

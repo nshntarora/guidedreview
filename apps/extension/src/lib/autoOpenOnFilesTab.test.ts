@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  DEFAULT_AUTO_OPEN_ON_FILES_TAB,
   getAutoOpenOnFilesTab,
   onAutoOpenOnFilesTabChanged,
   setAutoOpenOnFilesTab,
@@ -11,9 +10,8 @@ describe("autoOpenOnFilesTab", () => {
     await chrome.storage.local.clear();
   });
 
-  it("returns the default when nothing is stored", async () => {
-    await expect(getAutoOpenOnFilesTab()).resolves.toBe(DEFAULT_AUTO_OPEN_ON_FILES_TAB);
-    expect(DEFAULT_AUTO_OPEN_ON_FILES_TAB).toBe(false);
+  it("defaults to off when nothing is stored", async () => {
+    await expect(getAutoOpenOnFilesTab()).resolves.toBe(false);
   });
 
   it("round-trips a saved value", async () => {
@@ -25,7 +23,7 @@ describe("autoOpenOnFilesTab", () => {
 
   it("ignores invalid stored values", async () => {
     await chrome.storage.local.set({ "guidedReview.autoOpenOnFilesTab": "yes" });
-    await expect(getAutoOpenOnFilesTab()).resolves.toBe(DEFAULT_AUTO_OPEN_ON_FILES_TAB);
+    await expect(getAutoOpenOnFilesTab()).resolves.toBe(false);
   });
 
   it("onAutoOpenOnFilesTabChanged fires on save", async () => {

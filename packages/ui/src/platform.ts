@@ -1,8 +1,8 @@
 /**
  * OS detection for keyboard-shortcut labels (⌘ vs Ctrl).
- * Safe to call from client components only (reads navigator).
+ * Reads `navigator` only at call time, so it is safe in the extension's
+ * content script and in client components on the marketing site.
  */
-
 export function isMacPlatform(): boolean {
   if (typeof navigator === "undefined") return false;
 

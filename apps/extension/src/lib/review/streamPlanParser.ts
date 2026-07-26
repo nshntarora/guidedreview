@@ -49,11 +49,6 @@ export class StreamPlanParser {
     }
   }
 
-  /** Full buffered text (for debugging / final validation). */
-  getText(): string {
-    return this.buffer;
-  }
-
   private extractCompletedUnits(): ReviewUnit[] {
     if (this.unitsArrayStart < 0) {
       const start = findUnitsArrayStart(this.buffer);

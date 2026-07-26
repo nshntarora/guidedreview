@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 
 import { languageForPath } from "../../../lib/highlight";
-import { buildSelectableLines } from "../buildSelectableLines";
-import { displayLineNumber, linesInSelection } from "../commentTypes";
+import { displayLineNumber, linesInSelection, type SelectableLine } from "../commentTypes";
 import { hydrateDiffViewMode, useReviewStore } from "../store";
 import type { ResolvedUnitFile } from "../selectors";
 import { AddCommentButton, CommentModeChip, DiffViewToggle } from "./diff/DiffToolbar";
@@ -17,9 +16,15 @@ interface DiffPaneProps {
   unitTitle: string;
   /** Review unit id for associating saved drafts. */
   unitId?: string;
+  /**
+   * Flat selectable-line list for `files` in the active view mode. Owned by
+   * Overlay (which also feeds it to the keyboard handler) so entering comment
+   * mode from the button and from `c` always operate on the same list.
+   */
+  selectableForUnit: SelectableLine[];
 }
 
-export function DiffPane({ files, unitTitle, unitId }: DiffPaneProps) {
+export function DiffPane({ files, unitTitle, unitId, selectableForUnit }: DiffPaneProps) {
   const diffViewMode = useReviewStore((s) => s.diffViewMode);
   const setDiffViewMode = useReviewStore((s) => s.setDiffViewMode);
   const uiMode = useReviewStore((s) => s.uiMode);
@@ -33,11 +38,6 @@ export function DiffPane({ files, unitTitle, unitId }: DiffPaneProps) {
   useEffect(() => {
     void hydrateDiffViewMode();
   }, []);
-
-  const unitSelectableLines = useMemo(
-    () => buildSelectableLines(files, diffViewMode),
-    [files, diffViewMode],
-  );
 
   const filePaths = useMemo(() => new Set(files.map((f) => f.file.path)), [files]);
 
@@ -58,12 +58,12 @@ export function DiffPane({ files, unitTitle, unitId }: DiffPaneProps) {
   }, [uiMode, focusId, lineSelection?.focusIndex]);
 
   const commentModeActive = uiMode === "comment";
-  const commentModeDisabled = unitSelectableLines.length === 0;
+  const commentModeDisabled = selectableForUnit.length === 0;
 
   // Announce focused/selected lines so comment mode is not color-only (1.4.1 / 4.1.3).
   const selectionAnnouncement = useMemo(() => {
     if (uiMode !== "comment" || !lineSelection) return "";
-    const lines = selectableLines.length > 0 ? selectableLines : unitSelectableLines;
+    const lines = selectableLines.length > 0 ? selectableLines : selectableForUnit;
     const focused = lines[lineSelection.focusIndex];
     if (!focused) return "Comment mode. No line focused.";
     const selected = linesInSelection(lines, lineSelection);
@@ -76,7 +76,7 @@ export function DiffPane({ files, unitTitle, unitId }: DiffPaneProps) {
       return `Comment mode. ${focused.filePath}, lines ${start ?? "?"} to ${end ?? "?"} selected.`;
     }
     return `Comment mode. ${focused.filePath}, line ${focusNum ?? "?"}.`;
-  }, [uiMode, lineSelection, selectableLines, unitSelectableLines]);
+  }, [uiMode, lineSelection, selectableLines, selectableForUnit]);
 
   return (
     <div ref={rootRef}>
@@ -103,7 +103,7 @@ export function DiffPane({ files, unitTitle, unitId }: DiffPaneProps) {
           ) : (
             <AddCommentButton
               disabled={commentModeDisabled}
-              onEnter={() => enterCommentMode(unitSelectableLines)}
+              onEnter={() => enterCommentMode(selectableForUnit)}
             />
           )}
           <DiffViewToggle mode={diffViewMode} onChange={setDiffViewMode} />

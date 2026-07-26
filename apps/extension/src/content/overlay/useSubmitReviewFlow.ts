@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { getGitHubAuthStatus, submitPullRequestReview } from "../../lib/messaging";
 import type { PRContext } from "../../lib/types";
+import { EMPTY_REVIEW_BODY_MESSAGE } from "../../lib/types";
 import type { DraftComment, ReviewEvent, ReviewSubmission } from "./commentTypes";
 import { mapDraftsToReviewComments } from "./mapDraftComments";
 import { navigateToPrConversation } from "./prConversationUrl";
@@ -118,11 +119,7 @@ export function useSubmitReviewFlow({
         (submission.event === "COMMENT" || submission.event === "REQUEST_CHANGES") &&
         trimmedBody.length === 0
       ) {
-        setSubmitReviewError(
-          submission.event === "COMMENT"
-            ? "Add a review comment before submitting."
-            : "Add a summary explaining the requested changes before submitting.",
-        );
+        setSubmitReviewError(EMPTY_REVIEW_BODY_MESSAGE[submission.event]);
         return;
       }
 
@@ -138,12 +135,14 @@ export function useSubmitReviewFlow({
       setSubmittingReview(true);
       setSubmitReviewError(null);
 
+      const comments = mapDraftsToReviewComments(draftComments);
+
       try {
         const result = await submitPullRequestReview(
           { owner: pr.owner, repo: pr.repo, number: pr.number },
           trimmedBody,
           submission.event,
-          mapDraftsToReviewComments(draftComments),
+          comments,
         );
 
         if (generation !== submitGenerationRef.current) return;
@@ -153,11 +152,10 @@ export function useSubmitReviewFlow({
           return;
         }
 
-        const commentCount = mapDraftsToReviewComments(draftComments).length;
         clearDraftComments();
         setSubmitReviewOpen(false);
         setSubmitReviewError(null);
-        setSubmitSuccess({ event: submission.event, commentCount });
+        setSubmitSuccess({ event: submission.event, commentCount: comments.length });
       } catch (error: unknown) {
         if (generation !== submitGenerationRef.current) return;
         const message = error instanceof Error ? error.message : "Could not submit the review.";

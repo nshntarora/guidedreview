@@ -153,7 +153,9 @@ export function highlightToLines(code: string, language: string): string[] {
   }
 
   const rawLines = highlighted.split("\n");
-  const openTagRe = /^<span class="([^"]*)">/;
+  // Sticky so it matches at `idx` without slicing the line on every character —
+  // this runs over every rendered diff line, and slicing made it quadratic.
+  const openTagRe = /<span class="([^"]*)">/y;
   const lines: string[] = [];
   let openStack: string[] = [];
 
@@ -164,13 +166,14 @@ export function highlightToLines(code: string, language: string): string[] {
     const stack = [...openStack];
     let idx = 0;
     while (idx < rawLine.length) {
-      const openMatch = openTagRe.exec(rawLine.slice(idx));
+      openTagRe.lastIndex = idx;
+      const openMatch = openTagRe.exec(rawLine);
       if (openMatch) {
         stack.push(openMatch[1]);
-        idx += openMatch[0].length;
+        idx = openTagRe.lastIndex;
         continue;
       }
-      if (rawLine.slice(idx).startsWith("</span>")) {
+      if (rawLine.startsWith("</span>", idx)) {
         stack.pop();
         idx += "</span>".length;
         continue;

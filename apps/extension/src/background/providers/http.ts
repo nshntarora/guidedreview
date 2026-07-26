@@ -2,7 +2,9 @@
  * Shared fetch/error helpers for provider HTTP clients.
  */
 
-export interface ProviderHttpErrorDetail {
+import { ProviderError } from "./types";
+
+interface ProviderHttpErrorDetail {
   /** Exact provider message when present; otherwise statusText or a fallback. */
   message: string;
   /** Provider error code/type when present (e.g. invalid_api_key, authentication_error). */
@@ -45,12 +47,47 @@ export async function parseProviderHttpError(response: Response): Promise<Provid
   }
 }
 
-/** @deprecated Prefer parseProviderHttpError — kept for any residual callers. */
-export async function safeErrorDetail(response: Response): Promise<string> {
-  const detail = await parseProviderHttpError(response);
-  return detail.message;
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError";
 }
 
-export function isAbortError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === "AbortError";
+/**
+ * POST a JSON body to a provider endpoint and return the successful response.
+ *
+ * Throws `ProviderError` for both transport failures and non-2xx responses — a
+ * bare fetch rejection would otherwise surface as "Failed to fetch" with no
+ * hint of which provider failed. Abort errors pass through untouched so
+ * cancellation stays distinguishable from a real failure.
+ */
+export async function postProviderJson(
+  url: string,
+  headers: Record<string, string>,
+  body: unknown,
+  providerName: string,
+  signal?: AbortSignal,
+): Promise<Response> {
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json", ...headers },
+      body: JSON.stringify(body),
+      signal,
+    });
+  } catch (error) {
+    if (isAbortError(error)) throw error;
+    throw new ProviderError(
+      error instanceof Error ? error.message : `Failed to reach the ${providerName} API.`,
+    );
+  }
+
+  if (!response.ok) {
+    const detail = await parseProviderHttpError(response);
+    throw new ProviderError(detail.message, {
+      statusCode: response.status,
+      code: detail.code,
+    });
+  }
+
+  return response;
 }
