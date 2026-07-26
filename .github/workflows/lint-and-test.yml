@@ -22,7 +22,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       extension: ${{ steps.filter.outputs.extension }}
-      web: ${{ steps.filter.outputs.web }}
       ui: ${{ steps.filter.outputs.ui }}
       root: ${{ steps.filter.outputs.root }}
     steps:
@@ -33,12 +32,6 @@ jobs:
           filters: |
             extension:
               - 'apps/extension/**'
-              - 'packages/ui/**'
-              - 'package.json'
-              - 'package-lock.json'
-              - 'tsconfig.base.json'
-            web:
-              - 'apps/web/**'
               - 'packages/ui/**'
               - 'package.json'
               - 'package-lock.json'
@@ -127,22 +120,3 @@ jobs:
             apps/extension/playwright-report/
             apps/extension/test-results/
           retention-days: 7
-
-  build-web:
-    name: Build marketing site
-    runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.web == 'true' || needs.changes.outputs.ui == 'true' || needs.changes.outputs.root == 'true' || github.event_name == 'push'
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build web
-        run: npm run build -w @guided-review/web
