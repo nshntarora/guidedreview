@@ -44,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-3.5">
             <Link
               href="/"
-              className="rounded-sm no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gr-accent"
+              className="rounded-sm border-b-0 no-underline hover:border-b-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gr-accent"
               aria-label="Guided Review home"
             >
               <img
@@ -55,12 +55,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 height={49}
               />
             </Link>
-            <nav className="flex items-center gap-5 text-base text-gr-muted" aria-label="Primary">
+            <nav className="flex items-center gap-5 text-base" aria-label="Primary">
               <Link
                 href="/#features"
-                className="hidden transition-colors hover:text-gr-text sm:inline"
+                className="hidden text-gr-text hover:text-gr-accent sm:inline"
               >
                 Features
+              </Link>
+              <Link href="/#faqs" className="hidden text-gr-text hover:text-gr-accent sm:inline">
+                FAQ
               </Link>
               <StarOnGitHubButton size="sm" surface="overlay" compact />
               <InstallButton size="sm" surface="overlay" compact />

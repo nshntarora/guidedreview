@@ -40,7 +40,19 @@ body::before {
 
 @layer base {
   a {
-    color: inherit;
+    color: var(--opt-accent, #caff57);
+    text-decoration: none;
+  }
+
+  /* Text links: brand color + bottom border on hover.
+     Button-styled anchors use `inline-flex` via buttonClassName and keep their own chrome. */
+  a:not(.inline-flex) {
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s ease;
+  }
+
+  a:not(.inline-flex):hover {
+    border-bottom-color: currentColor;
   }
 }
 
