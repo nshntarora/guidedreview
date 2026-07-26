@@ -96,11 +96,11 @@ export function Faqs() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd(faqs)) }}
       />
 
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-5xl">
         <h2 className="m-0 text-center text-3xl font-bold tracking-tight sm:text-4xl font-brand">
           FAQs
         </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-center font-serif text-lg italic text-opt-muted text-balance sm:text-xl">
+        <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-opt-muted text-balance sm:text-xl">
           The questions everyone asks before installing.
         </p>
 
@@ -124,7 +124,7 @@ export function Faqs() {
                       <path d="m6 9 6 6 6-6" />
                     </svg>
                   </summary>
-                  <div className="space-y-3 px-6 pb-6 font-serif text-base leading-relaxed text-opt-muted sm:px-8 sm:pb-8 sm:text-lg">
+                  <div className="space-y-3 px-6 pb-6 text-base leading-relaxed text-opt-muted sm:px-8 sm:pb-8 sm:text-lg">
                     {faq.answer.map((paragraph, index) => (
                       <p key={index} className="m-0">
                         {paragraph}

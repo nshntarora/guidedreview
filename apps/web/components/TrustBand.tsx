@@ -15,11 +15,11 @@ function formatStarCount(count: number): string {
 export function TrustBand({ starCount }: TrustBandProps) {
   return (
     <section className="relative px-6 py-20 sm:py-28">
-      <div className="mx-auto max-w-3xl text-center">
+      <div className="mx-auto max-w-5xl text-center">
         <h2 className="m-0 text-2xl font-bold tracking-tight sm:text-3xl font-brand">
           Your code never touches our infrastructure
         </h2>
-        <p className="mx-auto mt-4 max-w-2xl font-serif text-lg italic text-opt-muted text-balance sm:text-xl">
+        <p className="mx-auto mt-4 max-w-2xl text-lg text-opt-muted text-balance sm:text-xl">
           The extension talks directly to your AI provider and GitHub. We never see your diffs, your
           keys, or your code — because there&apos;s nothing on our end to see them with.
         </p>

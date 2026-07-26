@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { helpPages, type TocEntry } from "@/config/help-pages";
+import { helpPages } from "@/config/help-pages";
 import { helpNavigation } from "@/config/help-navigation";
 import { DocsPageWrapper } from "@/components/docs/DocsPageWrapper";
 
@@ -38,7 +38,6 @@ export default async function DocsSlugPage({ params }: Props) {
 
   const mod = await loader();
   const Content = mod.default;
-  const toc: TocEntry[] = mod.toc ?? [];
   const pageTitle = getPageTitle(slug);
 
   const techArticleSchema = {
@@ -70,7 +69,7 @@ export default async function DocsSlugPage({ params }: Props) {
   };
 
   return (
-    <DocsPageWrapper slug={slug} toc={toc}>
+    <DocsPageWrapper slug={slug}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(techArticleSchema) }}

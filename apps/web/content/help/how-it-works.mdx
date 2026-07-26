@@ -10,6 +10,8 @@ export const toc = [
 
 A short tour of the pipeline behind **Start Guided Review**.
 
+<TocCard toc={toc} />
+
 ## Diff → plan
 
 1. **Parse** — The unified diff is parsed into files, hunks, and lines. Every hunk gets a stable id (`filePath#index`) that the model must reference exactly.

@@ -71,11 +71,11 @@ export function FeatureGrid() {
 
   return (
     <section id="features" className="relative px-6 py-20 sm:py-28">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-5xl">
         <h2 className="m-0 text-center text-3xl font-bold tracking-tight sm:text-4xl font-brand">
           Features
         </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-center font-serif text-lg italic text-opt-muted text-balance sm:text-xl">
+        <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-opt-muted text-balance sm:text-xl">
           Built for humans who still have to read the code.
         </p>
 
@@ -112,9 +112,7 @@ function FeatureCard({ feature: f, wide = false }: { feature: Feature; wide?: bo
           ))}
         </div>
         {f.footnote ? (
-          <p className="mt-4 m-0 font-serif text-sm italic leading-relaxed text-opt-muted/80">
-            {f.footnote}
-          </p>
+          <p className="mt-4 m-0 text-sm italic leading-relaxed text-opt-muted/80">{f.footnote}</p>
         ) : null}
       </div>
 

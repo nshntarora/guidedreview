@@ -10,13 +10,8 @@ export function Hero() {
   return (
     <section className="relative overflow-hidden px-6 pb-20 pt-16 text-center sm:pb-28 sm:pt-24">
       <div className="mx-auto max-w-5xl">
-        <p className="gr-rise-in m-0 font-mono text-sm text-opt-muted" style={riseDelay(0)}>
-          <span className="text-opt-accent">$</span> git review pr/1284
-          <span className="gr-caret text-opt-text" aria-hidden="true" />
-        </p>
-
         <h1
-          className="gr-rise-in mx-auto mt-6 max-w-3xl text-4xl font-bold tracking-tight text-balance sm:text-6xl font-brand"
+          className="gr-rise-in mx-auto max-w-3xl text-4xl font-bold tracking-tight text-balance sm:text-6xl font-brand"
           style={riseDelay(0.1)}
         >
           A better way for humans to review{" "}
@@ -30,7 +25,7 @@ export function Hero() {
         </h1>
 
         <p
-          className="gr-rise-in mx-auto mt-6 max-w-2xl font-serif text-lg italic leading-relaxed text-opt-muted text-balance sm:text-xl"
+          className="gr-rise-in mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-opt-muted text-balance sm:text-xl"
           style={riseDelay(0.2)}
         >
           Guided Review is a browser extension that makes &ldquo;reading code&rdquo; wayyyy better

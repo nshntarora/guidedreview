@@ -3,10 +3,12 @@ import { Children, isValidElement, type HTMLAttributes, type ReactNode } from "r
 import type { TdHTMLAttributes, ThHTMLAttributes } from "react";
 import { Callout } from "@/components/docs/Callout";
 import { CopyButton } from "@/components/docs/CopyButton";
+import { TocCard } from "@/components/docs/TocCard";
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
     ...components,
+    TocCard,
 
     // Blockquotes become Note callouts by default
     blockquote: ({ children }: { children?: ReactNode }) => (

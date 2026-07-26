@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Content, { toc } from "@/content/help/index.mdx";
+import Content from "@/content/help/index.mdx";
 import { DocsPageWrapper } from "@/components/docs/DocsPageWrapper";
 
 export const metadata: Metadata = {
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function DocsPage() {
   return (
-    <DocsPageWrapper slug="" toc={toc}>
+    <DocsPageWrapper slug="">
       <Content />
     </DocsPageWrapper>
   );
