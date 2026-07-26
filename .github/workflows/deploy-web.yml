@@ -1,0 +1,77 @@
+# Deploy the marketing site (apps/web) to Cloudflare Pages.
+#
+# Required GitHub secrets (repo Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN   — Account API token with Cloudflare Pages:Edit
+#   CLOUDFLARE_ACCOUNT_ID  — Cloudflare account ID
+#
+# Create an empty Pages project named "guidedreview" (or set
+# vars.CLOUDFLARE_PAGES_PROJECT) in the Cloudflare dashboard first, or let
+# the first deploy create it via Direct Upload.
+#
+# Production: push to main when web-related paths change.
+# Preview:    pull requests that touch the same paths.
+
+name: Deploy web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/ui/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.base.json"
+      - ".github/workflows/deploy-web.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/ui/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.base.json"
+      - ".github/workflows/deploy-web.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web-${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  deployments: write
+  pull-requests: write
+
+jobs:
+  deploy:
+    name: Build & deploy
+    runs-on: ubuntu-latest
+    # Fork PRs do not receive repo secrets; skip rather than fail the build matrix.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    environment:
+      name: ${{ github.event_name == 'pull_request' && 'preview' || 'production' }}
+      url: ${{ steps.deploy.outputs.deployment-url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build marketing site
+        run: npm run build -w @guided-review/web
+
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # Static export output (next.config.ts → output: "export")
+          command: pages deploy apps/web/out --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT || 'guidedreview' }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
