@@ -345,7 +345,7 @@ async function handleGitHubDevicePoll(
   }
 }
 
-async function handleGitHubAuthGet(): Promise<GitHubAuthGetResponse> {
+export async function handleGitHubAuthGet(): Promise<GitHubAuthGetResponse> {
   const auth = await getGitHubAuth();
   if (!auth) return { ok: true, auth: null };
   // Strip the access token before it leaves the background worker — neither
