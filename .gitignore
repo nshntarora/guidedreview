@@ -1,6 +1,7 @@
 node_modules/
 dist/
 dist_chrome/
+*.zip
 .DS_Store
 *.local
 .vite/

@@ -7,7 +7,7 @@ export default defineManifest({
   // Chrome caps description at 132 characters (browser load + Web Store).
   // Keep in sync with the short description in store-listing.md.
   description:
-    "A better way for humans to review AI generated code — clustered changes, summaries, and a keyboard-first overlay on GitHub.",
+    "A better way for humans to review AI generated code — clustered changes, summaries, keyboard-first. Free and open source.",
   version: pkg.version,
   icons: {
     16: "public/icons/icon16.png",

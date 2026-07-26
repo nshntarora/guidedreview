@@ -8,7 +8,7 @@
     "predev": "node scripts/sync-ui-assets.mjs",
     "dev": "vite",
     "prebuild": "node scripts/sync-ui-assets.mjs",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/zip-extension.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
