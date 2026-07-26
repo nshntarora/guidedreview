@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { GitHubAuthState } from "../lib/types";
+import type { GitHubPublicAuthState } from "../lib/types";
 import { isGitHubOAuthConfigured } from "../lib/github/oauthConfig";
 import { openVerificationUri, useGitHubDeviceAuth } from "../lib/github/useGitHubDeviceAuth";
 import { clearGitHubAuthSession, getGitHubAuthStatus } from "../lib/messaging";
@@ -7,7 +7,9 @@ import { confirm, ConfirmationHost } from "../content/overlay/components/confirm
 import { Button, Spinner, cn } from "@guided-review/ui";
 
 type SessionState =
-  { kind: "loading" } | { kind: "disconnected" } | { kind: "connected"; auth: GitHubAuthState };
+  | { kind: "loading" }
+  | { kind: "disconnected" }
+  | { kind: "connected"; auth: GitHubPublicAuthState };
 
 /**
  * Options section: GitHub device OAuth connect / disconnect.

@@ -106,6 +106,15 @@ export interface GitHubAuthState {
   name?: string;
 }
 
+/**
+ * `GitHubAuthState` without the access token. `GITHUB_AUTH_GET` is answered
+ * from the background worker for both the options page and the content
+ * script — neither needs the raw token (submission goes through
+ * `SUBMIT_REVIEW`, which reads it from storage background-side), so it's
+ * never sent across that boundary.
+ */
+export type GitHubPublicAuthState = Omit<GitHubAuthState, "accessToken" | "tokenType">;
+
 // ---- Messaging protocol (content <-> background) -----------------------------
 
 /** First message on the `annotate-review` port from content → background. */
@@ -196,7 +205,7 @@ export interface GitHubAuthGetRequest {
 
 export interface GitHubAuthGetResponse {
   ok: true;
-  auth: GitHubAuthState | null;
+  auth: GitHubPublicAuthState | null;
 }
 
 export interface GitHubAuthClearRequest {

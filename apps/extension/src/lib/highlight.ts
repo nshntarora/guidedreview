@@ -131,6 +131,10 @@ export function languageForPath(path: string): string | undefined {
   return lang;
 }
 
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 /**
  * Highlight `code` as `language` and split the result into one HTML string
  * per source line, re-opening any `<span>` tags that were left open across a
@@ -142,7 +146,10 @@ export function highlightToLines(code: string, language: string): string[] {
   try {
     highlighted = hljs.highlight(code, { language, ignoreIllegals: true }).value;
   } catch {
-    return code.split("\n");
+    // Diff content is attacker-controlled (any PR author writes it), and the
+    // caller renders every returned line via dangerouslySetInnerHTML — escape
+    // this fallback so a highlight failure can't become an HTML injection.
+    return code.split("\n").map(escapeHtml);
   }
 
   const rawLines = highlighted.split("\n");
