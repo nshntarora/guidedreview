@@ -98,9 +98,21 @@ jobs:
           cache: npm
 
       - name: Install dependencies
+        env:
+          HUSKY: "0"
         run: npm ci
 
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: apps/web/.next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('package-lock.json', 'apps/web/package.json', 'apps/web/next.config.ts', 'packages/ui/package.json') }}
+          restore-keys: |
+            next-${{ runner.os }}-
+
       - name: Build marketing site
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
         run: npm run build -w @guided-review/web
 
       - name: Deploy to Cloudflare Pages
