@@ -41,6 +41,9 @@ import { ProviderError } from "./providers/types";
 
 const ANNOTATE_PORT_NAME = "annotate-review";
 
+/** Packaged welcome page path (stable across builds; matches Vite multi-page input). */
+export const WELCOME_PAGE_PATH = "src/welcome/index.html";
+
 // Toolbar icon opens the action popup (`src/popup/`), which starts a guided
 // review on PR pages or explains that the extension only works there.
 
@@ -50,6 +53,19 @@ const ANNOTATE_PORT_NAME = "annotate-review";
 chrome.storage.session
   .setAccessLevel({ accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS" })
   .catch((error) => console.error("Failed to set storage.session access level:", error));
+
+/**
+ * First-install only: open the welcome page. Never on update — no "What's New" tab.
+ * Load-unpacked also fires `install` (useful for local QA).
+ */
+export function handleInstalled(details: { reason: string }): void {
+  if (details.reason !== "install") return;
+  void chrome.tabs.create({
+    url: chrome.runtime.getURL(WELCOME_PAGE_PATH),
+  });
+}
+
+chrome.runtime.onInstalled.addListener(handleInstalled);
 
 chrome.runtime.onMessage.addListener((message: BackgroundRequest, _sender, sendResponse) => {
   if (message.type === "TEST_CONNECTION") {

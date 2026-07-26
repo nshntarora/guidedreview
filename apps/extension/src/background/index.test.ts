@@ -11,6 +11,11 @@ async function loadHandleGitHubAuthGet() {
   return handleGitHubAuthGet;
 }
 
+async function loadHandleInstalled() {
+  const { handleInstalled, WELCOME_PAGE_PATH } = await import("./index");
+  return { handleInstalled, WELCOME_PAGE_PATH };
+}
+
 type MessageListener = (
   message: unknown,
   sender: unknown,
@@ -36,6 +41,28 @@ describe("OPEN_OPTIONS", () => {
 
     expect(chrome.runtime.openOptionsPage).toHaveBeenCalledTimes(1);
     expect(response).toEqual({ ok: true });
+  });
+});
+
+describe("handleInstalled", () => {
+  it("opens the welcome page on first install", async () => {
+    const { handleInstalled, WELCOME_PAGE_PATH } = await loadHandleInstalled();
+
+    handleInstalled({ reason: "install" });
+
+    expect(chrome.tabs.create).toHaveBeenCalledTimes(1);
+    expect(chrome.tabs.create).toHaveBeenCalledWith({
+      url: WELCOME_PAGE_PATH,
+    });
+    expect(chrome.runtime.getURL).toHaveBeenCalledWith(WELCOME_PAGE_PATH);
+  });
+
+  it("does not open a tab on update", async () => {
+    const { handleInstalled } = await loadHandleInstalled();
+
+    handleInstalled({ reason: "update" });
+
+    expect(chrome.tabs.create).not.toHaveBeenCalled();
   });
 });
 

@@ -59,6 +59,7 @@ export function createChromeMock() {
   >();
 
   const onConnectListeners = new Set<(port: MockPort) => void>();
+  const onInstalledListeners = new Set<(details: { reason: string }) => void>();
 
   function createPort(name: string): MockPort {
     const onMessage = new Set<(message: unknown) => void>();
@@ -159,11 +160,21 @@ export function createChromeMock() {
         }),
         __listeners: onConnectListeners,
       },
+      onInstalled: {
+        addListener: vi.fn((listener: (details: { reason: string }) => void) => {
+          onInstalledListeners.add(listener);
+        }),
+        removeListener: vi.fn((listener: (details: { reason: string }) => void) => {
+          onInstalledListeners.delete(listener);
+        }),
+        __listeners: onInstalledListeners,
+      },
     },
     action: {
       onClicked: {
         addListener: vi.fn(),
       },
+      getUserSettings: vi.fn(async () => ({ isOnToolbar: false })),
     },
     tabs: {
       sendMessage: vi.fn(async (_tabId: number, _message: unknown) => undefined),

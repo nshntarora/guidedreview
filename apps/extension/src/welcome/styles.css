@@ -1,0 +1,14 @@
+/* Tailwind must scan shared UI components (workspace package lives outside this app tree). */
+@source "../../../../packages/ui/src/**/*.{ts,tsx}";
+
+/* Brand mono — same family as options / marketing site headings. */
+@import "@fontsource/victor-mono/latin-400.css";
+@import "@fontsource/victor-mono/latin-700.css";
+
+@import "@guided-review/ui/theme.css";
+
+@theme {
+  --font-victor-mono: "Victor Mono";
+  --font-brand:
+    var(--font-victor-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
