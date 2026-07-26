@@ -1,36 +1,56 @@
+import type { CSSProperties } from "react";
 import { InstallButton, StarOnGitHubButton } from "./CtaButtons";
 import { ProductVideo } from "./ProductVideo";
 
+function riseDelay(seconds: number): CSSProperties {
+  return { "--gr-delay": `${seconds}s` } as CSSProperties;
+}
+
 export function Hero() {
   return (
-    <section className="relative overflow-hidden px-6 py-20 text-center sm:py-28">
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-        aria-hidden="true"
-      >
-        <div className="absolute left-1/2 top-16 h-64 w-[30rem] -translate-x-1/2 rounded-full bg-opt-accent/8 blur-[100px] sm:top-20" />
-      </div>
-
+    <section className="relative overflow-hidden px-6 pb-20 pt-16 text-center sm:pb-28 sm:pt-24">
       <div className="mx-auto max-w-5xl">
-        <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-bold tracking-tight text-balance sm:text-6xl font-brand">
+        <p className="gr-rise-in m-0 font-mono text-sm text-opt-muted" style={riseDelay(0)}>
+          <span className="text-opt-accent">$</span> git review pr/1284
+          <span className="gr-caret text-opt-text" aria-hidden="true" />
+        </p>
+
+        <h1
+          className="gr-rise-in mx-auto mt-6 max-w-3xl text-4xl font-bold tracking-tight text-balance sm:text-6xl font-brand"
+          style={riseDelay(0.1)}
+        >
           A better way for humans to review{" "}
-          <span className="bg-[linear-gradient(90deg,var(--opt-accent),color-mix(in_srgb,var(--opt-accent)_55%,var(--opt-text)))] bg-clip-text text-transparent">
-            AI generated code
+          <span className="relative whitespace-nowrap">
+            <span className="relative z-10 text-opt-text">AI generated code</span>
+            <span
+              className="absolute inset-x-0 bottom-0.5 -z-0 h-[0.35em] bg-opt-accent/70 sm:bottom-1.5"
+              aria-hidden="true"
+            />
           </span>
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-opt-muted text-balance">
-          Guided Review is a browser extension that makes "reading code" wayyyy better with things
-          like clustered file changes, summaries, and a keyboard first experience.
+
+        <p
+          className="gr-rise-in mx-auto mt-6 max-w-2xl font-serif text-lg italic leading-relaxed text-opt-muted text-balance sm:text-xl"
+          style={riseDelay(0.2)}
+        >
+          Guided Review is a browser extension that makes &ldquo;reading code&rdquo; wayyyy better
+          with clustered file changes, summaries, and a keyboard-first experience.
         </p>
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+
+        <div
+          className="gr-rise-in mt-10 flex flex-wrap items-center justify-center gap-3"
+          style={riseDelay(0.3)}
+        >
           <InstallButton />
           <StarOnGitHubButton />
         </div>
-        <p className="mt-4 font-mono text-xs text-opt-muted">
+        <p className="gr-rise-in mt-4 font-mono text-xs text-opt-muted" style={riseDelay(0.35)}>
           Free · Open source · Bring your own LLM key
         </p>
 
-        <ProductVideo />
+        <div className="gr-rise-in" style={riseDelay(0.45)}>
+          <ProductVideo />
+        </div>
       </div>
     </section>
   );

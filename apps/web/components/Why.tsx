@@ -1,15 +1,10 @@
+import { WindowFrame } from "./WindowFrame";
+
 export function Why() {
   return (
-    <section id="why" className="relative overflow-hidden px-6 py-20 sm:py-28">
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-        aria-hidden="true"
-      >
-        <div className="absolute left-1/2 top-24 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-opt-accent/6 blur-[120px]" />
-      </div>
-
-      <div className="mx-auto max-w-5xl">
-        <h2 className="m-0 text-center text-2xl font-bold tracking-tight text-transparent bg-[linear-gradient(90deg,var(--opt-accent),color-mix(in_srgb,var(--opt-accent)_55%,var(--opt-text)))] bg-clip-text font-brand sm:text-3xl">
+    <section id="why" className="relative px-6 py-20 sm:py-28">
+      <div className="mx-auto max-w-4xl">
+        <h2 className="m-0 text-center text-2xl font-bold tracking-tight text-opt-accent font-brand sm:text-3xl">
           Why?
         </h2>
         <h3 className="m-0 mt-3 text-center text-xl font-bold tracking-tight text-opt-text font-brand sm:text-2xl">
@@ -18,38 +13,42 @@ export function Why() {
           and it&apos;s only getting harder
         </h3>
 
-        <div className="mt-8 grid gap-8 text-base leading-relaxed text-opt-muted sm:grid-cols-2 sm:gap-10 sm:text-lg">
-          <div className="space-y-4">
-            <p>
-              AI agents are writing code for you, and you have PRs pending your review. You had
-              imagined when you installed the new hot code review agent on github, it is going to
-              make the job easy for you. You&apos;ll just click &quot;approve&quot; and move on to
-              the next PR.
-            </p>
-            <p>
-              Unfortunately, agents writing code, and agents reviewing code are not a replacement
-              for you (congrats, your job is safe). You have more context. You know people,
-              business, and the product better than your coding agent.
-            </p>
-            <p>
-              End of the day, you are still going to have to read the code. You are still going to
-              have to understand it, and then you have the final say.
-            </p>
-            <p>But... it&apos;s just too much code, and it&apos;s hard to review code.</p>
+        <WindowFrame label="why.md" className="mt-10">
+          <div className="grid gap-8 font-serif text-lg leading-relaxed text-opt-muted sm:grid-cols-2 sm:gap-10 sm:text-xl">
+            <div className="space-y-4">
+              <p>
+                AI agents are writing code for you, and you have PRs pending your review. You had
+                imagined when you installed the new hot code review agent on github, it is going to
+                make the job easy for you. You&apos;ll just click &quot;approve&quot; and move on to
+                the next PR.
+              </p>
+              <p>
+                Unfortunately, agents writing code, and agents reviewing code are not a replacement
+                for you (congrats, your job is safe). You have more context. You know people,
+                business, and the product better than your coding agent.
+              </p>
+              <p>
+                End of the day, you are still going to have to read the code. You are still going to
+                have to understand it, and then you have the final say.
+              </p>
+              <p className="italic">
+                But... it&apos;s just too much code, and it&apos;s hard to review code.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <p>What if, we used AI to help us review code and not review it for us?</p>
+              <p>
+                That&apos;s why I built Guided Review. It gives you a brand new experience to review
+                pull requests. An experience that&apos;s designed for humans, and uses AI in just
+                the right places (not too little, not too much).
+              </p>
+              <p>
+                Reading your code is more important than ever, now that you cannot trust the LLM
+                loops creating the PR.
+              </p>
+            </div>
           </div>
-          <div className="space-y-4">
-            <p>What if, we used AI to help us review code and not review it for us?</p>
-            <p>
-              That&apos;s why I built Guided Review. It gives you a brand new experience to review
-              pull requests. An experience that&apos;s designed for humans, and uses AI in just the
-              right places (not too little, not too much).
-            </p>
-            <p>
-              Reading your code is more important than ever, now that you cannot trust the LLM loops
-              creating the PR.
-            </p>
-          </div>
-        </div>
+        </WindowFrame>
       </div>
     </section>
   );

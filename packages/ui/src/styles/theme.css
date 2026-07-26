@@ -15,7 +15,7 @@
   --color-gr-border: #312d29;
   --color-gr-border-muted: #4a433c;
   --color-gr-text: #fefefe;
-  --color-gr-muted: #8b949e;
+  --color-gr-muted: #fefefea1;
   /* ≥ 4.5:1 on gr-bg for normal text (line numbers, placeholders) */
   --color-gr-faint: #768088;
   --color-gr-accent: #caff57;
@@ -105,7 +105,7 @@
     --opt-subtle: #16120f;
     --opt-border: #312d29;
     --opt-text: #fefefe;
-    --opt-muted: #8b949e;
+    --opt-muted: #fefefea1;
     --opt-accent: #caff57;
     --opt-accent-hover: #b6e64e;
     --opt-accent-on: #0d0806;

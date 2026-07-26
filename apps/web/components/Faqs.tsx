@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { CHROME_WEB_STORE_URL, GITHUB_REPO_URL } from "../lib/links";
+import { WindowFrame } from "./WindowFrame";
 
 type Faq = {
   question: string;
@@ -88,57 +89,53 @@ function faqJsonLd(items: Faq[]) {
 
 export function Faqs() {
   return (
-    <section id="faqs" className="relative overflow-hidden px-6 py-20 sm:py-28">
+    <section id="faqs" className="relative px-6 py-20 sm:py-28">
       {/* Static, locally-authored JSON (not user input) — safe to inject directly. */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd(faqs)) }}
       />
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-        aria-hidden="true"
-      >
-        <div className="absolute left-1/2 top-24 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-opt-accent/6 blur-[120px]" />
-      </div>
 
       <div className="mx-auto max-w-3xl">
         <h2 className="m-0 text-center text-3xl font-bold tracking-tight sm:text-4xl font-brand">
           FAQs
         </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-opt-muted text-balance">
+        <p className="mx-auto mt-4 max-w-2xl text-center font-serif text-lg italic text-opt-muted text-balance sm:text-xl">
           The questions everyone asks before installing.
         </p>
 
-        <ul className="mt-14 m-0 grid list-none grid-cols-1 gap-4 p-0 sm:mt-20">
-          {faqs.map((faq) => (
-            <li key={faq.question}>
-              <details className="group rounded-3xl border border-opt-border bg-opt-subtle/60 transition-all duration-300 hover:border-opt-accent/60 hover:bg-opt-subtle [&_summary::-webkit-details-marker]:hidden">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-6 text-lg font-semibold tracking-tight sm:p-8 sm:text-xl">
-                  {faq.question}
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 24 24"
-                    className="h-5 w-5 flex-shrink-0 text-opt-muted transition-transform duration-300 group-open:rotate-180"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
-                </summary>
-                <div className="space-y-3 px-6 pb-6 text-base leading-relaxed text-opt-muted sm:px-8 sm:pb-8 sm:text-lg">
-                  {faq.answer.map((paragraph, index) => (
-                    <p key={index} className="m-0">
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
-              </details>
-            </li>
-          ))}
-        </ul>
+        <WindowFrame label="faq.md" className="mt-14 sm:mt-20" bodyClassName="p-0">
+          <ul className="m-0 list-none divide-y divide-opt-border p-0">
+            {faqs.map((faq) => (
+              <li key={faq.question}>
+                <details className="group [&_summary::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-6 text-lg font-semibold tracking-tight transition-colors hover:text-opt-accent sm:p-8 sm:text-xl">
+                    {faq.question}
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      className="h-5 w-5 flex-shrink-0 text-opt-muted transition-transform duration-300 group-open:rotate-180"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </summary>
+                  <div className="space-y-3 px-6 pb-6 font-serif text-base leading-relaxed text-opt-muted sm:px-8 sm:pb-8 sm:text-lg">
+                    {faq.answer.map((paragraph, index) => (
+                      <p key={index} className="m-0">
+                        {paragraph}
+                      </p>
+                    ))}
+                  </div>
+                </details>
+              </li>
+            ))}
+          </ul>
+        </WindowFrame>
       </div>
     </section>
   );

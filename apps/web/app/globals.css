@@ -6,6 +6,9 @@
 @theme {
   --font-brand:
     var(--font-victor-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  /* Editorial serif for long-form body copy — pairs with the mono brand voice
+     without competing with it; scoped to this app only, not the shared theme. */
+  --font-serif: var(--font-newsreader), "Iowan Old Style", "Palatino Linotype", Georgia, serif;
 }
 
 html,
@@ -64,5 +67,50 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+}
+
+/* Staggered entrance for the hero — each child sets its own --gr-delay. */
+@keyframes gr-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.6rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.gr-rise-in {
+  animation: gr-rise-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--gr-delay, 0s);
+}
+
+@keyframes gr-caret-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.gr-caret {
+  display: inline-block;
+  width: 0.5ch;
+  margin-left: 0.1em;
+  background: currentColor;
+  animation: gr-caret-blink 1.05s steps(1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-rise-in {
+    animation: none;
+  }
+  .gr-caret {
+    animation: none;
+    opacity: 1;
   }
 }

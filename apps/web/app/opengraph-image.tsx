@@ -10,7 +10,7 @@ export const contentType = "image/png";
 const ACCENT = "#caff57";
 const BG = "#0d0806";
 const TEXT = "#fefefe";
-const MUTED = "#8b949e";
+const MUTED = "#fefefea1";
 
 export default async function OpengraphImage() {
   const logoPath = path.join(process.cwd(), "../../packages/ui/src/assets/logomark.png");
