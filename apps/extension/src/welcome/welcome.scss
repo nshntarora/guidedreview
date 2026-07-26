@@ -1,0 +1,59 @@
+/*
+ * Welcome page base — matches options document chrome (dark opt surface + grain).
+ */
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  position: relative;
+  font-size: 0.875rem;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background: var(--color-opt-bg);
+  color: var(--color-opt-text);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-opt-accent, #caff57);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--opt-accent);
+  color: var(--opt-accent-on);
+}
+
+@layer base {
+  a:not(.inline-flex) {
+    color: var(--opt-accent, #caff57);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s ease;
+  }
+
+  a:not(.inline-flex):hover {
+    border-bottom-color: currentColor;
+  }
+}
