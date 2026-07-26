@@ -42,7 +42,7 @@ export function ContextPanel({
         role="alert"
         data-testid="context-panel-error"
       >
-        <div className="mb-2 text-xs font-semibold tracking-[0.04em] text-gr-muted uppercase">
+        <div className="mb-2 text-xs font-semibold tracking-[0.04em] text-muted uppercase">
           Error
         </div>
 
@@ -50,16 +50,16 @@ export function ContextPanel({
           <dl className="mb-2 m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm leading-normal">
             {error.statusCode !== undefined && (
               <>
-                <dt className="m-0 font-medium text-gr-muted">HTTP Status</dt>
-                <dd className="m-0 font-mono text-gr-danger" data-testid="error-status-code">
+                <dt className="m-0 font-medium text-muted">HTTP Status</dt>
+                <dd className="m-0 font-mono text-danger" data-testid="error-status-code">
                   {error.statusCode}
                 </dd>
               </>
             )}
             {error.code && (
               <>
-                <dt className="m-0 font-medium text-gr-muted">Error Code</dt>
-                <dd className="m-0 font-mono break-all text-gr-danger" data-testid="error-code">
+                <dt className="m-0 font-medium text-muted">Error Code</dt>
+                <dd className="m-0 font-mono break-all text-danger" data-testid="error-code">
                   {error.code}
                 </dd>
               </>
@@ -67,13 +67,13 @@ export function ContextPanel({
           </dl>
         )}
 
-        <pre className="m-0 max-h-[40vh] overflow-x-auto overflow-y-auto rounded-md border border-gr-danger bg-gr-danger-subtle p-3 text-left font-mono text-sm leading-normal break-words whitespace-pre-wrap text-gr-danger">
+        <pre className="m-0 max-h-[40vh] overflow-x-auto overflow-y-auto rounded-md border border-danger bg-danger-muted p-3 text-left font-mono text-sm leading-normal break-words whitespace-pre-wrap text-danger">
           <code data-testid="error-message">{error.message}</code>
         </pre>
 
         {onRetry && (
           <div className="mt-3">
-            <Button surface="overlay" size="sm" onClick={onRetry}>
+            <Button size="sm" onClick={onRetry}>
               Retry
             </Button>
           </div>
@@ -90,13 +90,13 @@ export function ContextPanel({
 
     return (
       <div className="rounded-none border-0 bg-transparent px-0 py-0.5 pb-1">
-        <div className="text-lg leading-[1.7] text-gr-text" data-testid="context-panel-body">
+        <div className="text-lg leading-[1.7] text-foreground" data-testid="context-panel-body">
           {hint}
         </div>
         {loading ? (
-          <div className="mt-4 flex items-center gap-2.5 border-t border-gr-border-muted pt-3">
+          <div className="mt-4 flex items-center gap-2.5 border-t border-border-strong pt-3">
             <Spinner label="Building remaining units" />
-            <p className="m-0 text-base text-gr-muted">Building remaining units…</p>
+            <p className="m-0 text-base text-muted">Building remaining units…</p>
           </div>
         ) : (
           <KeyboardShortcuts />
@@ -107,7 +107,7 @@ export function ContextPanel({
 
   return (
     <div className="rounded-none border-0 bg-transparent px-0 py-0.5 pb-1">
-      <div className="text-base leading-[1.7] text-gr-text" data-testid="context-panel-body">
+      <div className="text-base leading-[1.7] text-foreground" data-testid="context-panel-body">
         {unit.context}
       </div>
     </div>

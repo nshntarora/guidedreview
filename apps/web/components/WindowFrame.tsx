@@ -18,15 +18,15 @@ export function WindowFrame({ label, children, className, bodyClassName }: Windo
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-lg border border-opt-border bg-opt-subtle/50 shadow-[0_1px_0_rgba(0,0,0,0.02)]",
+        "overflow-hidden rounded-lg border border-border bg-surface-raised/50 shadow-[0_1px_0_rgba(0,0,0,0.02)]",
         className,
       )}
     >
-      <div className="flex items-center gap-1.5 border-b border-opt-border bg-opt-bg/70 px-4 py-2.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-gr-danger/70" aria-hidden="true" />
-        <span className="h-2.5 w-2.5 rounded-full bg-gr-syntax-variable/70" aria-hidden="true" />
-        <span className="h-2.5 w-2.5 rounded-full bg-gr-add-text/70" aria-hidden="true" />
-        <span className="ml-2.5 truncate font-mono text-xs text-opt-muted">{label}</span>
+      <div className="flex items-center gap-1.5 border-b border-border bg-background/70 px-4 py-2.5">
+        <span className="h-2.5 w-2.5 rounded-full bg-danger/70" aria-hidden="true" />
+        <span className="h-2.5 w-2.5 rounded-full bg-syntax-variable/70" aria-hidden="true" />
+        <span className="h-2.5 w-2.5 rounded-full bg-diff-add/70" aria-hidden="true" />
+        <span className="ml-2.5 truncate font-mono text-xs text-muted">{label}</span>
       </div>
       <div className={cn("p-4 sm:p-6 md:p-8", bodyClassName)}>{children}</div>
     </div>

@@ -31,15 +31,15 @@ function frame(props: IllustProps) {
  * ------------------------------------------------------------------ */
 
 /** Raised panel — one step above the card background. */
-const SURFACE = "fill-[var(--opt-subtle)] stroke-[var(--opt-border)]";
+const SURFACE = "fill-[var(--color-surface-raised)] stroke-[var(--color-border)]";
 /** Recessed control (input, key cap, pill) sitting inside a surface. */
-const INSET = "fill-[var(--opt-bg)] stroke-[var(--opt-border)]";
+const INSET = "fill-[var(--color-background)] stroke-[var(--color-border)]";
 /** Selected / active state — the single accent moment per illustration. */
 const ACCENT_WASH =
-  "fill-[color-mix(in_srgb,var(--opt-accent)_14%,transparent)] stroke-[var(--gr-accent-ink)]";
+  "fill-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] stroke-[var(--color-primary)]";
 
-const ADD_WASH = "fill-[color-mix(in_srgb,var(--opt-ok)_20%,transparent)]";
-const DEL_WASH = "fill-[color-mix(in_srgb,var(--opt-error)_16%,transparent)]";
+const ADD_WASH = "fill-[color-mix(in_srgb,var(--color-success)_20%,transparent)]";
+const DEL_WASH = "fill-[color-mix(in_srgb,var(--color-danger)_16%,transparent)]";
 
 type PanelProps = {
   x: number;
@@ -92,7 +92,7 @@ function Txt({
   y,
   size = 8,
   anchor = "start",
-  className = "fill-[var(--opt-muted)]",
+  className = "fill-[var(--color-muted)]",
   weight,
   children,
 }: TxtProps) {
@@ -118,7 +118,7 @@ function SectionLabel({ x, y, children }: { x: number; y: number; children: Reac
       y={y}
       fontSize="7"
       letterSpacing="0.08em"
-      className="font-mono fill-[var(--opt-muted)] uppercase"
+      className="font-mono fill-[var(--color-muted)] uppercase"
     >
       {children}
     </text>
@@ -155,7 +155,7 @@ function KeyCap({
         y={y + 12.5}
         size={8.5}
         anchor="middle"
-        className={accent ? "fill-[var(--gr-accent-ink)]" : "fill-[var(--opt-text)]"}
+        className={accent ? "fill-[var(--color-primary)]" : "fill-[var(--color-foreground)]"}
       >
         {label}
       </Txt>
@@ -169,7 +169,7 @@ function Bar({
   y,
   w,
   h = 6,
-  className = "fill-[var(--opt-muted)]",
+  className = "fill-[var(--color-muted)]",
   opacity = 0.5,
 }: {
   x: number;
@@ -190,11 +190,11 @@ function Spark({ x, y, scale = 0.5 }: { x: number; y: number; scale?: number }) 
     <g transform={`translate(${x},${y}) scale(${scale})`}>
       <path
         d="M12 2c.6 3.6 2.4 5.4 6 6-3.6.6-5.4 2.4-6 6-.6-3.6-2.4-5.4-6-6 3.6-.6 5.4-2.4 6-6Z"
-        className="fill-[var(--gr-accent-ink)]"
+        className="fill-[var(--color-primary)]"
       />
       <path
         d="M19 15c.3 1.6 1.1 2.4 2.7 2.7-1.6.3-2.4 1.1-2.7 2.7-.3-1.6-1.1-2.4-2.7-2.7 1.6-.3 2.4-1.1 2.7-2.7Z"
-        className="fill-[var(--gr-accent-ink)]"
+        className="fill-[var(--color-primary)]"
         opacity="0.7"
       />
     </g>
@@ -221,7 +221,7 @@ export function ClusteredChangesIllustration(props: IllustProps) {
       <SectionLabel x={8} y={20}>
         changed files
       </SectionLabel>
-      <Txt x={120} y={20} size={7} anchor="end" className="fill-[var(--opt-muted)]">
+      <Txt x={120} y={20} size={7} anchor="end" className="fill-[var(--color-muted)]">
         a→z
       </Txt>
 
@@ -245,7 +245,7 @@ export function ClusteredChangesIllustration(props: IllustProps) {
       <Spark x={143} y={86} scale={0.62} />
       <path
         d="M128 111h44m-6-5 6 5-6 5"
-        className="stroke-[var(--opt-text)]"
+        className="stroke-[var(--color-foreground)]"
         strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -275,7 +275,7 @@ export function ClusteredChangesIllustration(props: IllustProps) {
               y={y + 17}
               size={9}
               weight={600}
-              className={active ? "fill-[var(--gr-accent-ink)]" : "fill-[var(--opt-text)]"}
+              className={active ? "fill-[var(--color-primary)]" : "fill-[var(--color-foreground)]"}
             >
               {unit.title}
             </Txt>
@@ -338,7 +338,7 @@ export function KeyboardFirstIllustration(props: IllustProps) {
       <SectionLabel x={48} y={38}>
         keymap
       </SectionLabel>
-      <rect x={82} y={31} width={4} height={9} className="fill-[var(--gr-accent-ink)]" />
+      <rect x={82} y={31} width={4} height={9} className="fill-[var(--color-primary)]" />
 
       {KEYMAP.map((row, i) => {
         const y = 50 + i * 33;
@@ -346,7 +346,7 @@ export function KeyboardFirstIllustration(props: IllustProps) {
         const startX = KEYS_RIGHT - total;
         return (
           <g key={row.action}>
-            <Txt x={48} y={y + 13} size={9} className="fill-[var(--opt-text)]">
+            <Txt x={48} y={y + 13} size={9} className="fill-[var(--color-foreground)]">
               {row.action}
             </Txt>
             {row.keys.map((key, k) => (
@@ -392,23 +392,23 @@ export function SummariesIllustration(props: IllustProps) {
         w={280}
         h={62}
         r={8}
-        className="fill-[var(--opt-bg)] stroke-[var(--gr-accent-ink)]"
+        className="fill-[var(--color-background)] stroke-[var(--color-primary)]"
         strokeWidth={1.5}
       />
       <Spark x={30} y={32} scale={0.6} />
-      <Txt x={52} y={45} size={8} weight={600} className="fill-[var(--gr-accent-ink)]">
+      <Txt x={52} y={45} size={8} weight={600} className="fill-[var(--color-primary)]">
         summary
       </Txt>
       <path
         d="M278 35l8 8m0-8-8 8"
-        className="stroke-[var(--opt-muted)]"
+        className="stroke-[var(--color-muted)]"
         strokeWidth="1.4"
         strokeLinecap="round"
       />
       <Bar x={32} y={58} w={252} opacity={0.5} />
       <Bar x={32} y={72} w={190} opacity={0.32} />
 
-      <path d="M20 102h280" className="stroke-[var(--opt-border)]" strokeWidth="1" />
+      <path d="M20 102h280" className="stroke-[var(--color-border)]" strokeWidth="1" />
 
       {DIFF_LINES.map((line, i) => {
         const y = 112 + i * 15;
@@ -430,7 +430,9 @@ export function SummariesIllustration(props: IllustProps) {
                 x={22}
                 y={y + 6}
                 size={8}
-                className={line.kind === "add" ? "fill-[var(--opt-ok)]" : "fill-[var(--opt-error)]"}
+                className={
+                  line.kind === "add" ? "fill-[var(--color-success)]" : "fill-[var(--color-danger)]"
+                }
               >
                 {line.kind === "add" ? "+" : "−"}
               </Txt>
@@ -441,10 +443,10 @@ export function SummariesIllustration(props: IllustProps) {
               w={line.w}
               className={
                 line.kind === "add"
-                  ? "fill-[var(--opt-ok)]"
+                  ? "fill-[var(--color-success)]"
                   : line.kind === "del"
-                    ? "fill-[var(--opt-error)]"
-                    : "fill-[var(--opt-muted)]"
+                    ? "fill-[var(--color-danger)]"
+                    : "fill-[var(--color-muted)]"
               }
               opacity={changed ? 0.6 : 0.4}
             />
@@ -482,12 +484,12 @@ export function ApprovedToolsIllustration(props: IllustProps) {
 
       {/* Provider select */}
       <Panel x={30} y={46} w={140} h={28} r={6} className={INSET} />
-      <Txt x={42} y={64} size={9} className="fill-[var(--opt-text)]">
+      <Txt x={42} y={64} size={9} className="fill-[var(--color-foreground)]">
         Anthropic
       </Txt>
       <path
         d="M152 58l4 4 4-4"
-        className="stroke-[var(--opt-muted)]"
+        className="stroke-[var(--color-muted)]"
         strokeWidth="1.4"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -500,7 +502,7 @@ export function ApprovedToolsIllustration(props: IllustProps) {
       </Txt>
 
       {/* Local-only status */}
-      <circle cx={34} cy={94} r={3.5} className="fill-[var(--gr-accent-ink)]" />
+      <circle cx={34} cy={94} r={3.5} className="fill-[var(--color-primary)]" />
       <Txt x={44} y={97} size={7.5}>
         connected · key stays on your machine
       </Txt>
@@ -517,7 +519,7 @@ export function ApprovedToolsIllustration(props: IllustProps) {
               y={146}
               size={8}
               anchor="middle"
-              className="fill-[var(--opt-text)]"
+              className="fill-[var(--color-foreground)]"
             >
               {chip.label}
             </Txt>
@@ -526,14 +528,21 @@ export function ApprovedToolsIllustration(props: IllustProps) {
       })}
 
       {/* …and you can read every line of what it does. */}
-      <rect x={98} y={166} width={124} height={24} rx={12} className="fill-[var(--opt-accent)]" />
+      <rect
+        x={98}
+        y={166}
+        width={124}
+        height={24}
+        rx={12}
+        className="fill-[var(--color-primary)]"
+      />
       <Txt
         x={160}
         y={182}
         size={9}
         weight={600}
         anchor="middle"
-        className="fill-[var(--opt-accent-on)]"
+        className="fill-[var(--color-primary-foreground)]"
       >
         open source
       </Txt>
@@ -556,48 +565,55 @@ export function NoBackendIllustration(props: IllustProps) {
 
       {/* Endpoints you already trust */}
       <Panel x={8} y={64} w={68} h={28} r={8} className={INSET} />
-      <Txt x={42} y={82} size={8.5} anchor="middle" className="fill-[var(--opt-text)]">
+      <Txt x={42} y={82} size={8.5} anchor="middle" className="fill-[var(--color-foreground)]">
         GitHub
       </Txt>
 
       <Panel x={244} y={64} w={68} h={28} r={8} className={INSET} />
-      <Txt x={278} y={82} size={8.5} anchor="middle" className="fill-[var(--opt-text)]">
+      <Txt x={278} y={82} size={8.5} anchor="middle" className="fill-[var(--color-foreground)]">
         LLM API
       </Txt>
 
       {/* Direct, two-way */}
       <path
         d="M80 78h24m-24 0 4-4m-4 4 4 4m20-4-4-4m4 4-4 4"
-        className="stroke-[var(--opt-text)]"
+        className="stroke-[var(--color-foreground)]"
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
         d="M216 78h24m-24 0 4-4m-4 4 4 4m20-4-4-4m4 4-4 4"
-        className="stroke-[var(--opt-text)]"
+        className="stroke-[var(--color-foreground)]"
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
 
       {/* The browser window itself */}
-      <rect x={112} y={40} width={96} height={76} rx={10} className="fill-[var(--opt-bg)]" />
+      <rect
+        x={112}
+        y={40}
+        width={96}
+        height={76}
+        rx={10}
+        className="fill-[var(--color-background)]"
+      />
       <path
         d="M112 50a10 10 0 0 1 10-10h76a10 10 0 0 1 10 10v10h-96V50Z"
-        className="fill-[var(--opt-subtle)]"
+        className="fill-[var(--color-surface-raised)]"
       />
-      <circle cx={124} cy={50} r={2.5} className="fill-[var(--opt-border)]" />
-      <circle cx={132} cy={50} r={2.5} className="fill-[var(--opt-border)]" />
-      <circle cx={140} cy={50} r={2.5} className="fill-[var(--opt-border)]" />
-      <rect x={126} y={74} width={68} height={24} rx={6} className="fill-[var(--opt-accent)]" />
+      <circle cx={124} cy={50} r={2.5} className="fill-[var(--color-border)]" />
+      <circle cx={132} cy={50} r={2.5} className="fill-[var(--color-border)]" />
+      <circle cx={140} cy={50} r={2.5} className="fill-[var(--color-border)]" />
+      <rect x={126} y={74} width={68} height={24} rx={6} className="fill-[var(--color-primary)]" />
       <Txt
         x={160}
         y={90}
         size={8.5}
         weight={600}
         anchor="middle"
-        className="fill-[var(--opt-accent-on)]"
+        className="fill-[var(--color-primary-foreground)]"
       >
         extension
       </Txt>
@@ -606,21 +622,21 @@ export function NoBackendIllustration(props: IllustProps) {
         y={40}
         w={96}
         h={76}
-        className="fill-none stroke-[var(--gr-accent-ink)]"
+        className="fill-none stroke-[var(--color-primary)]"
         strokeWidth={1.75}
       />
 
       {/* …and the path that does not exist */}
       <path
         d="M160 116v16"
-        className="stroke-[var(--opt-muted)]"
+        className="stroke-[var(--color-muted)]"
         strokeWidth="1.4"
         strokeDasharray="3 3"
         opacity="0.6"
       />
       <path
         d="M156 136l8 8m0-8-8 8"
-        className="stroke-[var(--opt-muted)]"
+        className="stroke-[var(--color-muted)]"
         strokeWidth="1.5"
         strokeLinecap="round"
         opacity="0.8"
@@ -632,7 +648,7 @@ export function NoBackendIllustration(props: IllustProps) {
           w={100}
           h={30}
           r={8}
-          className="fill-none stroke-[var(--opt-border)]"
+          className="fill-none stroke-[var(--color-border)]"
           strokeDasharray="4 3"
         />
         <Txt x={160} y={171} size={8} anchor="middle">

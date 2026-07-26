@@ -15,8 +15,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  background: var(--color-opt-bg);
-  color: var(--color-opt-text);
+  background: var(--color-background);
+  color: var(--color-foreground);
 }
 
 body::before {
@@ -36,18 +36,18 @@ body::before {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-opt-accent, #caff57);
+  outline: 2px solid var(--color-primary, #caff57);
   outline-offset: 2px;
 }
 
 ::selection {
-  background: var(--opt-accent);
-  color: var(--opt-accent-on);
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
 }
 
 @layer base {
   a:not(.inline-flex) {
-    color: var(--opt-accent, #caff57);
+    color: var(--color-primary, #caff57);
     text-decoration: none;
     border-bottom: 1px solid transparent;
     transition: border-color 0.15s ease;

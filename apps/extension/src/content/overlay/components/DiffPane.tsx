@@ -91,7 +91,7 @@ export function DiffPane({ files, unitTitle, unitId, selectableForUnit }: DiffPa
       </div>
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2
-          className="min-w-0 truncate text-lg font-semibold text-gr-text"
+          className="min-w-0 truncate text-lg font-semibold text-foreground"
           data-testid="diff-unit-title"
           title={unitTitle}
         >
@@ -114,13 +114,13 @@ export function DiffPane({ files, unitTitle, unitId, selectableForUnit }: DiffPa
         const extension = file.path.includes(".") ? file.path.split(".").pop() : undefined;
         return (
           <div
-            className="mb-7 overflow-hidden rounded-lg border border-gr-border bg-gr-canvas"
+            className="mb-7 overflow-hidden rounded-lg border border-border bg-surface-raised"
             key={file.path}
           >
-            <div className="flex items-baseline gap-2.5 border-b border-gr-border bg-gr-chrome px-3 py-2 font-mono text-sm">
+            <div className="flex items-baseline gap-2.5 border-b border-border bg-background px-3 py-2 font-mono text-sm">
               {file.previousPath ? `${file.previousPath} → ${file.path}` : file.path}
               {!language && !file.isBinaryOrElided && (
-                <span className="font-normal text-gr-muted italic">
+                <span className="font-normal text-muted italic">
                   {extension
                     ? `no syntax highlighting for .${extension}`
                     : "no syntax highlighting"}

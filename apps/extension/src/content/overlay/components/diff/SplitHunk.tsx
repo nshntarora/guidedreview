@@ -46,8 +46,8 @@ function SplitCellView({
       className={cn(
         DIFF_LINE_WRAP,
         "flex-1 overflow-hidden",
-        showDiffBg && cell.type === "del" && "bg-gr-del-bg",
-        showDiffBg && cell.type === "add" && "bg-gr-add-bg",
+        showDiffBg && cell.type === "del" && "bg-diff-del-bg",
+        showDiffBg && cell.type === "add" && "bg-diff-add-bg",
         selectionClasses(lineId, selectedIds, focusId),
       )}
       data-side={side}
@@ -64,8 +64,8 @@ function SplitCellView({
       <span
         className={cn(
           "w-4 shrink-0 opacity-70",
-          cell.type === "add" && "text-gr-add-text",
-          cell.type === "del" && "text-gr-del-text",
+          cell.type === "add" && "text-diff-add",
+          cell.type === "del" && "text-diff-del",
         )}
       >
         {cell.type === "add" ? "+" : cell.type === "del" ? "-" : " "}
@@ -112,7 +112,7 @@ export function SplitHunk({
 
         return (
           <div key={i}>
-            <div className="flex min-w-0 border-b border-gr-border-muted last:border-b-0">
+            <div className="flex min-w-0 border-b border-border-strong last:border-b-0">
               <SplitCellView
                 cell={row.left}
                 highlighted={
@@ -123,7 +123,7 @@ export function SplitHunk({
                 selectedIds={selectedIds}
                 focusId={focusId}
               />
-              <div className="w-px shrink-0 bg-gr-border" aria-hidden="true" />
+              <div className="w-px shrink-0 bg-border" aria-hidden="true" />
               <SplitCellView
                 cell={row.right}
                 highlighted={
@@ -138,7 +138,7 @@ export function SplitHunk({
             {(showLeftExtras || showRightExtras) && (
               <div className="flex min-w-0" data-testid="split-line-extras">
                 <div className="min-w-0 flex-1" aria-hidden="true" />
-                <div className="w-px shrink-0 bg-gr-border" aria-hidden="true" />
+                <div className="w-px shrink-0 bg-border" aria-hidden="true" />
                 <div className="min-w-0 flex-1">
                   {showLeftExtras && leftId && (
                     <LineExtras

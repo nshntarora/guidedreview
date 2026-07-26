@@ -29,11 +29,11 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
 
   return (
     <nav
-      className="mt-6 min-h-0 flex-[1_1_50%] overflow-y-auto border-t border-gr-border-muted pt-4"
+      className="mt-6 min-h-0 flex-[1_1_50%] overflow-y-auto border-t border-border-strong pt-4"
       aria-label="Review Units"
     >
       <div className="px-5">
-        <div className="px-2 pb-1 pt-2.5 text-xs tracking-[0.04em] text-gr-muted uppercase">
+        <div className="px-2 pb-1 pt-2.5 text-xs tracking-[0.04em] text-muted uppercase">
           Review Units
         </div>
 
@@ -46,12 +46,12 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
               ref={isActive ? activeItemRef : undefined}
               aria-current={isActive ? "true" : undefined}
               className={cn(
-                "mb-0.5 block w-full cursor-pointer rounded-md border-none bg-transparent p-2 text-left text-base leading-snug text-gr-text",
-                isActive && "bg-gr-accent-subtle text-gr-accent! hover:bg-gr-accent-subtle",
+                "mb-0.5 block w-full cursor-pointer rounded-md border-none bg-transparent p-2 text-left text-base leading-snug text-foreground",
+                isActive && "bg-primary-muted text-primary! hover:bg-primary-muted",
               )}
               onClick={() => onSelectUnit(displayIndex)}
             >
-              <span className={cn("mr-1.5", isActive ? "text-gr-accent" : "text-gr-muted")}>
+              <span className={cn("mr-1.5", isActive ? "text-primary" : "text-muted")}>
                 {displayIndex + 1}.
               </span>
               {unit.title}
@@ -69,7 +69,7 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
             >
               <span
                 data-skeleton-index={i}
-                className="block h-3 animate-gr-skeleton rounded bg-[linear-gradient(90deg,var(--color-gr-subtle)_0%,var(--color-gr-border-muted)_50%,var(--color-gr-subtle)_100%)] bg-size-[200%_100%]"
+                className="block h-3 animate-gr-skeleton rounded bg-[linear-gradient(90deg,var(--color-surface-muted)_0%,var(--color-border-strong)_50%,var(--color-surface-muted)_100%)] bg-size-[200%_100%]"
               />
             </div>
           ))}

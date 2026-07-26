@@ -31,19 +31,19 @@ export function DocsBreadcrumbs({ slug, basePath = "/docs" }: DocsBreadcrumbsPro
   }
 
   return (
-    <nav aria-label="Breadcrumb" className="mb-6 text-xs text-opt-muted">
+    <nav aria-label="Breadcrumb" className="mb-6 text-xs text-muted">
       <ol className="m-0 flex list-none flex-wrap items-center gap-1 p-0">
         <li>
           <Link
             href={basePath}
-            className="border-b-0 text-opt-muted no-underline hover:border-b-transparent hover:text-opt-text"
+            className="border-b-0 text-muted no-underline hover:border-b-transparent hover:text-foreground"
           >
             Docs
           </Link>
         </li>
         {sectionTitle ? (
           <>
-            <li aria-hidden="true" className="text-opt-muted/60">
+            <li aria-hidden="true" className="text-muted/60">
               /
             </li>
             <li>
@@ -53,11 +53,11 @@ export function DocsBreadcrumbs({ slug, basePath = "/docs" }: DocsBreadcrumbsPro
         ) : null}
         {pageTitle ? (
           <>
-            <li aria-hidden="true" className="text-opt-muted/60">
+            <li aria-hidden="true" className="text-muted/60">
               /
             </li>
             <li>
-              <span className="font-medium text-opt-text" aria-current="page">
+              <span className="font-medium text-foreground" aria-current="page">
                 {pageTitle}
               </span>
             </li>

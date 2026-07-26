@@ -65,7 +65,7 @@ export function FeatureGrid() {
         <h2 className="m-0 text-center text-3xl font-bold tracking-tight sm:text-4xl font-brand">
           Features
         </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-opt-muted text-balance sm:text-xl">
+        <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-muted text-balance sm:text-xl">
           Built for humans who still have to read the code.
         </p>
 
@@ -94,12 +94,12 @@ function FeatureCard({ feature: f, wide = false }: { feature: Feature; wide?: bo
   return (
     <WindowFrame
       label={f.file}
-      className="group w-full transition-colors duration-300 hover:border-opt-accent/60"
+      className="group w-full transition-colors duration-300 hover:border-primary/60"
       bodyClassName={`flex flex-col gap-6 ${wide ? "md:flex-row md:items-center md:gap-10" : ""}`}
     >
       <div className={`flex flex-col ${wide ? "md:flex-1" : ""}`}>
         <h3 className="m-0 text-xl font-semibold tracking-tight sm:text-2xl">{f.title}</h3>
-        <div className="mt-3 space-y-3 text-base leading-relaxed text-opt-muted sm:text-lg">
+        <div className="mt-3 space-y-3 text-base leading-relaxed text-muted sm:text-lg">
           {f.body.map((paragraph) => (
             <p key={paragraph} className="m-0">
               {paragraph}
@@ -107,12 +107,12 @@ function FeatureCard({ feature: f, wide = false }: { feature: Feature; wide?: bo
           ))}
         </div>
         {f.footnote ? (
-          <p className="mt-4 m-0 text-sm italic leading-relaxed text-opt-muted/80">{f.footnote}</p>
+          <p className="mt-4 m-0 text-sm italic leading-relaxed text-muted/80">{f.footnote}</p>
         ) : null}
       </div>
 
       <div
-        className={`flex items-center justify-center rounded-lg bg-opt-bg/60 p-6 ${
+        className={`flex items-center justify-center rounded-lg bg-background/60 p-6 ${
           wide ? "md:w-[min(46%,26rem)]" : "mt-auto"
         }`}
       >

@@ -19,10 +19,10 @@ export function InstallCta() {
           <h2 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl font-brand">
             Get Guided Review
           </h2>
-          <p className="mt-3 text-lg text-opt-muted">
+          <p className="mt-3 text-lg text-muted">
             Install the Chrome extension, add an LLM API key in options, and open any GitHub pull
             request. Click{" "}
-            <strong className="font-semibold text-opt-text">Start Guided Review</strong> to begin.
+            <strong className="font-semibold text-foreground">Start Guided Review</strong> to begin.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <InstallButton />

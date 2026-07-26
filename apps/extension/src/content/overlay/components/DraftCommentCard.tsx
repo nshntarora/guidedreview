@@ -56,19 +56,19 @@ export function DraftCommentCard({ comment, onRemove, onUpdate }: DraftCommentCa
 
   return (
     <div
-      className="border-y border-gr-border bg-gr-bg px-3 py-2.5"
+      className="border-y border-border bg-surface px-3 py-2.5"
       data-testid="draft-comment"
       data-draft-id={comment.id}
     >
       <div className="mb-1.5 flex items-center justify-between gap-2">
-        <span className="font-mono text-xs text-gr-muted">
+        <span className="font-mono text-xs text-muted">
           Draft · {formatLineRangeLabel(comment.filePath, comment.startLine, comment.endLine)}
         </span>
         <div className="flex items-center gap-1">
           {!editing && (
             <button
               type="button"
-              className="cursor-pointer rounded px-1.5 py-0.5 text-sm text-gr-muted hover:bg-gr-subtle hover:text-gr-text"
+              className="cursor-pointer rounded px-1.5 py-0.5 text-sm text-muted hover:bg-surface-muted hover:text-foreground"
               onClick={() => setEditing(true)}
               aria-label="Edit draft comment"
               data-testid="draft-comment-edit"
@@ -78,7 +78,7 @@ export function DraftCommentCard({ comment, onRemove, onUpdate }: DraftCommentCa
           )}
           <button
             type="button"
-            className="cursor-pointer rounded px-1.5 py-0.5 text-sm text-gr-muted hover:bg-gr-subtle hover:text-gr-text"
+            className="cursor-pointer rounded px-1.5 py-0.5 text-sm text-muted hover:bg-surface-muted hover:text-foreground"
             onClick={() => onRemove(comment.id)}
             aria-label="Remove draft comment"
             data-testid="draft-comment-remove"
@@ -91,8 +91,7 @@ export function DraftCommentCard({ comment, onRemove, onUpdate }: DraftCommentCa
         <>
           <Textarea
             ref={textareaRef}
-            surface="overlay"
-            className="bg-gr-chrome"
+            className="bg-background"
             value={body}
             onChange={(e) => setBody(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -101,10 +100,9 @@ export function DraftCommentCard({ comment, onRemove, onUpdate }: DraftCommentCa
           />
           <div className="mt-2 flex flex-wrap items-center justify-end gap-2">
             <Button
-              surface="overlay"
               variant="secondary"
               size="sm"
-              className="bg-gr-chrome"
+              className="bg-background"
               onClick={exitEdit}
               data-testid="draft-comment-edit-cancel"
             >
@@ -112,7 +110,6 @@ export function DraftCommentCard({ comment, onRemove, onUpdate }: DraftCommentCa
               <Kbd>Esc</Kbd>
             </Button>
             <Button
-              surface="overlay"
               size="sm"
               disabled={!canSave}
               onClick={saveEdit}
@@ -126,7 +123,7 @@ export function DraftCommentCard({ comment, onRemove, onUpdate }: DraftCommentCa
         </>
       ) : (
         <div
-          className="whitespace-pre-wrap font-sans text-base leading-relaxed text-gr-text"
+          className="whitespace-pre-wrap font-sans text-base leading-relaxed text-foreground"
           data-testid="draft-comment-body"
         >
           {comment.body}

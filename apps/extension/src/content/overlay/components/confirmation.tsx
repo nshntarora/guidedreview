@@ -251,18 +251,17 @@ function ConfirmationDialog({
       }}
     >
       <div className="flex flex-col gap-2 px-4 py-4">
-        <h2 id={titleId} className="m-0 text-lg font-semibold text-gr-text">
+        <h2 id={titleId} className="m-0 text-lg font-semibold text-foreground">
           {title}
         </h2>
-        <div id={bodyId} className="m-0 text-base leading-relaxed text-gr-muted">
+        <div id={bodyId} className="m-0 text-base leading-relaxed text-muted">
           {typeof body === "string" ? <p className="m-0">{body}</p> : body}
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-end gap-2 border-t border-gr-border px-4 py-3">
+      <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border px-4 py-3">
         <Button
           ref={cancelRef}
-          surface="overlay"
           variant="secondary"
           size="sm"
           onClick={() => void handleCancel()}
@@ -273,7 +272,6 @@ function ConfirmationDialog({
           <Kbd>Esc</Kbd>
         </Button>
         <Button
-          surface="overlay"
           variant={variant === "destructive" ? "destructive" : "primary"}
           size="sm"
           onClick={() => void handleOk()}

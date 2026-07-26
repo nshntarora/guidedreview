@@ -222,7 +222,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
       aria-modal="true"
       aria-labelledby={titleId}
       tabIndex={-1}
-      className="fixed inset-0 z-[2147483000] flex flex-col bg-gr-bg font-sans text-base text-gr-text antialiased outline-none [color-scheme:dark] [text-rendering:optimizeLegibility]"
+      className="fixed inset-0 z-[2147483000] flex flex-col bg-surface font-sans text-base text-foreground antialiased outline-none [color-scheme:dark] [text-rendering:optimizeLegibility]"
       data-testid="guided-review-overlay"
     >
       <div
@@ -249,7 +249,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
       <div className="flex min-h-0 flex-1">
         <main
           id="main-content"
-          className="min-w-0 flex-[1_1_68%] overflow-y-auto border-r border-gr-border bg-gr-bg px-8 py-6"
+          className="min-w-0 flex-[1_1_68%] overflow-y-auto border-r border-border bg-surface px-8 py-6"
           ref={codeColRef}
           data-testid="code-col"
           tabIndex={-1}
@@ -267,7 +267,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         </main>
 
         <aside
-          className="flex max-w-[420px] min-w-[300px] flex-[1_1_32%] flex-col overflow-hidden bg-gr-chrome py-6"
+          className="flex max-w-[420px] min-w-[300px] flex-[1_1_32%] flex-col overflow-hidden bg-background py-6"
           aria-label="Review context and plan"
         >
           <div

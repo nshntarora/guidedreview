@@ -2,57 +2,59 @@
  * Shared Tailwind entry + design tokens.
  * App customizations/overrides live in SCSS; this file exists because
  * Tailwind v4's @import / @theme are CSS-first.
+ *
+ * Single dark palette for marketing, options, welcome, and review overlay.
+ * Utilities: bg-background, text-foreground, border-border, bg-primary, …
+ * Raw CSS: var(--color-background), var(--color-primary), …
  */
 @import "tailwindcss";
 
 @theme {
-  /* Overlay (dark-only) surface hierarchy */
-  --color-gr-chrome: #0d0806;
-  --color-gr-bg: #110e0b;
-  --color-gr-canvas: #16120f;
-  --color-gr-subtle: #1c1814;
-  /* Borders ≥ 3:1 against gr-bg/gr-chrome for WCAG 1.4.11 UI contrast */
-  --color-gr-border: #312d29;
-  --color-gr-border-muted: #4a433c;
-  --color-gr-text: #fefefe;
-  --color-gr-muted: #fefefea1;
-  /* ≥ 4.5:1 on gr-bg for normal text (line numbers, placeholders) */
-  --color-gr-faint: #768088;
-  --color-gr-accent: #caff57;
-  --color-gr-accent-hover: #b6e64e;
-  --color-gr-accent-on: #0d0806;
-  --color-gr-accent-subtle: #1a2408;
-  --color-gr-danger: #ff7b72;
-  --color-gr-danger-subtle: #3d0f0f;
-  --color-gr-add-bg: #0f2c1d;
-  --color-gr-add-text: #56d364;
-  --color-gr-del-bg: #2d1416;
-  --color-gr-del-text: #ff7b72;
+  /* Surface ladder (dark → elevated) */
+  --color-background: #0d0806;
+  --color-surface: #110e0b;
+  --color-surface-raised: #16120f;
+  --color-surface-muted: #1c1814;
+
+  /* Text */
+  --color-foreground: #fefefe;
+  --color-muted: #fefefea1;
+  /* ≥ 4.5:1 on surface for normal text (line numbers, placeholders) */
+  --color-faint: #768088;
+
+  /* Borders ≥ 3:1 against background/surface for WCAG 1.4.11 UI contrast */
+  --color-border: #312d29;
+  --color-border-strong: #4a433c;
+
+  /* Brand (lime) */
+  --color-primary: #caff57;
+  --color-primary-hover: #b6e64e;
+  --color-primary-foreground: #0d0806;
+  --color-primary-muted: #1a2408;
+
+  /* Status */
+  --color-success: #3fb950;
+  --color-danger: #ff7b72;
+  --color-danger-muted: #3d0f0f;
+
+  /* Diff (overlay + illustrations) */
+  --color-diff-add-bg: #0f2c1d;
+  --color-diff-add: #56d364;
+  --color-diff-del-bg: #2d1416;
+  --color-diff-del: #ff7b72;
 
   /* highlight.js / syntax (consumed by SCSS) */
-  --color-gr-syntax-comment: #8b949e;
-  --color-gr-syntax-keyword: #ff7b72;
-  --color-gr-syntax-entity: #d2a8ff;
-  --color-gr-syntax-string: #a5d6ff;
-  --color-gr-syntax-variable: #ffa657;
-  --color-gr-syntax-constant: #79c0ff;
-  --color-gr-syntax-tag: #7ee787;
-  --color-gr-syntax-attr: #79c0ff;
-  --color-gr-syntax-meta: #8b949e;
-  --color-gr-syntax-deleted: #ffdcd7;
-  --color-gr-syntax-inserted: #aff5b4;
-
-  /* Options + marketing surfaces (dark-only) */
-  --color-opt-bg: var(--opt-bg);
-  --color-opt-subtle: var(--opt-subtle);
-  --color-opt-border: var(--opt-border);
-  --color-opt-text: var(--opt-text);
-  --color-opt-muted: var(--opt-muted);
-  --color-opt-accent: var(--opt-accent);
-  --color-opt-accent-hover: var(--opt-accent-hover);
-  --color-opt-accent-on: var(--opt-accent-on);
-  --color-opt-ok: var(--opt-ok);
-  --color-opt-error: var(--opt-error);
+  --color-syntax-comment: #8b949e;
+  --color-syntax-keyword: #ff7b72;
+  --color-syntax-entity: #d2a8ff;
+  --color-syntax-string: #a5d6ff;
+  --color-syntax-variable: #ffa657;
+  --color-syntax-constant: #79c0ff;
+  --color-syntax-tag: #7ee787;
+  --color-syntax-attr: #79c0ff;
+  --color-syntax-meta: #8b949e;
+  --color-syntax-deleted: #ffdcd7;
+  --color-syntax-inserted: #aff5b4;
 
   --font-sans:
     system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
@@ -83,20 +85,8 @@
   }
 }
 
-/* Options + marketing tokens (dark-only; referenced by @theme above) */
 :root {
   color-scheme: dark;
-  --opt-bg: #0d0806;
-  --opt-subtle: #16120f;
-  /* ≥ 3:1 against opt-bg for control borders (1.4.11) */
-  --opt-border: #312d29;
-  --opt-text: #fefefe;
-  --opt-muted: #fefefea1;
-  --opt-accent: #caff57;
-  --opt-accent-hover: #b6e64e;
-  --opt-accent-on: #0d0806;
-  --opt-ok: #3fb950;
-  --opt-error: #ff7b72;
 }
 
 /* WCAG 2.3.3 — respect reduced-motion preference (overlay + options import this file) */

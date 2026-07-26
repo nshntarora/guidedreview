@@ -52,7 +52,7 @@ export function ModalShell({
       <div
         ref={panelRef}
         className={cn(
-          "flex w-full flex-col rounded-lg border border-gr-border bg-gr-chrome shadow-xl",
+          "flex w-full flex-col rounded-lg border border-border bg-background shadow-xl",
           maxWidthClassName,
           panelClassName,
         )}

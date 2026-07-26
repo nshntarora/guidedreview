@@ -1,29 +1,19 @@
 import type { ComponentProps } from "react";
 import { cn } from "../cn";
-import type { Surface } from "../surface";
 
-export type KbdProps = ComponentProps<"kbd"> & {
-  /**
-   * Token set: `app` (options + marketing, opt-*) or `overlay` (dark review UI, gr-*).
-   * Defaults to `overlay` for back-compat with existing review UI usage.
-   */
-  surface?: Surface;
-};
+export type KbdProps = ComponentProps<"kbd">;
 
 /**
  * Keyboard key badge — mirrors shadcn/ui `Kbd`.
  * @see https://ui.shadcn.com/docs/components/kbd
  */
-function Kbd({ className, surface = "overlay", ...props }: KbdProps) {
+function Kbd({ className, ...props }: KbdProps) {
   return (
     <kbd
       data-slot="kbd"
       className={cn(
-        "pointer-events-none inline-flex h-5 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm border px-1 font-sans text-sm",
+        "pointer-events-none inline-flex h-5 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm border border-border bg-surface-muted px-1 font-sans text-sm text-muted",
         "[&_svg:not([class*='size-'])]:size-3 opacity-75",
-        surface === "app"
-          ? "border-opt-border bg-opt-subtle text-opt-muted"
-          : "border-gr-border bg-gr-subtle text-gr-muted",
         className,
       )}
       {...props}

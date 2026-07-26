@@ -19,12 +19,12 @@ export function TrustBand({ starCount }: TrustBandProps) {
         <h2 className="m-0 text-2xl font-bold tracking-tight sm:text-3xl font-brand">
           Your code never touches our infrastructure
         </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-lg text-opt-muted text-balance sm:text-xl">
+        <p className="mx-auto mt-4 max-w-2xl text-lg text-muted text-balance sm:text-xl">
           The extension talks directly to your AI provider and GitHub. We never see your diffs, your
           keys, or your code — because there&apos;s nothing on our end to see them with.
         </p>
 
-        <div className="mx-auto mt-10 flex items-center justify-center rounded-lg bg-opt-bg/60 p-6">
+        <div className="mx-auto mt-10 flex items-center justify-center rounded-lg bg-background/60 p-6">
           <NoBackendIllustration className="h-auto w-full max-w-[480px]" />
         </div>
 
@@ -33,7 +33,7 @@ export function TrustBand({ starCount }: TrustBandProps) {
             href={GITHUB_REPO_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-md border border-opt-border bg-opt-subtle/60 px-5 py-2.5 text-sm font-medium text-opt-text transition-colors hover:border-opt-accent/60 hover:bg-opt-subtle"
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-surface-raised/60 px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-primary/60 hover:bg-surface-raised"
           >
             <GitHubIcon className="h-4 w-4" />
             {starCount !== null ? (
@@ -44,7 +44,7 @@ export function TrustBand({ starCount }: TrustBandProps) {
           </a>
           <a
             href="/docs/configure-provider"
-            className="inline-flex items-center gap-2 rounded-md border border-opt-border bg-opt-subtle/60 px-5 py-2.5 text-sm font-medium text-opt-text transition-colors hover:border-opt-accent/60 hover:bg-opt-subtle"
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-surface-raised/60 px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-primary/60 hover:bg-surface-raised"
           >
             Bring your own LLM key
           </a>

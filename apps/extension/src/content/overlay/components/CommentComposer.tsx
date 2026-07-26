@@ -47,17 +47,16 @@ export function CommentComposer({
 
   return (
     <div
-      className="border border-gr-border bg-gr-chrome px-3 py-3"
+      className="border border-border bg-background px-3 py-3"
       data-testid="comment-composer"
       role="form"
       aria-label="Draft review comment"
     >
-      <div className="mb-2 font-mono text-sm text-gr-muted">
+      <div className="mb-2 font-mono text-sm text-muted">
         {formatLineRangeLabel(filePath, startLine, endLine)}
       </div>
       <Textarea
         ref={textareaRef}
-        surface="overlay"
         placeholder="Line comment (markdown supported)…"
         value={body}
         onChange={(e) => setBody(e.target.value)}
@@ -66,12 +65,11 @@ export function CommentComposer({
         data-testid="comment-composer-input"
       />
       <div className="mt-2 flex flex-wrap items-center justify-end gap-2">
-        <Button surface="overlay" variant="secondary" size="sm" onClick={onCancel}>
+        <Button variant="secondary" size="sm" onClick={onCancel}>
           Cancel
           <Kbd>Esc</Kbd>
         </Button>
         <Button
-          surface="overlay"
           size="sm"
           disabled={!canSave}
           onClick={() => {
