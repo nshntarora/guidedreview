@@ -1,0 +1,3 @@
+/* Tailwind must scan shared UI components (workspace package lives outside this app tree). */
+@source "../../../../packages/ui/src/**/*.{ts,tsx}";
+@import "@guided-review/ui/theme.css";

@@ -1,0 +1,106 @@
+/*
+ * Overlay stylesheet injected into the review Shadow DOM (?inline).
+ * Layout/colors live as Tailwind utilities on components; SCSS holds only
+ * styles that cannot be applied to markup we own.
+ *
+ * Layer order: `reset` must precede `theme` so `:host { all: initial }` does
+ * not clobber Tailwind design tokens (unlayered rules beat @layer theme).
+ * Host reset is pure CSS in this file (not SCSS): Sass was dropping nested
+ * @layer contents when the reset lived only in a partial.
+ *
+ * Tailwind v4 border/outline/ring/shadow utilities resolve style via CSS
+ * variables whose defaults come from `@property { initial-value }`. Browsers
+ * ignore `@property` when the rule lives only in a Shadow DOM stylesheet
+ * (tailwindlabs/tailwindcss#15005, #16025), so e.g. `--tw-border-style` is
+ * undefined and `border-style: var(--tw-border-style)` computes to `none` —
+ * 1px borders never paint. Mirror Tailwind's pre-@property `@layer properties`
+ * fallback on every element so those utilities work inside the overlay host.
+ */
+@layer reset, theme, base, components, utilities;
+
+/* Scan shared UI components (workspace package is outside this app tree / node_modules). */
+@source "../../../../../../packages/ui/src/**/*.{ts,tsx}";
+
+@layer reset {
+  :host {
+    all: initial;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    --tw-border-style: solid;
+    --tw-outline-style: solid;
+    --tw-space-y-reverse: 0;
+    --tw-shadow: 0 0 #0000;
+    --tw-shadow-alpha: 100%;
+    --tw-inset-shadow: 0 0 #0000;
+    --tw-inset-shadow-alpha: 100%;
+    --tw-ring-shadow: 0 0 #0000;
+    --tw-inset-ring-shadow: 0 0 #0000;
+    --tw-ring-offset-width: 0px;
+    --tw-ring-offset-color: #fff;
+    --tw-ring-offset-shadow: 0 0 #0000;
+    --tw-drop-shadow-alpha: 100%;
+  }
+}
+
+/* Prefer package export; relative fallback if ?inline fails to resolve workspace package. */
+@import "@guided-review/ui/theme.css";
+/* fallback: @import "../../../../../../packages/ui/src/styles/theme.css"; */
+@import "./_highlight.scss";
+@import "./_markdown.scss";
+@import "./_animations.scss";
+
+/*
+ * Visible focus for keyboard users (2.4.7). Prefer :focus-visible so mouse
+ * clicks do not show a ring. Accent meets ≥ 3:1 against dark surfaces.
+ *
+ * Scoped to interactive controls only — containers (dialog shell, main column,
+ * cards) may be programmatically focused for traps/scroll restore but must not
+ * draw a chrome ring. Lives in @layer base so Tailwind `outline-none` can
+ * still suppress the ring on widgets that use a custom focus style (e.g.
+ * listbox + option highlight, textareas with focus:border).
+ */
+:focus-visible {
+  outline: none;
+}
+
+@layer base {
+  :is(
+    a,
+    button,
+    input,
+    select,
+    textarea,
+    summary,
+    [role="button"],
+    [role="link"],
+    [role="menuitem"],
+    [role="option"],
+    [role="tab"],
+    [role="checkbox"],
+    [role="radio"],
+    [role="switch"],
+    [role="combobox"],
+    [contenteditable="true"],
+    [tabindex]:not([tabindex="-1"])
+  ):focus-visible {
+    outline: 2px solid var(--color-gr-accent, #caff57);
+    outline-offset: 2px;
+  }
+}
+
+/* Screen-reader-only utility (Tailwind sr-only may not always ship into the host) */
+.gr-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
