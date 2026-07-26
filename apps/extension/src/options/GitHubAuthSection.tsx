@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import type { GitHubPublicAuthState } from "../lib/types";
+import { GitHubLogo } from "../components/GitHubLogo";
 import { GITHUB_CLIENT_ID_ENV_VAR, isGitHubOAuthConfigured } from "../lib/github/oauthConfig";
 import { useCopyToClipboard } from "../lib/useCopyToClipboard";
 import { openVerificationUri, useGitHubDeviceAuth } from "../lib/github/useGitHubDeviceAuth";
 import { clearGitHubAuthSession, getGitHubAuthStatus } from "../lib/messaging";
 import { confirm, ConfirmationHost } from "../content/overlay/components/confirmation";
 import { Button, Spinner, cn } from "@guided-review/ui";
+import { SettingsCard } from "./SettingsCard";
 
 type SessionState =
   | { kind: "loading" }
@@ -97,17 +99,24 @@ export function GitHubAuthSection() {
   const showError = flow.kind === "error" ? flow.message : disconnectError;
 
   return (
-    <section className="mb-8 border-b border-opt-border pb-8" data-testid="github-auth-section">
-      <h2 className="mb-1.5 text-base font-semibold text-opt-text">GitHub Account</h2>
-      <p className="mb-4 text-base text-opt-muted">
-        Connect GitHub so Guided Review can submit reviews on your behalf. Uses device sign-in — no
-        password is stored. Token stays in this browser only.
-      </p>
-
+    <SettingsCard
+      title="GitHub Account"
+      titleId="github-heading"
+      icon={
+        <span
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gr-accent-subtle text-opt-accent"
+          aria-hidden="true"
+        >
+          <GitHubLogo size={18} data-testid="github-auth-logo" />
+        </span>
+      }
+      description="Connect GitHub so Guided Review can submit reviews on your behalf. Uses device sign-in — no password is stored. Token stays in this browser only."
+      data-testid="github-auth-section"
+    >
       {!configured && (
-        <p className="text-base text-opt-muted" role="status">
+        <p className="m-0 text-base text-opt-muted" role="status">
           GitHub connection isn’t configured in this build. Set{" "}
-          <code className="rounded bg-opt-subtle px-1 py-0.5 text-sm text-opt-text">
+          <code className="rounded bg-opt-bg/80 px-1 py-0.5 font-mono text-sm text-opt-text">
             {GITHUB_CLIENT_ID_ENV_VAR}
           </code>{" "}
           and rebuild.
@@ -115,7 +124,7 @@ export function GitHubAuthSection() {
       )}
 
       {configured && session.kind === "loading" && flow.kind === "idle" && !showError && (
-        <p className="flex items-center gap-2 text-base text-opt-muted" role="status">
+        <p className="m-0 flex items-center gap-2 text-base text-opt-muted" role="status">
           <Spinner surface="app" size={14} label="Loading GitHub connection" />
           Loading…
         </p>
@@ -141,7 +150,7 @@ export function GitHubAuthSection() {
         <div className="space-y-3" data-testid="github-auth-awaiting">
           <div className="flex flex-wrap items-center gap-2">
             <code
-              className="rounded-md border border-opt-border bg-opt-subtle px-3 py-2 font-mono text-lg tracking-widest text-opt-text"
+              className="rounded-md border border-opt-border bg-opt-bg/60 px-3 py-2 font-mono text-lg tracking-widest text-opt-text"
               data-testid="github-user-code"
             >
               {flow.userCode}
@@ -177,7 +186,7 @@ export function GitHubAuthSection() {
 
       {configured && session.kind === "connected" && flow.kind === "idle" && !showError && (
         <div
-          className="flex flex-wrap items-center justify-between gap-3"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-opt-border bg-opt-bg/60 p-3"
           data-testid="github-auth-connected"
         >
           <div className="flex min-w-0 items-center gap-3">
@@ -231,6 +240,6 @@ export function GitHubAuthSection() {
       )}
 
       <ConfirmationHost />
-    </section>
+    </SettingsCard>
   );
 }

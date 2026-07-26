@@ -47,14 +47,25 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
-      # Push to main: diff the tip commit against its parent so merge/squash
-      # deploys still see the right paths. PR: diff against the default branch.
+      # paths-filter cannot fetch relative refs like HEAD~1 (invalid refspec).
+      # Resolve push base to a real parent SHA after checkout; PRs use default branch.
+      - name: Resolve change-detection base
+        if: github.event_name == 'workflow_run'
+        id: paths_base
+        run: |
+          if [ "${{ github.event.workflow_run.event }}" = "push" ]; then
+            # Tip vs parent so merge/squash deploys still see the right paths.
+            echo "base=$(git rev-parse HEAD~1)" >> "$GITHUB_OUTPUT"
+          else
+            echo "base=${{ github.event.repository.default_branch }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: dorny/paths-filter@v4
         id: filter
         if: github.event_name == 'workflow_run'
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
-          base: ${{ github.event.workflow_run.event == 'push' && 'HEAD~1' || github.event.repository.default_branch }}
+          base: ${{ steps.paths_base.outputs.base }}
           filters: |
             web:
               - 'apps/web/**'
