@@ -1,3 +1,4 @@
+import { Kbd, KbdGroup } from "@guided-review/ui";
 import { ShortcutKeys, type ShortcutJoin } from "./ShortcutKeys";
 
 /**
@@ -43,13 +44,15 @@ function ShortcutRowKeys({ row }: { row: ShortcutRow }) {
   if ("chordWithAlternatives" in row) {
     const { modifier, alternatives } = row.chordWithAlternatives;
     return (
-      <span className="inline-flex items-center gap-1">
-        <ShortcutKeys keys={[modifier]} join="none" />
+      <KbdGroup>
+        <Kbd>{modifier}</Kbd>
         <span className="text-xs opacity-70" aria-hidden="true">
           +
         </span>
-        <ShortcutKeys keys={alternatives} join="none" />
-      </span>
+        {alternatives.map((key) => (
+          <Kbd key={key}>{key}</Kbd>
+        ))}
+      </KbdGroup>
     );
   }
   return <ShortcutKeys keys={row.keys} join={row.join} />;

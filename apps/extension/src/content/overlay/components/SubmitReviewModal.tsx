@@ -9,7 +9,7 @@ import {
 } from "react";
 import type { ReviewEvent, ReviewSubmission } from "../commentTypes";
 import { CloseButton } from "./CloseButton";
-import { Button, Kbd, Textarea } from "@guided-review/ui";
+import { Button, Kbd, KbdGroup, Textarea } from "@guided-review/ui";
 import { ModalShell } from "./ModalShell";
 import { ModEnterChord } from "./ShortcutKeys";
 
@@ -283,8 +283,10 @@ export function SubmitReviewModal({
               })}
             </div>
             <div className="flex items-center gap-2 text-sm text-gr-faint">
-              <Kbd>↑</Kbd>
-              <Kbd>↓</Kbd>
+              <KbdGroup>
+                <Kbd>↑</Kbd>
+                <Kbd>↓</Kbd>
+              </KbdGroup>
               <span>to choose</span>
               <span className="opacity-50">·</span>
               <Kbd>Enter</Kbd>

@@ -33,8 +33,8 @@ const appVariants: Record<ButtonVariant, string> = {
     "border-opt-accent bg-opt-accent font-semibold text-opt-accent-on",
     "not-disabled:hover:border-opt-accent-hover not-disabled:hover:bg-opt-accent-hover",
     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-opt-accent",
-    // Nested keyboard chords on accent fill need inverted kbd chrome.
-    "[&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit",
+    // Nested keyboard keys on accent fill need inverted kbd chrome.
+    "[&_[data-slot=kbd]]:bg-[rgba(13,8,6,0.12)] [&_[data-slot=kbd]]:text-inherit",
   ),
   secondary: cn(
     "border-opt-border bg-opt-subtle font-semibold text-opt-text",
@@ -58,8 +58,8 @@ const overlayVariants: Record<ButtonVariant, string> = {
     "border-gr-accent bg-gr-accent font-medium text-gr-accent-on",
     "not-disabled:hover:border-gr-accent-hover not-disabled:hover:bg-gr-accent-hover",
     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gr-accent",
-    // Nested keyboard chords on accent fill need inverted kbd chrome.
-    "[&_kbd]:border-[rgba(13,8,6,0.25)] [&_kbd]:bg-[rgba(13,8,6,0.08)] [&_kbd]:text-inherit",
+    // Nested keyboard keys on accent fill need inverted kbd chrome.
+    "[&_[data-slot=kbd]]:bg-[rgba(13,8,6,0.12)] [&_[data-slot=kbd]]:text-inherit",
   ),
   secondary: cn(
     "border-gr-border bg-gr-bg text-gr-muted",

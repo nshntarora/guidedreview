@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useSyncExternalStore } from "react";
-import { Kbd } from "@guided-review/ui";
+import { Kbd, KbdGroup } from "@guided-review/ui";
 import { isMacPlatform } from "../lib/platform";
 
 function subscribe() {
@@ -21,7 +21,7 @@ export function ShortcutChord({ keyLabel }: { keyLabel: string }) {
   const keys = [isMac ? "⌘" : "Ctrl", keyLabel.toUpperCase()];
 
   return (
-    <span className="inline-flex items-center gap-1" aria-hidden="true">
+    <KbdGroup aria-hidden="true">
       {keys.map((key, i) => (
         <Fragment key={`${key}-${i}`}>
           {i > 0 ? (
@@ -29,9 +29,9 @@ export function ShortcutChord({ keyLabel }: { keyLabel: string }) {
               +
             </span>
           ) : null}
-          <Kbd>{key}</Kbd>
+          <Kbd surface="app">{key}</Kbd>
         </Fragment>
       ))}
-    </span>
+    </KbdGroup>
   );
 }

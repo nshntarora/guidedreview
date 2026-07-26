@@ -12,7 +12,7 @@
   --color-gr-canvas: #16120f;
   --color-gr-subtle: #1c1814;
   /* Borders ≥ 3:1 against gr-bg/gr-chrome for WCAG 1.4.11 UI contrast */
-  --color-gr-border: #6b635a;
+  --color-gr-border: #312d29;
   --color-gr-border-muted: #4a433c;
   --color-gr-text: #fefefe;
   --color-gr-muted: #8b949e;
@@ -103,7 +103,7 @@
   :root {
     --opt-bg: #0d0806;
     --opt-subtle: #16120f;
-    --opt-border: #6b635a;
+    --opt-border: #312d29;
     --opt-text: #fefefe;
     --opt-muted: #8b949e;
     --opt-accent: #caff57;

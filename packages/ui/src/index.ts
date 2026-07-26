@@ -2,7 +2,8 @@ export { cn } from "./cn";
 export type { Surface } from "./surface";
 
 export { Spinner } from "./components/Spinner";
-export { Kbd } from "./components/Kbd";
+export { Kbd, KbdGroup } from "./components/Kbd";
+export type { KbdProps } from "./components/Kbd";
 export { BrandMark } from "./components/BrandMark";
 export type { BrandMarkProps } from "./components/BrandMark";
 
