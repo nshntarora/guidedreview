@@ -5,10 +5,56 @@ import { Callout } from "@/components/docs/Callout";
 import { CopyButton } from "@/components/docs/CopyButton";
 import { TocCard } from "@/components/docs/TocCard";
 
+/** Flatten heading children to plain text for slug generation. */
+function textFromChildren(children: ReactNode): string {
+  return Children.toArray(children)
+    .map((child) => {
+      if (typeof child === "string" || typeof child === "number") return String(child);
+      if (isValidElement<{ children?: ReactNode }>(child)) {
+        return textFromChildren(child.props.children);
+      }
+      return "";
+    })
+    .join("");
+}
+
+/**
+ * Stable heading ids for in-page TOC and cross-doc deep links.
+ * Keep in sync with `export const toc` ids in content/help/*.mdx.
+ */
+export function slugifyHeading(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[''`]/g, "")
+    .replace(/→/g, " to ")
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function Heading({
+  as: Tag,
+  children,
+  id,
+  ...props
+}: HTMLAttributes<HTMLHeadingElement> & { as: "h1" | "h2" | "h3" | "h4" }) {
+  const autoId = id ?? slugifyHeading(textFromChildren(children));
+  return (
+    <Tag id={autoId || undefined} {...props}>
+      {children}
+    </Tag>
+  );
+}
+
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
     ...components,
     TocCard,
+
+    h1: (props: HTMLAttributes<HTMLHeadingElement>) => <Heading as="h1" {...props} />,
+    h2: (props: HTMLAttributes<HTMLHeadingElement>) => <Heading as="h2" {...props} />,
+    h3: (props: HTMLAttributes<HTMLHeadingElement>) => <Heading as="h3" {...props} />,
+    h4: (props: HTMLAttributes<HTMLHeadingElement>) => <Heading as="h4" {...props} />,
 
     // Blockquotes become Note callouts by default
     blockquote: ({ children }: { children?: ReactNode }) => (

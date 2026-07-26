@@ -10,7 +10,7 @@ export const toc = [
 
 Move through a guided review without leaving the keyboard. Focus must not be in an editable field for most of these — when the comment composer is open, typing goes to the text field and only Esc / ⌘/Ctrl+Enter are intercepted.
 
-The overlay sidebar always lists the same shortcuts as the product.
+The overlay sidebar always lists the same shortcuts as the product. Hands-on walkthrough: [Your first review](/docs/first-review).
 
 <TocCard toc={toc} />
 
@@ -23,9 +23,9 @@ The overlay sidebar always lists the same shortcuts as the product.
 | `↑` / `↓` | Scroll the code pane |
 | `Esc` | Close the overlay (when not in comment mode or a modal) |
 | `c` | Enter [comment mode](/docs/leave-comments) (if the unit has selectable lines) |
-| `⌘/Ctrl` + `Enter` | Open [Submit review](/docs/submit-review) (or Connect GitHub if needed) |
+| `⌘/Ctrl` + `Enter` | Open [Submit review](/docs/submit-review) (or [Connect GitHub](/docs/connect-github) if needed) |
 
-While the overlay is open, keys are not passed through to GitHub’s page shortcuts.
+While the overlay is open, keys are not passed through to GitHub’s page shortcuts. What a “unit” is: [How a review plan works](/docs/how-it-works#review-units).
 
 ## Diff view
 
@@ -34,7 +34,7 @@ While the overlay is open, keys are not passed through to GitHub’s page shortc
 | `v` then `u` | Unified view |
 | `v` then `s` | Split view |
 
-Type `v`, then `u` or `s` within about a second. You can also toggle unified / split from the overlay toolbar.
+Type `v`, then `u` or `s` within about a second. You can also toggle unified / split from the overlay toolbar while [walking the plan](/docs/first-review#walk-the-plan).
 
 ## Comment mode
 
@@ -47,7 +47,7 @@ Type `v`, then `u` or `s` within about a second. You can also toggle unified / s
 | `Esc` | Close composer, or exit comment mode |
 | `←` / `→` | Previous / next unit (still works in comment mode) |
 
-Details and draft editing: [Leave line comments](/docs/leave-comments).
+Details and draft editing: [Leave line comments](/docs/leave-comments). Drafts stay local until submit: [Privacy & data](/docs/privacy-and-data#what-stays-local).
 
 ## Submit and modals
 
@@ -58,13 +58,15 @@ Details and draft editing: [Leave line comments](/docs/leave-comments).
 | `⌘/Ctrl` + `Enter` | Submit from the compose step |
 | `Enter` / `Esc` | Dismiss the post-submit success dialog and exit |
 
+Full submit flow: [Submit a review](/docs/submit-review). Auth gate: [Connect GitHub](/docs/connect-github). If submit fails: [Troubleshooting](/docs/troubleshooting#github-connect-and-submit).
+
 ## Marketing site
 
 On [guidedreview.com](https://guidedreview.com):
 
 | Shortcut | Action |
 | --- | --- |
-| `⌘/Ctrl` + `I` | Open install (Chrome Web Store) |
+| `⌘/Ctrl` + `I` | Open install (Chrome Web Store) — also [Install the extension](/docs/install) |
 | `⌘/Ctrl` + `G` | Open the GitHub repository |
 
 > **Tip.** Prefer keyboard navigation on large plans — it keeps attention on the unit narrative instead of hunting scroll position on the PR page.

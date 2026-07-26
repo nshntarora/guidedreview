@@ -6,7 +6,7 @@ export const toc = [
 
 # Install the extension
 
-Guided Review runs as a Chrome Manifest V3 extension. Install it once, then use it on any `github.com` pull request.
+Guided Review runs as a Chrome Manifest V3 extension. Install it once, then use it on any `github.com` pull request. For the “why” and product map, see the [Introduction](/docs).
 
 <TocCard toc={toc} />
 
@@ -16,7 +16,7 @@ Guided Review runs as a Chrome Manifest V3 extension. Install it once, then use 
 2. Click **Add to Chrome** and confirm.
 3. Pin the extension from the puzzle-piece menu if you want one-click access to options.
 
-> **Store ID placeholder.** If the store link still shows a placeholder ID, use the install button on [guidedreview.com](https://guidedreview.com) or install from source below.
+> **Store ID placeholder.** If the store link still shows a placeholder ID, use the install button on [guidedreview.com](https://guidedreview.com) or install from source below. Site shortcut: `⌘/Ctrl` + `I` — see [Keyboard shortcuts](/docs/keyboard-shortcuts#marketing-site).
 
 ## Load unpacked (development)
 
@@ -34,11 +34,13 @@ npm run build:extension
 4. Select **`apps/extension/dist`** — never a root-level `dist/` if one exists from an older layout.
 5. After code changes, run `npm run build:extension` again, then hit **Reload** on the extension card and refresh the GitHub PR tab.
 
-> **Dev HMR.** `npm run dev` / `npm run dev:extension` serves Vite HMR on port **5173**, but Chrome still loads the built files under `apps/extension/dist`. Rebuild (or rely on the dev pipeline that writes there) and reload the extension when behavior looks stale.
+> **Dev HMR.** `npm run dev` / `npm run dev:extension` serves Vite HMR on port **5173**, but Chrome still loads the built files under `apps/extension/dist`. Rebuild (or rely on the dev pipeline that writes there) and reload the extension when behavior looks stale. More on stale builds: [Troubleshooting](/docs/troubleshooting#load-unpacked-stale-build).
 
 ## After install
 
 1. Open the extension **Options** page (right-click the extension icon → Options, or open it from `chrome://extensions`).
 2. [Configure an AI provider](/docs/configure-provider) and save your API key.
-3. Optionally [connect GitHub](/docs/connect-github) if you want to submit reviews from the overlay.
+3. Optionally [connect GitHub](/docs/connect-github) if you want to [submit reviews](/docs/submit-review) from the overlay.
 4. Open a PR and follow [Your first review](/docs/first-review).
+
+Keys and tokens stay on your machine — details in [Privacy & data](/docs/privacy-and-data). If the **Start Guided Review** button never appears, see [Troubleshooting](/docs/troubleshooting#no-start-guided-review-button).

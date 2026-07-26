@@ -1,14 +1,14 @@
 export const toc = [
   { id: "diff-to-plan", label: "Diff → plan", level: 2 },
   { id: "review-units", label: "Review units", level: 2 },
-  { id: "chunking", label: "Chunking large PRs", level: 2 },
+  { id: "chunking-large-prs", label: "Chunking large PRs", level: 2 },
   { id: "streaming-and-validation", label: "Streaming and validation", level: 2 },
   { id: "what-the-model-must-not-invent", label: "What the model must not invent", level: 2 },
 ];
 
 # How a review plan works
 
-A short tour of the pipeline behind **Start Guided Review**.
+A short tour of the pipeline behind **Start Guided Review**. For the hands-on path, see [Your first review](/docs/first-review). Provider setup lives under [Configure AI provider](/docs/configure-provider).
 
 <TocCard toc={toc} />
 
@@ -16,23 +16,31 @@ A short tour of the pipeline behind **Start Guided Review**.
 
 1. **Parse** — The unified diff is parsed into files, hunks, and lines. Every hunk gets a stable id (`filePath#index`) that the model must reference exactly.
 2. **Prompt** — The parsed diff is rendered into LLM-readable text with hunk ids annotated.
-3. **Annotate** — The background worker streams a structured review plan from your provider.
+3. **Annotate** — The background worker streams a structured review plan from [your provider](/docs/configure-provider) (API key never leaves the worker for LLM calls — [privacy](/docs/privacy-and-data)).
 4. **Validate** — Each unit is cleaned against real file/hunk ids; hallucinated refs are dropped.
 5. **Display** — The overlay resolves unit refs back to the real diff for rendering.
+
+If annotation fails mid-stream, see [Troubleshooting → Plan generation fails](/docs/troubleshooting#plan-generation-fails).
 
 ## Review units
 
 A **review unit** is a logical step in the plan: a title, guidance text, and one or more hunk references. Units are ordered so reviewers typically see foundational pieces (schema, types, core logic) before call-sites and tests.
 
-The first display step is a synthetic **PR description** unit built from page context, then the model’s units.
+The first display step is a synthetic **PR description** unit built from page context, then the model’s units. You step through them with the footer or [keyboard shortcuts](/docs/keyboard-shortcuts).
+
+Summaries are optional guidance — you still judge the code ([FAQ](/docs/faq#does-the-ai-approve-prs)).
 
 ## Chunking large PRs
 
 Large diffs are split **by file** into chunks (~60k characters each). A single file’s hunks are never split across chunks. Each chunk is annotated separately; unit ids are namespaced so multi-chunk plans don’t collide, then merged for the final plan.
 
+That chunk size is why [model choice](/docs/configure-provider#pick-a-model) still matters on big PRs: each chunk is a full model call.
+
 ## Streaming and validation
 
 As text deltas arrive, complete units are extracted and validated. Progressive unit events update the overlay; a final done event carries the merged plan. Invalid structure or unknown hunk ids never reach the reviewer as broken links into missing code.
+
+[Line comments](/docs/leave-comments) always attach to the real diff lines shown for a unit — not to model-invented code.
 
 ## What the model must not invent
 
@@ -43,3 +51,5 @@ As text deltas arrive, complete units are extracted and validated. Progressive u
 | Grouping real hunks | Replacing real diff lines with model-generated code |
 
 If a unit only references invalid hunks after cleanup, it won’t be shown. That keeps the overlay honest even when the model is imperfect.
+
+**Next.** [Your first review](/docs/first-review) · [Leave line comments](/docs/leave-comments) · [Keyboard shortcuts](/docs/keyboard-shortcuts) · [Privacy & data](/docs/privacy-and-data)

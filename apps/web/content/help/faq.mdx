@@ -1,22 +1,22 @@
 export const toc = [
   { id: "how-does-it-work", label: "How does it work?", level: 2 },
   { id: "do-you-track-anything", label: "Do you track anything?", level: 2 },
-  { id: "is-it-free", label: "Is it free forever?", level: 2 },
-  { id: "does-ai-approve-prs", label: "Does the AI approve PRs?", level: 2 },
-  { id: "which-providers", label: "Which AI providers?", level: 2 },
+  { id: "is-it-free-forever", label: "Is it free forever?", level: 2 },
+  { id: "does-the-ai-approve-prs", label: "Does the AI approve PRs?", level: 2 },
+  { id: "which-ai-providers", label: "Which AI providers?", level: 2 },
   { id: "do-i-need-github-auth", label: "Do I need GitHub auth?", level: 2 },
   { id: "where-is-the-code", label: "Where is the code?", level: 2 },
 ];
 
 # FAQ
 
-Short answers to the questions people ask before and after install. Longer how-tos live in the rest of the docs.
+Short answers to the questions people ask before and after install. Longer how-tos live in the rest of the docs — start from the [Introduction](/docs) if you’re new.
 
 <TocCard toc={toc} />
 
 ## How does it work?
 
-Install the Chrome extension, open a GitHub PR, click **Start Guided Review**. The extension reads the PR diff, calls **your** AI provider for an ordered set of review units, and shows them in an overlay mapped back to the real hunks. You step through, comment, and optionally submit a review. More detail: [How a review plan works](/docs/how-it-works).
+[Install the Chrome extension](/docs/install), open a GitHub PR, click **Start Guided Review**. The extension reads the PR diff, calls **[your AI provider](/docs/configure-provider)** for an ordered set of review units, and shows them in an overlay mapped back to the real hunks. You step through ([first review](/docs/first-review)), [comment](/docs/leave-comments), and optionally [submit a review](/docs/submit-review). Pipeline detail: [How a review plan works](/docs/how-it-works). Keyboard-first path: [Keyboard shortcuts](/docs/keyboard-shortcuts).
 
 ## Do you track anything?
 
@@ -24,22 +24,22 @@ The **extension** does not track review activity and does not talk to Guided Rev
 
 ## Is it free forever?
 
-Forever is a long time. It’s free while it can be maintained for free. If demand grows and maintenance can’t stay free, something for compensation might show up later. It’s [open source](https://github.com/nshntarora/guidedreview) — you can fork it if you need to.
+Forever is a long time. It’s free while it can be maintained for free. If demand grows and maintenance can’t stay free, something for compensation might show up later. It’s [open source](https://github.com/nshntarora/guidedreview) — you can fork it if you need to. Getting set up costs only your own provider usage ([Configure AI provider](/docs/configure-provider)).
 
 ## Does the AI approve PRs?
 
-No. The model clusters and orders changes and writes short guidance. You read the code and you submit approve / comment / request changes. Take unit summaries with a grain of salt.
+No. The model clusters and orders changes and writes short guidance ([How a review plan works](/docs/how-it-works)). You read the code and you [submit](/docs/submit-review) approve / comment / request changes. Take unit summaries with a grain of salt.
 
 ## Which AI providers?
 
-Anthropic (Claude), OpenAI, and Grok (xAI). You bring your own API key. See [Configure AI provider](/docs/configure-provider).
+Anthropic (Claude), OpenAI, and Grok (xAI). You bring your own API key. Setup and model list: [Configure AI provider](/docs/configure-provider). Connection failures: [Troubleshooting](/docs/troubleshooting#provider-and-api-key).
 
 ## Do I need GitHub auth?
 
-Not to generate a plan or walk units. Yes, if you want to [submit a review](/docs/submit-review) (line comments and overall decision) from the overlay. See [Connect GitHub](/docs/connect-github).
+Not to generate a plan or walk units ([Your first review](/docs/first-review)). Yes, if you want to [submit a review](/docs/submit-review) (line comments and overall decision) from the overlay. [Drafting comments](/docs/leave-comments) works offline of GitHub auth. Scopes, SSO, and disconnect: [Connect GitHub](/docs/connect-github).
 
 ## Where is the code?
 
-[github.com/nshntarora/guidedreview](https://github.com/nshntarora/guidedreview) (Apache-2.0). Issues and PRs welcome when something’s wrong or unclear.
+[github.com/nshntarora/guidedreview](https://github.com/nshntarora/guidedreview) (Apache-2.0). Issues and PRs welcome when something’s wrong or unclear. Load-from-source: [Install → Load unpacked](/docs/install#load-unpacked-development).
 
-> **More setup help.** [Install](/docs/install) · [First review](/docs/first-review) · [Troubleshooting](/docs/troubleshooting)
+> **More setup help.** [Install](/docs/install) · [First review](/docs/first-review) · [Troubleshooting](/docs/troubleshooting) · [Privacy & data](/docs/privacy-and-data)

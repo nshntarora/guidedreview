@@ -7,7 +7,7 @@ export const toc = [
 
 # Privacy & data
 
-Guided Review is designed so the extension does not phone home. Your PR content goes to **your** AI provider and (optionally) **GitHub** — not to a Guided Review backend.
+Guided Review is designed so the extension does not phone home. Your PR content goes to **your** AI provider and (optionally) **GitHub** — not to a Guided Review backend. Short version also lives in the [FAQ](/docs/faq#do-you-track-anything).
 
 <TocCard toc={toc} />
 
@@ -15,19 +15,20 @@ Guided Review is designed so the extension does not phone home. Your PR content 
 
 | Destination | When | What |
 | --- | --- | --- |
-| **Your AI provider** | Starting / streaming a review | Prompt built from the PR diff + schema instructions; API key in the Authorization header |
-| **GitHub** | Diff fetch, device OAuth, submit review | Diff/patch URLs, OAuth device flow, review API payloads you initiate |
+| **Your AI provider** | Starting / streaming a review | Prompt built from the PR diff + schema instructions; API key in the Authorization header — [Configure AI provider](/docs/configure-provider), [How a review plan works](/docs/how-it-works) |
+| **GitHub** | Diff fetch, device OAuth, submit review | Diff/patch URLs, [OAuth device flow](/docs/connect-github#device-flow), [review API payloads](/docs/submit-review) you initiate |
 | **Guided Review servers** | — | **None** for extension product paths |
 
-The background service worker is the only context that holds the API key and performs cross-origin LLM requests.
+The background service worker is the only context that holds the API key and performs cross-origin LLM requests. Line-comment drafts are **not** sent until you explicitly [submit](/docs/submit-review).
 
 ## What stays local
 
-- Provider choice, model, and API key (`chrome.storage.local`)
-- Active review session: diff, plan, step index (`chrome.storage.session`, keyed by `owner/repo#number`)
-- Draft comments in the overlay until you submit
+- Provider choice, model, and API key (`chrome.storage.local`) — [Configure AI provider](/docs/configure-provider#where-settings-live)
+- Active review session: diff, plan, step index (`chrome.storage.session`, keyed by `owner/repo#number`) — [Resume later](/docs/first-review#resume-later)
+- [Draft comments](/docs/leave-comments) in the overlay until you submit
+- GitHub tokens after [Connect GitHub](/docs/connect-github), until you disconnect
 
-Closing the browser session clears session storage; local settings remain until you change or clear them.
+Closing the browser session clears session storage; local settings remain until you change or clear them. Session edge cases: [Troubleshooting](/docs/troubleshooting#session-and-resume).
 
 ## Website analytics
 
@@ -37,4 +38,4 @@ The **marketing site** may include anonymous analytics. That is separate from th
 
 Legal detail lives in the [Privacy Policy](/privacy), [Terms](/terms), and [Cookies](/cookies) pages. If something here conflicts with those documents, the legal pages win.
 
-> **Questions?** Email [support@guidedreview.com](mailto:support@guidedreview.com).
+> **Questions?** Email [support@guidedreview.com](mailto:support@guidedreview.com). Product questions: [FAQ](/docs/faq). Setup problems: [Troubleshooting](/docs/troubleshooting).

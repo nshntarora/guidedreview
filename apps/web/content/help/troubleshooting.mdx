@@ -1,5 +1,5 @@
 export const toc = [
-  { id: "no-start-button", label: "No Start Guided Review button", level: 2 },
+  { id: "no-start-guided-review-button", label: "No Start Guided Review button", level: 2 },
   { id: "provider-and-api-key", label: "Provider and API key", level: 2 },
   { id: "plan-generation-fails", label: "Plan generation fails", level: 2 },
   { id: "github-connect-and-submit", label: "GitHub connect and submit", level: 2 },
@@ -12,45 +12,47 @@ export const toc = [
 
 Straight fixes for the problems that show up most often. If something fails, read the message in Options or the overlay first — provider and GitHub errors are often already specific enough to act on.
 
+Concept overviews: [How a review plan works](/docs/how-it-works) · [FAQ](/docs/faq) · [Privacy & data](/docs/privacy-and-data).
+
 <TocCard toc={toc} />
 
 ## No Start Guided Review button
 
-1. Confirm the tab is a **pull request** URL on `github.com` (Conversation, Files changed, or Commits).
+1. Confirm the tab is a **pull request** URL on `github.com` (Conversation, Files changed, or Commits) — same as [Your first review](/docs/first-review#open-a-pull-request).
 2. Reload the page. SPA navigations from the PR list should still inject the button; a full reload clears stuck DOM.
 3. Check the extension is enabled and allowed on GitHub in `chrome://extensions`.
-4. If you loaded unpacked, confirm you selected **`apps/extension/dist`**, then **Reload** the extension and refresh the tab.
+4. If you loaded unpacked, confirm you selected **`apps/extension/dist`**, then **Reload** the extension and refresh the tab ([Install](/docs/install#load-unpacked-development)).
 
 ## Provider and API key
 
 | Symptom | What to try |
 | --- | --- |
 | Prompted for a key on start | Open Options → [configure a provider](/docs/configure-provider) → paste a valid key → Save |
-| **Test connection** fails | Wrong key or model, expired key, or network/VPN blocking the provider. Fix the key, pick a model your account can use, retry |
+| **Test connection** fails | Wrong key or model, expired key, or network/VPN blocking the provider. Fix the key, [pick a model](/docs/configure-provider#pick-a-model) your account can use, retry |
 | Auth / invalid key from the provider | Regenerate the key in the provider console; don’t paste org-restricted keys your seat can’t use |
 
-Keys live only in `chrome.storage.local` and leave the machine toward **your** provider when annotating — not toward Guided Review servers.
+Keys live only in `chrome.storage.local` and leave the machine toward **your** provider when annotating — not toward Guided Review servers ([Privacy & data](/docs/privacy-and-data#what-the-extension-sends)).
 
 ## Plan generation fails
 
-- **Mid-stream error** — Check the overlay message. Common causes: rate limits, insufficient quota, model unavailable, or a network blip. Wait and retry, or switch model/provider in Options.
-- **Empty or thin plan** — Very large or mostly binary PRs produce less useful structure. Chunking still runs by file; binary/elided files won’t get textual units.
-- **Lost connection to the worker** — Reload the extension and the PR tab, then start again.
+- **Mid-stream error** — Check the overlay message. Common causes: rate limits, insufficient quota, model unavailable, or a network blip. Wait and retry, or [switch model/provider](/docs/configure-provider) in Options.
+- **Empty or thin plan** — Very large or mostly binary PRs produce less useful structure. [Chunking](/docs/how-it-works#chunking-large-prs) still runs by file; binary/elided files won’t get textual units.
+- **Lost connection to the worker** — Reload the extension and the PR tab, then start again ([first review](/docs/first-review#start-guided-review)).
 
-The model only supplies order and commentary. If hunks don’t match the real diff, those refs are dropped rather than shown as broken code.
+The model only supplies order and commentary ([How a review plan works](/docs/how-it-works#what-the-model-must-not-invent)). If hunks don’t match the real diff, those refs are dropped rather than shown as broken code.
 
 ## GitHub connect and submit
 
 | Symptom | What to try |
 | --- | --- |
-| Device flow never completes | Finish the code at GitHub’s verification URL before it expires; don’t close Options mid-flow |
+| Device flow never completes | Finish the code at GitHub’s verification URL before it expires; don’t close Options mid-flow — [device flow steps](/docs/connect-github#device-flow) |
 | Org blocks the OAuth app | An org admin must approve the app, or complete the review on github.com |
-| Submit returns 401 / reconnect | Disconnect and connect again in Options so a fresh token is stored |
-| Submit returns 403 | Your user can’t review that PR, or the token lacks access |
-| Submit returns 404 | PR gone or inaccessible; for private org repos also check SSO (below) |
-| Submit returns 422 | Line comments no longer match the current diff — re-draft on the latest plan |
+| Submit returns 401 / reconnect | Disconnect and [connect again](/docs/connect-github) in Options so a fresh token is stored |
+| Submit returns 403 | Your user can’t review that PR, or the token lacks access ([scopes](/docs/connect-github#what-we-request)) |
+| Submit returns 404 | PR gone or inaccessible; for private org repos also check [SSO](#private-repos-and-sso) |
+| Submit returns 422 | Line comments no longer match the current diff — [re-draft](/docs/leave-comments#what-gets-posted) on the latest plan |
 
-See [Connect GitHub](/docs/connect-github) for scopes and disconnect.
+See [Connect GitHub](/docs/connect-github) for scopes and disconnect, and [Submit a review](/docs/submit-review) for the happy path.
 
 ## Private repos and SSO
 
@@ -58,13 +60,17 @@ See [Connect GitHub](/docs/connect-github) for scopes and disconnect.
 - Many orgs require **SSO authorization** on third-party tokens. If submit fails with not-found or access errors on a private org repo:
   1. Open GitHub → **Settings → Applications** (or the org’s SSO prompt).
   2. Authorize the Guided Review / OAuth token for that organization.
-  3. Retry submit, or reconnect GitHub in Options if needed.
+  3. Retry [submit](/docs/submit-review), or reconnect GitHub in Options if needed.
+
+Narrative version: [Connect GitHub → Private repos and org SSO](/docs/connect-github#private-repos-and-org-sso).
 
 ## Session and resume
 
-- Active plans live in `chrome.storage.session`, keyed by `owner/repo#number`. Switching Conversation ↔ Files changed should resume the same step.
-- Closing the browser (or ending the session) clears the plan. Settings and API keys in local storage remain.
-- Starting Guided Review again on the same PR after a clear rebuilds a **new** plan for the current diff.
+- Active plans live in `chrome.storage.session`, keyed by `owner/repo#number`. Switching Conversation ↔ Files changed should resume the same step ([Your first review → Resume later](/docs/first-review#resume-later)).
+- Closing the browser (or ending the session) clears the plan. Settings and API keys in local storage remain ([Privacy & data](/docs/privacy-and-data#what-stays-local)).
+- Starting Guided Review again on the same PR after a clear rebuilds a **new** plan for the current diff ([How a review plan works](/docs/how-it-works)).
+
+Draft comments are part of the same session until you [submit](/docs/submit-review) or discard them ([Leave line comments](/docs/leave-comments)).
 
 ## Load unpacked / stale build
 
@@ -74,6 +80,6 @@ If you develop from source:
 2. In `chrome://extensions`, hit **Reload** on the Guided Review card.
 3. Refresh the GitHub PR tab.
 
-Chrome loads **`apps/extension/dist`**, not a root-level `dist/`. A stale folder means you keep seeing old behavior even with `npm run dev` running.
+Chrome loads **`apps/extension/dist`**, not a root-level `dist/`. A stale folder means you keep seeing old behavior even with `npm run dev` running. Full install steps: [Install → Load unpacked](/docs/install#load-unpacked-development).
 
-> **Still stuck?** Open an issue on [GitHub](https://github.com/nshntarora/guidedreview) with the exact error text (redact keys and private URLs).
+> **Still stuck?** Open an issue on [GitHub](https://github.com/nshntarora/guidedreview) with the exact error text (redact keys and private URLs). Concept questions: [FAQ](/docs/faq).

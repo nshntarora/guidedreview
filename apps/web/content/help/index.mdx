@@ -15,11 +15,11 @@ Guided Review turns a GitHub pull request into an ordered walkthrough — schema
 Guided Review is a Chrome extension for GitHub pull requests. On a PR page it adds a **Start Guided Review** button. When you start a review, the extension:
 
 1. Reads the PR’s unified diff (fetched through the extension’s background worker)
-2. Sends that diff to **your** configured AI provider (Anthropic, OpenAI, or Grok)
-3. Turns the response into a sequence of **review units** — logical groups of hunks with short commentary
+2. Sends that diff to **[your configured AI provider](/docs/configure-provider)** (Anthropic, OpenAI, or Grok)
+3. Turns the response into a sequence of **[review units](/docs/how-it-works)** — logical groups of hunks with short commentary
 4. Shows those units in an overlay so you can step through the change set in a sensible order
 
-You stay on GitHub. Your API key stays in the extension. The model plans structure and commentary; the code you see always comes from the real parsed diff.
+You stay on GitHub. Your API key stays in the extension. The model plans structure and commentary; the code you see always comes from the real parsed diff. For what leaves your machine, see [Privacy & data](/docs/privacy-and-data).
 
 ## What you'll find here
 
@@ -52,5 +52,6 @@ You stay on GitHub. Your API key stays in the extension. The model plans structu
 2. Open the options page and [configure a provider](/docs/configure-provider).
 3. Open any GitHub pull request and click **Start Guided Review**.
 4. Step through the plan — see [Your first review](/docs/first-review) for details.
+5. Optionally [draft line comments](/docs/leave-comments) and [submit a review](/docs/submit-review) (needs [GitHub connected](/docs/connect-github)).
 
-> **Open source.** Guided Review is Apache-2.0. Source and issues live on [GitHub](https://github.com/nshntarora/guidedreview).
+> **Open source.** Guided Review is Apache-2.0. Source and issues live on [GitHub](https://github.com/nshntarora/guidedreview). Stuck? Start with the [FAQ](/docs/faq) or [Troubleshooting](/docs/troubleshooting).

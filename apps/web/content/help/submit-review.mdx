@@ -8,24 +8,26 @@ export const toc = [
 
 # Submit a review
 
-Post drafted line comments and an overall decision to the pull request through the GitHub API — without leaving the overlay.
+Post [drafted line comments](/docs/leave-comments) and an overall decision to the pull request through the GitHub API — without leaving the overlay.
 
-This path requires [GitHub connected](/docs/connect-github). Generating and walking a plan does **not**.
+This path requires [GitHub connected](/docs/connect-github). Generating and walking a plan does **not** — see [Your first review](/docs/first-review) and the [FAQ](/docs/faq#do-i-need-github-auth).
+
+The model never submits for you ([FAQ](/docs/faq#does-the-ai-approve-prs)).
 
 <TocCard toc={toc} />
 
 ## Before you submit
 
 1. Finish [walking the plan](/docs/first-review) and [draft any line comments](/docs/leave-comments) you want included.
-2. Confirm you’re signed into the extension with an account that can review that PR (collaborator / required reviewers, org SSO if applicable).
+2. Confirm you’re signed into the extension with an account that can review that PR (collaborator / required reviewers, [org SSO](/docs/connect-github#private-repos-and-org-sso) if applicable).
 3. Remember: you still have the final say. The model ordered the walkthrough; the approve / request-changes decision is yours.
 
 ## Open Submit review
 
-- Press `⌘/Ctrl` + `Enter` from navigate or comment mode (not while typing in the composer — there it saves the draft).
+- Press `⌘/Ctrl` + `Enter` from navigate or comment mode (not while typing in the composer — there it saves the draft). See [Keyboard shortcuts](/docs/keyboard-shortcuts#submit-and-modals).
 - Or use the **Submit review** control in the overlay.
 
-If GitHub isn’t connected, the **Connect GitHub** modal opens first. Complete device OAuth, then submit again.
+If GitHub isn’t connected, the **Connect GitHub** modal opens first. Complete [device OAuth](/docs/connect-github#device-flow), then submit again.
 
 ## Choose a review type
 
@@ -43,18 +45,20 @@ Use `↑` / `↓` to highlight a type and `Enter` to continue, or click.
 
 1. Optionally write a top-level review summary (required for Request Changes).
 2. Press `⌘/Ctrl` + `Enter` or click submit.
-3. The extension posts the review and all current drafts as line comments via your stored token.
+3. The extension posts the review and all current drafts as line comments via your stored token. What leaves the browser: [Privacy & data](/docs/privacy-and-data#what-the-extension-sends).
 
-Errors from GitHub (permissions, expired token, stale line anchors, SSO) surface in the modal with a short next step — see [Troubleshooting](/docs/troubleshooting).
+Errors from GitHub (permissions, expired token, stale line anchors, SSO) surface in the modal with a short next step — see [Troubleshooting → GitHub connect and submit](/docs/troubleshooting#github-connect-and-submit) and [Private repos and SSO](/docs/troubleshooting#private-repos-and-sso).
 
 ## After submit
 
 On success:
 
 1. Drafts for that submission are cleared.
-2. A short confirmation appears; `Enter` or `Esc` dismisses it and closes the guided review.
+2. A short confirmation appears; `Enter` or `Esc` dismisses it and closes the guided review ([shortcuts](/docs/keyboard-shortcuts#submit-and-modals)).
 3. You’re returned toward the PR conversation view so you can see the review on GitHub.
 
-You can start Guided Review again later if the PR gains new commits; that builds a new plan for the current diff.
+You can start Guided Review again later if the PR gains new commits; that builds a [new plan](/docs/how-it-works) for the current diff. Session storage limits: [Troubleshooting](/docs/troubleshooting#session-and-resume).
 
 > **Note.** Guided Review never auto-approves. Submit only runs when you confirm the dialog.
+
+**Next.** [Leave line comments](/docs/leave-comments) · [Connect GitHub](/docs/connect-github) · [Troubleshooting](/docs/troubleshooting)

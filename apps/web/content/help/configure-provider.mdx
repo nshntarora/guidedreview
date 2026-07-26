@@ -8,7 +8,9 @@ export const toc = [
 
 # Configure AI provider
 
-Guided Review calls **your** LLM account. There is no Guided Review cloud that holds your key or rewrites diffs for you.
+Guided Review calls **your** LLM account. There is no Guided Review cloud that holds your key or rewrites diffs for you. That design is spelled out in [Privacy & data](/docs/privacy-and-data).
+
+You need a provider before [your first review](/docs/first-review). GitHub auth is separate and only required to [submit a review](/docs/submit-review) — see [Connect GitHub](/docs/connect-github).
 
 <TocCard toc={toc} />
 
@@ -20,11 +22,13 @@ Guided Review calls **your** LLM account. There is no Guided Review cloud that h
 | **OpenAI** | OpenAI chat completions |
 | **Grok (xAI)** | xAI’s OpenAI-compatible API |
 
-OpenAI and Grok share the same client shape; Anthropic uses its own streaming endpoint. Structured output for the review plan is enforced with a shared JSON schema so behavior stays consistent across backends.
+OpenAI and Grok share the same client shape; Anthropic uses its own streaming endpoint. Structured output for the review plan is enforced with a shared JSON schema so behavior stays consistent across backends — see [How a review plan works](/docs/how-it-works).
+
+Also covered in the [FAQ](/docs/faq#which-ai-providers).
 
 ## Set your API key
 
-1. Open the extension **Options** page.
+1. Open the extension **Options** page (after [install](/docs/install)).
 2. Choose a provider.
 3. Paste an API key from that provider’s console.
 4. Save.
@@ -33,7 +37,7 @@ Keys are stored in `chrome.storage.local` and are only used from the **backgroun
 
 ## Pick a model
 
-Select a model available on your account. Prefer a model that handles long contexts well if you review large PRs — Guided Review chunks oversized diffs by file (~60k characters per chunk) so no single call is expected to swallow an entire monorepo change set, but each chunk still benefits from a capable model.
+Select a model available on your account. Prefer a model that handles long contexts well if you review large PRs — Guided Review [chunks oversized diffs by file](/docs/how-it-works#chunking-large-prs) (~60k characters per chunk) so no single call is expected to swallow an entire monorepo change set, but each chunk still benefits from a capable model.
 
 Models currently listed in Options (ids can change as providers ship or retire models):
 
@@ -49,6 +53,8 @@ If a stored model disappears from the catalog, Options falls back to that provid
 
 Use **Test connection** on the options page. That runs the same provider path as a lightweight health check and surfaces user-safe error messages if the key, model, or network path fails.
 
+If the test fails, step through [Troubleshooting → Provider and API key](/docs/troubleshooting#provider-and-api-key).
+
 ## Where settings live
 
 | Setting | Storage | Used by |
@@ -56,4 +62,8 @@ Use **Test connection** on the options page. That runs the same provider path as
 | Provider, model, API key | `chrome.storage.local` | Background worker |
 | Active review session | `chrome.storage.session` | Content overlay (session-scoped) |
 
+Session resume behavior: [Your first review → Resume later](/docs/first-review#resume-later) and [Troubleshooting](/docs/troubleshooting#session-and-resume).
+
 > **Billing.** Token usage and cost are entirely between you and your provider. Guided Review does not meter or resell LLM usage.
+
+**Next.** [Your first review](/docs/first-review) · [How a review plan works](/docs/how-it-works) · [Privacy & data](/docs/privacy-and-data)
