@@ -116,9 +116,9 @@ jobs:
           # Analytics is off unless ENABLED is exactly "true" and a key is set.
           # Add repo secrets/vars: NEXT_PUBLIC_ANALYTICS_KEY (and optionally the rest).
           # Production events go through the existing Worker at guidedreview.dev/i/*.
-          NEXT_PUBLIC_ANALYTICS_ENABLED: ${{ vars.NEXT_PUBLIC_ANALYTICS_ENABLED }}
+          NEXT_PUBLIC_ANALYTICS_ENABLED: ${{ secrets.NEXT_PUBLIC_ANALYTICS_ENABLED }}
           NEXT_PUBLIC_ANALYTICS_KEY: ${{ secrets.NEXT_PUBLIC_ANALYTICS_KEY }}
-          NEXT_PUBLIC_ANALYTICS_PROXY_PATH: ${{ vars.NEXT_PUBLIC_ANALYTICS_PROXY_PATH }}
+          NEXT_PUBLIC_ANALYTICS_PROXY_PATH: ${{ secrets.NEXT_PUBLIC_ANALYTICS_PROXY_PATH }}
         run: npm run build -w @guided-review/web
 
       - name: Deploy to Cloudflare Pages
