@@ -25,8 +25,8 @@ export function InstallCta() {
             <strong className="font-semibold text-foreground">Start Guided Review</strong> to begin.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <InstallButton />
-            <StarOnGitHubButton />
+            <InstallButton location="install_cta" />
+            <StarOnGitHubButton location="install_cta" />
           </div>
         </div>
       </WindowFrame>

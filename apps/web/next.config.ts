@@ -16,6 +16,25 @@ const nextConfig: NextConfig = {
   output: "export",
   // next/image optimizer needs a server; site uses plain <img> / public assets.
   images: { unoptimized: true },
+  // Dev-only reverse proxy for PostHog (matches production Worker at /i/*).
+  // Rewrites are not applied to the static export; production uses the
+  // Cloudflare Worker already routed on guidedreview.dev/i/*.
+  async rewrites() {
+    return [
+      {
+        source: "/i/static/:path*",
+        destination: "https://us-assets.i.posthog.com/static/:path*",
+      },
+      {
+        source: "/i/array/:path*",
+        destination: "https://us-assets.i.posthog.com/array/:path*",
+      },
+      {
+        source: "/i/:path*",
+        destination: "https://us.i.posthog.com/:path*",
+      },
+    ];
+  },
 };
 
 const withMDX = createMDX({});

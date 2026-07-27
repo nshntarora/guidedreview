@@ -45,6 +45,50 @@ Specs use port **4173** for the static server so they do not clash with `dev:web
 
 Uses `@guided-review/ui` via `transpilePackages` and Tailwind `@source` of `packages/ui` in `app/globals.css`.
 
+## Analytics
+
+Optional, **off by default**. When enabled, the site loads marketing web
+analytics (pageviews / pageleave only). Events are sent to a first-party path
+so ad blockers are less likely to drop them.
+
+| Variable                           | Default | Notes                                     |
+| ---------------------------------- | ------- | ----------------------------------------- |
+| `NEXT_PUBLIC_ANALYTICS_ENABLED`    | off     | Must be exactly `true` to enable          |
+| `NEXT_PUBLIC_ANALYTICS_KEY`        | empty   | Required when enabled                     |
+| `NEXT_PUBLIC_ANALYTICS_PROXY_PATH` | `/i`    | First-party proxy path used as `api_host` |
+
+**Production proxy:** Cloudflare Worker on `guidedreview.dev/i/*` (managed
+outside this package). The SDK uses `api_host: /i`; ingest does not go to the
+vendor hostname directly.
+
+**Local dev:** `next.config.ts` rewrites `/i/*` to the analytics ingest host.
+Those rewrites are not part of the static export.
+
+Enable locally:
+
+```bash
+# apps/web/.env.local (or monorepo root — Next loads apps/web)
+NEXT_PUBLIC_ANALYTICS_ENABLED=true
+NEXT_PUBLIC_ANALYTICS_KEY=phc_...
+```
+
+Code lives under `lib/analytics/` (client factory) and
+`components/analytics/` (React provider + pageviews).
+
+### Custom events
+
+Named events live in `lib/analytics/events.ts`. CTA buttons accept a required
+`location` and optional `eventProperties` object:
+
+| Event                     | When                             |
+| ------------------------- | -------------------------------- |
+| `install_extension_click` | Install CTA click or ⌘/Ctrl+I    |
+| `github_star_click`       | Star on GitHub click or ⌘/Ctrl+G |
+
+Every CTA event includes at least `{ location, method, href, … }`. Known
+locations: `header`, `hero`, `install_cta`, `keyboard`. Extra fields go via
+`eventProperties` on the button props.
+
 ## Hosting
 
 **Cloudflare Pages** via GitHub Actions (`.github/workflows/deploy.yml`).
@@ -66,10 +110,18 @@ via manual `workflow_dispatch`). PR and non-main test runs never deploy.
 
 **GitHub secrets** (repo → Settings → Secrets and variables → Actions):
 
-| Secret                  | Value                                              |
-| ----------------------- | -------------------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`  | Account API token with **Cloudflare Pages → Edit** |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID                              |
+| Secret                      | Value                                              |
+| --------------------------- | -------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`      | Account API token with **Cloudflare Pages → Edit** |
+| `CLOUDFLARE_ACCOUNT_ID`     | Cloudflare account ID                              |
+| `NEXT_PUBLIC_ANALYTICS_KEY` | (optional) Project key when analytics is on        |
+
+**GitHub variables** (optional; analytics stays off until set):
+
+| Variable                           | Example |
+| ---------------------------------- | ------- |
+| `NEXT_PUBLIC_ANALYTICS_ENABLED`    | `true`  |
+| `NEXT_PUBLIC_ANALYTICS_PROXY_PATH` | `/i`    |
 
 Pages **project name** is `guidedreview` (set via `--project-name` in the
 workflow and package scripts). First deploy creates the project if it does not

@@ -33,8 +33,8 @@ export function Hero() {
           className="gr-rise-in mt-10 flex flex-wrap items-center justify-center gap-3"
           style={riseDelay(0.3)}
         >
-          <InstallButton />
-          <StarOnGitHubButton />
+          <InstallButton location="hero" />
+          <StarOnGitHubButton location="hero" />
         </div>
         <p className="gr-rise-in mt-4 font-mono text-xs text-muted" style={riseDelay(0.35)}>
           Free · Open source · Bring your own LLM key
