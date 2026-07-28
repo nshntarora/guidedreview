@@ -1,5 +1,9 @@
 import { WindowFrame } from "./WindowFrame";
 
+const X_PROFILE_URL = "https://x.com/nshntarora";
+const MITCHELL_TWEET_URL = "https://x.com/mitchellh/status/2072738025344565262";
+const MITCHELL_TWEET_IMG = "/mitchell-hashimoto-tweet.png";
+
 export function Why() {
   return (
     <section id="why" className="relative px-4 py-16 sm:px-6 sm:py-28">
@@ -16,31 +20,83 @@ export function Why() {
         <WindowFrame label="why.md" className="mt-10">
           <div className="grid gap-8 font-serif text-lg leading-relaxed text-muted sm:grid-cols-2 sm:gap-10 sm:text-xl">
             <div className="space-y-4">
+              <p>AI agents are writing code for you, and you have PRs pending your review.</p>
               <p>
-                AI agents are writing code for you, and you have PRs pending your review. When you
-                installed the new hot code review agent on GitHub, you imagined it would make the
-                job easy. You&apos;d click &quot;approve&quot; and move on to the next PR.
+                When you installed the hot new code review agent, you imagined it would make the job
+                easy. You&apos;d click &quot;approve&quot; and move on to the next PR.
+              </p>
+              <p>I wish it were true.</p>
+              <p>
+                Unfortunately,{" "}
+                <strong className="font-semibold text-foreground">
+                  code review agents are not a replacement for you
+                </strong>{" "}
+                (your job is safe, yay?).
               </p>
               <p>
-                Unfortunately, agents writing code and agents reviewing code are not a replacement
-                for you (congrats, your job is safe). You have more context. You know people,
-                business, and the product better than your coding agent.
+                They&apos;re very useful for finding bugs and edge cases you&apos;ve missed, but
+                they lack something only you have —{" "}
+                <em className="italic text-foreground">&quot;taste.&quot;</em>
               </p>
               <p>
-                End of the day, you are still going to have to read the code. You are still going to
-                have to understand it, and then you have the final say.
-              </p>
-              <p className="italic">
-                But... it&apos;s just too much code, and it&apos;s hard to review code.
+                You have more context. You know the people, the business, and the product better
+                than any coding agent. You know when an abstraction is unnecessary. You know what
+                needs a comment. You know where to break the rules.
               </p>
             </div>
             <div className="space-y-4">
-              <p>What if we used AI to help us review code, and not review it for us?</p>
-              <p>
-                That&apos;s why I built Guided Review. It&apos;s an experience designed for humans,
-                that uses AI in just the right places (not too little, not too much).
+              <p className="font-semibold text-foreground">
+                Nothing beats &quot;reading&quot; the code.
               </p>
-              <p>Reading the code matters more than ever now that you didn&apos;t write it.</p>
+              <figure className="max-w-sm">
+                <a
+                  href={MITCHELL_TWEET_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block overflow-hidden rounded-lg border border-border shadow-[0_1px_0_rgba(0,0,0,0.02)] transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
+                  <img
+                    src={MITCHELL_TWEET_IMG}
+                    alt='Mitchell Hashimoto (@mitchellh) on X: "I read the code"'
+                    width={352}
+                    height={135}
+                    className="block h-auto w-full"
+                    decoding="async"
+                    loading="lazy"
+                  />
+                </a>
+                <figcaption className="mt-2 font-mono text-xs leading-relaxed text-muted">
+                  Mitchell Hashimoto, saying the quiet part out loud.{" "}
+                  <a
+                    href={MITCHELL_TWEET_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline-offset-4 transition-colors hover:underline"
+                  >
+                    Source
+                  </a>
+                </figcaption>
+              </figure>
+              <p>
+                AI has made writing code too easy. It&apos;s time we used it to make reading code
+                easy too. We need an experience designed for humans — not to avoid AI, but to use it
+                in just the right places (not too little, not too much).
+              </p>
+              <p>
+                Reading the code matters more now because humans aren&apos;t writing it anymore.
+              </p>
+              <p>That&apos;s why I built Guided Review.</p>
+              <p className="pt-2 text-right">
+                —{" "}
+                <a
+                  href={X_PROFILE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline-offset-4 transition-colors hover:underline"
+                >
+                  @nshntarora
+                </a>
+              </p>
             </div>
           </div>
         </WindowFrame>
