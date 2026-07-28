@@ -109,7 +109,6 @@ export function DiffSearch({
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
   const listboxId = useId();
   const labelId = useId();
 
@@ -159,20 +158,6 @@ export function DiffSearch({
     const option = list.querySelector<HTMLElement>(`[data-search-index="${activeIndex}"]`);
     option?.scrollIntoView({ block: "nearest" });
   }, [open, activeIndex, results.length]);
-
-  // Click outside the panel closes search.
-  useEffect(() => {
-    if (!open) return;
-    function onPointerDown(event: MouseEvent) {
-      const panel = panelRef.current;
-      if (!panel) return;
-      const path = event.composedPath();
-      if (!path.includes(panel)) onClose();
-    }
-    // Bubble phase so the search option's own click runs first.
-    window.addEventListener("mousedown", onPointerDown);
-    return () => window.removeEventListener("mousedown", onPointerDown);
-  }, [open, onClose]);
 
   // Register capture-phase actions for the overlay keyboard hook.
   useEffect(() => {
@@ -261,112 +246,120 @@ export function DiffSearch({
   const activeOptionId = results.length > 0 ? `${listboxId}-option-${activeIndex}` : undefined;
 
   return (
-    <div
-      className="pointer-events-none absolute inset-x-0 top-0 z-[60] flex justify-center px-6 pt-12"
-      data-testid="diff-search-root"
-    >
+    <div className="absolute inset-0 z-[60]" data-testid="diff-search-root">
+      {/* Dim + blur the review UI so the palette keeps focus. */}
       <div
-        ref={panelRef}
-        className="pointer-events-auto w-full max-w-3xl overflow-hidden rounded-xl border border-border-strong bg-background shadow-2xl"
-        data-testid="diff-search"
-        role="presentation"
-      >
-        <div className="border-b border-border px-4 py-3.5">
-          <label id={labelId} className="gr-sr-only" htmlFor={`${listboxId}-input`}>
-            Search files and code in this pull request
-          </label>
-          <Input
-            ref={inputRef}
-            id={`${listboxId}-input`}
-            type="search"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setActiveIndex(0);
-            }}
-            onKeyDown={onInputKeyDown}
-            placeholder="Search files and code…"
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck={false}
-            role="combobox"
-            aria-autocomplete="list"
-            aria-expanded={true}
-            aria-controls={listboxId}
-            aria-activedescendant={activeOptionId}
-            aria-labelledby={labelId}
-            data-testid="diff-search-input"
-            className="border-border-strong bg-surface-raised px-3.5 py-2.5 font-mono text-base"
-          />
-          <div
-            className="mt-2 flex items-center justify-between text-sm text-muted"
-            data-testid="diff-search-meta"
-            aria-live="polite"
-          >
-            <span>
-              {query.trim()
-                ? results.length === 0
-                  ? "No matches"
-                  : `${results.length} match${results.length === 1 ? "" : "es"}`
-                : "Search files and code in this PR"}
-            </span>
-            <span className="text-faint" aria-hidden="true">
-              ↑↓ navigate · Enter open · Esc close
-            </span>
+        className="absolute inset-0 bg-background/70 backdrop-blur-[2px]"
+        data-testid="diff-search-backdrop"
+        aria-hidden="true"
+        onMouseDown={(e) => {
+          // mousedown (not click) so dismiss runs before the input blurs awkwardly.
+          if (e.button === 0) onClose();
+        }}
+      />
+      <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center px-6 pt-12">
+        <div
+          className="pointer-events-auto relative w-full max-w-3xl overflow-hidden rounded-xl border border-border-strong bg-background shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
+          data-testid="diff-search"
+          role="presentation"
+        >
+          <div className="border-b border-border px-4 py-3.5">
+            <label id={labelId} className="gr-sr-only" htmlFor={`${listboxId}-input`}>
+              Search files and code in this pull request
+            </label>
+            <Input
+              ref={inputRef}
+              id={`${listboxId}-input`}
+              type="search"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setActiveIndex(0);
+              }}
+              onKeyDown={onInputKeyDown}
+              placeholder="Search files and code…"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={true}
+              aria-controls={listboxId}
+              aria-activedescendant={activeOptionId}
+              aria-labelledby={labelId}
+              data-testid="diff-search-input"
+              className="border-border-strong bg-surface-raised px-3.5 py-2.5 font-mono text-base"
+            />
+            <div
+              className="mt-2 flex items-center justify-between text-sm text-muted"
+              data-testid="diff-search-meta"
+              aria-live="polite"
+            >
+              <span>
+                {query.trim()
+                  ? results.length === 0
+                    ? "No matches"
+                    : `${results.length} match${results.length === 1 ? "" : "es"}`
+                  : "Search files and code in this PR"}
+              </span>
+              <span className="text-faint" aria-hidden="true">
+                ↑↓ navigate · Enter open · Esc close
+              </span>
+            </div>
           </div>
-        </div>
 
-        {query.trim() && results.length > 0 ? (
-          <ul
-            ref={listRef}
-            id={listboxId}
-            role="listbox"
-            aria-label="Search results"
-            className="m-0 max-h-[min(28rem,55vh)] list-none overflow-y-auto p-2"
-            data-testid="diff-search-results"
-          >
-            {results.map((result, index) => {
-              const isActive = index === activeIndex;
-              const pathRanges = rangesForField(result, "path", result.filePath, query);
+          {query.trim() && results.length > 0 ? (
+            <ul
+              ref={listRef}
+              id={listboxId}
+              role="listbox"
+              aria-label="Search results"
+              className="m-0 max-h-[min(28rem,55vh)] list-none overflow-y-auto p-2"
+              data-testid="diff-search-results"
+            >
+              {results.map((result, index) => {
+                const isActive = index === activeIndex;
+                const pathRanges = rangesForField(result, "path", result.filePath, query);
 
-              return (
-                <li
-                  key={result.id}
-                  id={`${listboxId}-option-${index}`}
-                  role="option"
-                  aria-selected={isActive}
-                  data-search-index={index}
-                  data-testid={
-                    result.kind === "file" ? "diff-search-result-file" : "diff-search-result-line"
-                  }
-                  className={cn(
-                    "cursor-pointer rounded-lg px-3 py-2.5",
-                    isActive ? "bg-primary-muted" : "hover:bg-surface-raised",
-                  )}
-                  onMouseEnter={() => setActiveIndex(index)}
-                  onMouseDown={(e) => {
-                    // Prevent input blur before click registers.
-                    e.preventDefault();
-                  }}
-                  onClick={() => selectIndex(index)}
-                >
-                  <div
-                    className="truncate font-mono text-base text-foreground"
-                    title={result.filePath}
+                return (
+                  <li
+                    key={result.id}
+                    id={`${listboxId}-option-${index}`}
+                    role="option"
+                    aria-selected={isActive}
+                    data-search-index={index}
+                    data-testid={
+                      result.kind === "file" ? "diff-search-result-file" : "diff-search-result-line"
+                    }
+                    className={cn(
+                      "cursor-pointer rounded-lg px-3 py-2.5",
+                      isActive ? "bg-primary-muted" : "hover:bg-surface-raised",
+                    )}
+                    onMouseEnter={() => setActiveIndex(index)}
+                    onMouseDown={(e) => {
+                      // Prevent input blur before click registers.
+                      e.preventDefault();
+                    }}
+                    onClick={() => selectIndex(index)}
                   >
-                    <HighlightedText text={result.filePath} ranges={pathRanges} />
-                  </div>
+                    <div
+                      className="truncate font-mono text-base text-foreground"
+                      title={result.filePath}
+                    >
+                      <HighlightedText text={result.filePath} ranges={pathRanges} />
+                    </div>
 
-                  {result.kind === "file" ? (
-                    <div className="mt-1 text-sm text-muted">File name match</div>
-                  ) : (
-                    <LineResultPreview result={result} docs={docs} query={query} />
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        ) : null}
+                    {result.kind === "file" ? (
+                      <div className="mt-1 text-sm text-muted">File name match</div>
+                    ) : (
+                      <LineResultPreview result={result} docs={docs} query={query} />
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+        </div>
       </div>
     </div>
   );

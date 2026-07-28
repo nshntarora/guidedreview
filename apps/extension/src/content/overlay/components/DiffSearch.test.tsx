@@ -75,6 +75,21 @@ describe("DiffSearch", () => {
     await waitFor(() => expect(input).toHaveFocus());
   });
 
+  it("renders a backdrop that dismisses search on mousedown", () => {
+    render(<DiffSearch open={true} diff={sampleDiff()} onClose={onClose} onSelect={onSelect} />);
+    const backdrop = screen.getByTestId("diff-search-backdrop");
+    expect(backdrop).toBeInTheDocument();
+    fireEvent.mouseDown(backdrop);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not dismiss when interacting with the panel", async () => {
+    const user = userEvent.setup();
+    render(<DiffSearch open={true} diff={sampleDiff()} onClose={onClose} onSelect={onSelect} />);
+    await user.click(screen.getByTestId("diff-search-input"));
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it("filters results as the user types", async () => {
     const user = userEvent.setup();
     render(<DiffSearch open={true} diff={sampleDiff()} onClose={onClose} onSelect={onSelect} />);
