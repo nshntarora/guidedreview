@@ -58,13 +58,14 @@ const faqs: Faq[] = [
     question: "So you don't track anything at all?",
     answer: [
       <>
-        Yes. There&apos;s an anonymous analytics script on this website, and that&apos;s it. The
-        extension doesn&apos;t track anything and doesn&apos;t talk to any third-party servers other
-        than <FaqLink href="https://github.com">GitHub</FaqLink> and your AI provider.
+        Almost. This marketing site may use PostHog for page views and a few CTA clicks when
+        analytics is enabled. That&apos;s it. The extension doesn&apos;t track anything and
+        doesn&apos;t talk to any third-party servers other than{" "}
+        <FaqLink href="https://github.com">GitHub</FaqLink> and your AI provider.
       </>,
     ],
     plainAnswer:
-      "Yes. There's an anonymous analytics script on this website, and that's it. The extension doesn't track anything and doesn't talk to any third-party servers other than GitHub and your AI provider.",
+      "Almost. This marketing site may use PostHog for page views and a few CTA clicks when analytics is enabled. That's it. The extension doesn't track anything and doesn't talk to any third-party servers other than GitHub and your AI provider.",
   },
   {
     question: "Is it free forever?",

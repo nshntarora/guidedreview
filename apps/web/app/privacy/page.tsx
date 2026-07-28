@@ -136,11 +136,17 @@ export default function PrivacyPage() {
         </p>
         <p>
           <strong>Log Data and Website analytics</strong> — When you visit the Website, our hosting
-          infrastructure or browsers may automatically record technical information such as IP
-          address, browser type, referring page, pages visited, and similar log data. We may also
-          use anonymous analytics on the Website to understand aggregate traffic and improve the
-          site. The Extension is not designed to send analytics or usage telemetry to us; it
-          communicates with GitHub and your configured LLM Provider as described above. See our{" "}
+          provider (Cloudflare) or your browser may process technical information such as IP
+          address, browser type, referring page, pages visited, and similar log or request data
+          needed to serve and secure the site. When Website analytics is enabled for a deployment,
+          we also use <a href="https://posthog.com">PostHog</a> on the marketing site to understand
+          traffic and improve content. Events may include page views, page leave, and selected
+          marketing CTA clicks (for example install-extension or star-on-GitHub). Analytics requests
+          are sent via a first-party path on our domain and forwarded to PostHog; they are not used
+          to track Extension usage inside GitHub. Analytics is optional and fail-closed (it only
+          loads when we enable it at build time). The Extension is not designed to send analytics or
+          usage telemetry to us; it communicates with GitHub and your configured LLM Provider as
+          described above. See our{" "}
           <a href="https://guidedreview.dev/cookies">Cookies Policy</a> for more detail.
         </p>
         <p>
@@ -154,9 +160,10 @@ export default function PrivacyPage() {
       <section>
         <h2>3. Cookies</h2>
         <p>
-          The Website may use cookies and similar technologies, including for anonymous analytics
-          and essential site operation. You may choose to disable cookies through your browser
-          settings. For more information, please refer to our Cookies Policy at{" "}
+          The Website may use cookies and similar technologies (including local storage) for
+          essential site operation and, when enabled, for PostHog marketing analytics as described
+          in Section 2 and our Cookies Policy. You may choose to disable cookies or clear site data
+          through your browser settings. For more information, please refer to our Cookies Policy at{" "}
           <a href="https://guidedreview.dev/cookies">guidedreview.dev/cookies</a>. The Extension
           primarily uses browser extension storage rather than website cookies for its settings and
           session data.
@@ -182,7 +189,7 @@ export default function PrivacyPage() {
           <li>to operate, maintain, and improve the Website and Services;</li>
           <li>
             for creation or development of business intelligence or data analytics in relation to
-            Website traffic (in aggregate or anonymous form where applicable);
+            Website traffic (including via PostHog when analytics is enabled);
           </li>
           <li>to manage our relationship with you;</li>
           <li>for internal record keeping; and</li>
@@ -207,9 +214,11 @@ export default function PrivacyPage() {
         </p>
         <p>
           <strong>Service Providers</strong> — We may share Personal Information with service
-          providers who work with us in connection with operating the Website (for example hosting
-          or anonymous analytics providers). All such service providers are subject to
-          confidentiality restrictions consistent with this Privacy Policy.
+          providers who work with us in connection with operating the Website. Current examples
+          include Cloudflare (hosting, CDN, and the first-party analytics proxy path) and, when
+          Website analytics is enabled, PostHog (marketing-site analytics). All such service
+          providers are subject to confidentiality restrictions consistent with this Privacy Policy
+          and process data under their own terms and privacy policies as applicable.
         </p>
         <p>
           <strong>LLM Providers and GitHub (your choices)</strong> — When you use the Extension,
@@ -303,10 +312,12 @@ export default function PrivacyPage() {
         </p>
         <p>
           <strong>Cross-border transfers</strong> — Personal Information of EU and UK residents may
-          be processed outside the EU and UK (including by hosting or analytics providers, or by LLM
-          Providers you choose). We collect and transfer Personal Information we control in
-          accordance with applicable law. If you have questions, please contact{" "}
-          <a href="mailto:support@guidedreview.dev">support@guidedreview.dev</a>.
+          be processed outside the EU and UK. In particular, Website hosting and edge infrastructure
+          may be provided by Cloudflare, and Website analytics (when enabled) is processed by
+          PostHog (including infrastructure in the United States). LLM Providers you configure may
+          also process data outside the EU and UK under their own policies. We collect and transfer
+          Personal Information we control in accordance with applicable law. If you have questions,
+          please contact <a href="mailto:support@guidedreview.dev">support@guidedreview.dev</a>.
         </p>
         <p>
           <strong>Your rights (EU and UK residents)</strong> — In addition to the rights described
