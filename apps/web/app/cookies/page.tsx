@@ -35,9 +35,8 @@ export default function CookiesPage() {
         </p>
         <p>
           This Policy applies to the Website. The Guided Review Chrome extension primarily uses
-          browser extension storage (for example Chrome storage) for settings and review sessions
-          rather than Website cookies. The Extension is not designed to set analytics cookies or
-          send usage telemetry to us.
+          browser extension storage for settings and review sessions rather than Website cookies.
+          The Extension is not designed to set analytics cookies or send usage telemetry to us.
         </p>
       </section>
 
@@ -69,56 +68,40 @@ export default function CookiesPage() {
         </p>
         <p>
           <strong>Third-party cookies</strong> — Set by a domain other than the Website you are
-          visiting. Our marketing analytics (when enabled) is loaded so that browser requests go to
-          a first-party path on our domain rather than directly to a third-party analytics hostname.
+          visiting. Where we use analytics, we aim to do so in a manner that limits unnecessary
+          third-party tracking on the Website.
         </p>
       </section>
 
       <section>
         <h2>How we use cookies on the Website</h2>
-        <p>
-          We aim to keep Website tracking minimal. Depending on deployment configuration, the
-          Website may use:
-        </p>
+        <p>We aim to keep Website tracking minimal. The Website uses:</p>
         <h3>Essential / functional</h3>
         <p>
           Cookies or similar storage that are necessary for the Website to function securely and
-          correctly (for example CDN or hosting security headers, load balancing, or basic
-          preferences). These are typically first-party and are not used for advertising.
+          correctly (for example security, load balancing, or basic preferences). These are
+          typically first-party and are not used for advertising.
         </p>
-        <h3>Website analytics (PostHog)</h3>
+        <h3>Website analytics</h3>
         <p>
-          When analytics is enabled for a given deployment, we use{" "}
-          <a href="https://posthog.com">PostHog</a> to understand how the marketing site is used so
-          we can improve content, layout, and calls to action. Analytics is optional and
-          fail-closed: it only loads when we explicitly enable it and provide a project key at build
-          time. If analytics is not enabled, the PostHog script is not loaded.
-        </p>
-        <p>
-          <strong>What we capture when analytics is on</strong> — Page views and page leave on the
-          Website; selected marketing CTA clicks (for example install-extension and star-on-GitHub
-          buttons, with coarse placement metadata such as header or hero). We configure PostHog
-          without session recording and without automatic click/form autocapture. We do not use
-          Website analytics to track Extension usage inside GitHub or to build a profile of your
-          pull request reviews.
+          We use a third-party analytics service on the Website to understand how the marketing site
+          is used so we can improve content, layout, and calls to action. Analytics data is handled
+          by our analytics provider, PostHog. We may collect information about visits to the Website
+          and selected interactions with marketing materials (for example clicks on primary calls to
+          action). We do not use Website analytics to track Extension usage on GitHub or to build a
+          profile of your pull request reviews.
         </p>
         <p>
-          <strong>How data is sent</strong> — The browser sends analytics events to a first-party
-          path on our domain (for example <code>/i/*</code> on guidedreview.dev). A proxy we control
-          forwards those events to PostHog. The analytics SDK may use cookies or similar browser
-          storage (such as local storage) on our domain to keep a random visitor identifier so
-          repeat visits can be counted. We configure PostHog so person profiles are created only for
-          identified users; ordinary Website visitors are not identified to us as named accounts.
-        </p>
-        <p>
-          We do not currently rely on advertising pixels as a core part of the product. If we add or
-          replace tracking tools, we will update this Policy.
+          Analytics tools may use cookies or similar browser storage to distinguish visits in an
+          aggregated way. Ordinary Website visitors are not identified to us as named user accounts
+          solely through this analytics. We do not currently rely on advertising pixels as a core
+          part of the product. If we add or replace tracking tools, we will update this Policy.
         </p>
         <h3>What we do not do with the Extension</h3>
         <p>
-          The Extension does not send product analytics or telemetry to Artery Ventures as part of
-          ordinary operation. It communicates with GitHub and with the LLM Provider you configure in
-          order to provide review plans. See the Privacy Policy for details on that processing.
+          The Extension does not send product analytics or telemetry to Artery Ventures. It
+          communicates with GitHub and with the LLM Provider you configure in order to provide
+          review plans. See the Privacy Policy for details on that processing.
         </p>
       </section>
 
@@ -129,7 +112,7 @@ export default function CookiesPage() {
           <li>operate and secure the Website;</li>
           <li>understand how visitors navigate the Website;</li>
           <li>improve content, performance, and layout; and</li>
-          <li>measure whether marketing pages and CTAs are useful.</li>
+          <li>measure whether marketing pages and calls to action are useful.</li>
         </ul>
         <p>
           We do not sell personal information collected via Website cookies. We do not use cookies
@@ -145,7 +128,7 @@ export default function CookiesPage() {
           via settings (see your browser&apos;s help documentation). Clearing site data may also
           remove local storage used by analytics. Disabling cookies or blocking scripts may affect
           Website functionality or prevent analytics from loading. You may also use browser privacy
-          features, extensions, or PostHog&apos;s own privacy controls where available.
+          features or extensions that limit tracking.
         </p>
       </section>
 

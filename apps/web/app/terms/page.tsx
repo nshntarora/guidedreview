@@ -56,17 +56,18 @@ export default function TermsPage() {
         <h2>2. Description of service</h2>
         <p>
           Guided Review is a browser extension and related website that helps users structure
-          reviews of GitHub pull requests. The Service may include, without limitation: injecting UI
-          into GitHub pull request pages; fetching pull request diffs; sending diff content to a
-          large language model provider that you configure; generating ordered review units and
-          commentary; displaying an overlay walkthrough; optionally authenticating with GitHub so
-          you can submit review comments; and related documentation on the Website.
+          reviews of GitHub pull requests. The Service may include, without limitation: presenting
+          review guidance on GitHub pull request pages; obtaining pull request content from GitHub;
+          sending that content to a large language model provider that you configure; generating
+          ordered review guidance and commentary; optionally authenticating with GitHub so you can
+          submit review comments; and related documentation on the Website.
         </p>
         <p>
-          The Service is designed so that API keys, optional GitHub tokens, and review session data
-          are stored in your browser. We do not operate a Guided Review backend that receives your
-          API keys or stores your pull request content for the core review workflow. Processing of
-          pull request content by your chosen LLM Provider is between you and that provider.
+          The Service is designed so that credentials you supply, optional GitHub authentication
+          material, and review session data are kept on your device. We do not operate a Guided
+          Review backend that receives your API keys or stores your pull request content for the
+          core review workflow. Processing of pull request content by your chosen LLM Provider is
+          between you and that provider.
         </p>
         <p>
           We reserve the right to modify, suspend, or discontinue the Service (or any part thereof)
@@ -152,8 +153,8 @@ export default function TermsPage() {
           </li>
           <li>
             Understand that we do not store your API keys on our servers as part of ordinary
-            Extension operation, and that loss of local browser data may result in loss of settings
-            or session progress.
+            Extension operation, and that loss of data stored on your device may result in loss of
+            settings or session progress.
           </li>
         </ol>
       </section>
@@ -179,9 +180,9 @@ export default function TermsPage() {
             third-party rights.
           </li>
           <li>
-            Optional GitHub device-flow authentication enables the Extension to act on your behalf
-            within the scopes granted; you may revoke access through GitHub or by clearing Extension
-            storage.
+            Optional GitHub authentication enables the Extension to act on your behalf within the
+            permissions you grant; you may revoke access through GitHub or by clearing Extension
+            data on your device.
           </li>
           <li>
             Availability, accuracy, pricing, data retention, and privacy practices of GitHub and LLM
