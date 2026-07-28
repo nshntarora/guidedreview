@@ -146,8 +146,8 @@ export default function PrivacyPage() {
           to track Extension usage inside GitHub. Analytics is optional and fail-closed (it only
           loads when we enable it at build time). The Extension is not designed to send analytics or
           usage telemetry to us; it communicates with GitHub and your configured LLM Provider as
-          described above. See our{" "}
-          <a href="https://guidedreview.dev/cookies">Cookies Policy</a> for more detail.
+          described above. See our <a href="https://guidedreview.dev/cookies">Cookies Policy</a> for
+          more detail.
         </p>
         <p>
           <strong>Payment Information</strong> — The Platform is currently offered without a paid

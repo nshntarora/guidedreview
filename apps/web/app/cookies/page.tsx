@@ -69,8 +69,8 @@ export default function CookiesPage() {
         </p>
         <p>
           <strong>Third-party cookies</strong> — Set by a domain other than the Website you are
-          visiting. Our marketing analytics (when enabled) is loaded so that browser requests go to a
-          first-party path on our domain rather than directly to a third-party analytics hostname.
+          visiting. Our marketing analytics (when enabled) is loaded so that browser requests go to
+          a first-party path on our domain rather than directly to a third-party analytics hostname.
         </p>
       </section>
 
@@ -90,9 +90,9 @@ export default function CookiesPage() {
         <p>
           When analytics is enabled for a given deployment, we use{" "}
           <a href="https://posthog.com">PostHog</a> to understand how the marketing site is used so
-          we can improve content, layout, and calls to action. Analytics is optional and fail-closed:
-          it only loads when we explicitly enable it and provide a project key at build time. If
-          analytics is not enabled, the PostHog script is not loaded.
+          we can improve content, layout, and calls to action. Analytics is optional and
+          fail-closed: it only loads when we explicitly enable it and provide a project key at build
+          time. If analytics is not enabled, the PostHog script is not loaded.
         </p>
         <p>
           <strong>What we capture when analytics is on</strong> — Page views and page leave on the
