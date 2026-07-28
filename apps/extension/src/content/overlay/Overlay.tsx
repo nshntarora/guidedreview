@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useReviewStore, persistSession } from "./store";
 import { resolveUnitFiles } from "./selectors";
 import { buildDisplayUnits, displayUnitCount } from "./displayUnits";
@@ -7,12 +7,14 @@ import { getFocusableElements, restoreFocusAfterOverlay } from "./focusTrap";
 import type { ViewChordPending } from "./viewModeChord";
 import { useOverlayKeyboard } from "./useOverlayKeyboard";
 import { useSubmitReviewFlow } from "./useSubmitReviewFlow";
+import { findUnitForFile, type DiffSearchResult, type SearchScrollTarget } from "./diffSearch";
 import { ProgressHeader } from "./components/ProgressHeader";
 import { Sidebar } from "./components/Sidebar";
 import { DiffPane } from "./components/DiffPane";
 import { DescriptionPane } from "./components/DescriptionPane";
 import { ContextPanel } from "./components/ContextPanel";
 import { FooterNav } from "./components/FooterNav";
+import { DiffSearch } from "./components/DiffSearch";
 import { ConnectGitHubModal } from "./components/ConnectGitHubModal";
 import { confirm, ConfirmationHost, useConfirmationOpen } from "./components/confirmation";
 import { SubmitReviewModal } from "./components/SubmitReviewModal";
@@ -53,6 +55,44 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   const viewChordRef = useRef<ViewChordPending>(null);
   const confirmationOpen = useConfirmationOpen();
   const titleId = useId();
+
+  const [diffSearchOpen, setDiffSearchOpen] = useState(false);
+  /** Bumped on each ⌘F so DiffSearch re-focuses even when already open. */
+  const [diffSearchFocusId, setDiffSearchFocusId] = useState(0);
+  const [searchScrollTarget, setSearchScrollTarget] = useState<SearchScrollTarget | null>(null);
+  const diffSearchKeyRef = useRef<((e: KeyboardEvent) => boolean) | null>(null);
+  /** Set by search navigation so unit-change scroll-to-top does not fight the match jump. */
+  const skipCodeScrollOnUnitChange = useRef(false);
+
+  const openDiffSearch = useCallback(() => {
+    setDiffSearchOpen(true);
+    setDiffSearchFocusId((n) => n + 1);
+  }, []);
+
+  const closeDiffSearch = useCallback(() => {
+    setDiffSearchOpen(false);
+  }, []);
+
+  const handleDiffSearchSelect = useCallback(
+    (result: DiffSearchResult) => {
+      const hunkId = result.kind === "line" ? result.hunkId : undefined;
+      const unitIndex = findUnitForFile(plan, result.filePath, hunkId);
+      if (unitIndex !== null && unitIndex !== currentUnitIndex) {
+        skipCodeScrollOnUnitChange.current = true;
+        goToUnit(unitIndex);
+      }
+      setSearchScrollTarget({
+        filePath: result.filePath,
+        lineId: result.kind === "line" ? result.id : undefined,
+      });
+      setDiffSearchOpen(false);
+    },
+    [plan, goToUnit, currentUnitIndex],
+  );
+
+  const clearSearchScrollTarget = useCallback(() => {
+    setSearchScrollTarget(null);
+  }, []);
 
   const handleExit = useCallback(() => {
     onRequestClose?.();
@@ -100,12 +140,25 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     if (status === "ready") void persistSession();
   }, [status, currentUnitIndex, sessionKey, draftComments]);
 
+  // Drop search UI when the overlay closes so the next open starts clean.
+  useEffect(() => {
+    if (!isOpen) {
+      setDiffSearchOpen(false);
+      setSearchScrollTarget(null);
+    }
+  }, [isOpen]);
+
   // When the active unit changes (keyboard ←/→, footer nav, or sidebar click),
   // reset the code and context panes so the new step starts at the top rather
-  // than inheriting scroll position from the previous unit.
+  // than inheriting scroll position from the previous unit. Search jumps set
+  // skipCodeScrollOnUnitChange so DiffPane can scroll the match into view instead.
   useEffect(() => {
     if (!isOpen) return;
-    codeColRef.current?.scrollTo({ top: 0 });
+    if (skipCodeScrollOnUnitChange.current) {
+      skipCodeScrollOnUnitChange.current = false;
+    } else {
+      codeColRef.current?.scrollTo({ top: 0 });
+    }
     contextPaneRef.current?.scrollTo({ top: 0 });
   }, [isOpen, currentUnitIndex]);
 
@@ -184,6 +237,10 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     setConnectGitHubOpen: closeConnectGitHubModal,
     confirmationOpen,
     requestExit,
+    diffSearchOpen,
+    openDiffSearch,
+    closeDiffSearch,
+    diffSearchKeyRef,
   });
 
   const statusAnnouncement = useMemo(() => {
@@ -262,6 +319,8 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
               unitTitle={currentReviewUnit?.title ?? ""}
               unitId={currentReviewUnit?.id}
               selectableForUnit={selectableForUnit}
+              searchScrollTarget={searchScrollTarget}
+              onSearchScrollTargetConsumed={clearSearchScrollTarget}
             />
           )}
         </main>
@@ -299,6 +358,15 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
       </div>
 
       <FooterNav currentIndex={currentUnitIndex} total={total} onPrev={goPrev} onNext={goNext} />
+
+      <DiffSearch
+        open={diffSearchOpen}
+        diff={diff}
+        onClose={closeDiffSearch}
+        onSelect={handleDiffSearchSelect}
+        focusRequestId={diffSearchFocusId}
+        keyActionRef={diffSearchKeyRef}
+      />
 
       <ConnectGitHubModal
         open={connectGitHubOpen}

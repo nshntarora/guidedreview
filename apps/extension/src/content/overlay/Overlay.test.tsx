@@ -1084,6 +1084,46 @@ describe("Overlay", () => {
     });
   });
 
+  describe("diff search (⌘/Ctrl+F)", () => {
+    it("opens the search palette on meta+f and prevents browser find", () => {
+      seedReadyReview(1);
+      render(<Overlay />);
+
+      const event = new KeyboardEvent("keydown", {
+        key: "f",
+        metaKey: true,
+        bubbles: true,
+        cancelable: true,
+      });
+      const preventSpy = vi.spyOn(event, "preventDefault");
+      fireEvent(window, event);
+
+      expect(preventSpy).toHaveBeenCalled();
+      expect(screen.getByTestId("diff-search")).toBeInTheDocument();
+      expect(screen.getByTestId("diff-search-input")).toBeInTheDocument();
+    });
+
+    it("opens the search palette on ctrl+f", () => {
+      seedReadyReview(1);
+      render(<Overlay />);
+      fireEvent.keyDown(window, { key: "f", ctrlKey: true });
+      expect(screen.getByTestId("diff-search")).toBeInTheDocument();
+    });
+
+    it("closes search on Escape without exiting the overlay", () => {
+      seedReadyReview(1);
+      render(<Overlay />);
+      fireEvent.keyDown(window, { key: "f", metaKey: true });
+      expect(screen.getByTestId("diff-search")).toBeInTheDocument();
+
+      fireEvent.keyDown(window, { key: "Escape" });
+      expect(screen.queryByTestId("diff-search")).not.toBeInTheDocument();
+      expect(useReviewStore.getState().isOpen).toBe(true);
+      // Confirmation dialog for exit should not open from this Esc.
+      expect(screen.queryByTestId("confirmation-dialog")).not.toBeInTheDocument();
+    });
+  });
+
   describe("keyboard isolation from the host page", () => {
     function dispatchKeyOnWindow(key: string, init: KeyboardEventInit = {}) {
       const event = new KeyboardEvent("keydown", {
