@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { getAutoOpenOnFilesTab, onAutoOpenOnFilesTabChanged } from "../lib/autoOpenOnFilesTab";
 import { parsePRUrl, type PRIdentity } from "../lib/github/diffFetch";
+import { isIgnoredPrPath } from "../lib/github/ignoredPrPaths";
 import { fetchConversationDescription, scrapePRContext } from "../lib/github/prContext";
 import { requestPRDiff, streamReviewPlan } from "../lib/messaging";
 import { getProviderSettings, onProviderSettingsChanged } from "../lib/settings";
@@ -123,8 +124,9 @@ function removeStartButton(): void {
 
 function tryInjectButton(): void {
   const pr = parsePRUrl(window.location.href);
-  // Content script matches all github.com; tear down UI when the SPA leaves a PR.
-  if (!pr) {
+  // Content script matches all github.com; tear down UI when the SPA leaves a PR,
+  // or lands on a PR surface we intentionally skip (e.g. conflict resolution).
+  if (!pr || isIgnoredPrPath(window.location.pathname)) {
     removeStartButton();
     return;
   }
@@ -252,6 +254,7 @@ function retryAnnotation(): void {
 async function onStartReview(): Promise<void> {
   // Prefer the cached identity from button injection; re-parse the URL so a
   // toolbar-icon click still works if the button hasn't painted yet.
+  if (isIgnoredPrPath(window.location.pathname)) return;
   const pr = currentPR ?? parsePRUrl(window.location.href);
   if (!pr) return;
   currentPR = pr;

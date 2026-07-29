@@ -1,9 +1,12 @@
 import { parsePRUrl } from "../lib/github/diffFetch";
+import { isIgnoredPrPath } from "../lib/github/ignoredPrPaths";
 import type { StartGuidedReviewMessage } from "../lib/types";
 import "./popup.css";
 
 const NOT_ON_PR = "Open a GitHub pull request page to start a review.";
 const RELOAD_PR = "Reload this pull request page, then try again.";
+const IGNORED_PR_PATH =
+  "Guided Review is not available on this pull request page (for example, conflict resolution).";
 
 /** Path registered as `options_page` in the manifest (stable across builds). */
 const OPTIONS_PAGE = "src/options/index.html";
@@ -35,9 +38,15 @@ async function init(): Promise<void> {
 
   const tab = await getActiveTab();
   const tabId = tab?.id;
-  const pr = tab?.url ? parsePRUrl(tab.url) : null;
+  const tabUrl = tab?.url;
+  const pr = tabUrl ? parsePRUrl(tabUrl) : null;
 
-  if (tabId != null && pr) {
+  if (tabId != null && pr && tabUrl) {
+    if (isIgnoredPrPath(new URL(tabUrl).pathname)) {
+      showMessage(root, messageEl, IGNORED_PR_PATH);
+      return;
+    }
+
     const message: StartGuidedReviewMessage = { type: "START_GUIDED_REVIEW" };
     try {
       await chrome.tabs.sendMessage(tabId, message);
