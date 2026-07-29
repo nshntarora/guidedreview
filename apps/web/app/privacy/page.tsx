@@ -70,9 +70,8 @@ export default function PrivacyPage() {
           superseding any of the foregoing.
         </p>
         <p>
-          &quot;LLM Provider&quot; means a third-party large language model service that you
-          configure in the Extension (for example Anthropic, OpenAI, or xAI/Grok), including any
-          compatible API endpoint you supply.
+          &quot;LLM Provider&quot; means a third-party large language model service that you choose
+          to use with the Extension, under that provider&apos;s own terms and privacy policy.
         </p>
       </section>
 
@@ -91,43 +90,42 @@ export default function PrivacyPage() {
         </p>
         <p>
           <strong>Information processed by the Extension (on your device)</strong> — The Extension
-          is designed to process data primarily on your device. When you use the Extension, the
-          following may be stored locally in your browser via Chrome storage (including{" "}
-          <code>chrome.storage.local</code> and <code>chrome.storage.session</code> as applicable):
+          is designed so that data needed to operate the product is processed primarily on your
+          device. Depending on how you use the Extension, this may include:
         </p>
         <ul>
           <li>
-            LLM Provider API keys, model preferences, and other settings you enter in the Extension
-            options;
+            credentials and preferences you supply so the Extension can call services you choose
+            (for example an LLM Provider API key and model settings);
           </li>
           <li>
-            optional GitHub authentication tokens obtained via device-flow authentication, so the
-            Extension can call GitHub&apos;s API on your behalf (for example to submit review
-            comments);
+            optional authentication credentials that allow the Extension to interact with GitHub on
+            your behalf (for example to post review comments you submit);
           </li>
           <li>
-            review session data for pull requests you review (for example parsed diffs, review
-            plans, and progress), keyed by pull request identity, so you can resume a session.
+            local review session information so you can continue a review of a pull request you have
+            already started.
           </li>
         </ul>
         <p>
-          This locally stored data is not transmitted to Artery Ventures servers as part of ordinary
-          Extension operation. We do not operate a Guided Review backend that receives your API keys
-          or stores your pull request content for the core review workflow.
+          Under ordinary use of the Extension, this information is not sent to Artery Ventures as
+          part of the core review workflow. We do not operate a product backend that receives your
+          API keys or stores your pull request content for that workflow.
         </p>
         <p>
-          <strong>Pull request content and third-party processing</strong> — When you start a guided
-          review, the Extension fetches the pull request diff from GitHub and sends that content
-          (and related prompt context) to the LLM Provider you configured. That content is processed
-          under that provider&apos;s terms and privacy policy. We do not control how your chosen LLM
-          Provider stores or uses that data. You are responsible for ensuring you are authorized to
-          share repository and pull request content with that provider.
+          <strong>Pull request content and third-party processing</strong> — When you run a guided
+          review, the Extension obtains the relevant pull request content from GitHub and may send
+          that content (and related context needed to generate a review plan) to the LLM Provider
+          you configured. That processing is subject to the provider&apos;s terms and privacy
+          policy. We do not control how your chosen LLM Provider stores or uses that data. You are
+          responsible for ensuring you are authorized to share repository and pull request content
+          with that provider.
         </p>
         <p>
-          <strong>GitHub</strong> — Interactions with GitHub (fetching diffs, optional
-          authentication, submitting reviews) are subject to GitHub&apos;s terms and privacy policy.
-          Tokens and requests stay between your browser, GitHub, and (where you configured it) your
-          LLM Provider.
+          <strong>GitHub</strong> — Interactions with GitHub (obtaining pull request content,
+          optional authentication, and submitting reviews) are subject to GitHub&apos;s terms and
+          privacy policy. Those interactions occur between you, your browser, GitHub, and (where you
+          have configured one) your LLM Provider.
         </p>
         <p>
           <strong>Social Media Platforms</strong> — If you contact us through social media platforms
@@ -136,10 +134,12 @@ export default function PrivacyPage() {
         </p>
         <p>
           <strong>Log Data and Website analytics</strong> — When you visit the Website, our hosting
-          infrastructure or browsers may automatically record technical information such as IP
-          address, browser type, referring page, pages visited, and similar log data. We may also
-          use anonymous analytics on the Website to understand aggregate traffic and improve the
-          site. The Extension is not designed to send analytics or usage telemetry to us; it
+          and infrastructure providers may process technical information such as IP address, browser
+          type, referring page, pages visited, and similar log or request data needed to serve and
+          secure the site. We also use a third-party analytics service on the Website to understand
+          general traffic and improve content. That analytics relates to Website visits and selected
+          interactions with marketing materials; it is not used to track Extension usage while you
+          review code on GitHub. The Extension does not send analytics or usage telemetry to us; it
           communicates with GitHub and your configured LLM Provider as described above. See our{" "}
           <a href="https://guidedreview.dev/cookies">Cookies Policy</a> for more detail.
         </p>
@@ -154,12 +154,13 @@ export default function PrivacyPage() {
       <section>
         <h2>3. Cookies</h2>
         <p>
-          The Website may use cookies and similar technologies, including for anonymous analytics
-          and essential site operation. You may choose to disable cookies through your browser
-          settings. For more information, please refer to our Cookies Policy at{" "}
+          The Website uses cookies and similar technologies for essential site operation and for
+          Website analytics as described in Section 2 and our Cookies Policy. You may choose to
+          disable cookies or clear site data through your browser settings. For more information,
+          please refer to our Cookies Policy at{" "}
           <a href="https://guidedreview.dev/cookies">guidedreview.dev/cookies</a>. The Extension
-          primarily uses browser extension storage rather than website cookies for its settings and
-          session data.
+          primarily relies on browser extension storage for its settings and session data rather
+          than Website cookies, and does not use Website analytics.
         </p>
       </section>
 
@@ -182,16 +183,16 @@ export default function PrivacyPage() {
           <li>to operate, maintain, and improve the Website and Services;</li>
           <li>
             for creation or development of business intelligence or data analytics in relation to
-            Website traffic (in aggregate or anonymous form where applicable);
+            Website traffic;
           </li>
           <li>to manage our relationship with you;</li>
           <li>for internal record keeping; and</li>
           <li>to comply with our legal or statutory obligations.</li>
         </ul>
         <p>
-          Local Extension settings, API keys, tokens, and review session data are used on your
-          device to provide the Services you request. Transmission of pull request content to your
-          LLM Provider is initiated by you when you run a guided review.
+          Local Extension settings, credentials, and review session data are used on your device to
+          provide the Services you request. Transmission of pull request content to your LLM
+          Provider is initiated by you when you run a guided review.
         </p>
       </section>
 
@@ -207,14 +208,16 @@ export default function PrivacyPage() {
         </p>
         <p>
           <strong>Service Providers</strong> — We may share Personal Information with service
-          providers who work with us in connection with operating the Website (for example hosting
-          or anonymous analytics providers). All such service providers are subject to
-          confidentiality restrictions consistent with this Privacy Policy.
+          providers who work with us in connection with operating the Website (for example hosting,
+          content delivery, security, and Website analytics). Our Website analytics provider is
+          PostHog, which processes analytics data under its own terms and privacy policy. All such
+          service providers are subject to confidentiality restrictions consistent with this Privacy
+          Policy and process data under their own terms and privacy policies as applicable.
         </p>
         <p>
           <strong>LLM Providers and GitHub (your choices)</strong> — When you use the Extension,
-          pull request content and API requests are sent to the LLM Provider you configure and to
-          GitHub as needed to provide the Services. Those parties process data under their own
+          pull request content and related requests are sent to the LLM Provider you configure and
+          to GitHub as needed to provide the Services. Those parties process data under their own
           policies. We are not responsible for their independent processing.
         </p>
         <p>
@@ -239,9 +242,9 @@ export default function PrivacyPage() {
           legal obligations, resolve disputes, and enforce our agreements.
         </p>
         <p>
-          Data stored by the Extension in Chrome storage remains on your device until you clear it,
-          uninstall the Extension, or otherwise remove it via Extension or browser controls. We do
-          not control retention of data held by your LLM Provider or GitHub.
+          Data stored by the Extension on your device remains there until you clear it, uninstall
+          the Extension, or otherwise remove it via Extension or browser controls. We do not control
+          retention of data held by your LLM Provider or GitHub.
         </p>
       </section>
 
@@ -249,8 +252,8 @@ export default function PrivacyPage() {
         <h2>8. Security</h2>
         <p>
           We take reasonable measures to protect Personal Information we process in connection with
-          the Website. The Extension relies on browser security and Chrome storage mechanisms; API
-          keys and tokens stored locally can still be exposed if your device or browser profile is
+          the Website. The Extension relies on the security of your browser and device; credentials
+          and other data stored locally can still be exposed if your device or browser profile is
           compromised. Although we and our providers use industry-standard protections where
           applicable, no method of transmission or storage is completely secure. You are responsible
           for safeguarding your device, browser profile, API keys, and GitHub credentials.
@@ -269,10 +272,9 @@ export default function PrivacyPage() {
           <a href="mailto:support@guidedreview.dev">support@guidedreview.dev</a>.
         </p>
         <p>
-          For data stored only in your browser by the Extension, you can delete or modify it
-          directly by clearing Extension storage, changing options, or uninstalling the Extension.
-          For data held by an LLM Provider or GitHub, please use those providers&apos; account and
-          privacy tools.
+          For data stored only on your device by the Extension, you can delete or modify it directly
+          by clearing Extension data, changing options, or uninstalling the Extension. For data held
+          by an LLM Provider or GitHub, please use those providers&apos; account and privacy tools.
         </p>
       </section>
 
@@ -303,8 +305,10 @@ export default function PrivacyPage() {
         </p>
         <p>
           <strong>Cross-border transfers</strong> — Personal Information of EU and UK residents may
-          be processed outside the EU and UK (including by hosting or analytics providers, or by LLM
-          Providers you choose). We collect and transfer Personal Information we control in
+          be processed outside the EU and UK. In particular, Website hosting, infrastructure, and
+          analytics providers may process data in jurisdictions outside the EU and UK, including the
+          United States. LLM Providers you configure may also process data outside the EU and UK
+          under their own policies. We collect and transfer Personal Information we control in
           accordance with applicable law. If you have questions, please contact{" "}
           <a href="mailto:support@guidedreview.dev">support@guidedreview.dev</a>.
         </p>
