@@ -68,6 +68,7 @@ export function createChromeMock() {
 
     const port: MockPort = {
       name,
+      sender: { id: MOCK_EXTENSION_ID },
       // Outbound only — does not fan into local onMessage listeners (those are remote events).
       postMessage: vi.fn((_message: unknown) => {}),
       disconnect: vi.fn(() => {
@@ -126,6 +127,7 @@ export function createChromeMock() {
       },
     },
     runtime: {
+      id: MOCK_EXTENSION_ID,
       sendMessage: vi.fn(async (_message: unknown) => undefined),
       connect: vi.fn((info?: { name?: string }) => {
         const port = createPort(info?.name ?? "");
@@ -184,8 +186,13 @@ export function createChromeMock() {
   };
 }
 
+/** Extension id the mock reports, so sender checks in the worker can pass. */
+export const MOCK_EXTENSION_ID = "guidedreviewmockextensionidaaaaaa";
+
 export interface MockPort {
   name: string;
+  /** Present on real ports; the worker rejects ports from other extensions. */
+  sender: { id: string };
   postMessage: ReturnType<typeof vi.fn>;
   disconnect: ReturnType<typeof vi.fn>;
   onMessage: {

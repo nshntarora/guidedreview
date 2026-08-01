@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildUnassignedUnits,
   isCompleteReviewUnit,
   prefixChunkUnitId,
   stripDuplicateHunks,
+  UNASSIGNED_UNIT_ID,
   validateAndCleanUnit,
 } from "./reviewPlan";
-import type { DiffFile, ReviewUnit } from "../types";
+import type { DiffFile, ParsedDiff, ReviewUnit } from "../types";
 
 /** The known-files map `validateAndCleanUnit` validates against. */
 function diffFixture(): Map<string, DiffFile> {
@@ -269,5 +271,83 @@ describe("prefixChunkUnitId", () => {
   it("namespaces unit ids by chunk index", () => {
     expect(prefixChunkUnitId(0, "u1")).toBe("c0-u1");
     expect(prefixChunkUnitId(2, "add-field")).toBe("c2-add-field");
+  });
+});
+
+describe("buildUnassignedUnits", () => {
+  function parsedDiff(known: Map<string, DiffFile>): ParsedDiff {
+    return { files: [...known.values()] };
+  }
+
+  it("returns nothing when the plan already claimed every hunk", () => {
+    const known = diffFixture();
+    const seen = new Set(["src/foo.ts#0", "src/foo.ts#1", "src/foo.test.ts#0"]);
+    expect(buildUnassignedUnits(parsedDiff(known), known, seen)).toEqual([]);
+  });
+
+  it("covers a file the model dropped entirely", () => {
+    const known = diffFixture();
+    // The model only planned the test file — src/foo.ts vanished from the plan.
+    const seen = new Set(["src/foo.test.ts#0"]);
+
+    const units = buildUnassignedUnits(parsedDiff(known), known, seen);
+
+    expect(units).toHaveLength(1);
+    expect(units[0].id).toBe(UNASSIGNED_UNIT_ID);
+    expect(units[0].kind).toBe("change");
+    expect(units[0].files).toEqual([
+      { fileId: "src/foo.ts", hunkIds: ["src/foo.ts#0", "src/foo.ts#1"], role: "core_logic" },
+    ]);
+    // Context is ours, not the model's.
+    expect(units[0].context).toContain("not placed in any earlier unit");
+  });
+
+  it("covers individual hunks dropped from a partially planned file", () => {
+    const known = diffFixture();
+    const seen = new Set(["src/foo.ts#0", "src/foo.test.ts#0"]);
+
+    const units = buildUnassignedUnits(parsedDiff(known), known, seen);
+
+    expect(units).toHaveLength(1);
+    expect(units[0].files).toEqual([
+      { fileId: "src/foo.ts", hunkIds: ["src/foo.ts#1"], role: "core_logic" },
+    ]);
+  });
+
+  it("splits leftovers into pure change and tests units", () => {
+    const known = diffFixture();
+    const units = buildUnassignedUnits(parsedDiff(known), known, new Set());
+
+    expect(units.map((u) => u.kind)).toEqual(["change", "tests"]);
+    expect(units[0].files.map((f) => f.fileId)).toEqual(["src/foo.ts"]);
+    expect(units[1].files.map((f) => f.fileId)).toEqual(["src/foo.test.ts"]);
+    expect(units[1].id).not.toBe(units[0].id);
+  });
+
+  it("claims binary/elided files once via the whole-file key", () => {
+    const binary: DiffFile = {
+      path: "assets/logo.png",
+      status: "added",
+      isBinaryOrElided: true,
+      hunks: [],
+    };
+    const known = new Map([[binary.path, binary]]);
+    const seen = new Set<string>();
+
+    const first = buildUnassignedUnits(parsedDiff(known), known, seen);
+    expect(first[0].files).toEqual([
+      { fileId: "assets/logo.png", hunkIds: [], role: "core_logic" },
+    ]);
+
+    // Same set, second pass: already claimed, so nothing is duplicated.
+    expect(buildUnassignedUnits(parsedDiff(known), known, seen)).toEqual([]);
+  });
+
+  it("marks recovered hunks as claimed so repeat calls are empty", () => {
+    const known = diffFixture();
+    const seen = new Set<string>();
+
+    expect(buildUnassignedUnits(parsedDiff(known), known, seen)).not.toEqual([]);
+    expect(buildUnassignedUnits(parsedDiff(known), known, seen)).toEqual([]);
   });
 });

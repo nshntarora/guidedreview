@@ -1,86 +1,52 @@
 # AGENTS.md
 
-Guidance for coding agents working in this repository.
-
-## Project
-
-**Guided Review** is a Chrome MV3 extension (`@crxjs/vite-plugin`) that injects a "Start Guided Review" button on GitHub PR pages. It fetches the PR diff, sends it to the user's LLM (Anthropic / OpenAI / Grok), and turns the diff into ordered **review units** shown in a Shadow DOM overlay so a human can walk the PR schema → logic → call-sites → tests.
-
-This repo is an **npm workspaces monorepo** (Node ≥ 22).
+Chrome MV3 extension that turns GitHub PR diffs into ordered **review units** via the user's LLM (Anthropic / OpenAI / Grok). npm workspaces monorepo, Node ≥ 22.
 
 ## Layout
 
-| Path             | Package                    | Description                              |
-| ---------------- | -------------------------- | ---------------------------------------- |
-| `apps/extension` | `@guided-review/extension` | Chrome MV3 extension (product)           |
-| `apps/web`       | `@guided-review/web`       | Marketing site (Next.js App Router, SSG) |
-| `packages/ui`    | `@guided-review/ui`        | Shared tokens, brand assets, UI          |
-
-**Chrome load path:** unpacked from **`apps/extension/dist` only** — never a root-level `dist/`.
+| Path             | Package                    | What                                                           |
+| ---------------- | -------------------------- | -------------------------------------------------------------- |
+| `apps/extension` | `@guided-review/extension` | Product (load unpacked from **`apps/extension/dist` only**)    |
+| `apps/web`       | `@guided-review/web`       | Marketing site (Next.js static export)                         |
+| `packages/ui`    | `@guided-review/ui`        | Shared tokens/UI — source-only, no `chrome.*` or product types |
 
 ## Commands
 
-- `npm run dev` / `dev:extension` — extension Vite HMR (port **5173**)
-- `npm run dev:web` — marketing site (port **3000**)
-- `npm run build` — extension then web
-- `npm run build:extension` → `apps/extension/dist`
-- `npm run build:web` / `start:web`
-- `npm run typecheck` / `npm test` / `npm run test:e2e` / `npm run test:e2e:web`
-- `npm run lint` / `format` / `format:check`
+`npm run dev` · `dev:web` · `build` · `build:extension` · `typecheck` · `test` · `test:e2e` · `lint` · `format`
 
-Unit tests: next to source as `*.test.{ts,tsx}`. Extension e2e: `apps/extension/e2e/`. Web e2e: `apps/web/e2e/` (serves `apps/web/out`).
+After extension changes: `npm run build:extension`, then reload in `chrome://extensions`.
 
-**Always run `npm run build:extension` after extension code changes**, even with `dev` running. Reload the extension in `chrome://extensions` and refresh the GitHub tab.
+Unit tests sit next to source (`*.test.{ts,tsx}`). Extension e2e: `apps/extension/e2e/`. Web e2e: `apps/web/e2e/`.
 
-## Extension architecture
+## Extension
 
-Three isolated contexts talk **only** via `chrome.runtime.sendMessage`:
+Three contexts, messages only via `chrome.runtime.sendMessage`:
 
-| Context    | Path                             | Role                                      |
-| ---------- | -------------------------------- | ----------------------------------------- |
-| Content    | `apps/extension/src/content/`    | GitHub DOM, button inject, review overlay |
-| Background | `apps/extension/src/background/` | Cross-origin fetch, API keys, LLM calls   |
-| Options    | `apps/extension/src/options/`    | Provider / model / key settings           |
+- **Content** (`src/content/`) — GitHub DOM, overlay
+- **Background** (`src/background/`) — fetch, keys, LLM
+- **Options** (`src/options/`) — settings
 
-Shared contracts: `apps/extension/src/lib/types.ts` (start here for cross-context work). Messaging helpers: `apps/extension/src/lib/messaging.ts`.
+Contracts: `src/lib/types.ts`. Messaging: `src/lib/messaging.ts`.
 
-### Review pipeline (file map)
+**Review pipeline:** `diffParser` → `buildPrompt` (chunk by file, never split a file) → providers stream plan → `streamPlanParser` / `reviewPlan` validate against real hunk ids → overlay renders from the real diff.
 
-1. `lib/github/diffParser.ts` — unified diff → hunks with stable ids (`${filePath}#${index}`)
-2. `lib/review/buildPrompt.ts` — LLM text + chunking by file (~60k chars; never split a file)
-3. `background/providers/*` — streaming `annotateReviewStream` per chunk (`REVIEW_PLAN_JSON_SCHEMA`)
-4. `lib/review/streamPlanParser.ts` + `reviewPlan.ts` — validate units against real hunk ids; drop hallucinations
-5. `content/overlay/` — render units; resolve refs against the **real** parsed diff
+**Invariant:** LLM plans structure and commentary only; it never supplies code. Hallucinated file/hunk refs are dropped.
 
-**Invariants:** the LLM plans structure and commentary only — it never supplies the code shown. Hallucinated file/hunk refs are dropped, never displayed.
-
-### Sessions
-
-Persisted to `chrome.storage.session`, keyed by **`owner/repo#number`** (`buildSessionKey` in `content/overlay/store.ts`), not the full URL. Background grants session storage access to content scripts on startup.
-
-### Providers
-
-`background/providers/types.ts` → `ProviderClient`. Register in `background/providers/index.ts`. Downstream schema, chunking, and validation are provider-agnostic. OpenAI and Grok share `openaiCompatible.ts`; Anthropic is separate.
+Sessions: `chrome.storage.session`, key `owner/repo#number` (`buildSessionKey`). Providers: `background/providers/` (`ProviderClient`); OpenAI/Grok share `openaiCompatible.ts`.
 
 ## packages/ui
 
-Source-only (no build emit). Apps transpile via Vite / Next `transpilePackages`.
-
-- Tokens: `@guided-review/ui/theme.css`
-- **No** `chrome.*`, extension messaging, GitHub API, or product types here (ESLint enforces)
-- Tailwind v4 CSS entries that use ui components **must** `@source` `packages/ui/src/**/*.{ts,tsx}`
+Source-only; apps transpile via `transpilePackages`. Tokens: `@guided-review/ui/theme.css`. Tailwind v4 entries that use ui must `@source packages/ui/src/**/*.{ts,tsx}`.
 
 ## apps/web
 
-Next.js App Router, **static export** (`output: "export"`). Docs MDX: `apps/web/content/help/` (registered in `config/help-pages.ts` / `help-navigation.ts`). Build output: `apps/web/out/`. Deploy via Cloudflare Pages (see `.github/workflows/deploy.yml`).
+Static export (`output: "export"`). Help MDX in `content/help/` (see `config/help-pages.ts`). Output: `apps/web/out/`.
 
-## Voice (UI, docs, marketing)
+## Voice
 
-Source of truth: landing copy in `apps/web` (`Hero`, `Why`, `FeatureGrid`, `TrustBand`, `Faqs`, `InstallCta`). Match that register — peer engineer, specific, dry; not corporate SaaS.
+Match landing copy in `apps/web` — peer engineer, specific, dry.
 
-- AI **structures** the review; humans read and decide. Never imply auto-approve or "reviews for you."
-- BYO LLM key; no product backend. Code only hits GitHub and the user's provider.
-- Prefer concrete terms: review units, cluster, overlay, keyboard-first.
-- Product name: **Guided Review**. CTA: **Start Guided Review**.
-- Errors: what failed + what to try. No jokes that hide the fix.
-- Avoid overclaiming model accuracy and SaaS clichés (_leverage, seamless, supercharge_).
+- AI **structures** the review; humans decide. Never imply auto-approve.
+- BYO key; no product backend. Code hits GitHub + the user's provider only.
+- Terms: review units, cluster, overlay, keyboard-first. Name: **Guided Review**. CTA: **Start Guided Review**.
+- Errors: what failed + what to try. No SaaS clichés or overclaiming model accuracy.

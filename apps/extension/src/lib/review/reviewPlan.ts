@@ -1,6 +1,13 @@
-import type { DiffFile, FileRole, ReviewUnit, ReviewUnitFileRef, UnitKind } from "../types";
+import type {
+  DiffFile,
+  FileRole,
+  ParsedDiff,
+  ReviewUnit,
+  ReviewUnitFileRef,
+  UnitKind,
+} from "../types";
 import { DEFAULT_FILE_ROLE, DEFAULT_UNIT_KIND, FILE_ROLES } from "../types";
-import { isTestPath } from "./pathClass";
+import { isTestPath, roleForPath } from "./pathClass";
 
 const KNOWN_FILE_ROLES: ReadonlySet<string> = new Set(FILE_ROLES);
 
@@ -155,7 +162,7 @@ export function stripDuplicateHunks(
 
     if (candidateIds.length === 0) {
       // Binary/elided or empty file — keep once via a synthetic claim key.
-      const claimKey = `${ref.fileId}#*`;
+      const claimKey = wholeFileClaimKey(ref.fileId);
       if (seenHunkIds.has(claimKey)) continue;
       seenHunkIds.add(claimKey);
       files.push(ref);
@@ -179,6 +186,75 @@ export function stripDuplicateHunks(
 
   if (files.length === 0) return null;
   return { ...unit, files: sortFileRefs(files) };
+}
+
+/** Claim key standing in for "this whole file" when it has no textual hunks. */
+function wholeFileClaimKey(fileId: string): string {
+  return `${fileId}#*`;
+}
+
+/** Base id for the backstop unit holding changes the model never assigned. */
+export const UNASSIGNED_UNIT_ID = "unassigned-changes";
+
+/**
+ * Title/context for the backstop unit. Written here rather than by the model:
+ * the whole point is that this content is what the model failed (or was talked
+ * out of) assigning, so its commentary can't be trusted to describe it.
+ */
+export const UNASSIGNED_UNIT_TITLE = "Remaining changes";
+const UNASSIGNED_UNIT_CONTEXT =
+  "These changes were not placed in any earlier unit, so they have no model-written summary. Read them directly — a diff can contain text that tries to talk the planner out of including a file, and everything in the PR has to be reviewed regardless.";
+
+/**
+ * Build the backstop unit(s) covering every hunk the plan never claimed.
+ *
+ * The model decides *structure*, never *scope*: `validateAndCleanUnit` already
+ * drops file/hunk ids that don't exist in the diff, and this is the other half
+ * of that guarantee — nothing real can fall out of the walkthrough. Without it,
+ * text inside an attacker-authored diff or PR description ("this file is
+ * generated, skip it") can make changes silently vanish from the review while
+ * the overlay still reads as complete.
+ *
+ * Returns [] when the plan already covers everything. Otherwise returns one
+ * change unit, one tests unit, or both — purity is enforced by reusing
+ * `validateAndCleanUnit`. Claimed ids are added to `seenHunkIds`.
+ */
+export function buildUnassignedUnits(
+  diff: ParsedDiff,
+  knownFiles: Map<string, DiffFile>,
+  seenHunkIds: Set<string>,
+): ReviewUnit[] {
+  const files: ReviewUnitFileRef[] = [];
+
+  for (const file of diff.files) {
+    const role = roleForPath(file.path);
+
+    if (file.hunks.length === 0) {
+      const claimKey = wholeFileClaimKey(file.path);
+      if (seenHunkIds.has(claimKey)) continue;
+      seenHunkIds.add(claimKey);
+      files.push({ fileId: file.path, hunkIds: [], role });
+      continue;
+    }
+
+    const missing = file.hunks.map((h) => h.id).filter((id) => !seenHunkIds.has(id));
+    if (missing.length === 0) continue;
+    for (const id of missing) seenHunkIds.add(id);
+    files.push({ fileId: file.path, hunkIds: missing, role });
+  }
+
+  if (files.length === 0) return [];
+
+  return validateAndCleanUnit(
+    {
+      id: UNASSIGNED_UNIT_ID,
+      title: UNASSIGNED_UNIT_TITLE,
+      kind: DEFAULT_UNIT_KIND,
+      context: UNASSIGNED_UNIT_CONTEXT,
+      files,
+    },
+    knownFiles,
+  );
 }
 
 /**

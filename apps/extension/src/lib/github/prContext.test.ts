@@ -98,3 +98,46 @@ describe("scrapePRContext branch refs", () => {
     expect(ctx.headRef).toBe("feature-x");
   });
 });
+
+describe("description HTML sanitization", () => {
+  function scrapeDescriptionHtml(bodyHtml: string): string {
+    setBody(`<div data-testid="issue-body"><div class="markdown-body">${bodyHtml}</div></div>`);
+    return scrapePRContext(pr).descriptionHtml;
+  }
+
+  it("keeps the markdown GitHub actually renders", () => {
+    const html = scrapeDescriptionHtml(
+      '<p>Fixes <a href="https://example.com/1">#1</a></p><ul><li><code>x</code></li></ul>',
+    );
+
+    expect(html).toContain("<p>");
+    expect(html).toContain("<code>x</code>");
+    expect(html).toContain('href="https://example.com/1"');
+    // Links open away from the review rather than navigating it.
+    expect(html).toContain('target="_blank"');
+    expect(html).toContain('rel="noopener noreferrer"');
+  });
+
+  it("drops style, form and inline event handlers", () => {
+    const html = scrapeDescriptionHtml(
+      "<style>.x{color:red}</style>" +
+        '<form action="https://evil.example"><input name="token"></form>' +
+        '<p onclick="alert(1)" style="position:fixed">hi</p>',
+    );
+
+    expect(html).not.toContain("<style");
+    expect(html).not.toContain("<form");
+    expect(html).not.toContain("onclick");
+    expect(html).not.toContain("position:fixed");
+    expect(html).toContain("hi");
+  });
+
+  it("drops javascript: links and script tags", () => {
+    const html = scrapeDescriptionHtml(
+      '<script>alert(1)</script><a href="javascript:alert(1)">click</a>',
+    );
+
+    expect(html).not.toContain("<script");
+    expect(html).not.toContain("javascript:");
+  });
+});

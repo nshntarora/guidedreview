@@ -2,6 +2,21 @@
 # https://developers.cloudflare.com/workers/static-assets/headers/
 # Next static export writes opengraph-image without a .png extension.
 
+# Security headers for every response.
+#
+# Every asset the site loads is same-origin — fonts are self-hosted by
+# next/font, the demo video and images live in public/, and PostHog is proxied
+# through /i/* by the Worker — so the policy stays at 'self' throughout.
+# 'unsafe-inline' is unavoidable for scripts and styles: static export has no
+# server to mint a per-request nonce, and Next inlines its hydration bootstrap.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; media-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; upgrade-insecure-requests
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+
 /opengraph-image
   Content-Type: image/png
   Cache-Control: public, max-age=86400, immutable
