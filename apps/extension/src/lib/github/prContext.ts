@@ -1,4 +1,4 @@
-import DOMPurify from "dompurify";
+import DOMPurify, { type Config } from "dompurify";
 import type { PRContext } from "../types";
 import type { PRIdentity } from "./diffFetch";
 
@@ -11,6 +11,97 @@ DOMPurify.addHook("afterSanitizeAttributes", (node) => {
     node.setAttribute("rel", "noopener noreferrer");
   }
 });
+
+/**
+ * Explicit allowlist for the PR description, which is authored by whoever
+ * opened the pull request and ends up in `dangerouslySetInnerHTML`.
+ *
+ * GitHub has already sanitized this HTML before we scrape it, so this is the
+ * second line: it covers what GitHub's markdown renderer emits and nothing
+ * else. Notably absent are `style` and `form` — with the overlay rendered
+ * inside a shadow root on the PR page, either one would let a description
+ * restyle the review UI or put a convincing fake input in front of the user if
+ * a gap ever opened upstream.
+ */
+const DESCRIPTION_SANITIZE_CONFIG = {
+  ALLOWED_TAGS: [
+    "a",
+    "b",
+    "blockquote",
+    "br",
+    "code",
+    "del",
+    "details",
+    "div",
+    "em",
+    "g-emoji",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "hr",
+    "i",
+    "img",
+    "input",
+    "kbd",
+    "li",
+    "ol",
+    "p",
+    "picture",
+    "pre",
+    "q",
+    "s",
+    "samp",
+    "source",
+    "span",
+    "strong",
+    "sub",
+    "summary",
+    "sup",
+    "table",
+    "tbody",
+    "td",
+    "tfoot",
+    "th",
+    "thead",
+    "tr",
+    "ul",
+    "var",
+  ],
+  ALLOWED_ATTR: [
+    "align",
+    "alt",
+    "checked",
+    "class",
+    "colspan",
+    "disabled",
+    "height",
+    "href",
+    "id",
+    "loading",
+    "media",
+    "rel",
+    "rowspan",
+    "span",
+    "src",
+    "srcset",
+    "start",
+    "target",
+    "title",
+    "type",
+    "width",
+  ],
+  // Belt and braces alongside the tag allowlist.
+  FORBID_TAGS: ["style", "form", "script", "iframe", "object", "embed"],
+  FORBID_ATTR: ["style", "srcdoc", "formaction", "ping"],
+} satisfies Config;
+
+/** Sanitize author-controlled description HTML for `dangerouslySetInnerHTML`. */
+function sanitizeDescriptionHtml(html: string): string {
+  return DOMPurify.sanitize(html, DESCRIPTION_SANITIZE_CONFIG);
+}
 
 /**
  * Best-effort scrape of PR title/description/branch refs from the rendered
@@ -35,7 +126,7 @@ export function scrapePRContext(pr: PRIdentity): PRContext {
 
   const descriptionEl = firstDescriptionElement(DESCRIPTION_SELECTORS, document);
   const description = descriptionEl?.textContent?.trim();
-  const descriptionHtml = descriptionEl && DOMPurify.sanitize(descriptionEl.innerHTML);
+  const descriptionHtml = descriptionEl && sanitizeDescriptionHtml(descriptionEl.innerHTML);
 
   const author = firstText([
     ".gh-header-meta .author",
@@ -241,7 +332,7 @@ export async function fetchConversationDescription(
   const conversationDoc = new DOMParser().parseFromString(html, "text/html");
   const el = firstDescriptionElement(DESCRIPTION_SELECTORS, conversationDoc);
   if (!el) return empty;
-  return { text: el.textContent?.trim() ?? "", html: DOMPurify.sanitize(el.innerHTML) };
+  return { text: el.textContent?.trim() ?? "", html: sanitizeDescriptionHtml(el.innerHTML) };
 }
 
 function firstAttrIn(root: ParentNode, selectors: string[], attr: string): string | undefined {

@@ -164,4 +164,108 @@ describe("parseUnifiedDiff", () => {
   it("returns no files for an empty diff", () => {
     expect(parseUnifiedDiff("")).toEqual({ files: [] });
   });
+
+  describe("ambiguous and quoted paths", () => {
+    it("keeps the real path for a filename containing a space", () => {
+      const raw = [
+        "diff --git a/src/my file.ts b/src/my file.ts",
+        "--- a/src/my file.ts",
+        "+++ b/src/my file.ts",
+        "@@ -1,1 +1,1 @@",
+        "-1",
+        "+2",
+      ].join("\n");
+
+      const diff = parseUnifiedDiff(raw);
+      expect(diff.files[0].path).toBe("src/my file.ts");
+      expect(diff.files[0].hunks[0].id).toBe("src/my file.ts#0");
+    });
+
+    // A greedy `a/(.+) b/(.+)` split reports "y.ts" here — a path that does not
+    // exist — letting a PR author show the reviewer the wrong filename.
+    it("does not let a filename containing ' b/' spoof the displayed path", () => {
+      const raw = [
+        "diff --git a/x b/y.ts b/x b/y.ts",
+        "--- a/x b/y.ts",
+        "+++ b/x b/y.ts",
+        "@@ -1,1 +1,1 @@",
+        "-1",
+        "+2",
+      ].join("\n");
+
+      const diff = parseUnifiedDiff(raw);
+      expect(diff.files[0].path).toBe("x b/y.ts");
+      expect(diff.files[0].hunks[0].id).toBe("x b/y.ts#0");
+    });
+
+    it("falls back to the agreeing header split when there are no ---/+++ lines", () => {
+      const raw = [
+        "diff --git a/x b/y.png b/x b/y.png",
+        "index 1234567..89abcde 100644",
+        "Binary files a/x b/y.png and b/x b/y.png differ",
+      ].join("\n");
+
+      const diff = parseUnifiedDiff(raw);
+      expect(diff.files[0].path).toBe("x b/y.png");
+      expect(diff.files[0].isBinaryOrElided).toBe(true);
+    });
+
+    it("decodes git's quoted path form", () => {
+      const raw = [
+        'diff --git "a/src/wei\\303\\237.ts" "b/src/wei\\303\\237.ts"',
+        '--- "a/src/wei\\303\\237.ts"',
+        '+++ "b/src/wei\\303\\237.ts"',
+        "@@ -1,1 +1,1 @@",
+        "-1",
+        "+2",
+      ].join("\n");
+
+      const diff = parseUnifiedDiff(raw);
+      expect(diff.files[0].path).toBe("src/weiß.ts");
+    });
+
+    it("uses rename to/from for renames with no content change", () => {
+      const raw = [
+        "diff --git a/old name.ts b/new name.ts",
+        "similarity index 100%",
+        "rename from old name.ts",
+        "rename to new name.ts",
+      ].join("\n");
+
+      const diff = parseUnifiedDiff(raw);
+      expect(diff.files[0].status).toBe("renamed");
+      expect(diff.files[0].path).toBe("new name.ts");
+      expect(diff.files[0].previousPath).toBe("old name.ts");
+    });
+
+    it("uses the old path for a deleted file (+++ is /dev/null)", () => {
+      const raw = [
+        "diff --git a/src/gone.ts b/src/gone.ts",
+        "deleted file mode 100644",
+        "--- a/src/gone.ts",
+        "+++ /dev/null",
+        "@@ -1,1 +0,0 @@",
+        "-1",
+      ].join("\n");
+
+      const diff = parseUnifiedDiff(raw);
+      expect(diff.files[0].path).toBe("src/gone.ts");
+      expect(diff.files[0].status).toBe("removed");
+    });
+
+    it("uses the new path for an added file (--- is /dev/null)", () => {
+      const raw = [
+        "diff --git a/src/new.ts b/src/new.ts",
+        "new file mode 100644",
+        "--- /dev/null",
+        "+++ b/src/new.ts",
+        "@@ -0,0 +1,1 @@",
+        "+1",
+      ].join("\n");
+
+      const diff = parseUnifiedDiff(raw);
+      expect(diff.files[0].path).toBe("src/new.ts");
+      expect(diff.files[0].status).toBe("added");
+    });
+  });
 });

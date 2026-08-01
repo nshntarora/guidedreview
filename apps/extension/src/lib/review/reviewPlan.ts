@@ -13,6 +13,14 @@ const ROLE_RANK: Record<FileRole, number> = {
   config_or_generated: 4,
 };
 
+/**
+ * Namespace a unit id by chunk index so units from different `chunkDiffByFile`
+ * chunks never collide when stitched into one plan.
+ */
+export function prefixChunkUnitId(chunkIndex: number, unitId: string): string {
+  return `c${chunkIndex}-${unitId}`;
+}
+
 function sortFileRefs(files: ReviewUnitFileRef[]): ReviewUnitFileRef[] {
   return [...files].sort((a, b) => {
     const rank = ROLE_RANK[a.role] - ROLE_RANK[b.role];

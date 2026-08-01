@@ -32,11 +32,11 @@ import {
   GITHUB_OAUTH_SCOPES,
   isGitHubOAuthConfigured,
 } from "../lib/github/oauthConfig";
-import { fetchPRDiff } from "../lib/github/diffFetch";
+import { fetchPRDiff, parsePRUrl } from "../lib/github/diffFetch";
 import { submitPullRequestReview } from "../lib/github/submitReview";
 import { chunkDiffByFile } from "../lib/review/buildPrompt";
 import { StreamPlanParser } from "../lib/review/streamPlanParser";
-import { parseReviewUnit, stripDuplicateHunks } from "../lib/review/reviewPlan";
+import { parseReviewUnit, prefixChunkUnitId, stripDuplicateHunks } from "../lib/review/reviewPlan";
 import { getProviderSettings } from "../lib/settings";
 import { grantSessionAccessToContentScripts } from "../lib/storage";
 import { getProviderClient } from "./providers";
@@ -68,6 +68,37 @@ export function handleInstalled(details: { reason: string }): void {
 chrome.runtime.onInstalled.addListener(handleInstalled);
 
 /**
+ * Reject anything that didn't come from this extension's own pages or content
+ * scripts. `externally_connectable` is unset, so Chrome already blocks web
+ * pages from reaching us — this is the belt to that braces, so adding an
+ * external surface later can't silently hand a caller the GitHub token.
+ */
+function isOwnSender(sender: chrome.runtime.MessageSender): boolean {
+  return sender.id === chrome.runtime.id;
+}
+
+/**
+ * Content-script requests that act on a specific PR must be for the PR that
+ * tab is actually showing. Without this the worker will fetch a diff from, or
+ * post a review to, any repo the message names — the `repo`-scoped OAuth token
+ * covers all of them. Extension pages (options, popup) have no `sender.tab` and
+ * are trusted as-is.
+ */
+export function senderMatchesPR(
+  sender: chrome.runtime.MessageSender,
+  pr: { owner: string; repo: string; number: number },
+): boolean {
+  if (!sender.tab) return true;
+  if (sender.origin !== undefined && sender.origin !== "https://github.com") return false;
+
+  const tabPr = sender.tab.url ? parsePRUrl(sender.tab.url) : null;
+  if (!tabPr) return false;
+  return tabPr.owner === pr.owner && tabPr.repo === pr.repo && tabPr.number === pr.number;
+}
+
+const WRONG_TAB_ERROR = "This request did not come from the pull request page it names.";
+
+/**
  * Wire an async handler to a one-shot message response.
  *
  * Every rejection has to resolve to a valid response for that message type —
@@ -84,7 +115,9 @@ function respondAsync<T>(
   return true;
 }
 
-chrome.runtime.onMessage.addListener((message: BackgroundRequest, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message: BackgroundRequest, sender, sendResponse) => {
+  if (!isOwnSender(sender)) return false;
+
   if (message.type === "TEST_CONNECTION") {
     return respondAsync<TestConnectionResponse>(
       handleTestConnection(message),
@@ -109,6 +142,10 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, _sender, sendR
   }
 
   if (message.type === "FETCH_DIFF") {
+    if (!senderMatchesPR(sender, message.pr)) {
+      sendResponse({ ok: false, error: WRONG_TAB_ERROR } satisfies FetchDiffError);
+      return true;
+    }
     return respondAsync<FetchDiffResponse | FetchDiffError>(
       handleFetchDiff(message),
       sendResponse,
@@ -150,6 +187,14 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, _sender, sendR
   }
 
   if (message.type === "SUBMIT_REVIEW") {
+    if (!senderMatchesPR(sender, message.pr)) {
+      sendResponse({
+        ok: false,
+        code: "validation",
+        error: WRONG_TAB_ERROR,
+      } satisfies SubmitReviewResponse);
+      return true;
+    }
     return respondAsync<SubmitReviewResponse>(handleSubmitReview(message), sendResponse, (e) => ({
       ok: false,
       code: "unknown",
@@ -166,6 +211,11 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, _sender, sendR
  */
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== ANNOTATE_PORT_NAME) return;
+  // Same-extension check as onMessage: this port spends the user's API key.
+  if (!port.sender || !isOwnSender(port.sender)) {
+    port.disconnect();
+    return;
+  }
 
   const abort = new AbortController();
   let started = false;
@@ -278,7 +328,7 @@ async function* streamChunkUnits(
         const deduped = stripDuplicateHunks(cleaned, knownFiles, seenHunkIds);
         if (!deduped) continue;
         // Namespace the id so units from different chunks can't collide.
-        yield { ...deduped, id: `c${chunkIndex}-${deduped.id}` };
+        yield { ...deduped, id: prefixChunkUnitId(chunkIndex, deduped.id) };
       }
     }
   }

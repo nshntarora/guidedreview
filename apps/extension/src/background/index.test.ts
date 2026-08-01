@@ -8,6 +8,7 @@ import type {
 } from "../lib/types";
 import { setGitHubAuth } from "../lib/github/authStorage";
 import { setProviderSettings } from "../lib/settings";
+import { MOCK_EXTENSION_ID } from "../test/chromeMock";
 import type { MockPort } from "../test/chromeMock";
 import type { AnnotateReviewInput, AnnotateStreamEvent } from "./providers/types";
 
@@ -44,6 +45,13 @@ vi.mock("./providers", () => ({
 // side effect, so it must be imported lazily (after the global chromeMock
 // beforeEach in src/test/setup.ts has installed `chrome`) rather than at
 // module top-level, which would run before that hook fires.
+// setup.ts installs a fresh chrome mock per test, so the worker has to be
+// re-imported each time — otherwise only the first test's mock ever receives
+// the runtime listeners registered at import time.
+beforeEach(() => {
+  vi.resetModules();
+});
+
 async function loadHandleGitHubAuthGet() {
   const { handleGitHubAuthGet } = await import("./index");
   return handleGitHubAuthGet;
@@ -60,17 +68,29 @@ type MessageListener = (
   sendResponse: (response?: unknown) => void,
 ) => boolean | void;
 
-/** Deliver a message to the worker's registered onMessage listeners. */
-async function sendToBackground(message: unknown): Promise<unknown> {
+/**
+ * Deliver a message to the worker's registered onMessage listeners. Defaults to
+ * a sender from this extension (an extension page: no `tab`); pass `sender` to
+ * simulate a content script or a foreign extension.
+ */
+async function sendToBackground(message: unknown, sender: unknown = { id: MOCK_EXTENSION_ID }) {
   await import("./index");
   const listeners = [
     ...(chrome.runtime.onMessage as unknown as { __listeners: Set<MessageListener> }).__listeners,
   ];
-  return new Promise((resolve) => {
+  return new Promise<unknown>((resolve) => {
+    let handled = false;
     for (const listener of listeners) {
-      listener(message, {}, resolve);
+      if (listener(message, sender, resolve)) handled = true;
     }
+    // A listener that returns falsy will never call sendResponse.
+    if (!handled) resolve(undefined);
   });
+}
+
+/** A content-script sender whose tab is showing the given PR. */
+function tabSender(url: string) {
+  return { id: MOCK_EXTENSION_ID, origin: "https://github.com", tab: { id: 7, url } };
 }
 
 describe("OPEN_OPTIONS", () => {
@@ -79,6 +99,51 @@ describe("OPEN_OPTIONS", () => {
 
     expect(chrome.runtime.openOptionsPage).toHaveBeenCalledTimes(1);
     expect(response).toEqual({ ok: true });
+  });
+});
+
+describe("sender checks", () => {
+  const pr = { owner: "acme", repo: "widgets", number: 1 };
+  const submit = { type: "SUBMIT_REVIEW", pr, body: "lgtm", event: "COMMENT", comments: [] };
+
+  it("ignores messages from another extension", async () => {
+    await expect(
+      sendToBackground({ type: "OPEN_OPTIONS" }, { id: "some-other-extension-id" }),
+    ).resolves.toBeUndefined();
+    expect(chrome.runtime.openOptionsPage).not.toHaveBeenCalled();
+  });
+
+  it("rejects SUBMIT_REVIEW naming a PR the sender tab is not on", async () => {
+    const response = await sendToBackground(
+      submit,
+      tabSender("https://github.com/acme/widgets/pull/999/files"),
+    );
+
+    expect(response).toEqual({
+      ok: false,
+      code: "validation",
+      error: expect.stringContaining("did not come from the pull request page"),
+    });
+  });
+
+  it("rejects FETCH_DIFF from a tab that is not on a PR at all", async () => {
+    const response = await sendToBackground(
+      { type: "FETCH_DIFF", pr },
+      tabSender("https://github.com/acme/widgets/issues/4"),
+    );
+
+    expect(response).toEqual({ ok: false, error: expect.stringContaining("did not come from") });
+  });
+
+  it("allows SUBMIT_REVIEW from the matching PR tab", async () => {
+    // Signed out, so it stops at the auth check — past the sender gate, which
+    // is what this asserts.
+    const response = await sendToBackground(
+      submit,
+      tabSender("https://github.com/acme/widgets/pull/1/files"),
+    );
+
+    expect(response).toMatchObject({ ok: false, code: "not_authenticated" });
   });
 });
 
