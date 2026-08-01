@@ -325,6 +325,23 @@ describe("ANNOTATE_REVIEW stream", () => {
     expect(donePlan(events)?.map((u) => u.id)).toEqual(["c0-shared", "c1-shared"]);
   });
 
+  it("posts waiting_for_tokens then tokens_streaming STATUS before units", async () => {
+    provider.deltasByFirstFilePath.set("a.ts", [planJson([unitJson("u1", "a.ts")])]);
+
+    const { events } = await runStream({ files: [oversizedFile("a.ts")] });
+
+    const statusPhases = events
+      .filter(
+        (e): e is Extract<AnnotateReviewStreamEvent, { type: "STATUS" }> => e.type === "STATUS",
+      )
+      .map((e) => e.phase);
+    expect(statusPhases).toEqual(["waiting_for_tokens", "tokens_streaming"]);
+    // STATUS events precede the first unit.
+    const firstUnitIdx = events.findIndex((e) => e.type === "UNIT");
+    const lastStatusIdx = events.map((e) => e.type).lastIndexOf("STATUS");
+    expect(lastStatusIdx).toBeLessThan(firstUnitIdx);
+  });
+
   it("drops units referencing a file the model was not given", async () => {
     provider.deltasByFirstFilePath.set("a.ts", [
       planJson([unitJson("real", "a.ts"), unitJson("ghost", "not-in-the-diff.ts")]),

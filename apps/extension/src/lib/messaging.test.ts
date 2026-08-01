@@ -79,6 +79,23 @@ describe("messaging", () => {
     expect(port.disconnect).toHaveBeenCalled();
   });
 
+  it("streamReviewPlan delivers STATUS events to onStatus", () => {
+    const onStatus = vi.fn();
+    streamReviewPlan({ files: [] }, { title: "t" } as PRContext, {
+      onUnit: vi.fn(),
+      onDone: vi.fn(),
+      onError: vi.fn(),
+      onStatus,
+    });
+    const port = vi.mocked(chrome.runtime.connect).mock.results[0].value as MockPort;
+
+    port.__emitMessage({ type: "STATUS", phase: "waiting_for_tokens" });
+    port.__emitMessage({ type: "STATUS", phase: "tokens_streaming" });
+
+    expect(onStatus).toHaveBeenNthCalledWith(1, "waiting_for_tokens");
+    expect(onStatus).toHaveBeenNthCalledWith(2, "tokens_streaming");
+  });
+
   it("streamReviewPlan delivers ERROR events", () => {
     const onUnit = vi.fn();
     const onDone = vi.fn();

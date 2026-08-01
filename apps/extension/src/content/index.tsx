@@ -4,6 +4,7 @@ import { parsePRUrl, type PRIdentity } from "../lib/github/diffFetch";
 import { isIgnoredPrPath } from "../lib/github/ignoredPrPaths";
 import { fetchConversationDescription, scrapePRContext } from "../lib/github/prContext";
 import { requestPRDiff, streamReviewPlan } from "../lib/messaging";
+import { getProvider } from "../lib/providers/catalog";
 import { getProviderSettings, onProviderSettingsChanged } from "../lib/settings";
 import type { ContentRequest, ParsedDiff, PRContext } from "../lib/types";
 import { ensureFallbackHost, FALLBACK_HOST_ID, findButtonAnchor } from "./buttonAnchor";
@@ -225,7 +226,11 @@ function startAnnotationStream(
   prContext: PRContext,
   streamGeneration: number,
 ): void {
+  // Request is on the wire — show "Sent it to …" until the worker reports waiting/tokens.
+  useReviewStore.getState().setBuildPhase("sent_to_provider", streamGeneration);
+
   const { cancel } = streamReviewPlan(diff, prContext, {
+    onStatus: (phase) => useReviewStore.getState().setBuildPhase(phase, streamGeneration),
     onUnit: (unit) => useReviewStore.getState().appendUnit(unit, streamGeneration),
     onDone: (plan) => {
       activeStreamCancel = null;
@@ -315,6 +320,7 @@ async function onStartReview(): Promise<void> {
       return;
     }
 
+    useReviewStore.getState().setProviderLabel(getProvider(settings.provider).displayName);
     useReviewStore.getState().beginStreaming(streamGeneration);
 
     const latestContext = useReviewStore.getState().prContext ?? prContext;

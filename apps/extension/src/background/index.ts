@@ -264,14 +264,26 @@ async function handleAnnotateReviewStream(
   const allUnits: ReviewUnit[] = [];
   /** First unit that claims a hunk id wins; later duplicates are stripped. */
   const seenHunkIds = new Set<string>();
+  /** Emit waiting / first-token STATUS once across all chunks. */
+  const streamStatus = { postedWaiting: false, postedStreaming: false };
 
   for (const [chunkIndex, chunk] of chunks.entries()) {
     if (signal.aborted) return;
+
+    if (!streamStatus.postedWaiting) {
+      streamStatus.postedWaiting = true;
+      postEvent(port, { type: "STATUS", phase: "waiting_for_tokens" });
+    }
 
     for await (const unit of streamChunkUnits(client, chunk, request.prContext, settings, {
       chunkIndex,
       seenHunkIds,
       signal,
+      onFirstToken: () => {
+        if (streamStatus.postedStreaming) return;
+        streamStatus.postedStreaming = true;
+        postEvent(port, { type: "STATUS", phase: "tokens_streaming" });
+      },
     })) {
       if (signal.aborted) return;
       allUnits.push(unit);
@@ -299,19 +311,31 @@ async function* streamChunkUnits(
     chunkIndex,
     seenHunkIds,
     signal,
-  }: { chunkIndex: number; seenHunkIds: Set<string>; signal: AbortSignal },
+    onFirstToken,
+  }: {
+    chunkIndex: number;
+    seenHunkIds: Set<string>;
+    signal: AbortSignal;
+    onFirstToken?: () => void;
+  },
 ): AsyncGenerator<ReviewUnit, void, unknown> {
   const parser = new StreamPlanParser();
   // Keyed by path because the schema defines `fileId` as "the file path exactly
   // as it appears in the diff" (see REVIEW_PLAN_JSON_SCHEMA) — the same
   // assumption `resolveUnitFiles` makes when rendering.
   const knownFiles = new Map(chunk.files.map((file) => [file.path, file]));
+  let sawToken = false;
 
   for await (const event of client.annotateReviewStream(
     { diff: chunk, prContext, settings },
     { signal },
   )) {
     if (signal.aborted) return;
+
+    if (event.type === "text_delta" && !sawToken) {
+      sawToken = true;
+      onFirstToken?.();
+    }
 
     const raw =
       event.type === "text_delta"

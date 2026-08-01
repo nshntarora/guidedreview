@@ -37,6 +37,27 @@ describe("ContextPanel error state", () => {
   });
 });
 
+describe("ContextPanel loading state", () => {
+  it("shows primary copy and phase detail under the spinner", () => {
+    render(
+      <ContextPanel
+        unit={null}
+        loading
+        loadingDetail="Extracting the diff…"
+        hasTitle
+        hasDescription
+      />,
+    );
+
+    expect(screen.getByTestId("context-panel-loading")).toBeInTheDocument();
+    expect(screen.getByText("Building a review plan")).toBeInTheDocument();
+    expect(screen.getByTestId("context-panel-loading-detail")).toHaveTextContent(
+      "Extracting the diff…",
+    );
+    expect(screen.getByRole("status", { name: /building a review plan/i })).toBeInTheDocument();
+  });
+});
+
 describe("ContextPanel needs-provider state", () => {
   it("renders the connect-provider prompt with its illustration", () => {
     render(<ContextPanel unit={null} needsProvider />);

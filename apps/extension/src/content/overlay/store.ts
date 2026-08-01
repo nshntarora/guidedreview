@@ -27,6 +27,18 @@ import {
 } from "./diffViewMode";
 
 export type ReviewStatus = "idle" | "loading" | "streaming" | "ready" | "error";
+
+/**
+ * Fine-grained progress while the review plan is being built (diff fetch →
+ * provider stream). Orthogonal to coarse `status`; cleared when ready/error.
+ */
+export type BuildPhase =
+  | "extracting_diff"
+  | "processing_diff"
+  | "sent_to_provider"
+  | "waiting_for_tokens"
+  | "tokens_streaming";
+
 export type { DiffViewMode };
 
 interface PersistedSession {
@@ -56,6 +68,10 @@ interface ReviewState {
    * the user to connect a provider for ordering and commentary.
    */
   needsProvider: boolean;
+  /** Pipeline sub-status while loading/streaming; null when idle/ready/error. */
+  buildPhase: BuildPhase | null;
+  /** Catalog display name of the configured provider (for "Sent it to …" copy). */
+  providerLabel: string | null;
   diff: ParsedDiff | null;
   plan: ReviewPlan | null;
   prContext: PRContext | null;
@@ -87,6 +103,8 @@ interface ReviewState {
   startLoading: (sessionKey: string) => void;
   setPRContext: (prContext: PRContext) => void;
   setDiff: (diff: ParsedDiff) => void;
+  setBuildPhase: (phase: BuildPhase, generation?: number) => void;
+  setProviderLabel: (label: string | null) => void;
   beginStreaming: (generation: number) => void;
   /**
    * Start a retry of the annotation stream without clearing the already-fetched
@@ -147,6 +165,8 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   status: "idle",
   error: null,
   needsProvider: false,
+  buildPhase: null,
+  providerLabel: null,
   diff: null,
   plan: null,
   prContext: null,
@@ -168,6 +188,8 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       status: "loading",
       error: null,
       needsProvider: false,
+      buildPhase: "extracting_diff",
+      providerLabel: null,
       currentUnitIndex: 0,
       plan: null,
       diff: null,
@@ -179,7 +201,19 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
 
   setPRContext: (prContext) => set({ prContext }),
 
-  setDiff: (diff) => set({ diff }),
+  setDiff: (diff) =>
+    set({
+      diff,
+      // Diff just landed — move past "extracting" into local/provider prep.
+      buildPhase: "processing_diff",
+    }),
+
+  setBuildPhase: (phase, generation) => {
+    if (generation !== undefined && get().streamGeneration !== generation) return;
+    set({ buildPhase: phase });
+  },
+
+  setProviderLabel: (label) => set({ providerLabel: label }),
 
   beginStreaming: (generation) => {
     if (get().streamGeneration !== generation) return;
@@ -197,6 +231,9 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       // prompt must not survive into the new attempt.
       needsProvider: false,
       plan: hasDiff ? { units: [] } : null,
+      // Cached-diff retry skips extract; full restart goes through startLoading.
+      buildPhase: hasDiff ? "processing_diff" : "extracting_diff",
+      providerLabel: hasDiff ? get().providerLabel : null,
       ...COMMENT_UI_RESET,
     });
     return nextGeneration;
@@ -213,6 +250,8 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
         status: "streaming",
         plan: { units: [...existing, unit] },
         error: null,
+        // Units imply tokens already arrived (STATUS may have set this earlier).
+        buildPhase: "tokens_streaming",
       };
     });
   },
@@ -228,6 +267,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
         plan,
         currentUnitIndex: index,
         error: null,
+        buildPhase: null,
       };
     });
   },
@@ -241,13 +281,13 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       get().setNeedsProvider();
       return;
     }
-    set({ status: "error", error: normalized });
+    set({ status: "error", error: normalized, buildPhase: null });
   },
 
   setNeedsProvider: () => {
     const { diff } = get();
     if (!diff) {
-      set({ needsProvider: true, error: null });
+      set({ needsProvider: true, error: null, buildPhase: null });
       return;
     }
     // Diff already fetched (or the background backstop fired mid-stream):
@@ -258,6 +298,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       status: "ready",
       plan: buildFileReviewPlan(diff),
       currentUnitIndex: 0,
+      buildPhase: null,
       ...COMMENT_UI_RESET,
     });
   },
@@ -531,6 +572,8 @@ export async function restoreSession(sessionKey: string): Promise<boolean> {
     currentUnitIndex,
     sessionKey,
     error: null,
+    buildPhase: null,
+    providerLabel: null,
     draftComments: saved.draftComments ?? [],
     ...COMMENT_UI_RESET,
   });
