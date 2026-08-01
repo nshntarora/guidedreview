@@ -4,8 +4,8 @@ import type { ReviewPlan } from "../../lib/types";
 
 const plan: ReviewPlan = {
   units: [
-    { id: "u1", title: "One", context: "c1", files: [] },
-    { id: "u2", title: "Two", context: "c2", files: [] },
+    { id: "u1", title: "One", kind: "change", context: "c1", files: [] },
+    { id: "u2", title: "Two", kind: "tests", context: "c2", files: [] },
   ],
 };
 

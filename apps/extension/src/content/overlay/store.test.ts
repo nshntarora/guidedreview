@@ -12,6 +12,7 @@ function planFixture(unitCount: number): ReviewPlan {
     units: Array.from({ length: unitCount }, (_, i) => ({
       id: `u${i}`,
       title: `Unit ${i}`,
+      kind: "change" as const,
       context: "because",
       files: [],
     })),

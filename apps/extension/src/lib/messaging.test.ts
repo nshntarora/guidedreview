@@ -58,6 +58,7 @@ describe("messaging", () => {
     const unit: ReviewUnit = {
       id: "c0-u1",
       title: "Update foo",
+      kind: "change",
       context: "because",
       files: [{ fileId: "src/foo.ts", hunkIds: [], role: "core_logic" }],
     };

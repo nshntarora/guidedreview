@@ -1,4 +1,4 @@
-import { FILE_ROLES } from "../types";
+import { FILE_ROLES, UNIT_KINDS } from "../types";
 
 /**
  * JSON schema for the structured `ReviewPlan` output. Shared by every
@@ -15,23 +15,33 @@ export const REVIEW_PLAN_JSON_SCHEMA = {
     units: {
       type: "array",
       description:
-        "Review units in the order the human should walk through them: model/schema changes first, then the logic that changes because of them, then consumers/call-sites, then tests and generated/config files last.",
+        "Review units in walk order. For each feature: change unit(s) first, then the matching tests unit. Never mix production and test files in one unit.",
       items: {
         type: "object",
         properties: {
-          id: { type: "string", description: "Stable slug id, e.g. 'add-retry-policy-field'." },
-          title: {
+          id: {
             type: "string",
             description:
-              "Short human title for this review unit, e.g. 'Add retryPolicy field to Job model'.",
+              "Unique kebab-case slug (e.g. 'add-retry-policy'). Tests units end with '-tests'.",
+          },
+          kind: {
+            type: "string",
+            enum: UNIT_KINDS,
+            description:
+              "'change' = production and optional config only. 'tests' = test files only. Never mix.",
+          },
+          title: {
+            type: "string",
+            description: "Short human title for this review unit.",
           },
           context: {
             type: "string",
             description:
-              "Why this change was made, inferred from the PR description and the diff. Assume the reviewer already understands the code; convey the intent and context behind the change rather than telling them what to check or verify. 2-5 sentences.",
+              "Why this change was made (intent from PR description and diff). Not a verify/check list. 2-5 sentences.",
           },
           files: {
             type: "array",
+            description: "Files for this unit only.",
             items: {
               type: "object",
               properties: {
@@ -43,11 +53,13 @@ export const REVIEW_PLAN_JSON_SCHEMA = {
                   type: "array",
                   items: { type: "string" },
                   description:
-                    "IDs of the specific hunks in this file relevant to this unit, formatted 'path#index'. Empty array means the whole file.",
+                    "Hunk ids for this unit ('path#index'). Empty array = whole file (only when every hunk belongs here).",
                 },
                 role: {
                   type: "string",
                   enum: FILE_ROLES,
+                  description:
+                    "schema_or_model | core_logic | consumer_or_call_site | test | config_or_generated",
                 },
               },
               required: ["fileId", "hunkIds", "role"],
@@ -55,7 +67,7 @@ export const REVIEW_PLAN_JSON_SCHEMA = {
             },
           },
         },
-        required: ["id", "title", "context", "files"],
+        required: ["id", "kind", "title", "context", "files"],
         additionalProperties: false,
       },
     },

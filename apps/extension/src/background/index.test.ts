@@ -163,6 +163,32 @@ describe("ANNOTATE_REVIEW stream", () => {
     };
   }
 
+  function twoHunkFile(path: string): DiffFile {
+    return {
+      path,
+      status: "modified",
+      isBinaryOrElided: false,
+      hunks: [0, 1].map((i) => ({
+        id: `${path}#${i}`,
+        header: "@@ -1 +1 @@",
+        oldStart: 1,
+        oldLines: 1,
+        newStart: 1,
+        newLines: 1,
+        lines: [{ type: "add" as const, content: `line ${i}`, newLine: 1 }],
+      })),
+    };
+  }
+
+  function unitJsonForHunks(id: string, fileId: string, hunkIds: string[]): string {
+    return JSON.stringify({
+      id,
+      title: `Unit ${id}`,
+      context: "Why",
+      files: [{ fileId, hunkIds, role: "core_logic" }],
+    });
+  }
+
   function unitJson(id: string, fileId: string): string {
     return JSON.stringify({
       id,
@@ -247,16 +273,33 @@ describe("ANNOTATE_REVIEW stream", () => {
 
   // Guards the StreamPlanParser offset bug: a unit the parser skips must not
   // shift its full-document fallback, or later units arrive twice in the plan.
+  // u1 and u3 claim different files so `stripDuplicateHunks` cannot mask it.
   it("emits every unit exactly once when the model skips a required field", async () => {
     const malformed = JSON.stringify({ id: "u2", title: "No context or files" });
     provider.deltasByFirstFilePath.set("a.ts", [
-      planJson([unitJson("u1", "a.ts"), malformed, unitJson("u3", "a.ts")]),
+      planJson([
+        unitJsonForHunks("u1", "a.ts", ["a.ts#0"]),
+        malformed,
+        unitJsonForHunks("u3", "a.ts", ["a.ts#1"]),
+      ]),
+    ]);
+
+    const { events } = await runStream({ files: [twoHunkFile("a.ts")] });
+
+    expect(unitIds(events)).toEqual(["c0-u1", "c0-u3"]);
+    expect(donePlan(events)?.map((u) => u.id)).toEqual(["c0-u1", "c0-u3"]);
+  });
+
+  // Two units claiming the same hunks are genuinely duplicate content, so the
+  // second is dropped rather than shown twice.
+  it("drops a later unit that claims hunks an earlier unit already took", async () => {
+    provider.deltasByFirstFilePath.set("a.ts", [
+      planJson([unitJson("u1", "a.ts"), unitJson("u3", "a.ts")]),
     ]);
 
     const { events } = await runStream({ files: [oversizedFile("a.ts")] });
 
-    expect(unitIds(events)).toEqual(["c0-u1", "c0-u3"]);
-    expect(donePlan(events)?.map((u) => u.id)).toEqual(["c0-u1", "c0-u3"]);
+    expect(unitIds(events)).toEqual(["c0-u1"]);
   });
 
   it("stops posting units and never sends DONE once the port disconnects", async () => {

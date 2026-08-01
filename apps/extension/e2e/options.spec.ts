@@ -68,4 +68,21 @@ test.describe("Options page", () => {
     await expect(page.getByRole("combobox", { name: "Provider" })).toBeVisible();
     await expect(page).toHaveURL(/#settings$/);
   });
+
+  test("auto-open on Files changed persists across a reload", async ({ context, extensionId }) => {
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/src/options/index.html`);
+
+    const toggle = page.getByRole("switch", { name: /Automatically open on Files changed/i });
+    await expect(toggle).toBeVisible();
+    await expect(toggle).toHaveAttribute("aria-checked", "false");
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-checked", "true");
+
+    await page.reload();
+    await expect(
+      page.getByRole("switch", { name: /Automatically open on Files changed/i }),
+    ).toHaveAttribute("aria-checked", "true");
+  });
 });

@@ -25,6 +25,11 @@ const SHORTCUTS: readonly ShortcutRow[] = [
   { keys: ["↑", "↓"], join: "none", description: "Scroll the code pane" },
   { keys: ["v", "u"], join: "sequence", description: "Unified view" },
   { keys: ["v", "s"], join: "sequence", description: "Split view" },
+  {
+    keys: ["mod", "F"],
+    join: "chord",
+    description: "Search files and code in this PR",
+  },
   { keys: ["c"], join: "none", description: "Enter comment mode" },
   { keys: ["↑", "↓"], join: "none", description: "Select lines (in comment mode)" },
   {

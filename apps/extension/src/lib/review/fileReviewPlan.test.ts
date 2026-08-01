@@ -64,14 +64,18 @@ describe("buildFileReviewPlan", () => {
     expect(resolved[0].hunks).toHaveLength(2);
   });
 
-  it("does not guess roles from paths", () => {
-    // Role only drives AI-ordered grouping, which this fallback has none of.
+  it("labels test and config files by path", () => {
     const plan = buildFileReviewPlan(diffFixture());
     expect(plan.units.map((u) => u.files[0].role)).toEqual([
       "core_logic",
-      "core_logic",
-      "core_logic",
+      "test",
+      "config_or_generated",
     ]);
+  });
+
+  it("sets kind tests only for test paths", () => {
+    const plan = buildFileReviewPlan(diffFixture());
+    expect(plan.units.map((u) => u.kind)).toEqual(["change", "tests", "change"]);
   });
 
   it("returns an empty plan for an empty diff", () => {

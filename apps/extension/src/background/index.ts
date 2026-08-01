@@ -36,7 +36,7 @@ import { fetchPRDiff } from "../lib/github/diffFetch";
 import { submitPullRequestReview } from "../lib/github/submitReview";
 import { chunkDiffByFile } from "../lib/review/buildPrompt";
 import { StreamPlanParser } from "../lib/review/streamPlanParser";
-import { parseReviewUnit } from "../lib/review/reviewPlan";
+import { parseReviewUnit, stripDuplicateHunks } from "../lib/review/reviewPlan";
 import { getProviderSettings } from "../lib/settings";
 import { grantSessionAccessToContentScripts } from "../lib/storage";
 import { getProviderClient } from "./providers";
@@ -212,12 +212,15 @@ async function handleAnnotateReviewStream(
   const client = getProviderClient(settings.provider);
   const chunks = chunkDiffByFile(request.diff).filter((chunk) => chunk.files.length > 0);
   const allUnits: ReviewUnit[] = [];
+  /** First unit that claims a hunk id wins; later duplicates are stripped. */
+  const seenHunkIds = new Set<string>();
 
   for (const [chunkIndex, chunk] of chunks.entries()) {
     if (signal.aborted) return;
 
     for await (const unit of streamChunkUnits(client, chunk, request.prContext, settings, {
       chunkIndex,
+      seenHunkIds,
       signal,
     })) {
       if (signal.aborted) return;
@@ -234,15 +237,19 @@ async function handleAnnotateReviewStream(
 
 /**
  * Stream one diff chunk through the provider and yield the review units that
- * survive validation, already namespaced by chunk. Yields nothing further once
- * `signal` aborts.
+ * survive validation, already deduplicated and namespaced by chunk. Yields
+ * nothing further once `signal` aborts.
  */
 async function* streamChunkUnits(
   client: ProviderClient,
   chunk: ParsedDiff,
   prContext: PRContext,
   settings: ProviderSettings,
-  { chunkIndex, signal }: { chunkIndex: number; signal: AbortSignal },
+  {
+    chunkIndex,
+    seenHunkIds,
+    signal,
+  }: { chunkIndex: number; seenHunkIds: Set<string>; signal: AbortSignal },
 ): AsyncGenerator<ReviewUnit, void, unknown> {
   const parser = new StreamPlanParser();
   // Keyed by path because the schema defines `fileId` as "the file path exactly
@@ -264,9 +271,15 @@ async function* streamChunkUnits(
           : [];
 
     for (const candidate of raw) {
-      const unit = parseReviewUnit(candidate, knownFiles);
-      // Namespace the id so units from different chunks can't collide.
-      if (unit) yield { ...unit, id: `c${chunkIndex}-${unit.id}` };
+      // One raw object can yield two units — a mixed production/test unit is
+      // split into change-then-tests.
+      for (const cleaned of parseReviewUnit(candidate, knownFiles)) {
+        if (signal.aborted) return;
+        const deduped = stripDuplicateHunks(cleaned, knownFiles, seenHunkIds);
+        if (!deduped) continue;
+        // Namespace the id so units from different chunks can't collide.
+        yield { ...deduped, id: `c${chunkIndex}-${deduped.id}` };
+      }
     }
   }
 }

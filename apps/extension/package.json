@@ -26,6 +26,7 @@
     "@fontsource/victor-mono": "^5.3.0",
     "@guided-review/ui": "*",
     "dompurify": "^3.4.12",
+    "fuse.js": "^7.5.0",
     "highlight.js": "^11.11.1",
     "highlightjs-zig": "^1.0.2",
     "react": "^19.2.8",

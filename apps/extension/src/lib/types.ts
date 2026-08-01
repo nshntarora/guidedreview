@@ -76,6 +76,18 @@ export type FileRole = (typeof FILE_ROLES)[number];
 export const DEFAULT_FILE_ROLE: FileRole = "core_logic";
 
 /**
+ * Whether a review unit is production code or tests. Tests are always a
+ * separate unit (never mixed with production files). Single source of truth
+ * for the JSON schema enum and runtime validation.
+ */
+export const UNIT_KINDS = ["change", "tests"] as const;
+
+export type UnitKind = (typeof UNIT_KINDS)[number];
+
+/** Kind assigned when the model omits one or returns something unrecognized. */
+export const DEFAULT_UNIT_KIND: UnitKind = "change";
+
+/**
  * Shown when a review that requires a summary is submitted without one. The
  * overlay checks this before calling the background worker so the user gets
  * the error without a round-trip; `submitReview.ts` enforces it again because
@@ -96,6 +108,11 @@ export interface ReviewUnitFileRef {
 export interface ReviewUnit {
   id: string;
   title: string;
+  /**
+   * `change` = production (and optional config); `tests` = test files only.
+   * Never mixed — validation splits impure units.
+   */
+  kind: UnitKind;
   /** Why the change was made (inferred). */
   context: string;
   files: ReviewUnitFileRef[];

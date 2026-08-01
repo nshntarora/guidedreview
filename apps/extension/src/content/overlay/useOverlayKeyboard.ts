@@ -52,6 +52,12 @@ interface UseOverlayKeyboardOptions {
   setConnectGitHubOpen: (open: boolean) => void;
   confirmationOpen: boolean;
   requestExit: () => void;
+  /** Diff search palette (⌘/Ctrl+F) open state. */
+  diffSearchOpen: boolean;
+  openDiffSearch: () => void;
+  closeDiffSearch: () => void;
+  /** Arrow/Enter/Esc routing while the search palette owns the keyboard. */
+  diffSearchKeyRef: MutableRefObject<((e: KeyboardEvent) => boolean) | null>;
 }
 
 /**
@@ -84,6 +90,10 @@ export function useOverlayKeyboard({
   setConnectGitHubOpen,
   confirmationOpen,
   requestExit,
+  diffSearchOpen,
+  openDiffSearch,
+  closeDiffSearch,
+  diffSearchKeyRef,
 }: UseOverlayKeyboardOptions): void {
   // Mirror modal flags into refs on every render so the capture listener never
   // sees a stale open state between React commit (modal paints) and this
@@ -105,6 +115,12 @@ export function useOverlayKeyboard({
   requestOpenSubmitReviewRef.current = requestOpenSubmitReview;
   const requestExitRef = useRef(requestExit);
   requestExitRef.current = requestExit;
+  const diffSearchOpenRef = useRef(diffSearchOpen);
+  diffSearchOpenRef.current = diffSearchOpen;
+  const openDiffSearchRef = useRef(openDiffSearch);
+  openDiffSearchRef.current = openDiffSearch;
+  const closeDiffSearchRef = useRef(closeDiffSearch);
+  closeDiffSearchRef.current = closeDiffSearch;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -316,6 +332,15 @@ export function useOverlayKeyboard({
       }
     }
 
+    function isFindShortcut(event: KeyboardEvent): boolean {
+      return (
+        (event.metaKey || event.ctrlKey) &&
+        !event.altKey &&
+        !event.shiftKey &&
+        event.key.toLowerCase() === "f"
+      );
+    }
+
     // Capture on window so we run before GitHub's document-level shortcuts.
     // The overlay mounts in an open shadow root; with focus inside it,
     // document.activeElement is the host — GitHub thinks nothing is focused
@@ -333,6 +358,35 @@ export function useOverlayKeyboard({
       // returns a null pending state for every key except `v`.
       if (handleModalKeys(event)) {
         clearViewChord();
+        return;
+      }
+
+      // ⌘/Ctrl+F: always open (or re-focus) the diff search palette. Must run
+      // before composer handling so find is not swallowed as "editable typing".
+      if (isFindShortcut(event)) {
+        event.preventDefault();
+        clearViewChord();
+        openDiffSearchRef.current();
+        return;
+      }
+
+      // Diff search owns Esc / arrows / Enter while open (above the composer so
+      // Esc closes search instead of only clearing a pending composer state).
+      if (diffSearchOpenRef.current) {
+        clearViewChord();
+        // Esc is handled here so close works even before DiffSearch mounts its ref.
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeDiffSearchRef.current();
+          return;
+        }
+        if (diffSearchKeyRef.current?.(event)) {
+          event.preventDefault();
+          return;
+        }
+        // Typing into the search input: do not run navigate/comment shortcuts.
+        if (isEditableEvent(event)) return;
+        // Other unbound keys are swallowed while the palette is open.
         return;
       }
 
@@ -378,5 +432,6 @@ export function useOverlayKeyboard({
     submitReviewActionRef,
     submitReviewKeyRef,
     connectGitHubActionRef,
+    diffSearchKeyRef,
   ]);
 }
