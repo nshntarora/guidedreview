@@ -23,6 +23,7 @@ const domTestTs = [
   "src/content/overlay/focusTrap.test.ts",
   "src/content/overlay/prConversationUrl.test.ts",
   "src/lib/github/prContext.test.ts",
+  "src/popup/main.test.ts",
 ];
 
 export default defineConfig({
