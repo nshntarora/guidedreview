@@ -11,6 +11,7 @@ import { BinaryElidedEmptyState } from "./diff/BinaryElidedEmptyState";
 import { SplitHunk } from "./diff/SplitHunk";
 import { UnifiedHunk } from "./diff/UnifiedHunk";
 import { useSelectionDerived } from "./diff/useSelectionDerived";
+import { MiddleEllipsisText } from "./MiddleEllipsisText";
 import { TestsUnitIcon } from "./TestsUnitIcon";
 
 /** How long the search-match flash highlight stays on the target line/file. */
@@ -196,10 +197,13 @@ export function DiffPane({
             data-file-path={file.path}
             data-testid={fileSearchHit ? "diff-file-search-highlight" : undefined}
           >
-            <div className="flex items-baseline gap-2.5 border-b border-border bg-background px-3 py-2 font-mono text-sm">
-              {file.previousPath ? `${file.previousPath} → ${file.path}` : file.path}
+            <div className="flex min-w-0 items-baseline gap-2.5 border-b border-border bg-background px-3 py-2 font-mono text-sm">
+              <MiddleEllipsisText
+                text={file.previousPath ? `${file.previousPath} → ${file.path}` : file.path}
+                className="min-w-0 flex-1"
+              />
               {!language && !file.isBinaryOrElided && (
-                <span className="font-normal text-muted italic">
+                <span className="shrink-0 font-normal text-muted italic">
                   {extension
                     ? `no syntax highlighting for .${extension}`
                     : "no syntax highlighting"}

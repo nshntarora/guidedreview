@@ -2,6 +2,7 @@ import type { FileChangeStatus, ParsedDiff, PRContext } from "../../../lib/types
 import { summarizeDiff, type FileDiffSummary } from "../../../lib/github/diffSummary";
 import { cn } from "@guided-review/ui";
 import { emptyDescriptionCopy } from "../missingMetadata";
+import { MiddleEllipsisText } from "./MiddleEllipsisText";
 
 interface DescriptionPaneProps {
   prContext: PRContext | null;
@@ -114,9 +115,7 @@ function DiffSummaryFileRow({ file }: { file: FileDiffSummary }) {
       >
         {badge.letter}
       </span>
-      <span className="min-w-0 truncate text-foreground" title={pathLabel}>
-        {pathLabel}
-      </span>
+      <MiddleEllipsisText text={pathLabel} className="min-w-0 text-foreground" />
       <span className="inline-flex min-w-[4.5rem] shrink-0 items-center justify-end gap-1.5 text-right tabular-nums">
         {file.isBinaryOrElided ? (
           <span className="text-[0.8125rem] text-faint">binary</span>
