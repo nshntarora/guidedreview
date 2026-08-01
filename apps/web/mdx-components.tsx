@@ -2,6 +2,8 @@ import type { MDXComponents } from "mdx/types";
 import { Children, isValidElement, type HTMLAttributes, type ReactNode } from "react";
 import type { TdHTMLAttributes, ThHTMLAttributes } from "react";
 import { Callout } from "@/components/docs/Callout";
+import { DocsIndex } from "@/components/docs/DocsIndex";
+import { LegalContactBlock } from "@/components/LegalDocument";
 import { CopyButton } from "@/components/docs/CopyButton";
 import { TocCard } from "@/components/docs/TocCard";
 
@@ -50,6 +52,11 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
     ...components,
     TocCard,
+    DocsIndex,
+    LegalContactBlock,
+    // Lets MDX use <Callout type="tip" | "warning" | "danger"> directly;
+    // blockquotes below map to the "note" variant.
+    Callout,
 
     h1: (props: HTMLAttributes<HTMLHeadingElement>) => <Heading as="h1" {...props} />,
     h2: (props: HTMLAttributes<HTMLHeadingElement>) => <Heading as="h2" {...props} />,

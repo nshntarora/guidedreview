@@ -1,24 +1,12 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
-import {
-  createAnalyticsClient,
-  getAnalyticsConfig,
-  type AnalyticsClient,
-  type AnalyticsConfig,
-} from "../../lib/analytics";
+import { createAnalyticsClient, type AnalyticsClient } from "../../lib/analytics";
 
 const AnalyticsContext = createContext<AnalyticsClient | null>(null);
 
-type AnalyticsProviderProps = {
-  children: ReactNode;
-  /** Optional override for tests; defaults to build-time env config. */
-  config?: AnalyticsConfig;
-};
-
-export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) {
-  const resolved = useMemo(() => config ?? getAnalyticsConfig(), [config]);
-  const client = useMemo(() => createAnalyticsClient(resolved), [resolved]);
+export function AnalyticsProvider({ children }: { children: ReactNode }) {
+  const client = useMemo(() => createAnalyticsClient(), []);
 
   useEffect(() => {
     client.init();

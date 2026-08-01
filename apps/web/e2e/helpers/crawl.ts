@@ -1,12 +1,12 @@
 import type { Page } from "@playwright/test";
 
-export type CollectedAnchor = {
+type CollectedAnchor = {
   href: string;
   target: string | null;
   rel: string | null;
 };
 
-export type PageCrawl = {
+type PageCrawl = {
   pageUrl: string;
   anchors: CollectedAnchor[];
   assets: string[];

@@ -15,7 +15,5 @@ export type AnalyticsConfig =
 export interface AnalyticsClient {
   init(): void;
   capturePageview(url: string): void;
-  capturePageleave(): void;
   capture(event: string, properties?: Record<string, unknown>): void;
-  shutdown?(): void;
 }

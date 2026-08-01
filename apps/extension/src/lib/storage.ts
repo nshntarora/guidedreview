@@ -1,37 +1,35 @@
 /**
- * Thin helpers over `chrome.storage.local` for the extension's single-key
- * preferences. Each caller supplies a `parse` that turns the raw stored value
- * (possibly `undefined` or stale) into a valid value of its own type.
+ * The extension's only access to `chrome.storage`. Every read, write, and
+ * change subscription goes through here — an ESLint rule enforces it — so the
+ * one place that knows about the browser storage API is this file.
+ *
+ * Each caller supplies a `parse` that turns the raw stored value (possibly
+ * `undefined` or stale) into a valid value of its own type.
+ *
+ * These functions propagate storage failures. Callers holding a best-effort
+ * preference should catch and fall back; callers holding real data (API keys,
+ * OAuth tokens) must let the failure surface rather than report it as "not
+ * configured".
  */
 
-/**
- * Read one key. Storage failures are logged and fall back to `parse(undefined)`
- * — a preference that can't be read should never break the flow reading it.
- * Callers that need a read failure to surface should call `chrome.storage.local`
- * directly.
- */
+// ---- local: persists across browser restarts (settings, tokens, prefs) ------
+
 export async function readLocal<T>(key: string, parse: (raw: unknown) => T): Promise<T> {
-  try {
-    const result = await chrome.storage.local.get(key);
-    return parse(result[key]);
-  } catch (error) {
-    console.warn(`Guided Review: failed to read ${key}`, error);
-    return parse(undefined);
-  }
+  const result = await chrome.storage.local.get(key);
+  return parse(result[key]);
 }
 
-/** Write one key. Failures are non-fatal and logged. */
 export async function writeLocal(key: string, value: unknown): Promise<void> {
-  try {
-    await chrome.storage.local.set({ [key]: value });
-  } catch (error) {
-    console.warn(`Guided Review: failed to persist ${key}`, error);
-  }
+  await chrome.storage.local.set({ [key]: value });
+}
+
+export async function removeLocal(key: string): Promise<void> {
+  await chrome.storage.local.remove(key);
 }
 
 /**
- * Watch one key for changes (e.g. the options page while a PR tab is open).
- * Returns an unsubscribe function.
+ * Watch one key for changes (e.g. the options page saving while a PR tab is
+ * open). Returns an unsubscribe function.
  */
 export function watchLocal<T>(
   key: string,
@@ -50,4 +48,25 @@ export function watchLocal<T>(
 
   chrome.storage.onChanged.addListener(handler);
   return () => chrome.storage.onChanged.removeListener(handler);
+}
+
+// ---- session: cleared when the browser closes (in-progress review state) ----
+
+export async function readSession<T>(key: string, parse: (raw: unknown) => T): Promise<T> {
+  const result = await chrome.storage.session.get(key);
+  return parse(result[key]);
+}
+
+export async function writeSession(key: string, value: unknown): Promise<void> {
+  await chrome.storage.session.set({ [key]: value });
+}
+
+/**
+ * Content scripts cannot touch session storage until the worker grants access.
+ * Called once on background startup.
+ */
+export async function grantSessionAccessToContentScripts(): Promise<void> {
+  await chrome.storage.session.setAccessLevel({
+    accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS",
+  });
 }

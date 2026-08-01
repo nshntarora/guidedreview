@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { recordViewChordKey, VIEW_CHORD_WINDOW_MS, type ViewChordPending } from "./viewModeChord";
+import { recordViewChordKey, type ViewChordPending } from "./viewModeChord";
 
 describe("recordViewChordKey", () => {
   it("arms on v and completes unified on u", () => {
@@ -43,9 +43,10 @@ describe("recordViewChordKey", () => {
     expect(recordViewChordKey(rearm.next, "u", 1600).mode).toBe("unified");
   });
 
+  // The chord window is 1000ms; 2s after arming is well past it.
   it("does not complete after the window expires", () => {
     const armed = recordViewChordKey(null, "v", 1000);
-    const late = recordViewChordKey(armed.next, "u", 1000 + VIEW_CHORD_WINDOW_MS + 1);
+    const late = recordViewChordKey(armed.next, "u", 3000);
     expect(late).toEqual({ next: null, mode: null, consumed: false });
   });
 

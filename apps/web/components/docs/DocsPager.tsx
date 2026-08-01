@@ -1,25 +1,11 @@
 import Link from "next/link";
-import { helpNavigation } from "@/config/help-navigation";
+import { DOCS_PAGES, docsPath } from "@/config/docs";
 
-const pages = helpNavigation.filter((item) => item.type !== "heading") as {
-  slug: string;
-  title: string;
-}[];
-
-function getHref(slug: string, basePath: "/docs") {
-  return slug ? `${basePath}/${slug}` : basePath;
-}
-
-type DocsPagerProps = {
-  slug: string;
-  basePath?: "/docs";
-};
-
-export function DocsPager({ slug, basePath = "/docs" }: DocsPagerProps) {
-  const currentIndex = pages.findIndex((p) => p.slug === slug);
-  const prev = currentIndex > 0 ? pages[currentIndex - 1] : null;
+export function DocsPager({ slug }: { slug: string }) {
+  const currentIndex = DOCS_PAGES.findIndex((p) => p.slug === slug);
+  const prev = currentIndex > 0 ? DOCS_PAGES[currentIndex - 1] : null;
   const next =
-    currentIndex >= 0 && currentIndex < pages.length - 1 ? pages[currentIndex + 1] : null;
+    currentIndex >= 0 && currentIndex < DOCS_PAGES.length - 1 ? DOCS_PAGES[currentIndex + 1] : null;
 
   if (!prev && !next) return null;
 
@@ -27,7 +13,7 @@ export function DocsPager({ slug, basePath = "/docs" }: DocsPagerProps) {
     <div className="mt-12 grid grid-cols-2 gap-4 border-t border-border pt-6">
       {prev ? (
         <Link
-          href={getHref(prev.slug, basePath)}
+          href={docsPath(prev.slug)}
           className="group inline-flex h-auto flex-col items-start gap-1 rounded-lg border border-border bg-surface-raised/40 p-4 no-underline transition-colors hover:border-muted hover:bg-surface-raised"
         >
           <span className="flex items-center gap-1 text-xs uppercase tracking-widest text-muted">
@@ -42,7 +28,7 @@ export function DocsPager({ slug, basePath = "/docs" }: DocsPagerProps) {
       )}
       {next ? (
         <Link
-          href={getHref(next.slug, basePath)}
+          href={docsPath(next.slug)}
           className="group inline-flex h-auto flex-col items-end gap-1 rounded-lg border border-border bg-surface-raised/40 p-4 no-underline transition-colors hover:border-muted hover:bg-surface-raised"
         >
           <span className="flex items-center gap-1 text-xs uppercase tracking-widest text-muted">

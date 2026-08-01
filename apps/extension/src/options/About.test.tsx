@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { About } from "./About";
-import { OptionsShell } from "./OptionsShell";
+import { OptionsShell } from "./App";
 
 describe("About", () => {
   it("shows a minimal product overview with logomark, how it works, and privacy", () => {

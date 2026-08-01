@@ -12,9 +12,16 @@ import { SplitHunk } from "./diff/SplitHunk";
 import { UnifiedHunk } from "./diff/UnifiedHunk";
 import { useSelectionDerived } from "./diff/useSelectionDerived";
 import { TestsUnitIcon } from "./TestsUnitIcon";
+import { middleTruncate } from "../../../lib/middleTruncate";
 
 /** How long the search-match flash highlight stays on the target line/file. */
 const SEARCH_HIGHLIGHT_MS = 1600;
+
+/** Character budget for file-header path labels in the diff viewer. */
+const DIFF_FILE_PATH_MAX = 80;
+
+/** Character budget for the unit title (often a file path without AI). */
+const UNIT_TITLE_MAX = 64;
 
 interface DiffPaneProps {
   files: ResolvedUnitFile[];
@@ -158,7 +165,9 @@ export function DiffPane({
           title={unitTitle}
         >
           {isTestsUnit && <TestsUnitIcon className="shrink-0 text-muted" size={16} />}
-          <span className="min-w-0 truncate">{unitTitle}</span>
+          <span className="min-w-0 truncate" title={unitTitle}>
+            {middleTruncate(unitTitle, UNIT_TITLE_MAX)}
+          </span>
         </h2>
         <div className="flex shrink-0 items-center gap-2">
           {commentModeActive ? (
@@ -175,6 +184,7 @@ export function DiffPane({
       {files.map(({ file, hunks }) => {
         const language = languageForPath(file.path);
         const extension = file.path.includes(".") ? file.path.split(".").pop() : undefined;
+        const pathLabel = file.previousPath ? `${file.previousPath} → ${file.path}` : file.path;
         const fileSearchHit =
           searchHighlight != null &&
           searchHighlight.filePath === file.path &&
@@ -196,10 +206,12 @@ export function DiffPane({
             data-file-path={file.path}
             data-testid={fileSearchHit ? "diff-file-search-highlight" : undefined}
           >
-            <div className="flex items-baseline gap-2.5 border-b border-border bg-background px-3 py-2 font-mono text-sm">
-              {file.previousPath ? `${file.previousPath} → ${file.path}` : file.path}
+            <div className="flex min-w-0 items-baseline gap-2.5 border-b border-border bg-background px-3 py-2 font-mono text-sm">
+              <span className="min-w-0 flex-1 truncate" title={pathLabel}>
+                {middleTruncate(pathLabel, DIFF_FILE_PATH_MAX)}
+              </span>
               {!language && !file.isBinaryOrElided && (
-                <span className="font-normal text-muted italic">
+                <span className="shrink-0 font-normal text-muted italic">
                   {extension
                     ? `no syntax highlighting for .${extension}`
                     : "no syntax highlighting"}

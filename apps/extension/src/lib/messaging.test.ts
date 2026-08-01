@@ -3,12 +3,12 @@ import {
   clearGitHubAuthSession,
   getGitHubAuthStatus,
   openOptionsPage,
-  submitPullRequestReview,
+  requestSubmitReview,
   pollGitHubDeviceAuth,
   requestPRDiff,
   startGitHubDeviceAuth,
   streamReviewPlan,
-  testConnection,
+  requestTestConnection,
 } from "./messaging";
 import type { ParsedDiff, PRContext, ReviewUnit } from "./types";
 import type { MockPort } from "../test/chromeMock";
@@ -113,7 +113,7 @@ describe("messaging", () => {
     expect(onError).not.toHaveBeenCalled();
   });
 
-  it("testConnection sends a typed TEST_CONNECTION message", async () => {
+  it("requestTestConnection sends a typed TEST_CONNECTION message", async () => {
     const settings = {
       provider: "anthropic" as const,
       model: "claude-opus-4-8",
@@ -122,7 +122,7 @@ describe("messaging", () => {
     const response = { ok: true };
     vi.mocked(chrome.runtime.sendMessage).mockResolvedValueOnce(response);
 
-    const result = await testConnection(settings);
+    const result = await requestTestConnection(settings);
 
     expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({ type: "TEST_CONNECTION", settings });
     expect(result).toEqual(response);
@@ -164,7 +164,7 @@ describe("messaging", () => {
     expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({ type: "GITHUB_AUTH_CLEAR" });
   });
 
-  it("submitPullRequestReview sends SUBMIT_REVIEW with payload", async () => {
+  it("requestSubmitReview sends SUBMIT_REVIEW with payload", async () => {
     const response = {
       ok: true as const,
       reviewId: 1,
@@ -174,7 +174,7 @@ describe("messaging", () => {
 
     const pr = { owner: "o", repo: "r", number: 1 };
     const comments = [{ path: "a.ts", body: "c", side: "RIGHT" as const, line: 3 }];
-    await expect(submitPullRequestReview(pr, "Looks good", "APPROVE", comments)).resolves.toEqual(
+    await expect(requestSubmitReview(pr, "Looks good", "APPROVE", comments)).resolves.toEqual(
       response,
     );
     expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({

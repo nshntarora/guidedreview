@@ -1,10 +1,14 @@
 import { useEffect, useRef } from "react";
 import type { ReviewPlan } from "../../../lib/types";
+import { middleTruncate } from "../../../lib/middleTruncate";
 import { cn } from "@guided-review/ui";
 import { buildDisplayUnits } from "../displayUnits";
 import { TestsUnitIcon } from "./TestsUnitIcon";
 
 const SKELETON_COUNT = 4;
+
+/** Character budget for unit titles (often file paths when no AI is configured). */
+const UNIT_TITLE_MAX = 40;
 
 interface SidebarProps {
   plan: ReviewPlan | null;
@@ -61,7 +65,9 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
                   className={cn("mr-1.5 mt-0.5 shrink-0", isActive ? "text-primary" : "text-muted")}
                 />
               )}
-              <span className="min-w-0">{unit.title}</span>
+              <span className="min-w-0 truncate" title={unit.title}>
+                {middleTruncate(unit.title, UNIT_TITLE_MAX)}
+              </span>
             </button>
           );
         })}

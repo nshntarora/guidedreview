@@ -9,7 +9,7 @@ export interface FileDiffSummary {
   isBinaryOrElided: boolean;
 }
 
-export interface DiffSummary {
+interface DiffSummary {
   files: number;
   additions: number;
   deletions: number;

@@ -5,7 +5,7 @@
  * Append more segments here as we find PR surfaces that are not suitable for
  * guided review (e.g. specialized editors).
  */
-export const IGNORED_PR_PATH_SEGMENTS = ["conflicts"] as const;
+const IGNORED_PR_PATH_SEGMENTS = ["conflicts"] as const;
 
 const IGNORED_SET = new Set<string>(IGNORED_PR_PATH_SEGMENTS);
 

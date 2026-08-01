@@ -1,17 +1,14 @@
 import { Fragment } from "react";
-import { Kbd, KbdGroup } from "@guided-review/ui";
-import { modKeyLabel } from "../platform";
-
-/**
- * Token for a key badge. Pass `"mod"` for the OS-aware primary modifier
- * (⌘ on macOS, Ctrl elsewhere).
- */
-export type ShortcutKey = string;
+import { isMacPlatform, Kbd, KbdGroup } from "@guided-review/ui";
 
 export type ShortcutJoin = "none" | "sequence" | "chord";
 
 interface ShortcutKeysProps {
-  keys: readonly ShortcutKey[];
+  /**
+   * One token per key badge. Pass `"mod"` for the OS-aware primary modifier
+   * (⌘ on macOS, Ctrl elsewhere).
+   */
+  keys: readonly string[];
   /**
    * - `none` / `sequence`: adjacent key badges (sequential presses or alternatives).
    * - `chord`: badges joined with `+` (keys held together).
@@ -20,8 +17,9 @@ interface ShortcutKeysProps {
   className?: string;
 }
 
-function resolveKey(key: ShortcutKey): string {
-  return key === "mod" ? modKeyLabel() : key;
+function resolveKey(key: string): string {
+  // "mod" is the OS primary modifier: ⌘ on Apple platforms, Ctrl elsewhere.
+  return key === "mod" ? (isMacPlatform() ? "⌘" : "Ctrl") : key;
 }
 
 /**

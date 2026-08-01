@@ -17,6 +17,7 @@ import {
   type SelectableLine,
   type UiMode,
 } from "./commentTypes";
+import { readSession, writeSession } from "../../lib/storage";
 import { displayUnitCount } from "./displayUnits";
 import {
   DEFAULT_DIFF_VIEW_MODE,
@@ -496,7 +497,7 @@ export async function persistSession(): Promise<void> {
     draftComments,
   };
   try {
-    await chrome.storage.session.set({ [storageKey(sessionKey)]: payload });
+    await writeSession(storageKey(sessionKey), payload);
   } catch (error) {
     console.warn("Guided Review: failed to persist session", error);
   }
@@ -510,8 +511,7 @@ export async function persistSession(): Promise<void> {
 export async function restoreSession(sessionKey: string): Promise<boolean> {
   let saved: PersistedSession | undefined;
   try {
-    const result = await chrome.storage.session.get(storageKey(sessionKey));
-    saved = result[storageKey(sessionKey)] as PersistedSession | undefined;
+    saved = await readSession(storageKey(sessionKey), (raw) => raw as PersistedSession | undefined);
   } catch (error) {
     console.warn("Guided Review: failed to restore session", error);
     return false;

@@ -81,6 +81,32 @@ export default tseslint.config(
       "@typescript-eslint/no-non-null-assertion": "off",
     },
   },
+  // The extension reaches chrome.storage and chrome.runtime.sendMessage through
+  // exactly one module each, so a future non-Chrome target is a change in two
+  // files rather than thirty. Tests mock the raw APIs and are exempt.
+  {
+    files: ["apps/extension/src/**/*.{ts,tsx}"],
+    ignores: [
+      "apps/extension/src/lib/storage.ts",
+      "apps/extension/src/lib/messaging.ts",
+      "apps/extension/src/**/*.{test,spec}.{ts,tsx}",
+      "apps/extension/src/test/**",
+    ],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "MemberExpression[object.object.name='chrome'][object.property.name='storage']",
+          message: "Use the helpers in lib/storage.ts instead of chrome.storage directly.",
+        },
+        {
+          selector:
+            "CallExpression[callee.object.object.name='chrome'][callee.object.property.name='runtime'][callee.property.name='sendMessage']",
+          message: "Use the helpers in lib/messaging.ts instead of chrome.runtime.sendMessage.",
+        },
+      ],
+    },
+  },
   // packages/ui must stay chrome-free and extension-free
   {
     files: ["packages/ui/**/*.{ts,tsx}"],

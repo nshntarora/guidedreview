@@ -5,7 +5,7 @@
  * @see https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps#device-flow
  */
 
-export interface DeviceCodeResponse {
+interface DeviceCodeResponse {
   deviceCode: string;
   userCode: string;
   verificationUri: string;
@@ -13,7 +13,7 @@ export interface DeviceCodeResponse {
   interval: number;
 }
 
-export type PollTokenResult =
+type PollTokenResult =
   | { status: "pending" }
   | { status: "slow_down"; interval: number }
   | { status: "authorized"; accessToken: string; tokenType: string; scope: string }
@@ -21,7 +21,7 @@ export type PollTokenResult =
   | { status: "denied" }
   | { status: "error"; message: string };
 
-export interface GitHubUserInfo {
+interface GitHubUserInfo {
   login: string;
   avatarUrl?: string;
   name?: string;

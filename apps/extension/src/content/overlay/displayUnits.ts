@@ -1,6 +1,6 @@
 import type { ReviewPlan, ReviewUnit } from "../../lib/types";
 
-export type DisplayUnit =
+type DisplayUnit =
   | { kind: "pr_description"; id: "__pr_description"; title: "PR Description" }
   | { kind: "review"; id: string; title: string; unit: ReviewUnit; planIndex: number };
 

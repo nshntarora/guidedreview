@@ -50,7 +50,3 @@ export function lineNumberClasses(isHighlighted: boolean): string {
     isHighlighted ? "bg-primary font-medium text-primary-foreground" : "text-faint",
   );
 }
-
-export function lineIdFor(hunkId: string, lineIndex: number, side: "LEFT" | "RIGHT"): string {
-  return `${hunkId}:${lineIndex}:${side}`;
-}

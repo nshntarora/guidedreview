@@ -4,11 +4,11 @@ import { CodeContent, highlightHunkLines } from "./hunkHighlight";
 import { LineExtras } from "./LineExtras";
 import {
   DIFF_LINE_WRAP,
-  lineIdFor,
   lineNumberClasses,
   selectionClasses,
   type HunkViewProps,
 } from "./hunkStyles";
+import { lineIdFor, sideForLine } from "../../commentTypes";
 
 export function UnifiedHunk({
   hunk,
@@ -28,7 +28,7 @@ export function UnifiedHunk({
       data-testid="diff-view-unified"
     >
       {hunk.lines.map((line, i) => {
-        const side = line.type === "del" ? "LEFT" : "RIGHT";
+        const side = sideForLine(line.type);
         const id = lineIdFor(hunk.id, i, side);
         const isFocus = focusId === id;
         const isSelected = selectedIds.has(id);
