@@ -138,7 +138,7 @@ export function createChromeMock() {
       getManifest: vi.fn(() => ({
         manifest_version: 3,
         name: "Guided Review",
-        version: "0.1.0",
+        version: "0.2.0",
       })),
       openOptionsPage: vi.fn(),
       lastError: undefined as { message?: string } | undefined,
