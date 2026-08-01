@@ -13,6 +13,9 @@ import type {
   GitHubDevicePollResponse,
   GitHubDeviceStartResponse,
   OpenOptionsResponse,
+  ParsedDiff,
+  PRContext,
+  ProviderSettings,
   ReviewErrorInfo,
   ReviewPlan,
   ReviewUnit,
@@ -37,7 +40,7 @@ import { StreamPlanParser } from "../lib/review/streamPlanParser";
 import { prefixChunkUnitId, validateAndCleanUnit } from "../lib/review/reviewPlan";
 import { getProviderSettings } from "../lib/settings";
 import { getProviderClient } from "./providers";
-import { ProviderError } from "./providers/types";
+import { ProviderError, type ProviderClient } from "./providers/types";
 
 const ANNOTATE_PORT_NAME = "annotate-review";
 
@@ -67,18 +70,37 @@ export function handleInstalled(details: { reason: string }): void {
 
 chrome.runtime.onInstalled.addListener(handleInstalled);
 
+/**
+ * Wire an async handler to a one-shot message response.
+ *
+ * Every rejection has to resolve to a valid response for that message type —
+ * a swallowed rejection would leave the caller's `sendMessage` promise hanging
+ * forever. Returning `true` (which callers must propagate) is what tells Chrome
+ * to keep the message channel open until `sendResponse` fires.
+ */
+function respondAsync<T>(
+  work: Promise<T>,
+  sendResponse: (response: T) => void,
+  onError: (error: unknown) => T,
+): true {
+  work.then(sendResponse).catch((error: unknown) => sendResponse(onError(error)));
+  return true;
+}
+
 chrome.runtime.onMessage.addListener((message: BackgroundRequest, _sender, sendResponse) => {
   if (message.type === "TEST_CONNECTION") {
-    handleTestConnection(message)
-      .then(sendResponse)
-      .catch((error: unknown) => {
-        const response: TestConnectionResponse = { ok: false, error: describeErrorMessage(error) };
-        sendResponse(response);
-      });
-    return true;
+    return respondAsync<TestConnectionResponse>(
+      handleTestConnection(message),
+      sendResponse,
+      (e) => ({
+        ok: false,
+        error: describeErrorMessage(e),
+      }),
+    );
   }
 
   if (message.type === "OPEN_OPTIONS") {
+    // The only synchronous handler — `openOptionsPage` has no async work to wait on.
     try {
       chrome.runtime.openOptionsPage();
       sendResponse({ ok: true } satisfies OpenOptionsResponse);
@@ -90,77 +112,52 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, _sender, sendR
   }
 
   if (message.type === "FETCH_DIFF") {
-    handleFetchDiff(message)
-      .then(sendResponse)
-      .catch((error: unknown) => {
-        const response: FetchDiffError = { ok: false, error: describeErrorMessage(error) };
-        sendResponse(response);
-      });
-    return true;
+    return respondAsync<FetchDiffResponse | FetchDiffError>(
+      handleFetchDiff(message),
+      sendResponse,
+      (e) => ({ ok: false, error: describeErrorMessage(e) }),
+    );
   }
 
   if (message.type === "GITHUB_DEVICE_START") {
-    handleGitHubDeviceStart()
-      .then(sendResponse)
-      .catch((error: unknown) => {
-        const response: GitHubDeviceStartResponse = {
-          ok: false,
-          error: describeErrorMessage(error),
-        };
-        sendResponse(response);
-      });
-    return true;
+    return respondAsync<GitHubDeviceStartResponse>(
+      handleGitHubDeviceStart(),
+      sendResponse,
+      (e) => ({ ok: false, error: describeErrorMessage(e) }),
+    );
   }
 
   if (message.type === "GITHUB_DEVICE_POLL") {
-    handleGitHubDevicePoll(message)
-      .then(sendResponse)
-      .catch((error: unknown) => {
-        const response: GitHubDevicePollResponse = {
-          ok: false,
-          status: "error",
-          error: describeErrorMessage(error),
-        };
-        sendResponse(response);
-      });
-    return true;
+    return respondAsync<GitHubDevicePollResponse>(
+      handleGitHubDevicePoll(message),
+      sendResponse,
+      (e) => ({ ok: false, status: "error", error: describeErrorMessage(e) }),
+    );
   }
 
   if (message.type === "GITHUB_AUTH_GET") {
-    handleGitHubAuthGet()
-      .then(sendResponse)
-      .catch((error: unknown) => {
-        // Still a valid response shape; treat failure as signed-out.
-        console.error("GITHUB_AUTH_GET failed:", error);
-        const response: GitHubAuthGetResponse = { ok: true, auth: null };
-        sendResponse(response);
-      });
-    return true;
+    // A storage failure isn't worth surfacing to the options page: report it as
+    // signed-out, which is the state the user can act on.
+    return respondAsync<GitHubAuthGetResponse>(handleGitHubAuthGet(), sendResponse, (e) => {
+      console.error("GITHUB_AUTH_GET failed:", e);
+      return { ok: true, auth: null };
+    });
   }
 
   if (message.type === "GITHUB_AUTH_CLEAR") {
-    handleGitHubAuthClear()
-      .then(sendResponse)
-      .catch((error: unknown) => {
-        console.error("GITHUB_AUTH_CLEAR failed:", error);
-        const response: GitHubAuthClearResponse = { ok: true };
-        sendResponse(response);
-      });
-    return true;
+    // Same reasoning: the caller's intent was to end up disconnected either way.
+    return respondAsync<GitHubAuthClearResponse>(handleGitHubAuthClear(), sendResponse, (e) => {
+      console.error("GITHUB_AUTH_CLEAR failed:", e);
+      return { ok: true };
+    });
   }
 
   if (message.type === "SUBMIT_REVIEW") {
-    handleSubmitReview(message)
-      .then(sendResponse)
-      .catch((error: unknown) => {
-        const response: SubmitReviewResponse = {
-          ok: false,
-          code: "unknown",
-          error: describeErrorMessage(error),
-        };
-        sendResponse(response);
-      });
-    return true;
+    return respondAsync<SubmitReviewResponse>(handleSubmitReview(message), sendResponse, (e) => ({
+      ok: false,
+      code: "unknown",
+      error: describeErrorMessage(e),
+    }));
   }
 
   return false;
@@ -216,39 +213,20 @@ async function handleAnnotateReviewStream(
   if (signal.aborted) return;
 
   const client = getProviderClient(settings.provider);
-  const chunks = chunkDiffByFile(request.diff);
+  const chunks = chunkDiffByFile(request.diff).filter((chunk) => chunk.files.length > 0);
   const allUnits: ReviewUnit[] = [];
 
-  let chunkIndex = 0;
-  for (const chunk of chunks) {
-    if (chunk.files.length === 0) continue;
+  for (const [chunkIndex, chunk] of chunks.entries()) {
     if (signal.aborted) return;
 
-    const parser = new StreamPlanParser();
-    const knownFiles = new Map(chunk.files.map((f) => [f.path, f]));
-
-    for await (const event of client.annotateReviewStream(
-      { diff: chunk, prContext: request.prContext, settings },
-      { signal },
-    )) {
+    for await (const unit of streamChunkUnits(client, chunk, request.prContext, settings, {
+      chunkIndex,
+      signal,
+    })) {
       if (signal.aborted) return;
-
-      if (event.type === "text_delta") {
-        const rawUnits = parser.push(event.text);
-        for (const raw of rawUnits) {
-          emitUnit(raw, knownFiles, chunkIndex, allUnits, port, signal);
-        }
-      }
-
-      if (event.type === "done") {
-        const remaining = parser.finish();
-        for (const raw of remaining) {
-          emitUnit(raw, knownFiles, chunkIndex, allUnits, port, signal);
-        }
-      }
+      allUnits.push(unit);
+      postEvent(port, { type: "UNIT", unit });
     }
-
-    chunkIndex++;
   }
 
   if (signal.aborted) return;
@@ -257,22 +235,56 @@ async function handleAnnotateReviewStream(
   postEvent(port, { type: "DONE", plan });
 }
 
-function emitUnit(
+/**
+ * Stream one diff chunk through the provider and yield the review units that
+ * survive validation, already namespaced by chunk. Yields nothing further once
+ * `signal` aborts.
+ */
+async function* streamChunkUnits(
+  client: ProviderClient,
+  chunk: ParsedDiff,
+  prContext: PRContext,
+  settings: ProviderSettings,
+  { chunkIndex, signal }: { chunkIndex: number; signal: AbortSignal },
+): AsyncGenerator<ReviewUnit, void, unknown> {
+  const parser = new StreamPlanParser();
+  // Keyed by path because the schema defines `fileId` as "the file path exactly
+  // as it appears in the diff" (see REVIEW_PLAN_JSON_SCHEMA) — the same
+  // assumption `resolveUnitFiles` makes when rendering.
+  const knownFiles = new Map(chunk.files.map((file) => [file.path, file]));
+
+  for await (const event of client.annotateReviewStream(
+    { diff: chunk, prContext, settings },
+    { signal },
+  )) {
+    if (signal.aborted) return;
+
+    const raw =
+      event.type === "text_delta"
+        ? parser.push(event.text)
+        : event.type === "done"
+          ? parser.finish()
+          : [];
+
+    for (const candidate of raw) {
+      const unit = toValidatedUnit(candidate, knownFiles, chunkIndex);
+      if (unit) yield unit;
+    }
+  }
+}
+
+/**
+ * Drop any unit whose file refs don't exist in the chunk the model was given,
+ * and namespace the id so units from different chunks can't collide.
+ */
+function toValidatedUnit(
   raw: ReviewUnit,
   knownFiles: Map<string, DiffFile>,
   chunkIndex: number,
-  allUnits: ReviewUnit[],
-  port: chrome.runtime.Port,
-  signal: AbortSignal,
-): void {
-  if (signal.aborted) return;
-
+): ReviewUnit | null {
   const cleaned = validateAndCleanUnit(raw, knownFiles);
-  if (!cleaned) return;
-
-  const unit: ReviewUnit = { ...cleaned, id: prefixChunkUnitId(chunkIndex, cleaned.id) };
-  allUnits.push(unit);
-  postEvent(port, { type: "UNIT", unit });
+  if (!cleaned) return null;
+  return { ...cleaned, id: prefixChunkUnitId(chunkIndex, cleaned.id) };
 }
 
 function postEvent(port: chrome.runtime.Port, event: AnnotateReviewStreamEvent): void {

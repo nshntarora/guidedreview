@@ -13,7 +13,14 @@ export class StreamPlanParser {
   private buffer = "";
   private unitsArrayStart = -1;
   private scanPos = 0;
-  private emittedCount = 0;
+  /**
+   * How many elements of the `units` array the incremental scanner has walked
+   * past — including ones it declined to emit. This is an array offset, not an
+   * emission tally: `finish()`'s full-document parse resumes from here, so
+   * counting only emitted units would make it re-emit everything after the
+   * first unit the scanner skipped.
+   */
+  private scannedCount = 0;
 
   /** Feed a text delta from the provider stream. Returns newly completed units. */
   push(delta: string): ReviewUnit[] {
@@ -28,25 +35,26 @@ export class StreamPlanParser {
    */
   finish(): ReviewUnit[] {
     const fromScan = this.extractCompletedUnits();
-    if (fromScan.length > 0) return fromScan;
 
-    // Safety net: structured output should be complete JSON by stream end.
+    // Safety net: structured output should be complete JSON by stream end, so
+    // full-parse whatever the incremental scanner never reached. Runs even when
+    // the scan just emitted something — the two can each recover different
+    // units from the same call, and `scannedCount` keeps them from overlapping.
+    let fromFullParse: ReviewUnit[] = [];
     try {
       const parsed = JSON.parse(this.buffer) as { units?: unknown };
-      if (!Array.isArray(parsed.units)) return [];
-
-      const remaining: ReviewUnit[] = [];
-      for (let i = this.emittedCount; i < parsed.units.length; i++) {
-        const unit = parsed.units[i];
-        if (isCompleteReviewUnit(unit)) {
-          remaining.push(unit);
-          this.emittedCount++;
+      if (Array.isArray(parsed.units)) {
+        for (let i = this.scannedCount; i < parsed.units.length; i++) {
+          const unit = parsed.units[i];
+          if (isCompleteReviewUnit(unit)) fromFullParse.push(unit);
         }
+        this.scannedCount = parsed.units.length;
       }
-      return remaining;
     } catch {
-      return [];
+      fromFullParse = [];
     }
+
+    return [...fromScan, ...fromFullParse];
   }
 
   private extractCompletedUnits(): ReviewUnit[] {
@@ -89,13 +97,13 @@ export class StreamPlanParser {
 
       const slice = this.buffer.slice(next, end + 1);
       this.scanPos = end + 1;
+      // Counted whether or not it survives validation below — this element of
+      // the array has been consumed either way.
+      this.scannedCount++;
 
       try {
         const value: unknown = JSON.parse(slice);
-        if (isCompleteReviewUnit(value)) {
-          emitted.push(value);
-          this.emittedCount++;
-        }
+        if (isCompleteReviewUnit(value)) emitted.push(value);
       } catch {
         // Malformed complete-looking object; skip it.
       }

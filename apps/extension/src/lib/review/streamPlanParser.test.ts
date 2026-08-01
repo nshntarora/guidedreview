@@ -115,6 +115,63 @@ describe("StreamPlanParser", () => {
     expect(parser.finish()).toEqual([]);
   });
 
+  // The incremental scanner and finish()'s full-document parse both walk the
+  // same `units` array. If the scanner's position were tracked as "units
+  // emitted" rather than "array elements consumed", every unit it declined to
+  // emit would shift the full parse backwards and re-emit units already sent.
+  describe("never emits the same unit twice", () => {
+    const UNIT_C = {
+      id: "u3",
+      title: "Third unit",
+      context: "Why third",
+      files: [{ fileId: "src/c.ts", hunkIds: [], role: "core_logic" }],
+    };
+
+    function idsFromWholeStream(json: string): string[] {
+      const parser = new StreamPlanParser();
+      return [...parser.push(json), ...parser.finish()].map((u) => u.id);
+    }
+
+    it("when a middle unit fails validation", () => {
+      const invalid = { id: "u2", title: "Missing context and files" };
+      expect(idsFromWholeStream(fullJson([UNIT_A, invalid, UNIT_C]))).toEqual(["u1", "u3"]);
+    });
+
+    it("when a middle unit is malformed JSON", () => {
+      // Hand-built so the middle element parses as a complete object to the
+      // brace matcher but throws in JSON.parse (trailing comma).
+      const json = `{"units":[${JSON.stringify(UNIT_A)},{"id":"u2",},${JSON.stringify(UNIT_C)}]}`;
+      expect(idsFromWholeStream(json)).toEqual(["u1", "u3"]);
+    });
+
+    it("when a unit is skipped and the stream arrives in tiny chunks", () => {
+      const invalid = { id: "u2", title: "Missing context and files" };
+      const json = fullJson([UNIT_A, invalid, UNIT_C]);
+      const parser = new StreamPlanParser();
+      const seen: string[] = [];
+
+      for (const ch of json) {
+        for (const unit of parser.push(ch)) seen.push(unit.id);
+      }
+      for (const unit of parser.finish()) seen.push(unit.id);
+
+      expect(seen).toEqual(["u1", "u3"]);
+    });
+  });
+
+  it("finish() adds nothing when the scan already emitted the trailing unit", () => {
+    const parser = new StreamPlanParser();
+    const json = fullJson([UNIT_A, UNIT_B]);
+    // Cut mid-way through the second unit so the first push emits only u1.
+    const cut = json.indexOf("},") + 2;
+    expect(parser.push(json.slice(0, cut)).map((u) => u.id)).toEqual(["u1"]);
+
+    // u2 completes during the final push, so the full-document fallback in
+    // finish() must not hand it back a second time.
+    expect(parser.push(json.slice(cut)).map((u) => u.id)).toEqual(["u2"]);
+    expect(parser.finish()).toEqual([]);
+  });
+
   it("ignores nested braces inside strings when finding object boundaries", () => {
     const unit = {
       id: "u1",
