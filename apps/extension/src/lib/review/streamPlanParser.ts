@@ -1,13 +1,13 @@
-import type { ReviewUnit } from "../types";
-import { isCompleteReviewUnit } from "./reviewPlan";
-
 /**
- * Incrementally extracts complete `ReviewUnit` objects from a streaming
- * JSON document of the form `{ "units": [ {...}, {...} ] }`.
+ * Incrementally extracts complete objects from a streaming JSON document of
+ * the form `{ "units": [ {...}, {...} ] }`.
  *
  * Only fully closed top-level objects inside the `units` array are emitted.
  * Incomplete trailing objects stay buffered until more text arrives (or
  * `finish()` runs a final full-document parse as a safety net).
+ *
+ * Emitted values are unvalidated — this class only finds object boundaries.
+ * Callers pass each one to `parseReviewUnit` to check it against the diff.
  */
 export class StreamPlanParser {
   private buffer = "";
@@ -23,7 +23,7 @@ export class StreamPlanParser {
   private scannedCount = 0;
 
   /** Feed a text delta from the provider stream. Returns newly completed units. */
-  push(delta: string): ReviewUnit[] {
+  push(delta: string): unknown[] {
     if (!delta) return [];
     this.buffer += delta;
     return this.extractCompletedUnits();
@@ -33,21 +33,18 @@ export class StreamPlanParser {
    * Call when the provider stream ends. Emits any remaining complete units
    * via a final full-document parse if the incremental scanner missed them.
    */
-  finish(): ReviewUnit[] {
+  finish(): unknown[] {
     const fromScan = this.extractCompletedUnits();
 
     // Safety net: structured output should be complete JSON by stream end, so
     // full-parse whatever the incremental scanner never reached. Runs even when
     // the scan just emitted something — the two can each recover different
     // units from the same call, and `scannedCount` keeps them from overlapping.
-    let fromFullParse: ReviewUnit[] = [];
+    let fromFullParse: unknown[] = [];
     try {
       const parsed = JSON.parse(this.buffer) as { units?: unknown };
       if (Array.isArray(parsed.units)) {
-        for (let i = this.scannedCount; i < parsed.units.length; i++) {
-          const unit = parsed.units[i];
-          if (isCompleteReviewUnit(unit)) fromFullParse.push(unit);
-        }
+        fromFullParse = parsed.units.slice(this.scannedCount);
         this.scannedCount = parsed.units.length;
       }
     } catch {
@@ -57,7 +54,7 @@ export class StreamPlanParser {
     return [...fromScan, ...fromFullParse];
   }
 
-  private extractCompletedUnits(): ReviewUnit[] {
+  private extractCompletedUnits(): unknown[] {
     if (this.unitsArrayStart < 0) {
       const start = findUnitsArrayStart(this.buffer);
       if (start < 0) return [];
@@ -65,7 +62,7 @@ export class StreamPlanParser {
       this.scanPos = start;
     }
 
-    const emitted: ReviewUnit[] = [];
+    const emitted: unknown[] = [];
 
     while (this.scanPos < this.buffer.length) {
       // Skip whitespace and commas between array elements.
@@ -102,8 +99,7 @@ export class StreamPlanParser {
       this.scannedCount++;
 
       try {
-        const value: unknown = JSON.parse(slice);
-        if (isCompleteReviewUnit(value)) emitted.push(value);
+        emitted.push(JSON.parse(slice) as unknown);
       } catch {
         // Malformed complete-looking object; skip it.
       }

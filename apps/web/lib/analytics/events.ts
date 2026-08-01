@@ -7,8 +7,6 @@ export const AnalyticsEvents = {
   GITHUB_STAR_CLICK: "github_star_click",
 } as const;
 
-export type AnalyticsEventName = (typeof AnalyticsEvents)[keyof typeof AnalyticsEvents];
-
 /**
  * Known CTA placement ids. Free-form strings are also allowed so new surfaces
  * do not require a type change.

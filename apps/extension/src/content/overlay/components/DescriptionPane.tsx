@@ -1,7 +1,7 @@
 import type { FileChangeStatus, ParsedDiff, PRContext } from "../../../lib/types";
 import { summarizeDiff, type FileDiffSummary } from "../../../lib/github/diffSummary";
 import { cn } from "@guided-review/ui";
-import { emptyDescriptionCopy } from "../missingMetadata";
+import { missingMetadataHint } from "../missingMetadata";
 
 interface DescriptionPaneProps {
   prContext: PRContext | null;
@@ -66,7 +66,7 @@ export function DescriptionPane({ prContext, diff }: DescriptionPaneProps) {
             className="m-0 text-[0.9375rem] leading-relaxed text-muted"
             data-testid="description-pane-empty"
           >
-            {emptyDescriptionCopy(hasTitle)}
+            {missingMetadataHint(hasTitle, false)}
           </p>
         )}
       </div>

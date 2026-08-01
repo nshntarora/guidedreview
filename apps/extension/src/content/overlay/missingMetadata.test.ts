@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { emptyDescriptionCopy, missingMetadataHint, PR_DESCRIPTION_HINT } from "./missingMetadata";
+import { missingMetadataHint, PR_DESCRIPTION_HINT } from "./missingMetadata";
 
 describe("missingMetadataHint", () => {
   it("mentions both title and description when neither is present", () => {
@@ -22,18 +22,5 @@ describe("missingMetadataHint", () => {
 
   it("returns the default PR description hint when both are present", () => {
     expect(missingMetadataHint(true, true)).toBe(PR_DESCRIPTION_HINT);
-  });
-});
-
-describe("emptyDescriptionCopy", () => {
-  it("mentions title and description when the title is missing", () => {
-    expect(emptyDescriptionCopy(false)).toMatch(/title or description/i);
-    expect(emptyDescriptionCopy(false)).toMatch(/inferred from the diff/i);
-  });
-
-  it("mentions only description when the title is present", () => {
-    const copy = emptyDescriptionCopy(true);
-    expect(copy).toMatch(/^No PR description\./);
-    expect(copy).toMatch(/inferred from the title and diff/i);
   });
 });

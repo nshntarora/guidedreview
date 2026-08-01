@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { REVIEW_PLAN_JSON_SCHEMA } from "./reviewSchema";
-import { validateAndCleanUnit } from "./reviewPlan";
+import { parseReviewUnit } from "./reviewPlan";
 import { FILE_ROLES, type DiffFile, type ReviewUnit } from "../types";
 
 const roleSchema =
@@ -27,8 +27,8 @@ describe("REVIEW_PLAN_JSON_SCHEMA", () => {
         files: [{ fileId: "src/foo.ts", hunkIds: [], role }],
       };
 
-      const cleaned = validateAndCleanUnit(unit, diffWith("src/foo.ts"));
-      expect(cleaned?.files[0].role).toBe(role);
+      const parsed = parseReviewUnit(unit, diffWith("src/foo.ts"));
+      expect(parsed?.files[0].role).toBe(role);
     }
   });
 });

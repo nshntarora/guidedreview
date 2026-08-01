@@ -4,7 +4,7 @@ import { PRODUCTION_ORIGIN } from "./routes";
 const SKIP_SCHEMES = /^(mailto:|tel:|javascript:|data:)/i;
 
 /** True if href should never be HTTP-fetched. */
-export function isSkippableScheme(href: string): boolean {
+function isSkippableScheme(href: string): boolean {
   return SKIP_SCHEMES.test(href.trim());
 }
 

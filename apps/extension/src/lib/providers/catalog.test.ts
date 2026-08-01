@@ -5,16 +5,16 @@ import {
   modelsForProvider,
   MODELS,
   normalizeProviderSettings,
-  PROVIDERS,
+  PROVIDER_LIST,
 } from "./catalog";
 
 describe("provider catalog", () => {
   it("lists the three built-in providers", () => {
-    expect(PROVIDERS.map((p) => p.id)).toEqual(["anthropic", "openai", "grok"]);
+    expect(PROVIDER_LIST.map((p) => p.id)).toEqual(["anthropic", "openai", "grok"]);
   });
 
   it("exposes a default model for every provider that exists in MODELS", () => {
-    for (const provider of PROVIDERS) {
+    for (const provider of PROVIDER_LIST) {
       const model = MODELS.find((m) => m.id === provider.defaultModelId);
       expect(model, `default for ${provider.id}`).toBeDefined();
       expect(model!.provider).toBe(provider.id);
@@ -71,7 +71,7 @@ describe("provider catalog", () => {
   });
 
   it("gives every model a non-empty display name and a known provider", () => {
-    const knownProviderIds = PROVIDERS.map((p) => p.id);
+    const knownProviderIds = PROVIDER_LIST.map((p) => p.id);
     for (const model of MODELS) {
       expect(model.displayName.length).toBeGreaterThan(0);
       expect(knownProviderIds).toContain(model.provider);

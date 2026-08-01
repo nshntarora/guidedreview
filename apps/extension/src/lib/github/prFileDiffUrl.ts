@@ -6,7 +6,7 @@
  * matches the fragment GitHub puts in the address bar when you open a file).
  */
 
-export interface PRFileDiffIdentity {
+interface PRFileDiffIdentity {
   owner: string;
   repo: string;
   number: number;

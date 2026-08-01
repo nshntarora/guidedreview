@@ -64,12 +64,13 @@ describe("buildFileReviewPlan", () => {
     expect(resolved[0].hunks).toHaveLength(2);
   });
 
-  it("labels test and config files by path", () => {
+  it("does not guess roles from paths", () => {
+    // Role only drives AI-ordered grouping, which this fallback has none of.
     const plan = buildFileReviewPlan(diffFixture());
     expect(plan.units.map((u) => u.files[0].role)).toEqual([
       "core_logic",
-      "test",
-      "config_or_generated",
+      "core_logic",
+      "core_logic",
     ]);
   });
 

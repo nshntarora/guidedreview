@@ -1,4 +1,4 @@
-import type { ProviderId } from "../../lib/types";
+import type { ProviderId } from "../../lib/providers/catalog";
 import type { ProviderClient } from "./types";
 import { anthropicProvider } from "./anthropic";
 import { createOpenAICompatibleProvider } from "./openaiCompatible";

@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import { cn } from "@guided-review/ui";
 
-export type CalloutType = "note" | "tip" | "warning" | "danger";
+type CalloutType = "note" | "tip" | "warning" | "danger";
 
-export type CalloutProps = {
+type CalloutProps = {
   type?: CalloutType;
   title?: string;
   children: ReactNode;

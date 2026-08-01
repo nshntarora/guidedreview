@@ -8,7 +8,7 @@
 
 export type ProviderId = "anthropic" | "openai" | "grok";
 
-export interface ProviderDefinition {
+interface ProviderDefinition {
   id: ProviderId;
   /** Human-readable label shown in the provider dropdown. */
   displayName: string;
@@ -23,7 +23,7 @@ export interface ProviderDefinition {
   defaultModelId: string;
 }
 
-export interface ModelDefinition {
+interface ModelDefinition {
   /** Exact string passed to the provider API. */
   id: string;
   /** Human-readable label shown in the model dropdown. */
@@ -31,30 +31,33 @@ export interface ModelDefinition {
   provider: ProviderId;
 }
 
-/** Providers in display order. */
-export const PROVIDERS: readonly ProviderDefinition[] = [
-  {
+/** Providers keyed by id. Key order is display order. */
+export const PROVIDERS: Record<ProviderId, ProviderDefinition> = {
+  anthropic: {
     id: "anthropic",
     displayName: "Claude (Anthropic)",
     keyPlaceholder: "sk-ant-…",
     iconSrc: "providers/claude.svg",
     defaultModelId: "claude-opus-4-8",
   },
-  {
+  openai: {
     id: "openai",
     displayName: "OpenAI",
     keyPlaceholder: "sk-…",
     iconSrc: "providers/openai.svg",
     defaultModelId: "gpt-4.1",
   },
-  {
+  grok: {
     id: "grok",
     displayName: "Grok (xAI)",
     keyPlaceholder: "xai-…",
     iconSrc: "providers/grok.svg",
     defaultModelId: "grok-4",
   },
-] as const;
+};
+
+/** Providers in display order, for dropdowns. */
+export const PROVIDER_LIST: readonly ProviderDefinition[] = Object.values(PROVIDERS);
 
 /**
  * Text-generation models available for PR review annotation.
@@ -84,12 +87,7 @@ export const MODELS: readonly ModelDefinition[] = [
 ] as const;
 
 export function getProvider(id: ProviderId): ProviderDefinition {
-  const found = PROVIDERS.find((p) => p.id === id);
-  if (!found) {
-    // Exhaustiveness: ProviderId is always in PROVIDERS; keep a safe fallback.
-    return PROVIDERS[0];
-  }
-  return found;
+  return PROVIDERS[id];
 }
 
 export function modelsForProvider(id: ProviderId): ModelDefinition[] {
@@ -109,7 +107,8 @@ export function normalizeProviderSettings(stored: {
   model?: string;
   apiKey?: string;
 }): { provider: ProviderId; model: string; apiKey: string } {
-  const provider = PROVIDERS.find((p) => p.id === stored.provider)?.id ?? "anthropic";
+  const provider =
+    stored.provider && stored.provider in PROVIDERS ? (stored.provider as ProviderId) : "anthropic";
   // Keep the stored model only if it still exists for this provider.
   const model = MODELS.find((m) => m.id === stored.model && m.provider === provider);
   return {

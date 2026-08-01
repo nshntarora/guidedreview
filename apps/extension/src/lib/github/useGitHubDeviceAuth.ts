@@ -3,7 +3,7 @@ import type { GitHubAuthState } from "../types";
 import { pollGitHubDeviceAuth, startGitHubDeviceAuth } from "../messaging";
 
 /** In-progress device OAuth UI state owned by the caller’s poll loop. */
-export type DeviceAuthFlowView =
+type DeviceAuthFlowView =
   | { kind: "idle" }
   | {
       kind: "awaiting";
@@ -13,7 +13,7 @@ export type DeviceAuthFlowView =
     }
   | { kind: "error"; message: string };
 
-export interface UseGitHubDeviceAuthOptions {
+interface UseGitHubDeviceAuthOptions {
   /** When false, connect is a no-op (OAuth client not configured). */
   enabled?: boolean;
   /** Called after the background worker persists the token. */

@@ -1,12 +1,8 @@
 import type { DiffLine } from "../../lib/types";
 import { buildSplitRows } from "./buildSplitRows";
 import type { DiffViewMode } from "./diffViewMode";
-import type { DiffSide, SelectableLine } from "./commentTypes";
+import { lineIdFor, sideForLine, type DiffSide, type SelectableLine } from "./commentTypes";
 import type { ResolvedUnitFile } from "./selectors";
-
-function lineId(hunkId: string, lineIndex: number, side: DiffSide): string {
-  return `${hunkId}:${lineIndex}:${side}`;
-}
 
 function fromDiffLine(
   filePath: string,
@@ -16,7 +12,7 @@ function fromDiffLine(
   side: DiffSide,
 ): SelectableLine {
   return {
-    id: lineId(hunkId, lineIndex, side),
+    id: lineIdFor(hunkId, lineIndex, side),
     filePath,
     hunkId,
     lineIndex,
@@ -39,7 +35,7 @@ function buildUnified(files: ResolvedUnitFile[]): SelectableLine[] {
     if (file.isBinaryOrElided) continue;
     for (const hunk of hunks) {
       hunk.lines.forEach((line, lineIndex) => {
-        const side: DiffSide = line.type === "del" ? "LEFT" : "RIGHT";
+        const side = sideForLine(line.type);
         out.push(fromDiffLine(file.path, hunk.id, lineIndex, line, side));
       });
     }

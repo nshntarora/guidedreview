@@ -1,6 +1,6 @@
 import type { ProviderSettings } from "./types";
 import { defaultModelFor, normalizeProviderSettings } from "./providers/catalog";
-import { watchLocal } from "./storage";
+import { readLocal, watchLocal, writeLocal } from "./storage";
 
 const STORAGE_KEY = "guidedReview.providerSettings";
 
@@ -15,19 +15,17 @@ function parseSettings(raw: unknown): ProviderSettings {
   return normalizeProviderSettings(raw as Partial<ProviderSettings>);
 }
 
-// Both accessors below deliberately skip the swallow-and-warn helpers in
-// `storage.ts`: a failed read must not look like "no API key configured", and
-// the options page reports a failed save to the user. Only the change listener
-// is shared.
-
-/** Read the user's configured provider settings from chrome.storage.local. */
-export async function getProviderSettings(): Promise<ProviderSettings> {
-  const result = await chrome.storage.local.get(STORAGE_KEY);
-  return parseSettings(result[STORAGE_KEY]);
+/**
+ * Read the user's configured provider settings. Storage failures propagate on
+ * purpose: a failed read must not look like "no API key configured", and the
+ * options page reports a failed save to the user.
+ */
+export function getProviderSettings(): Promise<ProviderSettings> {
+  return readLocal(STORAGE_KEY, parseSettings);
 }
 
-export async function setProviderSettings(settings: ProviderSettings): Promise<void> {
-  await chrome.storage.local.set({ [STORAGE_KEY]: settings });
+export function setProviderSettings(settings: ProviderSettings): Promise<void> {
+  return writeLocal(STORAGE_KEY, settings);
 }
 
 /**

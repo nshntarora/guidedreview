@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { helpPages } from "@/config/help-pages";
+import { DOCS_PAGES } from "@/config/docs";
 import { SITE_URL } from "@/lib/site";
 
 export const dynamic = "force-static";
@@ -40,8 +40,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  const docEntries: MetadataRoute.Sitemap = Object.keys(helpPages).map((slug) => ({
-    url: `${SITE_URL}/docs/${slug}`,
+  const docEntries: MetadataRoute.Sitemap = DOCS_PAGES.filter((page) => page.load).map((page) => ({
+    url: `${SITE_URL}/docs/${page.slug}`,
     lastModified: now,
     changeFrequency: "monthly" as const,
     priority: 0.7,

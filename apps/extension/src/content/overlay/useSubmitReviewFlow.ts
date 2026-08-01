@@ -1,10 +1,26 @@
 import { useCallback, useRef, useState } from "react";
-import { getGitHubAuthStatus, submitPullRequestReview } from "../../lib/messaging";
-import type { PRContext } from "../../lib/types";
+import { getGitHubAuthStatus, requestSubmitReview } from "../../lib/messaging";
+import type { PRContext, ReviewCommentInput } from "../../lib/types";
 import { EMPTY_REVIEW_BODY_MESSAGE } from "../../lib/types";
 import type { DraftComment, ReviewEvent, ReviewSubmission } from "./commentTypes";
-import { mapDraftsToReviewComments } from "./mapDraftComments";
 import { navigateToPrConversation } from "./prConversationUrl";
+
+/** Map local draft comments to GitHub create-review `comments[]` payloads. */
+function mapDraftsToReviewComments(drafts: DraftComment[]): ReviewCommentInput[] {
+  return drafts.map((draft) => {
+    const comment: ReviewCommentInput = {
+      path: draft.filePath,
+      body: draft.body,
+      side: draft.side,
+      line: draft.endLine,
+    };
+    if (draft.startLine !== draft.endLine) {
+      comment.startLine = draft.startLine;
+      comment.startSide = draft.side;
+    }
+    return comment;
+  });
+}
 
 export interface SubmitSuccessInfo {
   event: ReviewEvent;
@@ -138,7 +154,7 @@ export function useSubmitReviewFlow({
       const comments = mapDraftsToReviewComments(draftComments);
 
       try {
-        const result = await submitPullRequestReview(
+        const result = await requestSubmitReview(
           { owner: pr.owner, repo: pr.repo, number: pr.number },
           trimmedBody,
           submission.event,

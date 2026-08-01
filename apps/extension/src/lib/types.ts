@@ -110,7 +110,6 @@ export interface ReviewPlan {
 // ProviderId lives in the catalog so the options UI and background clients
 // share one registry of providers/models.
 
-export type { ProviderId } from "./providers/catalog";
 import type { ProviderId } from "./providers/catalog";
 
 export interface ProviderSettings {
@@ -285,7 +284,7 @@ export interface SubmitReviewRequest {
   comments: ReviewCommentInput[];
 }
 
-export type SubmitReviewErrorCode =
+type SubmitReviewErrorCode =
   "not_authenticated" | "forbidden" | "not_found" | "validation" | "network" | "unknown";
 
 export type SubmitReviewResponse =

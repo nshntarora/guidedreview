@@ -2,40 +2,33 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { helpNavigation } from "@/config/help-navigation";
+import { DOCS_PAGES, docsPath } from "@/config/docs";
 import { cn } from "@guided-review/ui";
 
-type DocsSidebarProps = {
-  basePath?: "/docs";
-  onNavigate?: () => void;
-};
-
-export function DocsSidebar({ basePath = "/docs", onNavigate }: DocsSidebarProps) {
+export function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
     <nav aria-label="Documentation" className="w-full">
       <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
-        {helpNavigation.map((item, idx) => {
-          if (item.type === "heading") {
-            return (
-              <li
-                key={`h-${idx}`}
-                className={cn(
-                  "mb-1.5 text-[0.65rem] font-semibold uppercase tracking-widest text-muted",
-                  idx === 0 ? "mt-0" : "mt-5",
-                )}
-              >
-                {item.title}
-              </li>
-            );
-          }
-
-          const href = item.slug ? `${basePath}/${item.slug}` : basePath;
-          const active = pathname === href || (item.slug === "" && pathname === basePath);
+        {DOCS_PAGES.map((page, idx) => {
+          const href = docsPath(page.slug);
+          const active = pathname === href;
+          // Section headings render above the first page of each section.
+          const heading = page.section !== DOCS_PAGES[idx - 1]?.section ? page.section : null;
 
           return (
             <li key={href}>
+              {heading ? (
+                <div
+                  className={cn(
+                    "mb-1.5 text-[0.65rem] font-semibold uppercase tracking-widest text-muted",
+                    idx === 0 ? "mt-0" : "mt-5",
+                  )}
+                >
+                  {heading}
+                </div>
+              ) : null}
               <Link
                 href={href}
                 onClick={onNavigate}
@@ -47,7 +40,7 @@ export function DocsSidebar({ basePath = "/docs", onNavigate }: DocsSidebarProps
                 )}
                 aria-current={active ? "page" : undefined}
               >
-                {item.title}
+                {page.title}
               </Link>
             </li>
           );

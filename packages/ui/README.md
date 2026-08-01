@@ -19,7 +19,6 @@ import {
   cn,
   Spinner,
   Kbd,
-  BrandMark,
   Button,
   buttonClassName,
   Input,

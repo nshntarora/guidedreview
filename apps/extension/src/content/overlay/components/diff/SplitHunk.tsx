@@ -5,11 +5,11 @@ import { CodeContent, highlightHunkLines } from "./hunkHighlight";
 import { LineExtras } from "./LineExtras";
 import {
   DIFF_LINE_WRAP,
-  lineIdFor,
   lineNumberClasses,
   selectionClasses,
   type HunkViewProps,
 } from "./hunkStyles";
+import { lineIdFor } from "../../commentTypes";
 
 function SplitCellView({
   cell,

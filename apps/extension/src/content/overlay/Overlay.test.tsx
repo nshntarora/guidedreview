@@ -18,7 +18,7 @@ const sampleAuth = {
 };
 
 vi.mock("../../lib/messaging", () => ({
-  submitPullRequestReview: vi.fn(),
+  requestSubmitReview: vi.fn(),
   getGitHubAuthStatus: vi.fn(),
   startGitHubDeviceAuth: vi.fn(),
   pollGitHubDeviceAuth: vi.fn(),
@@ -124,8 +124,8 @@ describe("Overlay", () => {
     // jsdom does not implement scrollBy; ArrowDown scrolls the code column.
     Element.prototype.scrollBy = vi.fn();
     vi.mocked(oauthConfig.isGitHubOAuthConfigured).mockReturnValue(true);
-    vi.mocked(messaging.submitPullRequestReview).mockReset();
-    vi.mocked(messaging.submitPullRequestReview).mockResolvedValue({
+    vi.mocked(messaging.requestSubmitReview).mockReset();
+    vi.mocked(messaging.requestSubmitReview).mockResolvedValue({
       ok: true,
       reviewId: 1,
       htmlUrl: "https://github.com/acme/widgets/pull/1#pullrequestreview-1",
@@ -804,7 +804,7 @@ describe("Overlay", () => {
       expect(screen.getByTestId("review-submitted-summary")).toHaveTextContent(
         "You approved this pull request and left 1 comment.",
       );
-      expect(messaging.submitPullRequestReview).toHaveBeenCalledWith(
+      expect(messaging.requestSubmitReview).toHaveBeenCalledWith(
         { owner: "acme", repo: "widgets", number: 1 },
         "Looks good",
         "APPROVE",
@@ -819,6 +819,51 @@ describe("Overlay", () => {
       );
       expect(useReviewStore.getState().draftComments).toHaveLength(0);
       expect(useReviewStore.getState().isOpen).toBe(true);
+    });
+
+    it("sends startLine/startSide only for multi-line draft comments", async () => {
+      seedReadyReview(0);
+      useReviewStore.setState({
+        draftComments: [
+          {
+            id: "d1",
+            filePath: "src/foo.ts",
+            side: "RIGHT",
+            startLine: 3,
+            endLine: 7,
+            lineIds: ["src/foo.ts#0:2:RIGHT"],
+            body: "spans lines",
+          },
+        ],
+      });
+      render(<Overlay />);
+
+      await openSubmitReviewModal();
+      fireEvent.click(screen.getByTestId("submit-review-event-APPROVE"));
+      fireEvent.change(screen.getByTestId("submit-review-body"), {
+        target: { value: "Looks good" },
+      });
+      fireEvent.click(screen.getByTestId("submit-review-confirm"));
+
+      // GitHub rejects startLine/startSide on single-line comments, so they are
+      // only present when the range actually spans more than one line.
+      await waitFor(() => {
+        expect(messaging.requestSubmitReview).toHaveBeenCalledWith(
+          { owner: "acme", repo: "widgets", number: 1 },
+          "Looks good",
+          "APPROVE",
+          [
+            {
+              path: "src/foo.ts",
+              body: "spans lines",
+              side: "RIGHT",
+              line: 7,
+              startLine: 3,
+              startSide: "RIGHT",
+            },
+          ],
+        );
+      });
     });
 
     it("exits the review from the success modal and navigates to conversation", async () => {
@@ -890,7 +935,7 @@ describe("Overlay", () => {
     });
 
     it("keeps the modal open and shows an error when submit fails", async () => {
-      vi.mocked(messaging.submitPullRequestReview).mockResolvedValueOnce({
+      vi.mocked(messaging.requestSubmitReview).mockResolvedValueOnce({
         ok: false,
         code: "not_authenticated",
         error: "Connect GitHub in the extension options before submitting a review.",
@@ -919,7 +964,7 @@ describe("Overlay", () => {
       await waitFor(() => {
         expect(screen.getByTestId("submit-review-error")).toHaveTextContent(/Add a review comment/);
       });
-      expect(messaging.submitPullRequestReview).not.toHaveBeenCalled();
+      expect(messaging.requestSubmitReview).not.toHaveBeenCalled();
     });
 
     it("submits with meta+Enter via the window capture handler", async () => {
@@ -937,7 +982,7 @@ describe("Overlay", () => {
         expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
       });
       expect(screen.getByTestId("review-submitted-modal")).toBeInTheDocument();
-      expect(messaging.submitPullRequestReview).toHaveBeenCalledWith(
+      expect(messaging.requestSubmitReview).toHaveBeenCalledWith(
         { owner: "acme", repo: "widgets", number: 1 },
         "Approved via shortcut",
         "APPROVE",
@@ -964,7 +1009,7 @@ describe("Overlay", () => {
       expect(screen.getByTestId("review-submitted-summary")).toHaveTextContent(
         "You submitted a comment review.",
       );
-      expect(messaging.submitPullRequestReview).toHaveBeenCalledWith(
+      expect(messaging.requestSubmitReview).toHaveBeenCalledWith(
         { owner: "acme", repo: "widgets", number: 1 },
         "General feedback",
         "COMMENT",

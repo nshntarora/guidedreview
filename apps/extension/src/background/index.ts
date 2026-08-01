@@ -2,7 +2,6 @@ import type {
   AnnotateReviewRequest,
   AnnotateReviewStreamEvent,
   BackgroundRequest,
-  DiffFile,
   FetchDiffError,
   FetchDiffRequest,
   FetchDiffResponse,
@@ -37,8 +36,9 @@ import { fetchPRDiff } from "../lib/github/diffFetch";
 import { submitPullRequestReview } from "../lib/github/submitReview";
 import { chunkDiffByFile } from "../lib/review/buildPrompt";
 import { StreamPlanParser } from "../lib/review/streamPlanParser";
-import { prefixChunkUnitId, validateAndCleanUnit } from "../lib/review/reviewPlan";
+import { parseReviewUnit } from "../lib/review/reviewPlan";
 import { getProviderSettings } from "../lib/settings";
+import { grantSessionAccessToContentScripts } from "../lib/storage";
 import { getProviderClient } from "./providers";
 import { ProviderError, type ProviderClient } from "./providers/types";
 
@@ -47,15 +47,12 @@ const ANNOTATE_PORT_NAME = "annotate-review";
 /** Packaged welcome page path (stable across builds; matches Vite multi-page input). */
 export const WELCOME_PAGE_PATH = "src/welcome/index.html";
 
-// Toolbar icon opens the action popup (`src/popup/`), which starts a guided
-// review on PR pages or explains that the extension only works there.
-
 // Content scripts run in an "untrusted" context and are blocked from
 // chrome.storage.session by default. The overlay persists/restores review
 // sessions from the content script, so grant it access here.
-chrome.storage.session
-  .setAccessLevel({ accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS" })
-  .catch((error) => console.error("Failed to set storage.session access level:", error));
+grantSessionAccessToContentScripts().catch((error) =>
+  console.error("Failed to set storage.session access level:", error),
+);
 
 /**
  * First-install only: open the welcome page. Never on update — no "What's New" tab.
@@ -108,7 +105,7 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, _sender, sendR
       console.error("OPEN_OPTIONS failed:", error);
       sendResponse({ ok: false } satisfies OpenOptionsResponse);
     }
-    return true;
+    return false;
   }
 
   if (message.type === "FETCH_DIFF") {
@@ -267,24 +264,11 @@ async function* streamChunkUnits(
           : [];
 
     for (const candidate of raw) {
-      const unit = toValidatedUnit(candidate, knownFiles, chunkIndex);
-      if (unit) yield unit;
+      const unit = parseReviewUnit(candidate, knownFiles);
+      // Namespace the id so units from different chunks can't collide.
+      if (unit) yield { ...unit, id: `c${chunkIndex}-${unit.id}` };
     }
   }
-}
-
-/**
- * Drop any unit whose file refs don't exist in the chunk the model was given,
- * and namespace the id so units from different chunks can't collide.
- */
-function toValidatedUnit(
-  raw: ReviewUnit,
-  knownFiles: Map<string, DiffFile>,
-  chunkIndex: number,
-): ReviewUnit | null {
-  const cleaned = validateAndCleanUnit(raw, knownFiles);
-  if (!cleaned) return null;
-  return { ...cleaned, id: prefixChunkUnitId(chunkIndex, cleaned.id) };
 }
 
 function postEvent(port: chrome.runtime.Port, event: AnnotateReviewStreamEvent): void {
@@ -370,14 +354,6 @@ async function handleGitHubDevicePoll(
       };
       await setGitHubAuth(auth);
       return { ok: true, status: "authorized", auth };
-    }
-    default: {
-      const _exhaustive: never = result;
-      return {
-        ok: false,
-        status: "error",
-        error: `Unexpected poll status: ${JSON.stringify(_exhaustive)}`,
-      };
     }
   }
 }
