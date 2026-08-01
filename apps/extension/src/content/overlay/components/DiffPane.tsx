@@ -20,6 +20,9 @@ const SEARCH_HIGHLIGHT_MS = 1600;
 /** Character budget for file-header path labels in the diff viewer. */
 const DIFF_FILE_PATH_MAX = 80;
 
+/** Character budget for the unit title (often a file path without AI). */
+const UNIT_TITLE_MAX = 64;
+
 interface DiffPaneProps {
   files: ResolvedUnitFile[];
   /** Title of the currently active review unit. */
@@ -162,7 +165,9 @@ export function DiffPane({
           title={unitTitle}
         >
           {isTestsUnit && <TestsUnitIcon className="shrink-0 text-muted" size={16} />}
-          <span className="min-w-0 truncate">{unitTitle}</span>
+          <span className="min-w-0 truncate" title={unitTitle}>
+            {middleTruncate(unitTitle, UNIT_TITLE_MAX)}
+          </span>
         </h2>
         <div className="flex shrink-0 items-center gap-2">
           {commentModeActive ? (
