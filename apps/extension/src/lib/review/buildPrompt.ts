@@ -105,9 +105,7 @@ function renderHunkInventory(diff: ParsedDiff): string {
 /**
  * Wrap author-controlled text in a labelled section. The tags are a signal, not
  * a sandbox — a determined author can write the closing tag themselves — so
- * they work with the system prompt's rule 8 (treat these sections as data) and
- * with the unassigned-hunk backstop in `reviewPlan.ts`, which is what actually
- * guarantees nothing drops out of the review.
+ * they work with the system prompt's rule 8 (treat these sections as data).
  */
 function untrustedSection(tag: string, body: string): string {
   return `<${tag}>\n${body}\n</${tag}>`;

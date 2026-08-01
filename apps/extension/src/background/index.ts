@@ -36,12 +36,7 @@ import { fetchPRDiff, parsePRUrl } from "../lib/github/diffFetch";
 import { submitPullRequestReview } from "../lib/github/submitReview";
 import { chunkDiffByFile } from "../lib/review/buildPrompt";
 import { StreamPlanParser } from "../lib/review/streamPlanParser";
-import {
-  buildUnassignedUnits,
-  parseReviewUnit,
-  prefixChunkUnitId,
-  stripDuplicateHunks,
-} from "../lib/review/reviewPlan";
+import { parseReviewUnit, prefixChunkUnitId, stripDuplicateHunks } from "../lib/review/reviewPlan";
 import { getProviderSettings } from "../lib/settings";
 import { grantSessionAccessToContentScripts } from "../lib/storage";
 import { getProviderClient } from "./providers";
@@ -285,18 +280,6 @@ async function handleAnnotateReviewStream(
   }
 
   if (signal.aborted) return;
-
-  // Scope backstop: the model plans the walk order, but it never gets to decide
-  // that part of the diff isn't worth showing. Anything it left unassigned —
-  // including hunks it was talked into skipping by text inside the diff itself —
-  // is appended as a final unit so the reviewer still walks every change.
-  const allFiles = new Map(request.diff.files.map((f) => [f.path, f]));
-  for (const unit of buildUnassignedUnits(request.diff, allFiles, seenHunkIds)) {
-    if (signal.aborted) return;
-    const prefixed: ReviewUnit = { ...unit, id: prefixChunkUnitId(chunks.length, unit.id) };
-    allUnits.push(prefixed);
-    postEvent(port, { type: "UNIT", unit: prefixed });
-  }
 
   const plan: ReviewPlan = { units: allUnits };
   postEvent(port, { type: "DONE", plan });
