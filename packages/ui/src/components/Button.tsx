@@ -39,6 +39,10 @@ const variants: Record<ButtonVariant, string> = {
     "border-danger bg-danger-muted font-semibold text-danger",
     "not-disabled:hover:bg-[color-mix(in_srgb,var(--color-danger)_20%,var(--color-danger-muted))]",
     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger",
+    // Nested keyboard keys: darker shade of the danger fill, not neutral surface.
+    "[&_[data-slot=kbd]]:border-transparent",
+    "[&_[data-slot=kbd]]:bg-[color-mix(in_srgb,black_25%,var(--color-danger-muted))]",
+    "[&_[data-slot=kbd]]:text-inherit",
   ),
   ghost: cn(
     "border-transparent bg-transparent font-medium text-muted",

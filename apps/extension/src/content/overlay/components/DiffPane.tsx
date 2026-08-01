@@ -164,10 +164,10 @@ export function DiffPane({
           data-testid="diff-unit-title"
           title={unitTitle}
         >
-          {isTestsUnit && <TestsUnitIcon className="shrink-0 text-muted" size={16} />}
           <span className="min-w-0 truncate" title={unitTitle}>
             {middleTruncate(unitTitle, UNIT_TITLE_MAX)}
           </span>
+          {isTestsUnit && <TestsUnitIcon className="shrink-0 text-muted" size={16} />}
         </h2>
         <div className="flex shrink-0 items-center gap-2">
           {commentModeActive ? (

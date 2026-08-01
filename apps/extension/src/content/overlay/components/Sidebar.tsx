@@ -53,21 +53,22 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
               aria-current={isActive ? "true" : undefined}
               className={cn(
                 "mb-0.5 flex w-full cursor-pointer items-start rounded-md border-none bg-transparent p-2 text-left text-base leading-snug text-foreground",
-                isActive && "bg-primary-muted text-primary! hover:bg-primary-muted",
+                "hover:bg-primary-muted",
+                isActive && "bg-primary-muted text-primary!",
               )}
               onClick={() => onSelectUnit(displayIndex)}
             >
               <span className={cn("mr-1.5 shrink-0", isActive ? "text-primary" : "text-muted")}>
                 {displayIndex + 1}.
               </span>
-              {isTestsUnit && (
-                <TestsUnitIcon
-                  className={cn("mr-1.5 mt-0.5 shrink-0", isActive ? "text-primary" : "text-muted")}
-                />
-              )}
               <span className="min-w-0 truncate" title={unit.title}>
                 {middleTruncate(unit.title, UNIT_TITLE_MAX)}
               </span>
+              {isTestsUnit && (
+                <TestsUnitIcon
+                  className={cn("ml-1.5 mt-0.5 shrink-0", isActive ? "text-primary" : "text-muted")}
+                />
+              )}
             </button>
           );
         })}

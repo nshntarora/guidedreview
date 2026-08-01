@@ -15,8 +15,9 @@ import { useReviewStore, restoreSession, buildSessionKey } from "./overlay/store
 const BUTTON_ID = "guided-review-start-btn";
 const BUTTON_STYLE_ID = "guided-review-start-btn-styles";
 const HOST_ID = "guided-review-overlay-host";
-/** Brand accent hover — keep in sync with `--color-primary-hover` in theme.css. */
-const ACCENT_HOVER = "#b6e64e";
+/** Brand accent — keep in sync with `--color-primary` / `--color-primary-hover` in theme.css. */
+const ACCENT = "#CAFF57";
+const ACCENT_HOVER = "#a8d448";
 
 let currentPR: PRIdentity | null = null;
 /** Active stream cancel handle so restart / close can abort the worker. */
@@ -37,9 +38,12 @@ function ensureButtonStyles(): void {
   if (document.getElementById(BUTTON_STYLE_ID)) return;
   const style = document.createElement("style");
   style.id = BUTTON_STYLE_ID;
+  // Base fill/border live here (not inline) so :hover can override them —
+  // style attributes beat normal stylesheet rules, including #id:hover.
   style.textContent = [
+    `#${BUTTON_ID}{border:1px solid ${ACCENT};background:${ACCENT}}`,
     `#${BUTTON_ID}:hover{background:${ACCENT_HOVER};border-color:${ACCENT_HOVER}}`,
-    `#${BUTTON_ID}:focus-visible{outline:2px solid #CAFF57;outline-offset:2px}`,
+    `#${BUTTON_ID}:focus-visible{outline:2px solid ${ACCENT};outline-offset:2px}`,
     `@media (prefers-reduced-motion:reduce){#${BUTTON_ID}{transition:none}}`,
   ].join("");
   document.documentElement.appendChild(style);
@@ -165,8 +169,7 @@ function tryInjectButton(): void {
       "margin-left: 8px",
       "padding: 0 12px",
       "border-radius: 6px",
-      "border: 1px solid #CAFF57",
-      "background: #CAFF57",
+      // border + background come from ensureButtonStyles() so :hover can apply
       "color: #0D0806",
       "font-size: 14px",
       "font-weight: 600",

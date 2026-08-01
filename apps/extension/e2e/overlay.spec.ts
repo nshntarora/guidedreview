@@ -247,17 +247,17 @@ test.describe("Guided review overlay", () => {
     await page.getByRole("button", { name: "Start Guided Review" }).click();
 
     await expect(page.getByText("PR Description").first()).toBeVisible();
-    await expect(page.getByTestId("footer-step-status")).toHaveText(/Step 1 of/i);
+    await expect(page.getByTestId("footer-step-status")).toHaveText(/Review unit 1 of/i);
 
     // Wait for the streamed AI unit before navigating past the description.
     await expect(page.getByText(CANNED_PLAN.units[0].title)).toBeVisible();
 
     await page.getByRole("button", { name: /next/i }).click();
     await expect(page.getByText(CANNED_PLAN.units[0].context)).toBeVisible();
-    await expect(page.getByTestId("footer-step-status")).toHaveText(/Step 2 of/i);
+    await expect(page.getByTestId("footer-step-status")).toHaveText(/Review unit 2 of/i);
 
     await page.getByRole("button", { name: /previous/i }).click();
-    await expect(page.getByTestId("footer-step-status")).toHaveText(/Step 1 of/i);
+    await expect(page.getByTestId("footer-step-status")).toHaveText(/Review unit 1 of/i);
 
     // Esc opens the exit confirmation; confirm to tear the overlay down.
     await page.keyboard.press("Escape");
