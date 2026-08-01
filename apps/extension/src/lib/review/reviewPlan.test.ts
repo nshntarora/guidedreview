@@ -72,6 +72,8 @@ describe("parseReviewUnit", () => {
     expect(cleaned).toHaveLength(1);
     expect(cleaned[0].files[0].hunkIds).toEqual(["src/foo.ts#0"]);
     expect(cleaned[0].kind).toBe("change");
+    // AI units show prose titles as-is — no pre-truncated displayTitle.
+    expect(cleaned[0].displayTitle).toBeUndefined();
   });
 
   it("drops hallucinated hunk ids but keeps the file ref if the file is real", () => {

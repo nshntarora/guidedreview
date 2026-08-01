@@ -316,7 +316,10 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
           ) : (
             <DiffPane
               files={resolvedFiles}
-              unitTitle={currentReviewUnit?.title ?? ""}
+              unitTitle={
+                currentReviewUnit ? (currentReviewUnit.displayTitle ?? currentReviewUnit.title) : ""
+              }
+              unitTitleTooltip={currentReviewUnit?.title}
               isTestsUnit={currentReviewUnit?.kind === "tests"}
               unitId={currentReviewUnit?.id}
               selectableForUnit={selectableForUnit}

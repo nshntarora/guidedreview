@@ -11,22 +11,21 @@ import { BinaryElidedEmptyState } from "./diff/BinaryElidedEmptyState";
 import { SplitHunk } from "./diff/SplitHunk";
 import { UnifiedHunk } from "./diff/UnifiedHunk";
 import { useSelectionDerived } from "./diff/useSelectionDerived";
+import { MiddleEllipsisText } from "./MiddleEllipsisText";
 import { TestsUnitIcon } from "./TestsUnitIcon";
-import { middleTruncate } from "../../../lib/middleTruncate";
 
 /** How long the search-match flash highlight stays on the target line/file. */
 const SEARCH_HIGHLIGHT_MS = 1600;
 
-/** Character budget for file-header path labels in the diff viewer. */
-const DIFF_FILE_PATH_MAX = 80;
-
-/** Character budget for the unit title (often a file path without AI). */
-const UNIT_TITLE_MAX = 64;
-
 interface DiffPaneProps {
   files: ResolvedUnitFile[];
-  /** Title of the currently active review unit. */
+  /**
+   * Title of the currently active review unit (`displayTitle ?? title`).
+   * Already display-ready — path plans pre-truncate in buildFileReviewPlan.
+   */
   unitTitle: string;
+  /** Full untruncated title for the native tooltip (falls back to unitTitle). */
+  unitTitleTooltip?: string;
   /** When true, show the flask icon (tests review unit). */
   isTestsUnit?: boolean;
   /** Review unit id for associating saved drafts. */
@@ -45,6 +44,7 @@ interface DiffPaneProps {
 export function DiffPane({
   files,
   unitTitle,
+  unitTitleTooltip,
   isTestsUnit = false,
   unitId,
   selectableForUnit,
@@ -162,11 +162,9 @@ export function DiffPane({
         <h2
           className="flex min-w-0 items-center gap-1.5 text-lg font-semibold text-foreground"
           data-testid="diff-unit-title"
-          title={unitTitle}
+          title={unitTitleTooltip ?? unitTitle}
         >
-          <span className="min-w-0 truncate" title={unitTitle}>
-            {middleTruncate(unitTitle, UNIT_TITLE_MAX)}
-          </span>
+          <span className="min-w-0 break-words">{unitTitle}</span>
           {isTestsUnit && <TestsUnitIcon className="shrink-0 text-muted" size={16} />}
         </h2>
         <div className="flex shrink-0 items-center gap-2">
@@ -207,9 +205,7 @@ export function DiffPane({
             data-testid={fileSearchHit ? "diff-file-search-highlight" : undefined}
           >
             <div className="flex min-w-0 items-baseline gap-2.5 border-b border-border bg-background px-3 py-2 font-mono text-sm">
-              <span className="min-w-0 flex-1 truncate" title={pathLabel}>
-                {middleTruncate(pathLabel, DIFF_FILE_PATH_MAX)}
-              </span>
+              <MiddleEllipsisText text={pathLabel} maxWidth="100%" className="min-w-0 flex-1" />
               {!language && !file.isBinaryOrElided && (
                 <span className="shrink-0 font-normal text-muted italic">
                   {extension

@@ -1,11 +1,8 @@
 import type { FileChangeStatus, ParsedDiff, PRContext } from "../../../lib/types";
 import { summarizeDiff, type FileDiffSummary } from "../../../lib/github/diffSummary";
-import { middleTruncate } from "../../../lib/middleTruncate";
 import { cn } from "@guided-review/ui";
 import { missingMetadataHint } from "../missingMetadata";
-
-/** Character budget for path labels in the narrow Changes column. */
-const DIFF_SUMMARY_PATH_MAX = 48;
+import { MiddleEllipsisText } from "./MiddleEllipsisText";
 
 interface DescriptionPaneProps {
   prContext: PRContext | null;
@@ -118,9 +115,7 @@ function DiffSummaryFileRow({ file }: { file: FileDiffSummary }) {
       >
         {badge.letter}
       </span>
-      <span className="min-w-0 truncate text-foreground" title={pathLabel}>
-        {middleTruncate(pathLabel, DIFF_SUMMARY_PATH_MAX)}
-      </span>
+      <MiddleEllipsisText text={pathLabel} maxWidth="100%" className="min-w-0 text-foreground" />
       <span className="inline-flex min-w-[4.5rem] shrink-0 items-center justify-end gap-1.5 text-right tabular-nums">
         {file.isBinaryOrElided ? (
           <span className="text-[0.8125rem] text-faint">binary</span>
