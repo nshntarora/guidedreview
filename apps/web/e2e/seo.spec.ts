@@ -119,4 +119,23 @@ test.describe("SEO and Open Graph", () => {
       expect(res.body.length).toBeGreaterThan(0);
     }
   });
+
+  test("robots.txt allows crawl and points at the sitemap", async ({ request }) => {
+    const response = await request.get("/robots.txt");
+    expect(response.status()).toBeLessThan(400);
+    const body = await response.text();
+    expect(body).toMatch(/User-agent:\s*\*/i);
+    expect(body).toMatch(/Allow:\s*\//i);
+    expect(body).toMatch(/Sitemap:\s*https:\/\/guidedreview\.dev\/sitemap\.xml/i);
+  });
+
+  test("sitemap.xml lists home, docs, and legal routes", async ({ request }) => {
+    const response = await request.get("/sitemap.xml");
+    expect(response.status()).toBeLessThan(400);
+    const body = await response.text();
+    expect(body).toMatch(/<urlset[\s>]/);
+    for (const path of ["", "/docs", "/docs/install", "/privacy", "/terms", "/cookies"]) {
+      expect(body, `sitemap entry for ${path || "/"}`).toContain(`https://guidedreview.dev${path}`);
+    }
+  });
 });

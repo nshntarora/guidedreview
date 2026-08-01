@@ -186,4 +186,86 @@ test.describe("Guided review overlay", () => {
       page.locator('[data-component="PH_Actions"] #guided-review-start-btn'),
     ).toBeVisible();
   });
+
+  test("without API key shows connect-provider prompt and file-per-unit plan", async ({
+    context,
+  }) => {
+    // No options seeding — default storage has no API key. Content script still
+    // fetches the diff, then falls back to one unit per file + connect prompt.
+    await context.route(PR_URL, (route) =>
+      route.fulfill({ path: PR_FIXTURE_PATH, contentType: "text/html" }),
+    );
+    await context.route(`${PR_URL}.diff`, (route) =>
+      route.fulfill({ status: 200, contentType: "text/plain", body: CANNED_DIFF }),
+    );
+
+    const page = await context.newPage();
+    await page.goto(PR_URL);
+
+    await page.getByRole("button", { name: "Start Guided Review" }).click();
+
+    await expect(page.getByTestId("connect-provider-prompt")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Connect an AI provider" })).toBeVisible();
+    await expect(page.getByTestId("connect-provider-open-settings")).toBeVisible();
+    await expect(page.getByTestId("connect-provider-learn-more")).toBeVisible();
+
+    // Synthetic PR description first, then the fallback file unit.
+    await expect(page.getByText("PR Description").first()).toBeVisible();
+    await page.getByRole("button", { name: /next/i }).click();
+    await expect(page.getByText("src/foo.ts").first()).toBeVisible();
+    // File-unit context is empty, so the prompt stays in the context panel.
+    await expect(page.getByTestId("connect-provider-prompt")).toBeVisible();
+  });
+
+  test("previous / next navigate units and Escape confirms exit", async ({
+    context,
+    extensionId,
+  }) => {
+    const optionsPage = await context.newPage();
+    await optionsPage.goto(`chrome-extension://${extensionId}/src/options/index.html`);
+    await optionsPage.getByLabel("API Key").fill("sk-e2e-test-key");
+    await optionsPage.getByRole("button", { name: "Save" }).click();
+    await expect(optionsPage.getByText("Saved")).toBeVisible();
+    await optionsPage.close();
+
+    await context.route(PR_URL, (route) =>
+      route.fulfill({ path: PR_FIXTURE_PATH, contentType: "text/html" }),
+    );
+    await context.route(`${PR_URL}.diff`, (route) =>
+      route.fulfill({ status: 200, contentType: "text/plain", body: CANNED_DIFF }),
+    );
+    await context.route("https://api.anthropic.com/v1/messages", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "text/event-stream",
+        body: anthropicSseForPlan(CANNED_PLAN),
+      }),
+    );
+
+    const page = await context.newPage();
+    await page.goto(PR_URL);
+    await page.getByRole("button", { name: "Start Guided Review" }).click();
+
+    await expect(page.getByText("PR Description").first()).toBeVisible();
+    await expect(page.getByTestId("footer-step-status")).toHaveText(/Step 1 of/i);
+
+    // Wait for the streamed AI unit before navigating past the description.
+    await expect(page.getByText(CANNED_PLAN.units[0].title)).toBeVisible();
+
+    await page.getByRole("button", { name: /next/i }).click();
+    await expect(page.getByText(CANNED_PLAN.units[0].context)).toBeVisible();
+    await expect(page.getByTestId("footer-step-status")).toHaveText(/Step 2 of/i);
+
+    await page.getByRole("button", { name: /previous/i }).click();
+    await expect(page.getByTestId("footer-step-status")).toHaveText(/Step 1 of/i);
+
+    // Esc opens the exit confirmation; confirm to tear the overlay down.
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("confirmation-dialog")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Exit review?" })).toBeVisible();
+    await page.getByTestId("confirmation-ok").click();
+
+    await expect(page.getByText("PR Description")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Start Guided Review" })).toBeVisible();
+  });
 });
