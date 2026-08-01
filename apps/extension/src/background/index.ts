@@ -34,7 +34,11 @@ import { fetchPRDiff } from "../lib/github/diffFetch";
 import { submitPullRequestReview } from "../lib/github/submitReview";
 import { chunkDiffByFile } from "../lib/review/buildPrompt";
 import { StreamPlanParser } from "../lib/review/streamPlanParser";
-import { prefixChunkUnitId, validateAndCleanUnit } from "../lib/review/reviewPlan";
+import {
+  prefixChunkUnitId,
+  stripDuplicateHunks,
+  validateAndCleanUnit,
+} from "../lib/review/reviewPlan";
 import { getProviderSettings } from "../lib/settings";
 import { getProviderClient } from "./providers";
 import { ProviderError } from "./providers/types";
@@ -218,6 +222,8 @@ async function handleAnnotateReviewStream(
   const client = getProviderClient(settings.provider);
   const chunks = chunkDiffByFile(request.diff);
   const allUnits: ReviewUnit[] = [];
+  /** First unit that claims a hunk id wins; later duplicates are stripped. */
+  const seenHunkIds = new Set<string>();
 
   let chunkIndex = 0;
   for (const chunk of chunks) {
@@ -236,14 +242,14 @@ async function handleAnnotateReviewStream(
       if (event.type === "text_delta") {
         const rawUnits = parser.push(event.text);
         for (const raw of rawUnits) {
-          emitUnit(raw, knownFiles, chunkIndex, allUnits, port, signal);
+          emitUnit(raw, knownFiles, chunkIndex, allUnits, seenHunkIds, port, signal);
         }
       }
 
       if (event.type === "done") {
         const remaining = parser.finish();
         for (const raw of remaining) {
-          emitUnit(raw, knownFiles, chunkIndex, allUnits, port, signal);
+          emitUnit(raw, knownFiles, chunkIndex, allUnits, seenHunkIds, port, signal);
         }
       }
     }
@@ -262,17 +268,23 @@ function emitUnit(
   knownFiles: Map<string, DiffFile>,
   chunkIndex: number,
   allUnits: ReviewUnit[],
+  seenHunkIds: Set<string>,
   port: chrome.runtime.Port,
   signal: AbortSignal,
 ): void {
   if (signal.aborted) return;
 
-  const cleaned = validateAndCleanUnit(raw, knownFiles);
-  if (!cleaned) return;
+  const cleanedUnits = validateAndCleanUnit(raw, knownFiles);
+  for (const cleaned of cleanedUnits) {
+    if (signal.aborted) return;
 
-  const unit: ReviewUnit = { ...cleaned, id: prefixChunkUnitId(chunkIndex, cleaned.id) };
-  allUnits.push(unit);
-  postEvent(port, { type: "UNIT", unit });
+    const deduped = stripDuplicateHunks(cleaned, knownFiles, seenHunkIds);
+    if (!deduped) continue;
+
+    const unit: ReviewUnit = { ...deduped, id: prefixChunkUnitId(chunkIndex, deduped.id) };
+    allUnits.push(unit);
+    postEvent(port, { type: "UNIT", unit });
+  }
 }
 
 function postEvent(port: chrome.runtime.Port, event: AnnotateReviewStreamEvent): void {

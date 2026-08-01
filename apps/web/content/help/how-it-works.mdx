@@ -24,7 +24,9 @@ If annotation fails mid-stream, see [Troubleshooting → Plan generation fails](
 
 ## Review units
 
-A **review unit** is a logical step in the plan: a title, guidance text, and one or more hunk references. Units are ordered so reviewers typically see foundational pieces (schema, types, core logic) before call-sites and tests.
+A **review unit** is a logical step in the plan: a title, intent context, and one or more hunk references. Production changes and tests are **separate** units — never mixed in one step. After each feature’s production unit(s), the matching tests unit follows immediately (not a single dump of all tests at the end). Tests steps show a flask icon next to the unit name in the sidebar and diff pane.
+
+Units aim for a consistent structure on the same diff: same hunk partition, order, and change-vs-tests kind. Titles and wording may still vary slightly across models.
 
 The first display step is a synthetic **PR description** unit built from page context, then the model’s units. You step through them with the footer or [keyboard shortcuts](/docs/keyboard-shortcuts).
 

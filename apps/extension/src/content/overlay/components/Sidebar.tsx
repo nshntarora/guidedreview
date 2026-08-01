@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import type { ReviewPlan } from "../../../lib/types";
 import { cn } from "@guided-review/ui";
 import { buildDisplayUnits } from "../displayUnits";
+import { TestsUnitIcon } from "./TestsUnitIcon";
 
 const SKELETON_COUNT = 4;
 
@@ -39,6 +40,7 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
 
         {displayUnits.map((unit, displayIndex) => {
           const isActive = displayIndex === currentUnitIndex;
+          const isTestsUnit = unit.kind === "review" && unit.unit.kind === "tests";
           return (
             <button
               key={unit.id}
@@ -46,15 +48,20 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
               ref={isActive ? activeItemRef : undefined}
               aria-current={isActive ? "true" : undefined}
               className={cn(
-                "mb-0.5 block w-full cursor-pointer rounded-md border-none bg-transparent p-2 text-left text-base leading-snug text-foreground",
+                "mb-0.5 flex w-full cursor-pointer items-start rounded-md border-none bg-transparent p-2 text-left text-base leading-snug text-foreground",
                 isActive && "bg-primary-muted text-primary! hover:bg-primary-muted",
               )}
               onClick={() => onSelectUnit(displayIndex)}
             >
-              <span className={cn("mr-1.5", isActive ? "text-primary" : "text-muted")}>
+              <span className={cn("mr-1.5 shrink-0", isActive ? "text-primary" : "text-muted")}>
                 {displayIndex + 1}.
               </span>
-              {unit.title}
+              {isTestsUnit && (
+                <TestsUnitIcon
+                  className={cn("mr-1.5 mt-0.5 shrink-0", isActive ? "text-primary" : "text-muted")}
+                />
+              )}
+              <span className="min-w-0">{unit.title}</span>
             </button>
           );
         })}

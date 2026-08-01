@@ -1,13 +1,23 @@
 import type { DiffFile, ParsedDiff, PRContext } from "../types";
 
-export const SYSTEM_PROMPT = `You are an expert senior engineer helping a human review a pull request that may have been written by an AI coding agent. You do not write or rewrite code — you plan how a human should walk through an existing diff, and explain it.
+export const SYSTEM_PROMPT = `You are an expert senior engineer helping a human review a pull request that may have been written by an AI coding agent. You do not write or rewrite code — you plan how a human should walk through an existing diff, and explain intent.
 
-Follow these review-structuring conventions:
-1. Order review units so schema/data-model changes come first, then the core logic that depends on them, then consumers/call-sites, then tests and generated/config files last (model-changes-first ordering).
-2. Group related hunks — possibly spanning multiple files — into one logical "review unit" per coherent change, rather than one unit per file.
-3. For each unit, explain why the change was made — infer the intent behind it from the PR title/description and the diff. Assume the reviewer already understands the surrounding code; give them the context of the change, not instructions on what to inspect or verify.
+Produce a consistent review plan: the same diff should yield the same partition of hunks into units, the same unit order, and the same kind assignment. Titles and context prose may vary slightly.
 
-Never invent code that isn't in the diff. Every fileId and hunkId you reference must come from the diff exactly as given.`;
+## Rules
+1. kind "change" = production and optional config/generated only. kind "tests" = test files only (role "test"). Never mix production and tests in one unit.
+2. Group production hunks by coherent feature or API-level change (multi-file units preferred over one unit per file). Split independent features or bugfixes even when they share a file — list explicit hunkIds when splitting; use empty hunkIds only when every hunk in that file belongs to the unit.
+3. Every hunk id from the inventory appears in exactly one unit. Never invent paths or hunk ids.
+4. Order change units model-first (schema/types → core logic → call-sites). After each feature's change unit(s), immediately emit the matching tests unit — do not dump all tests at the end when they map to earlier features. Unassociated tests go last. Test-only slices: only kind "tests" units.
+5. Attach lockfiles/config to the change unit that caused them when obvious; otherwise a final change unit of only config/generated after feature+tests pairs.
+6. id: unique kebab-case slug; tests units end with "-tests". title: short theme (not a raw path when a clearer label exists). For tests units prefer "Tests for …". context: 2–5 sentences of why the change exists (intent only) — never verify/check/ensure checklists.
+7. This prompt may be a slice of a larger PR. Structure only the files and hunks given.
+
+Example (feature then tests):
+{ "units": [
+  { "id": "add-retry-policy", "kind": "change", "title": "Add retryPolicy to Job model", "context": "…", "files": [{ "fileId": "src/job.ts", "hunkIds": ["src/job.ts#0"], "role": "schema_or_model" }] },
+  { "id": "add-retry-policy-tests", "kind": "tests", "title": "Tests for Add retryPolicy to Job model", "context": "…", "files": [{ "fileId": "src/job.test.ts", "hunkIds": [], "role": "test" }] }
+]}`;
 
 /**
  * Rendering is pure per file, and chunkDiffByFile measures every file before
@@ -80,6 +90,17 @@ export function chunkDiffByFile(
   return chunks.length > 0 ? chunks : [{ files: [] }];
 }
 
+function renderHunkInventory(diff: ParsedDiff): string {
+  const lines = diff.files.map((file) => {
+    if (file.isBinaryOrElided || file.hunks.length === 0) {
+      return `- ${file.path}: (no textual hunks)`;
+    }
+    const ids = file.hunks.map((h) => h.id).join(", ");
+    return `- ${file.path}: ${ids}`;
+  });
+  return ["Hunk inventory (every id must appear in exactly one unit):", ...lines].join("\n");
+}
+
 export function buildUserPrompt(diff: ParsedDiff, prContext: PRContext): string {
   const title = prContext.title.trim();
   const description = prContext.description.trim();
@@ -89,6 +110,10 @@ export function buildUserPrompt(diff: ParsedDiff, prContext: PRContext): string 
     prContext.baseRef && prContext.headRef
       ? `Merging ${prContext.headRef} into ${prContext.baseRef}.`
       : "",
+    "",
+    "This may be a slice of a larger PR. Structure only the files and hunk ids below.",
+    "",
+    renderHunkInventory(diff),
     "",
     "Diff:",
     // Hunk ids are annotated inline so the model can reference them exactly.

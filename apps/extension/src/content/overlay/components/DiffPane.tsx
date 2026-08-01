@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { cn } from "@guided-review/ui";
 
 import { languageForPath } from "../../../lib/highlight";
 import { displayLineNumber, linesInSelection, type SelectableLine } from "../commentTypes";
+import type { SearchScrollTarget } from "../diffSearch";
 import { hydrateDiffViewMode, useReviewStore } from "../store";
 import type { ResolvedUnitFile } from "../selectors";
 import { AddCommentButton, CommentModeChip, DiffViewToggle } from "./diff/DiffToolbar";
@@ -9,11 +11,17 @@ import { BinaryElidedEmptyState } from "./diff/BinaryElidedEmptyState";
 import { SplitHunk } from "./diff/SplitHunk";
 import { UnifiedHunk } from "./diff/UnifiedHunk";
 import { useSelectionDerived } from "./diff/useSelectionDerived";
+import { TestsUnitIcon } from "./TestsUnitIcon";
+
+/** How long the search-match flash highlight stays on the target line/file. */
+const SEARCH_HIGHLIGHT_MS = 1600;
 
 interface DiffPaneProps {
   files: ResolvedUnitFile[];
   /** Title of the currently active review unit. */
   unitTitle: string;
+  /** When true, show the flask icon (tests review unit). */
+  isTestsUnit?: boolean;
   /** Review unit id for associating saved drafts. */
   unitId?: string;
   /**
@@ -22,9 +30,20 @@ interface DiffPaneProps {
    * mode from the button and from `c` always operate on the same list.
    */
   selectableForUnit: SelectableLine[];
+  /** One-shot scroll/highlight target after picking a diff search result. */
+  searchScrollTarget?: SearchScrollTarget | null;
+  onSearchScrollTargetConsumed?: () => void;
 }
 
-export function DiffPane({ files, unitTitle, unitId, selectableForUnit }: DiffPaneProps) {
+export function DiffPane({
+  files,
+  unitTitle,
+  isTestsUnit = false,
+  unitId,
+  selectableForUnit,
+  searchScrollTarget = null,
+  onSearchScrollTargetConsumed,
+}: DiffPaneProps) {
   const diffViewMode = useReviewStore((s) => s.diffViewMode);
   const setDiffViewMode = useReviewStore((s) => s.setDiffViewMode);
   const uiMode = useReviewStore((s) => s.uiMode);
@@ -34,6 +53,7 @@ export function DiffPane({ files, unitTitle, unitId, selectableForUnit }: DiffPa
   const draftComments = useReviewStore((s) => s.draftComments);
   const enterCommentMode = useReviewStore((s) => s.enterCommentMode);
   const rootRef = useRef<HTMLDivElement>(null);
+  const [searchHighlight, setSearchHighlight] = useState<SearchScrollTarget | null>(null);
 
   useEffect(() => {
     void hydrateDiffViewMode();
@@ -56,6 +76,48 @@ export function DiffPane({ files, unitTitle, unitId, selectableForUnit }: DiffPa
     const el = rootRef.current.querySelector(`[data-line-id="${CSS.escape(focusId)}"]`);
     el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [uiMode, focusId, lineSelection?.focusIndex]);
+
+  // Jump to a search match: scroll into view, flash highlight, then clear.
+  // Double rAF waits for the unit's hunks to paint after goToUnit.
+  useEffect(() => {
+    if (!searchScrollTarget) return;
+
+    let clearTimer = 0;
+    const frame = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const root = rootRef.current;
+        if (!root) {
+          onSearchScrollTargetConsumed?.();
+          return;
+        }
+
+        const target =
+          (searchScrollTarget.lineId
+            ? root.querySelector<HTMLElement>(
+                `[data-line-id="${CSS.escape(searchScrollTarget.lineId)}"]`,
+              )
+            : null) ??
+          root.querySelector<HTMLElement>(
+            `[data-file-path="${CSS.escape(searchScrollTarget.filePath)}"]`,
+          );
+
+        if (target) {
+          target.scrollIntoView({ block: "center", behavior: "smooth" });
+          setSearchHighlight(searchScrollTarget);
+          clearTimer = window.setTimeout(() => {
+            setSearchHighlight(null);
+          }, SEARCH_HIGHLIGHT_MS);
+        }
+
+        onSearchScrollTargetConsumed?.();
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      if (clearTimer) window.clearTimeout(clearTimer);
+    };
+  }, [searchScrollTarget, onSearchScrollTargetConsumed, files]);
 
   const commentModeActive = uiMode === "comment";
   const commentModeDisabled = selectableForUnit.length === 0;
@@ -91,11 +153,12 @@ export function DiffPane({ files, unitTitle, unitId, selectableForUnit }: DiffPa
       </div>
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2
-          className="min-w-0 truncate text-lg font-semibold text-foreground"
+          className="flex min-w-0 items-center gap-1.5 text-lg font-semibold text-foreground"
           data-testid="diff-unit-title"
           title={unitTitle}
         >
-          {unitTitle}
+          {isTestsUnit && <TestsUnitIcon className="shrink-0 text-muted" size={16} />}
+          <span className="min-w-0 truncate">{unitTitle}</span>
         </h2>
         <div className="flex shrink-0 items-center gap-2">
           {commentModeActive ? (
@@ -112,10 +175,26 @@ export function DiffPane({ files, unitTitle, unitId, selectableForUnit }: DiffPa
       {files.map(({ file, hunks }) => {
         const language = languageForPath(file.path);
         const extension = file.path.includes(".") ? file.path.split(".").pop() : undefined;
+        const fileSearchHit =
+          searchHighlight != null &&
+          searchHighlight.filePath === file.path &&
+          !searchHighlight.lineId;
+        // When highlighting a line match, pass it as focus so existing focus styles apply.
+        const searchFocusId =
+          searchHighlight?.lineId && searchHighlight.filePath === file.path
+            ? searchHighlight.lineId
+            : null;
+        const effectiveFocusId = focusId ?? searchFocusId;
+
         return (
           <div
-            className="mb-7 overflow-hidden rounded-lg border border-border bg-surface-raised"
+            className={cn(
+              "mb-7 overflow-hidden rounded-lg border border-border bg-surface-raised",
+              fileSearchHit && "ring-2 ring-primary ring-offset-2 ring-offset-surface",
+            )}
             key={file.path}
+            data-file-path={file.path}
+            data-testid={fileSearchHit ? "diff-file-search-highlight" : undefined}
           >
             <div className="flex items-baseline gap-2.5 border-b border-border bg-background px-3 py-2 font-mono text-sm">
               {file.previousPath ? `${file.previousPath} → ${file.path}` : file.path}
@@ -137,7 +216,7 @@ export function DiffPane({ files, unitTitle, unitId, selectableForUnit }: DiffPa
                     language={language}
                     key={hunk.id}
                     selectedIds={selectedIds}
-                    focusId={focusId}
+                    focusId={effectiveFocusId}
                     draftsByEndLineId={draftsByEndLineId}
                     composerPlacementId={composerPlacementId}
                     composerRange={composerRange}
@@ -149,7 +228,7 @@ export function DiffPane({ files, unitTitle, unitId, selectableForUnit }: DiffPa
                     language={language}
                     key={hunk.id}
                     selectedIds={selectedIds}
-                    focusId={focusId}
+                    focusId={effectiveFocusId}
                     draftsByEndLineId={draftsByEndLineId}
                     composerPlacementId={composerPlacementId}
                     composerRange={composerRange}
