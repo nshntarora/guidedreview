@@ -1,14 +1,10 @@
 import { useEffect, useRef } from "react";
 import type { ReviewPlan } from "../../../lib/types";
-import { middleTruncate } from "../../../lib/middleTruncate";
 import { cn } from "@guided-review/ui";
 import { buildDisplayUnits } from "../displayUnits";
 import { TestsUnitIcon } from "./TestsUnitIcon";
 
 const SKELETON_COUNT = 4;
-
-/** Character budget for unit titles (often file paths when no AI is configured). */
-const UNIT_TITLE_MAX = 40;
 
 interface SidebarProps {
   plan: ReviewPlan | null;
@@ -45,29 +41,34 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
         {displayUnits.map((unit, displayIndex) => {
           const isActive = displayIndex === currentUnitIndex;
           const isTestsUnit = unit.kind === "review" && unit.unit.kind === "tests";
+          // displayTitle is pre-truncated in buildFileReviewPlan for path labels;
+          // AI units omit it and show title. Render as plain text either way.
+          const label =
+            unit.kind === "review" ? (unit.unit.displayTitle ?? unit.unit.title) : unit.title;
+          const tooltip = unit.kind === "review" ? unit.unit.title : unit.title;
           return (
             <button
               key={unit.id}
               type="button"
               ref={isActive ? activeItemRef : undefined}
               aria-current={isActive ? "true" : undefined}
+              title={tooltip}
               className={cn(
                 "mb-0.5 flex w-full cursor-pointer items-start rounded-md border-none bg-transparent p-2 text-left text-base leading-snug text-foreground",
-                isActive && "bg-primary-muted text-primary! hover:bg-primary-muted",
+                "hover:bg-primary-muted",
+                isActive && "bg-primary-muted text-primary!",
               )}
               onClick={() => onSelectUnit(displayIndex)}
             >
               <span className={cn("mr-1.5 shrink-0", isActive ? "text-primary" : "text-muted")}>
                 {displayIndex + 1}.
               </span>
+              <span className="min-w-0 break-words">{label}</span>
               {isTestsUnit && (
                 <TestsUnitIcon
-                  className={cn("mr-1.5 mt-0.5 shrink-0", isActive ? "text-primary" : "text-muted")}
+                  className={cn("ml-1.5 mt-0.5 shrink-0", isActive ? "text-primary" : "text-muted")}
                 />
               )}
-              <span className="min-w-0 truncate" title={unit.title}>
-                {middleTruncate(unit.title, UNIT_TITLE_MAX)}
-              </span>
             </button>
           );
         })}

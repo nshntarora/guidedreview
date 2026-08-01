@@ -19,6 +19,7 @@ import { ConnectGitHubModal } from "./components/ConnectGitHubModal";
 import { confirm, ConfirmationHost, useConfirmationOpen } from "./components/confirmation";
 import { SubmitReviewModal } from "./components/SubmitReviewModal";
 import { ReviewSubmittedModal } from "./components/ReviewSubmittedModal";
+import { BUILD_PLAN_PRIMARY, buildPhaseDetail } from "./buildPhaseCopy";
 
 interface OverlayProps {
   /** Invoked when the user exits so any in-flight stream can be cancelled. */
@@ -32,6 +33,8 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   const status = useReviewStore((s) => s.status);
   const error = useReviewStore((s) => s.error);
   const needsProvider = useReviewStore((s) => s.needsProvider);
+  const buildPhase = useReviewStore((s) => s.buildPhase);
+  const providerLabel = useReviewStore((s) => s.providerLabel);
   const diff = useReviewStore((s) => s.diff);
   const plan = useReviewStore((s) => s.plan);
   const prContext = useReviewStore((s) => s.prContext);
@@ -193,6 +196,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   const planStillBuilding = status === "loading" || status === "streaming";
   // Spinner on the description unit only while the plan is still being built.
   const showBuildingSpinner = planStillBuilding && (!plan || currentUnitIndex === 0);
+  const loadingDetail = buildPhase != null ? buildPhaseDetail(buildPhase, providerLabel) : null;
   const displayUnits = buildDisplayUnits(plan);
   const total = displayUnitCount(plan);
   const currentDisplay = displayUnits[currentUnitIndex] ?? displayUnits[0];
@@ -253,20 +257,19 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     if (needsProvider) {
       return "Connect an AI provider to enable the AI features.";
     }
-    if (status === "loading") {
-      return "Loading pull request diff…";
-    }
-    if (status === "streaming") {
+    if (status === "loading" || status === "streaming") {
+      const detail = buildPhase != null ? buildPhaseDetail(buildPhase, providerLabel) : null;
       const n = plan?.units.length ?? 0;
-      return n > 0
-        ? `Building review plan. ${n} review unit${n === 1 ? "" : "s"} ready.`
-        : "Building review plan…";
+      if (status === "streaming" && n > 0) {
+        return `${BUILD_PLAN_PRIMARY}. ${n} review unit${n === 1 ? "" : "s"} ready.${detail ? ` ${detail}` : ""}`;
+      }
+      return detail ? `${BUILD_PLAN_PRIMARY}. ${detail}` : `${BUILD_PLAN_PRIMARY}…`;
     }
     if (status === "ready" && plan) {
       return `Review plan ready. ${displayUnitCount(plan)} steps.`;
     }
     return "";
-  }, [status, error, plan, needsProvider]);
+  }, [status, error, plan, needsProvider, buildPhase, providerLabel]);
 
   if (!isOpen) return null;
 
@@ -316,7 +319,10 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
           ) : (
             <DiffPane
               files={resolvedFiles}
-              unitTitle={currentReviewUnit?.title ?? ""}
+              unitTitle={
+                currentReviewUnit ? (currentReviewUnit.displayTitle ?? currentReviewUnit.title) : ""
+              }
+              unitTitleTooltip={currentReviewUnit?.title}
               isTestsUnit={currentReviewUnit?.kind === "tests"}
               unitId={currentReviewUnit?.id}
               selectableForUnit={selectableForUnit}
@@ -345,6 +351,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
                 error={status === "error" ? error : null}
                 needsProvider={needsProvider}
                 loading={showBuildingSpinner && isDescriptionUnit}
+                loadingDetail={showBuildingSpinner && isDescriptionUnit ? loadingDetail : null}
                 onRetry={status === "error" ? onRetry : undefined}
               />
             </div>

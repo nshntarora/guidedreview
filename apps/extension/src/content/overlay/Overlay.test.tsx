@@ -90,6 +90,8 @@ function resetStore(): void {
     status: "idle",
     error: null,
     needsProvider: false,
+    buildPhase: null,
+    providerLabel: null,
     diff: null,
     plan: null,
     prContext: null,
@@ -151,6 +153,7 @@ describe("Overlay", () => {
     useReviewStore.setState({
       isOpen: true,
       status: "loading",
+      buildPhase: "extracting_diff",
       prContext: prContextFixture(),
       currentUnitIndex: 0,
     });
@@ -159,8 +162,12 @@ describe("Overlay", () => {
     // Title in left pane + entry in the unit list.
     expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
-    expect(screen.getByText(/building remaining units/i)).toBeInTheDocument();
-    expect(screen.getByRole("status", { name: /building remaining units/i })).toBeInTheDocument();
+    const loading = screen.getByTestId("context-panel-loading");
+    expect(loading).toHaveTextContent(/building a review plan/i);
+    expect(screen.getByTestId("context-panel-loading-detail")).toHaveTextContent(
+      /extracting the diff/i,
+    );
+    expect(screen.getByRole("status", { name: /building a review plan/i })).toBeInTheDocument();
     // Skeleton placeholders are present (non-interactive bars in the unit list).
     expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
     // Shortcuts are reserved for the ready state; spinner occupies that slot while loading.
@@ -175,6 +182,7 @@ describe("Overlay", () => {
     useReviewStore.setState({
       isOpen: true,
       status: "loading",
+      buildPhase: "processing_diff",
       diff: diffFixture(),
       prContext: prContextFixture(),
       currentUnitIndex: 0,
@@ -184,7 +192,12 @@ describe("Overlay", () => {
     expect(screen.getByLabelText(/diff summary/i)).toBeInTheDocument();
     expect(screen.getByText("src/foo.ts")).toBeInTheDocument();
     // Plan still loading — skeleton + status copy remain.
-    expect(screen.getByText(/building remaining units/i)).toBeInTheDocument();
+    expect(screen.getByTestId("context-panel-loading")).toHaveTextContent(
+      /building a review plan/i,
+    );
+    expect(screen.getByTestId("context-panel-loading-detail")).toHaveTextContent(
+      /processing the diff/i,
+    );
     expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
   });
 
@@ -192,6 +205,7 @@ describe("Overlay", () => {
     useReviewStore.setState({
       isOpen: true,
       status: "streaming",
+      buildPhase: "tokens_streaming",
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture(),
@@ -201,13 +215,37 @@ describe("Overlay", () => {
 
     expect(screen.getByText("Update foo")).toBeInTheDocument();
     expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
-    expect(screen.getByText(/building remaining units/i)).toBeInTheDocument();
+    expect(screen.getByTestId("context-panel-loading")).toHaveTextContent(
+      /building a review plan/i,
+    );
+    expect(screen.getByTestId("context-panel-loading-detail")).toHaveTextContent(
+      /tokens are streaming/i,
+    );
+  });
+
+  it("names the configured provider in the loading detail when the request is sent", () => {
+    useReviewStore.setState({
+      isOpen: true,
+      status: "streaming",
+      buildPhase: "sent_to_provider",
+      providerLabel: "Claude (Anthropic)",
+      diff: diffFixture(),
+      plan: { units: [] },
+      prContext: prContextFixture(),
+      currentUnitIndex: 0,
+    });
+    render(<Overlay />);
+
+    expect(screen.getByTestId("context-panel-loading-detail")).toHaveTextContent(
+      /sent it to claude \(anthropic\)/i,
+    );
   });
 
   it("shows unit context without the building spinner when viewing a streamed unit", () => {
     useReviewStore.setState({
       isOpen: true,
       status: "streaming",
+      buildPhase: "tokens_streaming",
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture(),
@@ -216,13 +254,14 @@ describe("Overlay", () => {
     render(<Overlay />);
 
     expect(screen.getByText("because it needed updating")).toBeInTheDocument();
-    expect(screen.queryByText(/building remaining units/i)).not.toBeInTheDocument();
+    expect(screen.queryByTestId("context-panel-loading")).not.toBeInTheDocument();
   });
 
   it("shows keyboard shortcuts on the description unit once the review plan is ready", () => {
     useReviewStore.setState({
       isOpen: true,
       status: "ready",
+      buildPhase: null,
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture(),
@@ -237,7 +276,7 @@ describe("Overlay", () => {
     expect(screen.getByText(/^split view$/i)).toBeInTheDocument();
     expect(screen.getByText(/^enter comment mode$/i)).toBeInTheDocument();
     expect(screen.getByText(/exit comment mode \/ exit review/i)).toBeInTheDocument();
-    expect(screen.queryByText(/building remaining units/i)).not.toBeInTheDocument();
+    expect(screen.queryByTestId("context-panel-loading")).not.toBeInTheDocument();
   });
 
   it("shows the error in the context panel without collapsing the layout", () => {

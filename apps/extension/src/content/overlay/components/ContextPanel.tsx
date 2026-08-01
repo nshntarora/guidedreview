@@ -2,6 +2,7 @@ import type { ReviewErrorInfo, ReviewUnit } from "../../../lib/types";
 import { ConnectProviderPrompt } from "./ConnectProviderPrompt";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { Button, Spinner } from "@guided-review/ui";
+import { BUILD_PLAN_PRIMARY } from "../buildPhaseCopy";
 import { missingMetadataHint, PR_DESCRIPTION_HINT } from "../missingMetadata";
 
 interface ContextPanelProps {
@@ -15,6 +16,8 @@ interface ContextPanelProps {
   /** No AI provider configured — prompt to connect one instead of erroring. */
   needsProvider?: boolean;
   loading?: boolean;
+  /** Pipeline phase detail shown under the primary loading line. */
+  loadingDetail?: string | null;
   /** Retry the failed API / review build step. */
   onRetry?: () => void;
 }
@@ -26,6 +29,7 @@ export function ContextPanel({
   error,
   needsProvider,
   loading,
+  loadingDetail,
   onRetry,
 }: ContextPanelProps) {
   // Takes precedence over `error`: a missing key is a setup step, not a failure.
@@ -94,9 +98,24 @@ export function ContextPanel({
           {hint}
         </div>
         {loading ? (
-          <div className="mt-4 flex items-center gap-2.5 border-t border-border-strong pt-3">
-            <Spinner label="Building remaining units" />
-            <p className="m-0 text-base text-muted">Building remaining units…</p>
+          <div
+            className="mt-4 flex items-start gap-2.5 border-t border-border-strong pt-3"
+            data-testid="context-panel-loading"
+          >
+            <Spinner
+              label={loadingDetail ? `${BUILD_PLAN_PRIMARY}. ${loadingDetail}` : BUILD_PLAN_PRIMARY}
+            />
+            <div className="min-w-0">
+              <p className="m-0 text-base text-muted">{BUILD_PLAN_PRIMARY}</p>
+              {loadingDetail ? (
+                <p
+                  className="m-0 mt-0.5 text-sm text-muted"
+                  data-testid="context-panel-loading-detail"
+                >
+                  {loadingDetail}
+                </p>
+              ) : null}
+            </div>
           </div>
         ) : (
           <KeyboardShortcuts />

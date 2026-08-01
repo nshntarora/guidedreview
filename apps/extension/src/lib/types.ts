@@ -109,6 +109,13 @@ export interface ReviewUnit {
   id: string;
   title: string;
   /**
+   * When set, the overlay shows this instead of `title`. The no-AI
+   * one-unit-per-file plan sets this to a middle-truncated path so the UI
+   * renders the label as plain text (no path-aware truncation at render).
+   * AI units omit it and show `title`. Not model output (not in the LLM schema).
+   */
+  displayTitle?: string;
+  /**
    * `change` = production (and optional config); `tests` = test files only.
    * Never mixed — validation splits impure units.
    */
@@ -187,8 +194,12 @@ export const NO_API_KEY_ERROR_CODE = "no_api_key";
  * Progressive events on the `annotate-review` port from background → content.
  * Complete, validated units are pushed as they become available; DONE carries
  * the final merged plan; ERROR ends the stream with structured error details.
+ * STATUS updates the overlay's build-phase subtext (waiting / first token).
  */
+export type AnnotateStreamStatusPhase = "waiting_for_tokens" | "tokens_streaming";
+
 export type AnnotateReviewStreamEvent =
+  | { type: "STATUS"; phase: AnnotateStreamStatusPhase }
   | { type: "UNIT"; unit: ReviewUnit }
   | { type: "DONE"; plan: ReviewPlan }
   | { type: "ERROR"; error: ReviewErrorInfo };

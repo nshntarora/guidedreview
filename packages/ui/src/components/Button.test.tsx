@@ -30,6 +30,15 @@ describe("Button", () => {
     expect(primary).not.toContain("enabled:hover:");
   });
 
+  it("tints nested kbd chips on destructive to a darker danger shade", () => {
+    const destructive = buttonClassName({ variant: "destructive" });
+    expect(destructive).toContain(
+      "[&_[data-slot=kbd]]:bg-[color-mix(in_srgb,black_25%,var(--color-danger-muted))]",
+    );
+    expect(destructive).toContain("[&_[data-slot=kbd]]:text-inherit");
+    expect(destructive).toContain("[&_[data-slot=kbd]]:border-transparent");
+  });
+
   it("includes transition-colors for hover feedback", () => {
     expect(buttonClassName()).toContain("transition-colors");
   });

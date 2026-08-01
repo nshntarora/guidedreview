@@ -43,6 +43,8 @@ function resetStore(): void {
     status: "idle",
     error: null,
     needsProvider: false,
+    buildPhase: null,
+    providerLabel: null,
     diff: null,
     plan: null,
     prContext: null,
@@ -103,6 +105,8 @@ describe("useReviewStore", () => {
       plan: planFixture(1),
       diff: diffFixture(),
       currentUnitIndex: 2,
+      buildPhase: "tokens_streaming",
+      providerLabel: "OpenAI",
     });
     useReviewStore.getState().startLoading(SESSION_KEY);
     const state = useReviewStore.getState();
@@ -112,9 +116,11 @@ describe("useReviewStore", () => {
     expect(state.diff).toBeNull();
     expect(state.currentUnitIndex).toBe(0);
     expect(state.sessionKey).toBe(SESSION_KEY);
+    expect(state.buildPhase).toBe("extracting_diff");
+    expect(state.providerLabel).toBeNull();
   });
 
-  it("setDiff stores the diff without changing status or plan", () => {
+  it("setDiff stores the diff and advances buildPhase to processing", () => {
     resetStore();
     useReviewStore.getState().startLoading(SESSION_KEY);
     const diff = diffFixture();
@@ -124,6 +130,7 @@ describe("useReviewStore", () => {
     expect(state.status).toBe("loading");
     expect(state.diff).toBe(diff);
     expect(state.plan).toBeNull();
+    expect(state.buildPhase).toBe("processing_diff");
   });
 
   it("beginStreaming and appendUnit grow the plan while streaming", () => {
@@ -139,6 +146,7 @@ describe("useReviewStore", () => {
     useReviewStore.getState().appendUnit(unit, gen);
     expect(useReviewStore.getState().plan?.units).toHaveLength(1);
     expect(useReviewStore.getState().status).toBe("streaming");
+    expect(useReviewStore.getState().buildPhase).toBe("tokens_streaming");
 
     // Duplicate id is ignored.
     useReviewStore.getState().appendUnit(unit, gen);
@@ -147,6 +155,40 @@ describe("useReviewStore", () => {
     // Stale generation is ignored.
     useReviewStore.getState().appendUnit({ ...unit, id: "stale" }, gen - 1);
     expect(useReviewStore.getState().plan?.units).toHaveLength(1);
+  });
+
+  it("setBuildPhase respects stream generation", () => {
+    resetStore();
+    useReviewStore.getState().startLoading(SESSION_KEY);
+    const gen = useReviewStore.getState().streamGeneration;
+    useReviewStore.getState().setBuildPhase("sent_to_provider", gen);
+    expect(useReviewStore.getState().buildPhase).toBe("sent_to_provider");
+    useReviewStore.getState().setBuildPhase("waiting_for_tokens", gen - 1);
+    expect(useReviewStore.getState().buildPhase).toBe("sent_to_provider");
+  });
+
+  it("beginRetry with a cached diff starts at processing_diff", () => {
+    resetStore();
+    useReviewStore.getState().startLoading(SESSION_KEY);
+    useReviewStore.getState().setDiff(diffFixture());
+    useReviewStore.getState().setProviderLabel("Claude (Anthropic)");
+    const gen = useReviewStore.getState().beginRetry();
+    const state = useReviewStore.getState();
+    expect(gen).toBe(state.streamGeneration);
+    expect(state.status).toBe("streaming");
+    expect(state.buildPhase).toBe("processing_diff");
+    expect(state.providerLabel).toBe("Claude (Anthropic)");
+  });
+
+  it("setReady and setError clear buildPhase", () => {
+    resetStore();
+    useReviewStore.setState({ buildPhase: "tokens_streaming" });
+    useReviewStore.getState().setReady(diffFixture(), planFixture(1));
+    expect(useReviewStore.getState().buildPhase).toBeNull();
+
+    useReviewStore.setState({ buildPhase: "waiting_for_tokens" });
+    useReviewStore.getState().setError("boom");
+    expect(useReviewStore.getState().buildPhase).toBeNull();
   });
 
   it("goNext works mid-stream once units have been appended", () => {

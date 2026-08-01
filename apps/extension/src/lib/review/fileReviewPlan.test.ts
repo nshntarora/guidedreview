@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { buildFileReviewPlan } from "./fileReviewPlan";
+import { buildFileReviewPlan, FILE_UNIT_TITLE_MAX } from "./fileReviewPlan";
 import { resolveUnitFiles } from "../../content/overlay/selectors";
+import { middleTruncate } from "../middleTruncate";
 import type { ParsedDiff } from "../types";
 
 function diffFixture(): ParsedDiff {
@@ -46,7 +47,27 @@ describe("buildFileReviewPlan", () => {
       "src/core.test.ts",
       "package.json",
     ]);
+    // Short paths fit the budget — displayTitle equals the full path.
+    expect(plan.units.map((u) => u.displayTitle)).toEqual([
+      "src/core.ts",
+      "src/core.test.ts",
+      "package.json",
+    ]);
     expect(new Set(plan.units.map((u) => u.id)).size).toBe(3);
+  });
+
+  it("middle-truncates long path labels into displayTitle, keeps full path on title", () => {
+    const longPath =
+      "apps/extension/src/content/overlay/components/VeryLongFileNameForTruncation.tsx";
+    const diff: ParsedDiff = {
+      files: [{ path: longPath, status: "modified", isBinaryOrElided: false, hunks: [] }],
+    };
+
+    const plan = buildFileReviewPlan(diff);
+    expect(plan.units[0].title).toBe(longPath);
+    expect(plan.units[0].displayTitle).toBe(middleTruncate(longPath, FILE_UNIT_TITLE_MAX));
+    expect(plan.units[0].displayTitle!.length).toBe(FILE_UNIT_TITLE_MAX);
+    expect(plan.units[0].displayTitle).toContain("…");
   });
 
   it("leaves context empty rather than inventing commentary", () => {

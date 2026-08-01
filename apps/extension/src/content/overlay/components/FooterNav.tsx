@@ -11,7 +11,8 @@ const navBtnBase =
   "inline-flex cursor-pointer items-center gap-2 rounded-md border px-4 py-[7px] text-base font-medium disabled:cursor-default disabled:opacity-40";
 
 export function FooterNav({ currentIndex, total, onPrev, onNext }: FooterNavProps) {
-  const stepLabel = total > 0 ? `Step ${currentIndex + 1} of ${total}` : "No steps yet";
+  const stepLabel =
+    total > 0 ? `Review unit ${currentIndex + 1} of ${total}` : "No review units yet";
 
   return (
     <footer
@@ -23,7 +24,7 @@ export function FooterNav({ currentIndex, total, onPrev, onNext }: FooterNavProp
         className={cn(navBtnBase, "border-border bg-surface text-foreground")}
         onClick={onPrev}
         disabled={currentIndex === 0 || total === 0}
-        aria-label="Previous step"
+        aria-label="Previous review unit"
       >
         Previous
         <Kbd>←</Kbd>
@@ -49,7 +50,7 @@ export function FooterNav({ currentIndex, total, onPrev, onNext }: FooterNavProp
         )}
         onClick={onNext}
         disabled={total === 0 || currentIndex >= total - 1}
-        aria-label="Next step"
+        aria-label="Next review unit"
       >
         Next
         <Kbd>→</Kbd>

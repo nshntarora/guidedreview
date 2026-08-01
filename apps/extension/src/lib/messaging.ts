@@ -45,6 +45,8 @@ export interface StreamReviewPlanHandlers {
   onUnit: (unit: ReviewUnit) => void;
   onDone: (plan: ReviewPlan) => void;
   onError: (error: ReviewErrorInfo) => void;
+  /** Optional: waiting_for_tokens / tokens_streaming from the worker. */
+  onStatus?: (phase: "waiting_for_tokens" | "tokens_streaming") => void;
 }
 
 /**
@@ -71,6 +73,9 @@ export function streamReviewPlan(
     if (!message || typeof message !== "object" || !("type" in message)) return;
 
     switch (message.type) {
+      case "STATUS":
+        handlers.onStatus?.(message.phase);
+        return;
       case "UNIT":
         handlers.onUnit(message.unit);
         return;
