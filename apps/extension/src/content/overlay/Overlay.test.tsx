@@ -60,6 +60,7 @@ function planFixture(): ReviewPlan {
       {
         id: "u1",
         title: "Update foo",
+        kind: "change",
         context: "because it needed updating",
         files: [{ fileId: "src/foo.ts", hunkIds: ["src/foo.ts#0"], role: "core_logic" }],
       },

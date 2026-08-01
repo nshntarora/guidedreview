@@ -8,6 +8,7 @@ function planFixture(): ReviewPlan {
       {
         id: "u0",
         title: "Auth",
+        kind: "change",
         context: "login flow",
         files: [
           { fileId: "src/auth/login.ts", hunkIds: ["src/auth/login.ts#0"], role: "core_logic" },
@@ -15,12 +16,17 @@ function planFixture(): ReviewPlan {
       },
       {
         id: "u1",
-        title: "Utils + tests",
+        title: "Utils",
+        kind: "change",
         context: "helpers",
-        files: [
-          { fileId: "src/utils/format.ts", hunkIds: [], role: "core_logic" },
-          { fileId: "src/auth/login.ts", hunkIds: ["src/auth/login.ts#1"], role: "test" },
-        ],
+        files: [{ fileId: "src/utils/format.ts", hunkIds: [], role: "core_logic" }],
+      },
+      {
+        id: "u2",
+        title: "Tests for Auth",
+        kind: "tests",
+        context: "login tests",
+        files: [{ fileId: "src/auth/login.ts", hunkIds: ["src/auth/login.ts#1"], role: "test" }],
       },
     ],
   };
@@ -41,8 +47,8 @@ describe("findUnitForFile", () => {
   });
 
   it("prefers the unit that owns the specific hunk when provided", () => {
-    // login.ts#1 is only on u1 → display index 2
-    expect(findUnitForFile(planFixture(), "src/auth/login.ts", "src/auth/login.ts#1")).toBe(2);
+    // login.ts#1 is only on the tests unit → display index 3
+    expect(findUnitForFile(planFixture(), "src/auth/login.ts", "src/auth/login.ts#1")).toBe(3);
     // login.ts#0 is on u0 → display index 1
     expect(findUnitForFile(planFixture(), "src/auth/login.ts", "src/auth/login.ts#0")).toBe(1);
   });

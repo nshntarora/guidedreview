@@ -11,6 +11,7 @@ import { BinaryElidedEmptyState } from "./diff/BinaryElidedEmptyState";
 import { SplitHunk } from "./diff/SplitHunk";
 import { UnifiedHunk } from "./diff/UnifiedHunk";
 import { useSelectionDerived } from "./diff/useSelectionDerived";
+import { TestsUnitIcon } from "./TestsUnitIcon";
 
 /** How long the search-match flash highlight stays on the target line/file. */
 const SEARCH_HIGHLIGHT_MS = 1600;
@@ -19,6 +20,8 @@ interface DiffPaneProps {
   files: ResolvedUnitFile[];
   /** Title of the currently active review unit. */
   unitTitle: string;
+  /** When true, show the flask icon (tests review unit). */
+  isTestsUnit?: boolean;
   /** Review unit id for associating saved drafts. */
   unitId?: string;
   /**
@@ -35,6 +38,7 @@ interface DiffPaneProps {
 export function DiffPane({
   files,
   unitTitle,
+  isTestsUnit = false,
   unitId,
   selectableForUnit,
   searchScrollTarget = null,
@@ -149,11 +153,12 @@ export function DiffPane({
       </div>
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2
-          className="min-w-0 truncate text-lg font-semibold text-foreground"
+          className="flex min-w-0 items-center gap-1.5 text-lg font-semibold text-foreground"
           data-testid="diff-unit-title"
           title={unitTitle}
         >
-          {unitTitle}
+          {isTestsUnit && <TestsUnitIcon className="shrink-0 text-muted" size={16} />}
+          <span className="min-w-0 truncate">{unitTitle}</span>
         </h2>
         <div className="flex shrink-0 items-center gap-2">
           {commentModeActive ? (

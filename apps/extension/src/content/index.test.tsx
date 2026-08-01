@@ -156,7 +156,9 @@ describe("content script review orchestration", () => {
     await chrome.storage.session.set({
       [SESSION_KEY]: {
         diff: diffFixture(),
-        plan: { units: [{ id: "u1", title: "Saved unit", context: "why", files: [] }] },
+        plan: {
+          units: [{ id: "u1", title: "Saved unit", kind: "change", context: "why", files: [] }],
+        },
         prContext: null,
         currentUnitIndex: 1,
         draftComments: [],

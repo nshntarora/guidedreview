@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildUserPrompt, chunkDiffByFile } from "./buildPrompt";
+import { buildUserPrompt, chunkDiffByFile, SYSTEM_PROMPT } from "./buildPrompt";
 import type { DiffFile, ParsedDiff, PRContext } from "../types";
 
 function fileFixture(path: string, extraLineCount = 0): DiffFile {
@@ -65,6 +65,15 @@ describe("chunkDiffByFile", () => {
   });
 });
 
+describe("SYSTEM_PROMPT", () => {
+  it("requires separate tests units and consistency rules", () => {
+    expect(SYSTEM_PROMPT).toContain('kind "tests"');
+    expect(SYSTEM_PROMPT.toLowerCase()).toContain("never mix");
+    expect(SYSTEM_PROMPT).toContain("exactly one");
+    expect(SYSTEM_PROMPT).toContain("model-first");
+  });
+});
+
 describe("buildUserPrompt", () => {
   const prContext: PRContext = {
     owner: "acme",
@@ -114,6 +123,14 @@ describe("buildUserPrompt", () => {
     const prompt = buildUserPrompt({ files: [fileFixture("src/foo.ts")] }, prContext);
     expect(prompt).toContain("[hunk id: src/foo.ts#0]");
     expect(prompt).toContain("### File: src/foo.ts (modified)");
+  });
+
+  it("includes a hunk inventory and slice disclaimer", () => {
+    const prompt = buildUserPrompt({ files: [fileFixture("src/foo.ts")] }, prContext);
+    expect(prompt).toContain("Hunk inventory");
+    expect(prompt).toContain("src/foo.ts: src/foo.ts#0");
+    expect(prompt).toContain("slice of a larger PR");
+    expect(prompt).not.toContain("Checklist before you finish");
   });
 
   it("marks binary files without dumping hunk content", () => {

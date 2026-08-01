@@ -29,6 +29,7 @@ const CANNED_PLAN: ReviewPlan = {
     {
       id: "u1",
       title: "Update foo's exported constant",
+      kind: "change",
       context: "Bumping const b to 3 and adding const c, per the PR description.",
       files: [{ fileId: "src/foo.ts", hunkIds: ["src/foo.ts#0"], role: "core_logic" }],
     },

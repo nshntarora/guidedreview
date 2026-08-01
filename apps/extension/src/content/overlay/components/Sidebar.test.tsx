@@ -8,6 +8,7 @@ function planWithUnits(count: number): ReviewPlan {
     units: Array.from({ length: count }, (_, i) => ({
       id: `u${i + 1}`,
       title: `Unit ${i + 1}`,
+      kind: "change" as const,
       context: `Context for unit ${i + 1}`,
       files: [],
     })),
@@ -88,5 +89,34 @@ describe("Sidebar", () => {
     );
 
     expect(screen.queryAllByTestId("unit-skeleton")).toHaveLength(0);
+  });
+
+  it("shows a flask icon only on tests units", () => {
+    const plan: ReviewPlan = {
+      units: [
+        {
+          id: "c1",
+          title: "Add feature",
+          kind: "change",
+          context: "why",
+          files: [],
+        },
+        {
+          id: "t1",
+          title: "Tests for Add feature",
+          kind: "tests",
+          context: "why",
+          files: [],
+        },
+      ],
+    };
+
+    render(
+      <Sidebar plan={plan} currentUnitIndex={1} stillBuilding={false} onSelectUnit={() => {}} />,
+    );
+
+    expect(screen.getAllByTestId("unit-tests-icon")).toHaveLength(1);
+    expect(screen.getByText("Tests for Add feature")).toBeInTheDocument();
+    expect(screen.getByText("Add feature")).toBeInTheDocument();
   });
 });

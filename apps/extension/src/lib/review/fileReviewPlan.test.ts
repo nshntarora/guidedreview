@@ -73,6 +73,11 @@ describe("buildFileReviewPlan", () => {
     ]);
   });
 
+  it("sets kind tests only for test paths", () => {
+    const plan = buildFileReviewPlan(diffFixture());
+    expect(plan.units.map((u) => u.kind)).toEqual(["change", "tests", "change"]);
+  });
+
   it("returns an empty plan for an empty diff", () => {
     expect(buildFileReviewPlan({ files: [] })).toEqual({ units: [] });
   });
