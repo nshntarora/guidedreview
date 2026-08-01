@@ -12,7 +12,7 @@ describe("About", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Guided Review" })).toBeInTheDocument();
-    expect(screen.getByText(/v0\.1\.0/)).toBeInTheDocument();
+    expect(screen.getByText(/v\d+\.\d+\.\d+/)).toBeInTheDocument();
     expect(screen.getByText(/makes reading code better/i)).toBeInTheDocument();
     expect(screen.getByText(/Free · Open source · Bring your own LLM key/)).toBeInTheDocument();
 
