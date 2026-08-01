@@ -11,11 +11,14 @@ import { BinaryElidedEmptyState } from "./diff/BinaryElidedEmptyState";
 import { SplitHunk } from "./diff/SplitHunk";
 import { UnifiedHunk } from "./diff/UnifiedHunk";
 import { useSelectionDerived } from "./diff/useSelectionDerived";
-import { MiddleEllipsisText } from "./MiddleEllipsisText";
 import { TestsUnitIcon } from "./TestsUnitIcon";
+import { middleTruncate } from "../../../lib/middleTruncate";
 
 /** How long the search-match flash highlight stays on the target line/file. */
 const SEARCH_HIGHLIGHT_MS = 1600;
+
+/** Character budget for file-header path labels in the diff viewer. */
+const DIFF_FILE_PATH_MAX = 80;
 
 interface DiffPaneProps {
   files: ResolvedUnitFile[];
@@ -176,6 +179,7 @@ export function DiffPane({
       {files.map(({ file, hunks }) => {
         const language = languageForPath(file.path);
         const extension = file.path.includes(".") ? file.path.split(".").pop() : undefined;
+        const pathLabel = file.previousPath ? `${file.previousPath} → ${file.path}` : file.path;
         const fileSearchHit =
           searchHighlight != null &&
           searchHighlight.filePath === file.path &&
@@ -198,10 +202,9 @@ export function DiffPane({
             data-testid={fileSearchHit ? "diff-file-search-highlight" : undefined}
           >
             <div className="flex min-w-0 items-baseline gap-2.5 border-b border-border bg-background px-3 py-2 font-mono text-sm">
-              <MiddleEllipsisText
-                text={file.previousPath ? `${file.previousPath} → ${file.path}` : file.path}
-                className="min-w-0 flex-1"
-              />
+              <span className="min-w-0 flex-1 truncate" title={pathLabel}>
+                {middleTruncate(pathLabel, DIFF_FILE_PATH_MAX)}
+              </span>
               {!language && !file.isBinaryOrElided && (
                 <span className="shrink-0 font-normal text-muted italic">
                   {extension
