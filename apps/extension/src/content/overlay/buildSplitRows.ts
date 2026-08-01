@@ -12,7 +12,7 @@ export type SplitCell =
     }
   | { kind: "empty" };
 
-export interface SplitRow {
+interface SplitRow {
   left: SplitCell;
   right: SplitCell;
 }

@@ -1,3 +1,14 @@
+/**
+ * The extension's only access to `chrome.runtime.sendMessage` — an ESLint rule
+ * enforces it. Each function below owns one message type from `lib/types.ts`,
+ * so the request/response contract and the wire call live together and a
+ * future non-Chrome target is a change in this file alone.
+ *
+ * `request*` names mean "ask the background worker to do this", which keeps
+ * them distinct from the functions that do the actual work background-side
+ * (`lib/github/submitReview.ts`, `ProviderClient.testConnection`).
+ */
+
 import type {
   AnnotateReviewRequest,
   AnnotateReviewStreamEvent,
@@ -110,7 +121,9 @@ export function streamReviewPlan(
 }
 
 /** Options-page-side helper: ask the background worker to test a provider config. */
-export async function testConnection(settings: ProviderSettings): Promise<TestConnectionResponse> {
+export async function requestTestConnection(
+  settings: ProviderSettings,
+): Promise<TestConnectionResponse> {
   const request: TestConnectionRequest = { type: "TEST_CONNECTION", settings };
   return chrome.runtime.sendMessage(request);
 }
@@ -166,7 +179,7 @@ export async function clearGitHubAuthSession(): Promise<GitHubAuthClearResponse>
  * Content-script-side helper: submit a PR review (summary + optional line
  * comments) through the background worker, which holds the OAuth token.
  */
-export async function submitPullRequestReview(
+export async function requestSubmitReview(
   pr: SubmitReviewRequest["pr"],
   body: string,
   event: ReviewEvent,

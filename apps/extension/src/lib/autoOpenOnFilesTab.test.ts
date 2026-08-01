@@ -47,4 +47,28 @@ describe("autoOpenOnFilesTab", () => {
 
     unsubscribe();
   });
+
+  // Best-effort preference: `storage.ts` propagates failures, so the fallback
+  // to "off" lives here rather than being hidden in the storage helper.
+  it("falls back to off and warns when the read fails", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.mocked(chrome.storage.local.get).mockRejectedValueOnce(new Error("quota"));
+
+    await expect(getAutoOpenOnFilesTab()).resolves.toBe(false);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("failed to read guidedReview.autoOpenOnFilesTab"),
+      expect.any(Error),
+    );
+  });
+
+  it("swallows and warns when the write fails", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.mocked(chrome.storage.local.set).mockRejectedValueOnce(new Error("disk full"));
+
+    await expect(setAutoOpenOnFilesTab(true)).resolves.toBeUndefined();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("failed to persist guidedReview.autoOpenOnFilesTab"),
+      expect.any(Error),
+    );
+  });
 });

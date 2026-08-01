@@ -1,13 +1,8 @@
 import { describe, expect, it } from "vitest";
-import {
-  isCompleteReviewUnit,
-  prefixChunkUnitId,
-  stripDuplicateHunks,
-  validateAndCleanUnit,
-} from "./reviewPlan";
+import { parseReviewUnit, stripDuplicateHunks } from "./reviewPlan";
 import type { DiffFile, ReviewUnit } from "../types";
 
-/** The known-files map `validateAndCleanUnit` validates against. */
+/** The known-files map `parseReviewUnit` validates against. */
 function diffFixture(): Map<string, DiffFile> {
   const foo: DiffFile = {
     path: "src/foo.ts",
@@ -56,7 +51,7 @@ function diffFixture(): Map<string, DiffFile> {
   ]);
 }
 
-describe("validateAndCleanUnit", () => {
+describe("parseReviewUnit", () => {
   function unitWith(files: ReviewUnit["files"], overrides: Partial<ReviewUnit> = {}): ReviewUnit {
     return {
       id: "u1",
@@ -69,7 +64,7 @@ describe("validateAndCleanUnit", () => {
   }
 
   it("keeps a unit whose file/hunk refs all exist in the diff", () => {
-    const cleaned = validateAndCleanUnit(
+    const cleaned = parseReviewUnit(
       unitWith([{ fileId: "src/foo.ts", hunkIds: ["src/foo.ts#0"], role: "core_logic" }]),
       diffFixture(),
     );
@@ -80,7 +75,7 @@ describe("validateAndCleanUnit", () => {
   });
 
   it("drops hallucinated hunk ids but keeps the file ref if the file is real", () => {
-    const cleaned = validateAndCleanUnit(
+    const cleaned = parseReviewUnit(
       unitWith([
         { fileId: "src/foo.ts", hunkIds: ["src/foo.ts#0", "src/foo.ts#99"], role: "core_logic" },
       ]),
@@ -91,7 +86,7 @@ describe("validateAndCleanUnit", () => {
   });
 
   it("treats an empty hunkIds list as a whole-file reference and keeps it", () => {
-    const cleaned = validateAndCleanUnit(
+    const cleaned = parseReviewUnit(
       unitWith([{ fileId: "src/foo.ts", hunkIds: [], role: "core_logic" }]),
       diffFixture(),
     );
@@ -101,7 +96,7 @@ describe("validateAndCleanUnit", () => {
   });
 
   it("returns an empty array when every file ref is hallucinated", () => {
-    const cleaned = validateAndCleanUnit(
+    const cleaned = parseReviewUnit(
       unitWith([{ fileId: "src/does-not-exist.ts", hunkIds: [], role: "core_logic" }]),
       diffFixture(),
     );
@@ -110,7 +105,7 @@ describe("validateAndCleanUnit", () => {
   });
 
   it("falls back to core_logic for an unrecognized role on production paths", () => {
-    const cleaned = validateAndCleanUnit(
+    const cleaned = parseReviewUnit(
       unitWith([
         {
           fileId: "src/foo.ts",
@@ -125,7 +120,7 @@ describe("validateAndCleanUnit", () => {
   });
 
   it("forces test paths to role test and kind tests", () => {
-    const cleaned = validateAndCleanUnit(
+    const cleaned = parseReviewUnit(
       unitWith([{ fileId: "src/foo.test.ts", hunkIds: [], role: "core_logic" }], {
         kind: "change",
         title: "Tests for foo",
@@ -139,7 +134,7 @@ describe("validateAndCleanUnit", () => {
   });
 
   it("splits mixed production+test units into change then tests", () => {
-    const cleaned = validateAndCleanUnit(
+    const cleaned = parseReviewUnit(
       unitWith(
         [
           { fileId: "src/foo.ts", hunkIds: ["src/foo.ts#0"], role: "core_logic" },
@@ -166,7 +161,7 @@ describe("validateAndCleanUnit", () => {
   });
 
   it("sorts files within a unit by role then path", () => {
-    const cleaned = validateAndCleanUnit(
+    const cleaned = parseReviewUnit(
       unitWith([
         { fileId: "src/z.ts", hunkIds: [], role: "core_logic" },
         { fileId: "src/a.ts", hunkIds: [], role: "schema_or_model" },
@@ -241,33 +236,45 @@ describe("stripDuplicateHunks", () => {
   });
 });
 
-describe("isCompleteReviewUnit", () => {
-  it("accepts a well-formed unit and rejects incomplete objects", () => {
-    expect(
-      isCompleteReviewUnit({
+describe("parseReviewUnit structural checks", () => {
+  it("accepts a well-formed unit with or without an explicit kind", () => {
+    const withKind = parseReviewUnit(
+      {
         id: "u1",
         title: "T",
         kind: "tests",
         context: "C",
-        files: [{ fileId: "a.ts", hunkIds: [], role: "test" }],
-      }),
-    ).toBe(true);
-    expect(
-      isCompleteReviewUnit({
+        files: [{ fileId: "src/foo.test.ts", hunkIds: [], role: "test" }],
+      },
+      diffFixture(),
+    );
+    expect(withKind).toHaveLength(1);
+
+    // `kind` is optional: streaming property order must not drop a unit.
+    const withoutKind = parseReviewUnit(
+      {
         id: "u1",
         title: "T",
         context: "C",
-        files: [{ fileId: "a.ts", hunkIds: [], role: "test" }],
-      }),
-    ).toBe(true);
-    expect(isCompleteReviewUnit({ id: "u1", title: "T" })).toBe(false);
-    expect(isCompleteReviewUnit(null)).toBe(false);
+        files: [{ fileId: "src/foo.test.ts", hunkIds: [], role: "test" }],
+      },
+      diffFixture(),
+    );
+    expect(withoutKind).toHaveLength(1);
+    expect(withoutKind[0].kind).toBe("tests");
   });
-});
 
-describe("prefixChunkUnitId", () => {
-  it("namespaces unit ids by chunk index", () => {
-    expect(prefixChunkUnitId(0, "u1")).toBe("c0-u1");
-    expect(prefixChunkUnitId(2, "add-field")).toBe("c2-add-field");
+  it("rejects incomplete or malformed objects", () => {
+    const diff = diffFixture();
+    expect(parseReviewUnit({ id: "u1", title: "T" }, diff)).toEqual([]);
+    expect(parseReviewUnit(null, diff)).toEqual([]);
+    // A malformed file ref invalidates the whole unit, unlike an unknown path
+    // (which only drops that one ref).
+    expect(
+      parseReviewUnit(
+        { id: "u1", title: "T", context: "C", files: [{ fileId: "src/foo.ts" }] },
+        diff,
+      ),
+    ).toEqual([]);
   });
 });

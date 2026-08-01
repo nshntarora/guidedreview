@@ -19,11 +19,3 @@ export function missingMetadataHint(hasTitle: boolean, hasDescription: boolean):
   }
   return PR_DESCRIPTION_HINT;
 }
-
-/** Left-pane empty-state copy when there is no description body to render. */
-export function emptyDescriptionCopy(hasTitle: boolean): string {
-  if (!hasTitle) {
-    return "No PR title or description. Intent will be inferred from the diff.";
-  }
-  return "No PR description. Intent will be inferred from the title and diff.";
-}

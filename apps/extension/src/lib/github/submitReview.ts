@@ -14,7 +14,7 @@ type SubmitReviewFailure = Extract<SubmitReviewResponse, { ok: false }>;
 const API_VERSION = "2022-11-28";
 const ACCEPT = "application/vnd.github+json";
 
-export interface SubmitPullRequestReviewParams {
+interface SubmitPullRequestReviewParams {
   accessToken: string;
   pr: PRIdentity;
   body: string;

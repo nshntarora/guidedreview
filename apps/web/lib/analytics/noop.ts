@@ -4,7 +4,6 @@ export function createNoopClient(): AnalyticsClient {
   return {
     init() {},
     capturePageview() {},
-    capturePageleave() {},
     capture() {},
   };
 }

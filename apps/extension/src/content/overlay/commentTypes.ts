@@ -3,10 +3,24 @@
  * Shared submit-API shapes (`ReviewEvent`, `ReviewCommentInput`) live in `src/lib/types.ts`.
  */
 
-import type { ReviewEvent } from "../../lib/types";
+import type { DiffLine, ReviewEvent } from "../../lib/types";
 
 export type { ReviewEvent };
 export type DiffSide = "LEFT" | "RIGHT";
+
+/**
+ * The stable id for one selectable diff line. Every place that renders a line
+ * or builds the selectable-line list must use this, or focus and selection
+ * silently stop matching between the two with no type error.
+ */
+export function lineIdFor(hunkId: string, lineIndex: number, side: DiffSide): string {
+  return `${hunkId}:${lineIndex}:${side}`;
+}
+
+/** Deletions belong to the left (old) side; everything else to the right. */
+export function sideForLine(type: DiffLine["type"]): DiffSide {
+  return type === "del" ? "LEFT" : "RIGHT";
+}
 
 /** One keyboard-selectable line anchor in the current unit's code pane. */
 export interface SelectableLine {

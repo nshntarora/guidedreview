@@ -1,44 +1,24 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { helpPages } from "@/config/help-pages";
-import { helpNavigation } from "@/config/help-navigation";
+import { DOCS_PAGES, findDocsPage } from "@/config/docs";
 import { DocsPageWrapper } from "@/components/docs/DocsPageWrapper";
 import { JsonLd } from "@/components/JsonLd";
 import { openGraphSite, SITE_NAME, SITE_URL } from "@/lib/site";
 
 type Props = { params: Promise<{ slug: string }> };
 
-function getNavPage(slug: string) {
-  return helpNavigation.find((item) => item.type !== "heading" && item.slug === slug);
-}
-
-function getPageTitle(slug: string): string {
-  const navItem = getNavPage(slug);
-  return navItem && navItem.type !== "heading" ? navItem.title : slug;
-}
-
-function getPageDescription(slug: string, pageTitle: string): string {
-  const navItem = getNavPage(slug);
-  if (navItem && navItem.type !== "heading" && navItem.description) {
-    return navItem.description;
-  }
-  return `${SITE_NAME} documentation: ${pageTitle}.`;
-}
-
 export async function generateStaticParams() {
-  return Object.keys(helpPages).map((slug) => ({ slug }));
+  return DOCS_PAGES.filter((page) => page.load).map((page) => ({ slug: page.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  if (!helpPages[slug]) return {};
-
-  const pageTitle = getPageTitle(slug);
-  const description = getPageDescription(slug, pageTitle);
+  const page = findDocsPage(slug);
+  if (!page?.load) return {};
 
   return {
-    title: pageTitle,
-    description,
+    title: page.title,
+    description: page.description,
     alternates: { canonical: `/docs/${slug}` },
     openGraph: { ...openGraphSite, type: "article", url: `/docs/${slug}` },
   };
@@ -46,31 +26,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function DocsSlugPage({ params }: Props) {
   const { slug } = await params;
-  const loader = helpPages[slug];
-  if (!loader) notFound();
+  const page = findDocsPage(slug);
+  if (!page?.load) notFound();
 
-  const mod = await loader();
-  const Content = mod.default;
-  const pageTitle = getPageTitle(slug);
-  const description = getPageDescription(slug, pageTitle);
+  const Content = (await page.load()).default;
   const pageUrl = `${SITE_URL}/docs/${slug}`;
+  const org = { "@type": "Organization", name: SITE_NAME, url: SITE_URL };
 
   const techArticleSchema = {
     "@context": "https://schema.org",
     "@type": "TechArticle",
-    headline: pageTitle,
-    description,
+    headline: page.title,
+    description: page.description,
     url: pageUrl,
-    author: {
-      "@type": "Organization",
-      name: SITE_NAME,
-      url: SITE_URL,
-    },
-    publisher: {
-      "@type": "Organization",
-      name: SITE_NAME,
-      url: SITE_URL,
-    },
+    author: org,
+    publisher: org,
     isPartOf: { "@type": "WebSite", url: SITE_URL, name: SITE_NAME },
   };
 
@@ -78,18 +48,8 @@ export default async function DocsSlugPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Docs",
-        item: `${SITE_URL}/docs`,
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: pageTitle,
-        item: pageUrl,
-      },
+      { "@type": "ListItem", position: 1, name: "Docs", item: `${SITE_URL}/docs` },
+      { "@type": "ListItem", position: 2, name: page.title, item: pageUrl },
     ],
   };
 

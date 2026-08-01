@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { readLocal, watchLocal, writeLocal } from "./storage";
+import {
+  readLocal,
+  readSession,
+  removeLocal,
+  watchLocal,
+  writeLocal,
+  writeSession,
+} from "./storage";
 import type { ChromeMock } from "../test/chromeMock";
 
 function chromeMock(): ChromeMock {
@@ -19,17 +26,12 @@ describe("readLocal", () => {
     expect(value).toBe("default");
   });
 
-  it("falls back to parse(undefined) when storage.get throws", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  // Failures propagate so a read error can never be mistaken for "not
+  // configured". Best-effort preferences catch and fall back themselves.
+  it("propagates storage.get failures", async () => {
     vi.mocked(chrome.storage.local.get).mockRejectedValueOnce(new Error("quota"));
 
-    const value = await readLocal("theme", (raw) => (raw === undefined ? "fallback" : String(raw)));
-
-    expect(value).toBe("fallback");
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining("failed to read theme"),
-      expect.any(Error),
-    );
+    await expect(readLocal("theme", (raw) => raw)).rejects.toThrow("quota");
   });
 });
 
@@ -40,15 +42,10 @@ describe("writeLocal", () => {
     expect(store.pref).toEqual({ a: 1 });
   });
 
-  it("logs and swallows storage.set failures", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  it("propagates storage.set failures", async () => {
     vi.mocked(chrome.storage.local.set).mockRejectedValueOnce(new Error("disk full"));
 
-    await expect(writeLocal("pref", true)).resolves.toBeUndefined();
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining("failed to persist pref"),
-      expect.any(Error),
-    );
+    await expect(writeLocal("pref", true)).rejects.toThrow("disk full");
   });
 });
 
@@ -81,5 +78,32 @@ describe("watchLocal", () => {
 
     await chrome.storage.local.set({ theme: "dark" });
     expect(listener).not.toHaveBeenCalled();
+  });
+});
+
+describe("removeLocal", () => {
+  it("deletes the key", async () => {
+    await writeLocal("pref", { a: 1 });
+    await removeLocal("pref");
+
+    const store = chromeMock().storage.local.__getStore();
+    expect(store.pref).toBeUndefined();
+  });
+});
+
+describe("session storage", () => {
+  it("round-trips a value through the session area", async () => {
+    await writeSession("draft", { body: "hi" });
+
+    const value = await readSession("draft", (raw) => raw as { body: string } | undefined);
+    expect(value).toEqual({ body: "hi" });
+  });
+
+  it("is a separate area from local", async () => {
+    await writeLocal("shared", "local-value");
+    await writeSession("shared", "session-value");
+
+    expect(await readLocal("shared", (raw) => raw)).toBe("local-value");
+    expect(await readSession("shared", (raw) => raw)).toBe("session-value");
   });
 });

@@ -67,22 +67,10 @@ export function createPostHogClient(config: PostHogConfig): AnalyticsClient {
       });
     },
 
-    capturePageleave() {
-      withClient((ph) => {
-        ph.capture("$pageleave");
-      });
-    },
-
     capture(event: string, properties?: Record<string, unknown>) {
       withClient((ph) => {
         ph.capture(event, properties);
       });
-    },
-
-    shutdown() {
-      pending.length = 0;
-      posthog?.reset();
-      posthog = null;
     },
   };
 }

@@ -21,6 +21,18 @@ function fullJson(units: unknown[]): string {
   return JSON.stringify({ units });
 }
 
+/**
+ * The parser emits unvalidated objects — shape checking is `parseReviewUnit`'s
+ * job — so tests read the fields they care about off the raw values.
+ */
+function fields(values: unknown[]): { id?: string; title?: string; context?: string }[] {
+  return values as { id?: string; title?: string; context?: string }[];
+}
+
+function ids(values: unknown[]): (string | undefined)[] {
+  return fields(values).map((u) => u.id);
+}
+
 describe("StreamPlanParser", () => {
   it("emits nothing until a complete unit object is available", () => {
     const parser = new StreamPlanParser();
@@ -36,7 +48,7 @@ describe("StreamPlanParser", () => {
     const firstUnitEnd = json.indexOf("},") + 1;
     const partial = json.slice(0, firstUnitEnd);
 
-    const units = parser.push(partial);
+    const units = fields(parser.push(partial));
     expect(units).toHaveLength(1);
     expect(units[0].id).toBe("u1");
     expect(units[0].title).toBe("First unit");
@@ -70,8 +82,8 @@ describe("StreamPlanParser", () => {
     const parser = new StreamPlanParser();
     const units = parser.push(fullJson([unit]));
     expect(units).toHaveLength(1);
-    expect(units[0].title).toBe('Say "hello"');
-    expect(units[0].context).toBe("path: C:\\foo\\bar");
+    expect(fields(units)[0].title).toBe('Say "hello"');
+    expect(fields(units)[0].context).toBe("path: C:\\foo\\bar");
   });
 
   it("skips incomplete trailing objects until finish() full-parses if possible", () => {
@@ -87,10 +99,10 @@ describe("StreamPlanParser", () => {
     // Re-create to check mid-stream state more carefully:
     const p2 = new StreamPlanParser();
     const emitted = p2.push(`{"units":[${JSON.stringify(UNIT_A)},{"id":"u2","title":"Second`);
-    expect(emitted.map((u) => u.id)).toEqual(["u1"]);
+    expect(ids(emitted)).toEqual(["u1"]);
 
     // finish() cannot full-parse incomplete JSON — no second unit.
-    expect(p2.finish().map((u) => u.id)).toEqual([]);
+    expect(ids(p2.finish())).toEqual([]);
     void mid;
   });
 
@@ -98,23 +110,73 @@ describe("StreamPlanParser", () => {
     const parser = new StreamPlanParser();
     // Push the whole document in one go — extract should already emit both.
     const units = parser.push(fullJson([UNIT_A, UNIT_B]));
-    expect(units.map((u) => u.id)).toEqual(["u1", "u2"]);
+    expect(ids(units)).toEqual(["u1", "u2"]);
     expect(parser.finish()).toEqual([]);
   });
 
-  it("does not emit objects missing required fields", () => {
+  it("emits complete objects without validating their shape", () => {
     const parser = new StreamPlanParser();
-    const incomplete = {
-      id: "u1",
-      title: "No files",
-      // missing context and files
-    };
-    expect(parser.push(fullJson([incomplete]))).toEqual([]);
+    // Missing context and files. The parser only finds object boundaries;
+    // `parseReviewUnit` is what drops units that aren't well-formed.
+    const incomplete = { id: "u1", title: "No files" };
+    expect(parser.push(fullJson([incomplete]))).toEqual([incomplete]);
   });
 
   it("handles an empty units array", () => {
     const parser = new StreamPlanParser();
     expect(parser.push('{"units":[]}')).toEqual([]);
+    expect(parser.finish()).toEqual([]);
+  });
+
+  // The incremental scanner and finish()'s full-document parse both walk the
+  // same `units` array. If the scanner's position were tracked as "units
+  // emitted" rather than "array elements consumed", every unit it declined to
+  // emit would shift the full parse backwards and re-emit units already sent.
+  describe("never emits the same unit twice", () => {
+    const UNIT_C = {
+      id: "u3",
+      title: "Third unit",
+      context: "Why third",
+      files: [{ fileId: "src/c.ts", hunkIds: [], role: "core_logic" }],
+    };
+
+    function idsFromWholeStream(json: string): string[] {
+      const parser = new StreamPlanParser();
+      return ids([...parser.push(json), ...parser.finish()]);
+    }
+
+    it("when a middle unit is malformed JSON", () => {
+      // Hand-built so the middle element parses as a complete object to the
+      // brace matcher but throws in JSON.parse (trailing comma).
+      const json = `{"units":[${JSON.stringify(UNIT_A)},{"id":"u2",},${JSON.stringify(UNIT_C)}]}`;
+      expect(idsFromWholeStream(json)).toEqual(["u1", "u3"]);
+    });
+
+    it("when an element is skipped and the stream arrives in tiny chunks", () => {
+      // Middle element parses to the brace matcher but throws in JSON.parse.
+      const json = `{"units":[${JSON.stringify(UNIT_A)},{"id":"u2",},${JSON.stringify(UNIT_C)}]}`;
+      const parser = new StreamPlanParser();
+      const seen: (string | undefined)[] = [];
+
+      for (const ch of json) {
+        seen.push(...ids(parser.push(ch)));
+      }
+      seen.push(...ids(parser.finish()));
+
+      expect(seen).toEqual(["u1", "u3"]);
+    });
+  });
+
+  it("finish() adds nothing when the scan already emitted the trailing unit", () => {
+    const parser = new StreamPlanParser();
+    const json = fullJson([UNIT_A, UNIT_B]);
+    // Cut mid-way through the second unit so the first push emits only u1.
+    const cut = json.indexOf("},") + 2;
+    expect(ids(parser.push(json.slice(0, cut)))).toEqual(["u1"]);
+
+    // u2 completes during the final push, so the full-document fallback in
+    // finish() must not hand it back a second time.
+    expect(ids(parser.push(json.slice(cut)))).toEqual(["u2"]);
     expect(parser.finish()).toEqual([]);
   });
 
@@ -129,6 +191,6 @@ describe("StreamPlanParser", () => {
     const parser = new StreamPlanParser();
     const units = parser.push(fullJson([unit]));
     expect(units).toHaveLength(1);
-    expect(units[0].context).toBe("also } here { and }");
+    expect(fields(units)[0].context).toBe("also } here { and }");
   });
 });

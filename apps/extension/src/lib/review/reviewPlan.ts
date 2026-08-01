@@ -1,5 +1,5 @@
-import type { DiffFile, FileRole, ReviewUnit, ReviewUnitFileRef, UnitKind } from "../types";
-import { DEFAULT_FILE_ROLE, DEFAULT_UNIT_KIND, FILE_ROLES } from "../types";
+import type { DiffFile, FileRole, ReviewUnit, ReviewUnitFileRef } from "../types";
+import { DEFAULT_FILE_ROLE, FILE_ROLES } from "../types";
 import { isTestPath } from "./pathClass";
 
 const KNOWN_FILE_ROLES: ReadonlySet<string> = new Set(FILE_ROLES);
@@ -12,14 +12,6 @@ const ROLE_RANK: Record<FileRole, number> = {
   test: 3,
   config_or_generated: 4,
 };
-
-/**
- * Namespace a unit id by chunk index so units from different `chunkDiffByFile`
- * chunks never collide when stitched into one plan.
- */
-export function prefixChunkUnitId(chunkIndex: number, unitId: string): string {
-  return `c${chunkIndex}-${unitId}`;
-}
 
 function sortFileRefs(files: ReviewUnitFileRef[]): ReviewUnitFileRef[] {
   return [...files].sort((a, b) => {
@@ -42,34 +34,50 @@ function testsTitle(changeTitle: string): string {
 }
 
 /**
- * Validate a raw review unit against the real diff and enforce purity:
- * no mixed production+test units. Returns zero, one, or two units
- * (change then tests when a mixed unit is split).
+ * Turn one raw object from the model's streamed JSON into review units, and
+ * enforce purity: no mixed production+test units. Returns zero, one, or two
+ * units (change then tests when a mixed unit is split).
  *
- * The LLM plans structure and writes commentary, but the actual code shown to
- * the reviewer must always come from the real diff. Every fileId/hunkId the
- * model referenced is checked against the diff it was given, and anything that
- * doesn't exist is dropped rather than trusted.
+ * Shape and content are checked in one pass. Partial JSON and malformed
+ * objects must never reach the UI, so a unit missing any required field is
+ * dropped whole (`kind` is optional — it is defaulted here, so streaming
+ * property order cannot drop a unit). Then: the LLM plans structure and writes
+ * commentary, but the code shown to the reviewer always comes from the real
+ * diff, so every fileId/hunkId it referenced is checked against the diff it was
+ * given and anything invented is dropped.
  *
- * Never mutates the caller's original unit.
+ * Never mutates `value`.
  */
-export function validateAndCleanUnit(
-  unit: ReviewUnit,
-  knownFiles: Map<string, DiffFile>,
-): ReviewUnit[] {
+export function parseReviewUnit(value: unknown, knownFiles: Map<string, DiffFile>): ReviewUnit[] {
+  if (!value || typeof value !== "object") return [];
+  const unit = value as Record<string, unknown>;
+
+  if (typeof unit.id !== "string" || unit.id.length === 0) return [];
+  if (typeof unit.title !== "string") return [];
+  if (typeof unit.context !== "string") return [];
+  if (!Array.isArray(unit.files)) return [];
+  if (unit.kind !== undefined && typeof unit.kind !== "string") return [];
+
   const files: ReviewUnitFileRef[] = [];
 
-  for (const ref of unit.files) {
+  for (const raw of unit.files) {
+    if (!raw || typeof raw !== "object") return [];
+    const ref = raw as Record<string, unknown>;
+    if (typeof ref.fileId !== "string") return [];
+    if (!Array.isArray(ref.hunkIds) || !ref.hunkIds.every((id) => typeof id === "string")) {
+      return [];
+    }
+    if (typeof ref.role !== "string") return [];
+
     const file = knownFiles.get(ref.fileId);
     if (!file) continue;
 
     // Empty hunkIds means "whole file". If the model listed only invalid ids,
     // treat the ref as whole-file rather than dropping a real file path —
     // better to show more of a real file than hide a unit step.
+    const rawHunkIds = ref.hunkIds as string[];
     const hunkIds =
-      ref.hunkIds.length === 0
-        ? []
-        : ref.hunkIds.filter((id) => file.hunks.some((h) => h.id === id));
+      rawHunkIds.length === 0 ? [] : rawHunkIds.filter((id) => file.hunks.some((h) => h.id === id));
 
     // Path class wins for test files so purity splits are deterministic.
     let role: FileRole = KNOWN_FILE_ROLES.has(ref.role)
@@ -179,35 +187,4 @@ export function stripDuplicateHunks(
 
   if (files.length === 0) return null;
   return { ...unit, files: sortFileRefs(files) };
-}
-
-/**
- * Lightweight structural check for a raw parsed unit before validation.
- * Incomplete or malformed objects from partial JSON must never reach the UI.
- * `kind` is optional here — validation defaults it — so streaming order of
- * properties cannot drop a unit.
- */
-export function isCompleteReviewUnit(value: unknown): value is ReviewUnit {
-  if (!value || typeof value !== "object") return false;
-  const u = value as Record<string, unknown>;
-  if (typeof u.id !== "string" || u.id.length === 0) return false;
-  if (typeof u.title !== "string") return false;
-  if (typeof u.context !== "string") return false;
-  if (!Array.isArray(u.files)) return false;
-  if (u.kind !== undefined && typeof u.kind !== "string") return false;
-
-  for (const file of u.files) {
-    if (!file || typeof file !== "object") return false;
-    const f = file as Record<string, unknown>;
-    if (typeof f.fileId !== "string") return false;
-    if (!Array.isArray(f.hunkIds) || !f.hunkIds.every((id) => typeof id === "string")) return false;
-    if (typeof f.role !== "string") return false;
-  }
-
-  // Fill kind for the type assertion when missing; validation will re-resolve.
-  if (u.kind === undefined) {
-    (u as { kind: UnitKind }).kind = DEFAULT_UNIT_KIND;
-  }
-
-  return true;
 }

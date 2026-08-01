@@ -19,7 +19,7 @@ Parent monorepo: [../../README.md](../../README.md) · Live site: [guidedreview.
 | `/terms`       | Terms of use              |
 | `/cookies`     | Cookie policy             |
 
-Docs are authored as MDX under `content/help/`. Register pages in `config/help-pages.ts` and sidebar order in `config/help-navigation.ts`.
+Docs are authored as MDX under `content/help/`. Register each page (slug, title, description, section, loader) in `config/docs.ts` — sidebar order, breadcrumbs, prev/next, routes, metadata, sitemap, and the index listing all read from it.
 
 ---
 

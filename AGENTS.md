@@ -42,7 +42,16 @@ Three isolated contexts talk **only** via `chrome.runtime.sendMessage`:
 | Background | `apps/extension/src/background/` | Cross-origin fetch, API keys, LLM calls   |
 | Options    | `apps/extension/src/options/`    | Provider / model / key settings           |
 
-Shared contracts: `apps/extension/src/lib/types.ts` (start here for cross-context work). Messaging helpers: `apps/extension/src/lib/messaging.ts`.
+Shared contracts: `apps/extension/src/lib/types.ts` (start here for cross-context work).
+
+**Platform boundaries (ESLint-enforced).** Two modules are the only code allowed to touch the browser APIs they wrap:
+
+| Module             | Wraps                                     |
+| ------------------ | ----------------------------------------- |
+| `lib/storage.ts`   | all of `chrome.storage` (local + session) |
+| `lib/messaging.ts` | `chrome.runtime.sendMessage`              |
+
+Adding a storage key or message type means adding a function there, not calling `chrome.*` at the call site. `storage.ts` propagates failures; a caller holding a best-effort preference catches and falls back (see `lib/autoOpenOnFilesTab.ts`), while API keys and OAuth tokens let the failure surface so it is never mistaken for "not configured". Tests are exempt — they mock the raw APIs via `src/test/chromeMock.ts`.
 
 ### Review pipeline (file map)
 
@@ -72,7 +81,7 @@ Source-only (no build emit). Apps transpile via Vite / Next `transpilePackages`.
 
 ## apps/web
 
-Next.js App Router, **static export** (`output: "export"`). Docs MDX: `apps/web/content/help/` (registered in `config/help-pages.ts` / `help-navigation.ts`). Build output: `apps/web/out/`. Deploy via Cloudflare Pages (see `.github/workflows/deploy.yml`).
+Next.js App Router, **static export** (`output: "export"`). Docs MDX: `apps/web/content/help/`, legal MDX: `apps/web/content/legal/`. Every docs page is registered once in `config/docs.ts` — sidebar, breadcrumbs, prev/next, routes, metadata, sitemap, and the index listing all read from it. Build output: `apps/web/out/`. Deploy via Cloudflare Pages (see `.github/workflows/deploy.yml`).
 
 ## Voice (UI, docs, marketing)
 

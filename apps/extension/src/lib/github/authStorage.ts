@@ -1,39 +1,42 @@
 import type { GitHubAuthState } from "../types";
+import { readLocal, removeLocal, writeLocal } from "../storage";
 
 const STORAGE_KEY = "guidedReview.githubAuth";
 
-function isGitHubAuthState(value: unknown): value is GitHubAuthState {
-  if (!value || typeof value !== "object") return false;
+/** Stored sessions missing any required field are treated as absent. */
+function parseAuth(value: unknown): GitHubAuthState | null {
+  if (!value || typeof value !== "object") return null;
   const v = value as Record<string, unknown>;
-  return (
-    typeof v.accessToken === "string" &&
-    v.accessToken.length > 0 &&
-    typeof v.tokenType === "string" &&
-    typeof v.scope === "string" &&
-    typeof v.login === "string" &&
-    v.login.length > 0
-  );
-}
+  if (
+    typeof v.accessToken !== "string" ||
+    v.accessToken.length === 0 ||
+    typeof v.tokenType !== "string" ||
+    typeof v.scope !== "string" ||
+    typeof v.login !== "string" ||
+    v.login.length === 0
+  ) {
+    return null;
+  }
 
-/** Read the stored GitHub OAuth session, or null if none / invalid. */
-export async function getGitHubAuth(): Promise<GitHubAuthState | null> {
-  const result = await chrome.storage.local.get(STORAGE_KEY);
-  const stored = result[STORAGE_KEY];
-  if (!isGitHubAuthState(stored)) return null;
   return {
-    accessToken: stored.accessToken,
-    tokenType: stored.tokenType,
-    scope: stored.scope,
-    login: stored.login,
-    ...(typeof stored.avatarUrl === "string" ? { avatarUrl: stored.avatarUrl } : {}),
-    ...(typeof stored.name === "string" ? { name: stored.name } : {}),
+    accessToken: v.accessToken,
+    tokenType: v.tokenType,
+    scope: v.scope,
+    login: v.login,
+    ...(typeof v.avatarUrl === "string" ? { avatarUrl: v.avatarUrl } : {}),
+    ...(typeof v.name === "string" ? { name: v.name } : {}),
   };
 }
 
-export async function setGitHubAuth(auth: GitHubAuthState): Promise<void> {
-  await chrome.storage.local.set({ [STORAGE_KEY]: auth });
+/** Read the stored GitHub OAuth session, or null if none / invalid. */
+export function getGitHubAuth(): Promise<GitHubAuthState | null> {
+  return readLocal(STORAGE_KEY, parseAuth);
 }
 
-export async function clearGitHubAuth(): Promise<void> {
-  await chrome.storage.local.remove(STORAGE_KEY);
+export function setGitHubAuth(auth: GitHubAuthState): Promise<void> {
+  return writeLocal(STORAGE_KEY, auth);
+}
+
+export function clearGitHubAuth(): Promise<void> {
+  return removeLocal(STORAGE_KEY);
 }
