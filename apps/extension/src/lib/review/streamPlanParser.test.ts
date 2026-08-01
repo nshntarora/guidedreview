@@ -4,6 +4,7 @@ import { StreamPlanParser } from "./streamPlanParser";
 const UNIT_A = {
   id: "u1",
   title: "First unit",
+  kind: "change",
   context: "Why first",
   files: [{ fileId: "src/a.ts", hunkIds: ["src/a.ts#0"], role: "core_logic" }],
 };
@@ -11,6 +12,7 @@ const UNIT_A = {
 const UNIT_B = {
   id: "u2",
   title: "Second unit",
+  kind: "tests",
   context: "Why second",
   files: [{ fileId: "src/b.ts", hunkIds: [], role: "test" }],
 };
@@ -61,6 +63,7 @@ describe("StreamPlanParser", () => {
     const unit = {
       id: "u1",
       title: 'Say "hello"',
+      kind: "change",
       context: "path: C:\\foo\\bar",
       files: [{ fileId: "src/a.ts", hunkIds: [], role: "core_logic" }],
     };
@@ -119,6 +122,7 @@ describe("StreamPlanParser", () => {
     const unit = {
       id: "u1",
       title: "Uses {braces}",
+      kind: "change",
       context: "also } here { and }",
       files: [{ fileId: "src/a.ts", hunkIds: [], role: "core_logic" }],
     };
