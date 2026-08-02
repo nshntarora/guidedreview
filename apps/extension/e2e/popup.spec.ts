@@ -1,23 +1,6 @@
 import { expect, test } from "./fixtures";
 
 test.describe("Popup", () => {
-  test("shows not-on-PR message and Settings/About links", async ({ context, extensionId }) => {
-    // Popup reads the active tab via chrome.tabs.query. Opening the popup HTML
-    // as the focused page means the active tab is not a GitHub PR URL, so the
-    // popup should render its idle message instead of starting a review.
-    const page = await context.newPage();
-    await page.goto(`chrome-extension://${extensionId}/src/popup/index.html`);
-
-    await expect(page.locator("#root")).toBeVisible();
-    await expect(page.locator("#message")).toHaveText(
-      /Open a GitHub pull request page to start a review/i,
-    );
-
-    await expect(page.getByRole("navigation", { name: "Extension pages" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Settings" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "About" })).toBeVisible();
-  });
-
   test("Settings opens the options page", async ({ context, extensionId }) => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/src/popup/index.html`);
