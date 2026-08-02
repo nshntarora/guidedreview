@@ -3,12 +3,17 @@
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { cn } from "@guided-review/ui";
 
+type WindowFrameRenderState = {
+  /** True while the frame is maximized to the viewport (desktop only). */
+  expanded: boolean;
+};
+
 type WindowFrameProps = {
   /** Tab label rendered in the title bar, e.g. "why.md". */
   label: ReactNode;
-  children: ReactNode;
+  children: ReactNode | ((state: WindowFrameRenderState) => ReactNode);
   className?: string;
-  bodyClassName?: string;
+  bodyClassName?: string | ((state: WindowFrameRenderState) => string | undefined);
 };
 
 /** Desktop (not tablet/mobile) — matches Tailwind `lg` (1024px). */
@@ -91,6 +96,11 @@ export function WindowFrame({ label, children, className, bodyClassName }: Windo
     };
   }, [expanded, collapse]);
 
+  const renderState: WindowFrameRenderState = { expanded };
+  const resolvedBodyClassName =
+    typeof bodyClassName === "function" ? bodyClassName(renderState) : bodyClassName;
+  const resolvedChildren = typeof children === "function" ? children(renderState) : children;
+
   return (
     <>
       {expanded ? (
@@ -116,7 +126,7 @@ export function WindowFrame({ label, children, className, bodyClassName }: Windo
           aria-labelledby={expanded ? labelId : undefined}
           style={
             expanded
-              ? { top: "10rem", right: "10rem", bottom: "10rem", left: "10rem", width: "auto" }
+              ? { top: "6rem", right: "10rem", bottom: "6rem", left: "10rem", width: "auto" }
               : undefined
           }
           className={cn(
@@ -164,11 +174,12 @@ export function WindowFrame({ label, children, className, bodyClassName }: Windo
           <div
             className={cn(
               "p-4 sm:p-6 md:p-8",
-              expanded && "min-h-0 flex-1 overflow-y-auto",
-              bodyClassName,
+              // flex-col so media children can fill height (e.g. ProductVideo).
+              expanded && "flex min-h-0 flex-1 flex-col overflow-y-auto",
+              resolvedBodyClassName,
             )}
           >
-            {children}
+            {resolvedChildren}
           </div>
         </div>
       </div>

@@ -70,23 +70,6 @@ body::before {
   }
 }
 
-/* Staggered entrance for the hero — each child sets its own --gr-delay. */
-@keyframes gr-rise-in {
-  from {
-    opacity: 0;
-    transform: translateY(0.6rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.gr-rise-in {
-  animation: gr-rise-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: var(--gr-delay, 0s);
-}
-
 @keyframes gr-caret-blink {
   0%,
   100% {
@@ -142,9 +125,6 @@ body::before {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gr-rise-in {
-    animation: none;
-  }
   .gr-caret {
     animation: none;
     opacity: 1;

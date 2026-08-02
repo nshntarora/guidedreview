@@ -9,7 +9,7 @@ export const PRODUCTION_ORIGIN = "https://guidedreview.dev";
 /** Public assets that must ship even if not currently linked from UI. */
 export const PUBLIC_ASSETS = [
   "/favicon.ico",
-  "/product-preview/thumbnail.png",
+  "/product-preview/thumbnail.webp",
   "/product-preview/demo.webm",
   "/mitchell-hashimoto-tweet.png",
   "/opengraph-image",
