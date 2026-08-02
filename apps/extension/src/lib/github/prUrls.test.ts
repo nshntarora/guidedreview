@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  buildFileLineUrl,
   buildPRFileDiffUrl,
   isIgnoredPrPath,
   isPrFilesChangedPath,
@@ -83,6 +84,49 @@ describe("buildPRFileDiffUrl", () => {
     );
     expect(url).toBe(
       "https://github.com/acme/widgets/pull/42/files#diff-bfe9874d239014961b1ae4e89875a6155667db834a410aaaa2ebe3cf89820556",
+    );
+  });
+
+  it("appends a right-side line anchor when line is provided", async () => {
+    const url = await buildPRFileDiffUrl(
+      { owner: "acme", repo: "widgets", number: 42 },
+      "src/index.js",
+      17,
+    );
+    expect(url).toBe(
+      "https://github.com/acme/widgets/pull/42/files#diff-bfe9874d239014961b1ae4e89875a6155667db834a410aaaa2ebe3cf89820556R17",
+    );
+  });
+});
+
+describe("buildFileLineUrl", () => {
+  const pr = { owner: "acme", repo: "widgets", number: 42 };
+
+  it("builds a head-branch blob URL when headRef is set", async () => {
+    const url = await buildFileLineUrl(pr, {
+      filePath: "src/foo.ts",
+      line: 12,
+      headRef: "feature-x",
+    });
+    expect(url).toBe("https://github.com/acme/widgets/blob/feature-x/src/foo.ts#L12");
+  });
+
+  it("encodes path segments and head ref", async () => {
+    const url = await buildFileLineUrl(pr, {
+      filePath: "src/my file.ts",
+      line: 3,
+      headRef: "feat/branch",
+    });
+    expect(url).toBe("https://github.com/acme/widgets/blob/feat%2Fbranch/src/my%20file.ts#L3");
+  });
+
+  it("falls back to the PR Files deep link when headRef is missing", async () => {
+    const url = await buildFileLineUrl(pr, {
+      filePath: "src/index.js",
+      line: 9,
+    });
+    expect(url).toBe(
+      "https://github.com/acme/widgets/pull/42/files#diff-bfe9874d239014961b1ae4e89875a6155667db834a410aaaa2ebe3cf89820556R9",
     );
   });
 });
