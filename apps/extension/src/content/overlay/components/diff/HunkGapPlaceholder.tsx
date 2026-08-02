@@ -34,11 +34,21 @@ export function HunkGapPlaceholder({ filePath, afterLine }: HunkGapPlaceholderPr
     };
   }, [prContext, filePath, afterLine]);
 
-  const label = `Open file at line ${afterLine}`;
+  const label = `View Collapsed Lines (line ${afterLine})`;
   const className = cn(
-    "flex w-full items-center justify-center border-y border-border bg-background",
+    // Match the surrounding hunk surface (parent is bg-surface-raised); no
+    // separate wash so it reads as part of the diff, not a chrome bar.
+    "flex w-full items-center justify-center gap-2 border-y border-border",
     "py-1.5 font-mono text-sm text-faint",
     href && "cursor-pointer hover:bg-surface-muted hover:text-muted",
+  );
+
+  const content = (
+    <>
+      <span aria-hidden="true">⋯</span>
+      <span>View Collapsed Lines</span>
+      <span aria-hidden="true">⋯</span>
+    </>
   );
 
   if (href) {
@@ -52,14 +62,14 @@ export function HunkGapPlaceholder({ filePath, afterLine }: HunkGapPlaceholderPr
         title={label}
         data-testid="hunk-gap-placeholder"
       >
-        ⋯
+        {content}
       </a>
     );
   }
 
   return (
     <div className={className} role="presentation" title={label} data-testid="hunk-gap-placeholder">
-      ⋯
+      {content}
     </div>
   );
 }

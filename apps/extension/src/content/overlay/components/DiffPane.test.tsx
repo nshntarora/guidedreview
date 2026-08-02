@@ -309,9 +309,10 @@ describe("DiffPane", () => {
     renderPane([{ file, hunks: [first, second] }]);
 
     // URL is built async via buildFileLineUrl — wait until the div becomes a link.
-    const gap = await screen.findByRole("link", { name: "Open file at line 2" });
+    const gap = await screen.findByRole("link", { name: /View Collapsed Lines/i });
     expect(gap).toHaveAttribute("data-testid", "hunk-gap-placeholder");
     expect(gap).toHaveAttribute("href", expectedHref);
     expect(gap).toHaveAttribute("target", "_blank");
+    expect(gap).toHaveTextContent("View Collapsed Lines");
   });
 });
