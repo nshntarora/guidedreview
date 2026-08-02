@@ -12,6 +12,7 @@ Chrome extension for GitHub pull requests that clusters related changes into ord
 
 Free, open source, bring your own LLM key. The extension talks to GitHub and your AI provider only — no Guided Review backend. Install from the [Chrome Web Store](https://chromewebstore.google.com/detail/pdnnimoajmnjpccboemeomoeomancodd), or build from source below. Site and docs: [guidedreview.dev](https://guidedreview.dev) · [docs](https://guidedreview.dev/docs).
 
+- [Demo](#demo)
 - [Why?](#why)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
@@ -22,6 +23,12 @@ Free, open source, bring your own LLM key. The extension talks to GitHub and you
 - [Usage](#usage)
 - [Configuration](#configuration)
 - [License](#license)
+
+## Demo
+
+Click the image below to play
+
+[![Product demo](apps/web/public/product-preview/thumbnail.webp)](https://guidedreview.dev/product-preview/demo.webm)
 
 ## Why?
 
