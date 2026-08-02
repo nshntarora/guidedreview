@@ -9,9 +9,11 @@ import {
   type SelectableLine,
 } from "@extension/content/overlay/commentTypes";
 import type { SearchScrollTarget } from "@extension/content/overlay/diffSearch";
+import { withHunkGaps } from "@extension/content/overlay/hunkGaps";
 import { hydrateDiffViewMode, useReviewStore } from "@extension/content/overlay/store";
 import type { ResolvedUnitFile } from "@extension/content/overlay/buildSelectableLines";
 import { AddCommentButton, CommentModeChip, DiffViewToggle } from "./diff/DiffToolbar";
+import { HunkGapPlaceholder } from "./diff/HunkGapPlaceholder";
 import { SplitHunk } from "./diff/SplitHunk";
 import { UnifiedHunk } from "./diff/UnifiedHunk";
 import { useSelectionDerived } from "./diff/useSelectionDerived";
@@ -270,8 +272,18 @@ export function DiffPane({
             {file.isBinaryOrElided ? (
               <BinaryElidedEmptyState filePath={file.path} />
             ) : (
-              hunks.map((hunk) =>
-                diffViewMode === "split" ? (
+              withHunkGaps(hunks).map((item) => {
+                if (item.kind === "gap") {
+                  return (
+                    <HunkGapPlaceholder
+                      key={item.key}
+                      filePath={file.path}
+                      afterLine={item.afterLine}
+                    />
+                  );
+                }
+                const { hunk } = item;
+                return diffViewMode === "split" ? (
                   <SplitHunk
                     hunk={hunk}
                     language={language}
@@ -295,8 +307,8 @@ export function DiffPane({
                     composerRange={composerRange}
                     unitId={unitId}
                   />
-                ),
-              )
+                );
+              })
             )}
           </div>
         );
