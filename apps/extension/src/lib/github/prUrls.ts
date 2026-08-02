@@ -55,14 +55,38 @@ export function navigateToPrConversation(pr: {
  * URL that opens the PR Files tab scrolled to `filePath`.
  * GitHub anchors each file with `#diff-{sha256Hex(path)}` (lowercase hex of
  * the UTF-8 path). Use the file's current path (new path after renames).
+ * When `line` is set, append `R{line}` so GitHub highlights that new-side line.
  */
 export async function buildPRFileDiffUrl(
   pr: { owner: string; repo: string; number: number },
   filePath: string,
+  line?: number,
 ): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(filePath));
   const hex = Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
-  return `https://github.com/${pr.owner}/${pr.repo}/pull/${pr.number}/files#diff-${hex}`;
+  const fragment = line != null && line > 0 ? `diff-${hex}R${line}` : `diff-${hex}`;
+  return `https://github.com/${pr.owner}/${pr.repo}/pull/${pr.number}/files#${fragment}`;
+}
+
+/**
+ * Deep link to a file at a specific line. Prefers the head-branch blob view
+ * (full file, including lines omitted from the patch). Falls back to the PR
+ * Files tab when `headRef` is missing.
+ */
+export async function buildFileLineUrl(
+  pr: { owner: string; repo: string; number: number },
+  opts: { filePath: string; line: number; headRef?: string },
+): Promise<string> {
+  const headRef = opts.headRef?.trim();
+  if (headRef) {
+    // Encode path segments so spaces/special chars survive; keep slashes.
+    const encodedPath = opts.filePath
+      .split("/")
+      .map((seg) => encodeURIComponent(seg))
+      .join("/");
+    return `https://github.com/${pr.owner}/${pr.repo}/blob/${encodeURIComponent(headRef)}/${encodedPath}#L${opts.line}`;
+  }
+  return buildPRFileDiffUrl(pr, opts.filePath, opts.line);
 }
