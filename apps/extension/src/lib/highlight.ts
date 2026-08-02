@@ -19,15 +19,11 @@ import cpp from "highlight.js/lib/languages/cpp";
 import csharp from "highlight.js/lib/languages/csharp";
 import css from "highlight.js/lib/languages/css";
 import go from "highlight.js/lib/languages/go";
-import graphql from "highlight.js/lib/languages/graphql";
 import java from "highlight.js/lib/languages/java";
 import javascript from "highlight.js/lib/languages/javascript";
 import json from "highlight.js/lib/languages/json";
 import kotlin from "highlight.js/lib/languages/kotlin";
-import less from "highlight.js/lib/languages/less";
-import lua from "highlight.js/lib/languages/lua";
 import markdown from "highlight.js/lib/languages/markdown";
-import objectivec from "highlight.js/lib/languages/objectivec";
 import php from "highlight.js/lib/languages/php";
 import python from "highlight.js/lib/languages/python";
 import ruby from "highlight.js/lib/languages/ruby";
@@ -39,7 +35,6 @@ import swift from "highlight.js/lib/languages/swift";
 import typescript from "highlight.js/lib/languages/typescript";
 import xml from "highlight.js/lib/languages/xml";
 import yaml from "highlight.js/lib/languages/yaml";
-import zig from "highlightjs-zig";
 
 hljs.registerLanguage("bash", bash);
 hljs.registerLanguage("c", c);
@@ -47,15 +42,11 @@ hljs.registerLanguage("cpp", cpp);
 hljs.registerLanguage("csharp", csharp);
 hljs.registerLanguage("css", css);
 hljs.registerLanguage("go", go);
-hljs.registerLanguage("graphql", graphql);
 hljs.registerLanguage("java", java);
 hljs.registerLanguage("javascript", javascript);
 hljs.registerLanguage("json", json);
 hljs.registerLanguage("kotlin", kotlin);
-hljs.registerLanguage("less", less);
-hljs.registerLanguage("lua", lua);
 hljs.registerLanguage("markdown", markdown);
-hljs.registerLanguage("objectivec", objectivec);
 hljs.registerLanguage("php", php);
 hljs.registerLanguage("python", python);
 hljs.registerLanguage("ruby", ruby);
@@ -67,7 +58,6 @@ hljs.registerLanguage("swift", swift);
 hljs.registerLanguage("typescript", typescript);
 hljs.registerLanguage("xml", xml);
 hljs.registerLanguage("yaml", yaml);
-hljs.registerLanguage("zig", zig);
 
 const EXTENSION_TO_LANGUAGE: Record<string, string> = {
   js: "javascript",
@@ -101,7 +91,6 @@ const EXTENSION_TO_LANGUAGE: Record<string, string> = {
   zsh: "bash",
   css: "css",
   scss: "scss",
-  less: "less",
   html: "xml",
   htm: "xml",
   xml: "xml",
@@ -112,12 +101,6 @@ const EXTENSION_TO_LANGUAGE: Record<string, string> = {
   kt: "kotlin",
   kts: "kotlin",
   swift: "swift",
-  m: "objectivec",
-  mm: "objectivec",
-  graphql: "graphql",
-  gql: "graphql",
-  lua: "lua",
-  zig: "zig",
 };
 
 /** Map a file path to a registered highlight.js language id, or undefined if unknown. */

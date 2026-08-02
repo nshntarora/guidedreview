@@ -76,11 +76,11 @@ NEXT_PUBLIC_ANALYTICS_ENABLED=true
 NEXT_PUBLIC_ANALYTICS_KEY=phc_...
 ```
 
-Code lives under `lib/analytics/` (client factory) and `components/analytics/` (React provider + pageviews).
+Code lives in `lib/analytics.ts` (config + PostHog client) and `components/analytics/` (React provider + pageviews).
 
 ### Custom events
 
-Named events live in `lib/analytics/events.ts`. CTA buttons take a required `location` and optional `eventProperties`:
+Named events live in `lib/analytics.ts` (`AnalyticsEvents`). CTA buttons take a required `location` and optional `eventProperties`:
 
 | Event                     | When                             |
 | ------------------------- | -------------------------------- |

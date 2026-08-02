@@ -2,8 +2,7 @@ import type { ReviewErrorInfo, ReviewUnit } from "../../../lib/types";
 import { ConnectProviderPrompt } from "./ConnectProviderPrompt";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { Button, Spinner } from "@guided-review/ui";
-import { BUILD_PLAN_PRIMARY } from "../buildPhaseCopy";
-import { missingMetadataHint, PR_DESCRIPTION_HINT } from "../missingMetadata";
+import { BUILD_PLAN_PRIMARY, missingMetadataHint, PR_DESCRIPTION_HINT } from "../overlayCopy";
 
 interface ContextPanelProps {
   /** When null, the synthetic PR-description unit is active. */

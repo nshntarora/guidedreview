@@ -4,7 +4,7 @@ import { Overlay } from "./Overlay";
 import { resetConfirmationQueueForTests } from "./components/confirmation";
 import { DEFAULT_DIFF_VIEW_MODE } from "./diffViewMode";
 import { useReviewStore } from "./store";
-import { VIEW_CHORD_WINDOW_MS } from "./viewModeChord";
+import { VIEW_CHORD_WINDOW_MS } from "./useOverlayKeyboard";
 import { buildFileReviewPlan } from "../../lib/review/fileReviewPlan";
 import type { ParsedDiff, PRContext, ReviewPlan } from "../../lib/types";
 import * as messaging from "../../lib/messaging";

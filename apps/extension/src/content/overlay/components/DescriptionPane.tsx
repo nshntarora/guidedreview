@@ -1,7 +1,7 @@
 import type { FileChangeStatus, ParsedDiff, PRContext } from "../../../lib/types";
 import { summarizeDiff, type FileDiffSummary } from "../../../lib/github/diffSummary";
 import { cn } from "@guided-review/ui";
-import { missingMetadataHint } from "../missingMetadata";
+import { missingMetadataHint } from "../overlayCopy";
 import { MiddleEllipsisText } from "./MiddleEllipsisText";
 
 interface DescriptionPaneProps {

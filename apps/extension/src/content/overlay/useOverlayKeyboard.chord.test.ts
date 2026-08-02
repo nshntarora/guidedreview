@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { recordViewChordKey, type ViewChordPending } from "./viewModeChord";
+import { recordViewChordKey, type ViewChordPending } from "./useOverlayKeyboard";
 
 describe("recordViewChordKey", () => {
   it("arms on v and completes unified on u", () => {

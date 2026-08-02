@@ -1,9 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  isPrFilesChangedPath,
-  navigateToPrConversation,
-  prConversationUrl,
-} from "./prConversationUrl";
+import { isPrFilesChangedPath, navigateToPrConversation, prConversationUrl } from "./prUrls";
 
 describe("prConversationUrl", () => {
   it("builds the conversation URL", () => {

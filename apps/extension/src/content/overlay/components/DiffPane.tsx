@@ -5,7 +5,7 @@ import { languageForPath } from "../../../lib/highlight";
 import { displayLineNumber, linesInSelection, type SelectableLine } from "../commentTypes";
 import type { SearchScrollTarget } from "../diffSearch";
 import { hydrateDiffViewMode, useReviewStore } from "../store";
-import type { ResolvedUnitFile } from "../selectors";
+import type { ResolvedUnitFile } from "../buildSelectableLines";
 import { AddCommentButton, CommentModeChip, DiffViewToggle } from "./diff/DiffToolbar";
 import { BinaryElidedEmptyState } from "./diff/BinaryElidedEmptyState";
 import { SplitHunk } from "./diff/SplitHunk";

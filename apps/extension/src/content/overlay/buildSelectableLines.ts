@@ -1,8 +1,29 @@
-import type { DiffLine } from "../../lib/types";
+import type { DiffFile, DiffHunk, DiffLine, ParsedDiff, ReviewUnit } from "../../lib/types";
 import { buildSplitRows } from "./buildSplitRows";
 import type { DiffViewMode } from "./diffViewMode";
 import { lineIdFor, sideForLine, type DiffSide, type SelectableLine } from "./commentTypes";
-import type { ResolvedUnitFile } from "./selectors";
+
+export interface ResolvedUnitFile {
+  file: DiffFile;
+  hunks: DiffHunk[];
+}
+
+/** Resolve a review unit's file/hunk references against the actual diff for rendering. */
+export function resolveUnitFiles(unit: ReviewUnit, diff: ParsedDiff): ResolvedUnitFile[] {
+  const filesByPath = new Map(diff.files.map((f) => [f.path, f]));
+
+  return unit.files
+    .map((ref): ResolvedUnitFile | null => {
+      const file = filesByPath.get(ref.fileId);
+      if (!file) return null;
+      const hunks =
+        ref.hunkIds.length === 0
+          ? file.hunks
+          : file.hunks.filter((h) => ref.hunkIds.includes(h.id));
+      return { file, hunks };
+    })
+    .filter((r): r is ResolvedUnitFile => r !== null);
+}
 
 function fromDiffLine(
   filePath: string,

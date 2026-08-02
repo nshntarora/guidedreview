@@ -3,7 +3,7 @@ import { getGitHubAuthStatus, requestSubmitReview } from "../../lib/messaging";
 import type { PRContext, ReviewCommentInput } from "../../lib/types";
 import { EMPTY_REVIEW_BODY_MESSAGE } from "../../lib/types";
 import type { DraftComment, ReviewEvent, ReviewSubmission } from "./commentTypes";
-import { navigateToPrConversation } from "./prConversationUrl";
+import { navigateToPrConversation } from "../../lib/github/prUrls";
 
 /** Map local draft comments to GitHub create-review `comments[]` payloads. */
 function mapDraftsToReviewComments(drafts: DraftComment[]): ReviewCommentInput[] {

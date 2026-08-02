@@ -9,7 +9,7 @@ import { getProviderSettings, onProviderSettingsChanged } from "../lib/settings"
 import type { ContentRequest, ParsedDiff, PRContext } from "../lib/types";
 import { ensureFallbackHost, FALLBACK_HOST_ID, findButtonAnchor } from "./buttonAnchor";
 import { Overlay } from "./overlay/Overlay";
-import { isPrFilesChangedPath } from "./overlay/prConversationUrl";
+import { isPrFilesChangedPath } from "../lib/github/prUrls";
 import overlayStyles from "./overlay/styles/overlay.css?inline";
 import { useReviewStore, restoreSession, buildSessionKey } from "./overlay/store";
 

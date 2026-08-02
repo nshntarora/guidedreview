@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildFileReviewPlan, FILE_UNIT_TITLE_MAX } from "./fileReviewPlan";
-import { resolveUnitFiles } from "../../content/overlay/selectors";
+import { resolveUnitFiles } from "../../content/overlay/buildSelectableLines";
 import { middleTruncate } from "../middleTruncate";
 import type { ParsedDiff } from "../types";
 

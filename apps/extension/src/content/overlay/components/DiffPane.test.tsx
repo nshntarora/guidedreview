@@ -5,7 +5,7 @@ import type { DiffFile, DiffHunk, PRContext } from "../../../lib/types";
 import { buildSelectableLines } from "../buildSelectableLines";
 import { DEFAULT_DIFF_VIEW_MODE } from "../diffViewMode";
 import { resetDiffViewModeHydrationForTests, useReviewStore } from "../store";
-import type { ResolvedUnitFile } from "../selectors";
+import type { ResolvedUnitFile } from "../buildSelectableLines";
 import { DiffPane } from "./DiffPane";
 
 function prContextFixture(overrides: Partial<PRContext> = {}): PRContext {
