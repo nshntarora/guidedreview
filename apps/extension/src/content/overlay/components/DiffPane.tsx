@@ -209,12 +209,14 @@ export function DiffPane({
       </div>
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2
-          className="flex min-w-0 items-center gap-1.5 text-lg font-semibold text-foreground"
+          className="min-w-0 text-lg font-semibold text-foreground"
           data-testid="diff-unit-title"
           title={unitTitleTooltip ?? unitTitle}
         >
-          <span className="min-w-0 break-words">
-            {isTestsUnit && <TestsUnitIcon className="shrink-0 text-muted" size={16} />}
+          <span className="break-words">
+            {isTestsUnit && (
+              <TestsUnitIcon className="mr-1.5 inline-block align-[-0.125em] text-muted" />
+            )}
             {unitTitle}
           </span>
         </h2>
