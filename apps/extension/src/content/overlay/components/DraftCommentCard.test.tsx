@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { DraftComment } from "../commentTypes";
+import type { DraftComment } from "@extension/content/overlay/commentTypes";
 import { DraftCommentCard } from "./DraftCommentCard";
 
 const draft: DraftComment = {

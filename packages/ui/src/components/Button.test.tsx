@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { Button, buttonClassName } from "./Button";
+import { Button } from "./Button";
 
 describe("Button", () => {
   it("renders a button with children", () => {
@@ -16,30 +16,5 @@ describe("Button", () => {
   it("forwards disabled", () => {
     render(<Button disabled>Busy</Button>);
     expect(screen.getByRole("button")).toBeDisabled();
-  });
-
-  it("buttonClassName includes primary styles by default", () => {
-    expect(buttonClassName()).toContain("bg-primary");
-    expect(buttonClassName({ variant: "secondary" })).toContain("bg-surface-raised");
-  });
-
-  it("uses not-disabled:hover so hover works on anchors and enabled buttons", () => {
-    // `:enabled` only matches form controls — link-styled CTAs would never hover.
-    const primary = buttonClassName();
-    expect(primary).toContain("not-disabled:hover:bg-primary-hover");
-    expect(primary).not.toContain("enabled:hover:");
-  });
-
-  it("tints nested kbd chips on destructive to a darker danger shade", () => {
-    const destructive = buttonClassName({ variant: "destructive" });
-    expect(destructive).toContain(
-      "[&_[data-slot=kbd]]:bg-[color-mix(in_srgb,black_25%,var(--color-danger-muted))]",
-    );
-    expect(destructive).toContain("[&_[data-slot=kbd]]:text-inherit");
-    expect(destructive).toContain("[&_[data-slot=kbd]]:border-transparent");
-  });
-
-  it("includes transition-colors for hover feedback", () => {
-    expect(buttonClassName()).toContain("transition-colors");
   });
 });

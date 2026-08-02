@@ -9,7 +9,7 @@ describe("highlightToLines", () => {
 
   it("HTML-escapes code when hljs.highlight throws, instead of returning it raw", () => {
     // Diff content is attacker-controlled (any PR author writes it), and every
-    // returned line is rendered via dangerouslySetInnerHTML in hunkHighlight.tsx
+    // returned line is rendered via dangerouslySetInnerHTML in hunkShared.tsx
     // — a highlight failure must never fall back to unescaped HTML.
     vi.spyOn(hljs, "highlight").mockImplementation(() => {
       throw new Error("simulated highlight.js failure");

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { CHROME_WEB_STORE_URL, GITHUB_REPO_URL } from "../lib/links";
+import { CHROME_WEB_STORE_URL, GITHUB_REPO_URL } from "@web/lib/links";
 
 test.describe("landing page", () => {
   test("hero, sections, primary CTAs, and FAQ accordion", async ({ page }) => {

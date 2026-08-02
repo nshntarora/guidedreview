@@ -25,8 +25,8 @@ export function Hero() {
           className="gr-rise-in mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted text-balance sm:text-xl"
           style={riseDelay(0.2)}
         >
-          Guided Review is a Chrome extension that makes &ldquo;reading code&rdquo; wayyyy better
-          with clustered file changes, summaries, and a keyboard-first experience.
+          Makes &ldquo;reading code&rdquo; wayyyy better: clusters PR diffs into review units, short
+          summaries, keyboard-first. AI structures the walkthrough — you still decide.
         </p>
 
         <div

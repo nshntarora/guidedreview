@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { DOCS_PAGES, docsPath } from "@/config/docs";
+import { DOCS_PAGES, docsPath } from "@web/config/docs";
 
 export function DocsPager({ slug }: { slug: string }) {
   const currentIndex = DOCS_PAGES.findIndex((p) => p.slug === slug);

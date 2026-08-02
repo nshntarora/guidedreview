@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { DocsBreadcrumbs } from "@/components/docs/DocsBreadcrumbs";
-import { DocsPager } from "@/components/docs/DocsPager";
+import { DocsBreadcrumbs } from "@web/components/docs/DocsBreadcrumbs";
+import { DocsPager } from "@web/components/docs/DocsPager";
 
 export function DocsPageWrapper({ children, slug }: { children: ReactNode; slug: string }) {
   return (

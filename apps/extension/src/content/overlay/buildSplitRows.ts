@@ -1,4 +1,4 @@
-import type { DiffLine } from "../../lib/types";
+import type { DiffLine } from "@extension/lib/types";
 
 /** One side of a split-diff row. */
 export type SplitCell =

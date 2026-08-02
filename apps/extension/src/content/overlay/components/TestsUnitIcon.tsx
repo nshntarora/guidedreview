@@ -1,11 +1,12 @@
 /** Lab flask mark for `kind: "tests"` review units — stroke via currentColor. */
 export function TestsUnitIcon({
   className,
-  size = 14,
+  /** Defaults to `1em` so the mark tracks surrounding text size. */
+  size = "1em",
   "data-testid": testId = "unit-tests-icon",
 }: {
   className?: string;
-  size?: number;
+  size?: number | string;
   "data-testid"?: string;
 }) {
   return (

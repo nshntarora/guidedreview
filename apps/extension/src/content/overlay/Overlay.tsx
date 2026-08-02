@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { useReviewStore, persistSession } from "./store";
-import { resolveUnitFiles } from "./selectors";
-import { buildDisplayUnits, displayUnitCount } from "./displayUnits";
-import { buildSelectableLines } from "./buildSelectableLines";
+import { buildDisplayUnits, displayUnitCount, useReviewStore, persistSession } from "./store";
+import { buildSelectableLines, resolveUnitFiles } from "./buildSelectableLines";
 import { getFocusableElements, restoreFocusAfterOverlay } from "./focusTrap";
-import type { ViewChordPending } from "./viewModeChord";
-import { useOverlayKeyboard } from "./useOverlayKeyboard";
+import { useOverlayKeyboard, type ViewChordPending } from "./useOverlayKeyboard";
 import { useSubmitReviewFlow } from "./useSubmitReviewFlow";
 import { findUnitForFile, type DiffSearchResult, type SearchScrollTarget } from "./diffSearch";
 import { ProgressHeader } from "./components/ProgressHeader";
@@ -16,10 +13,10 @@ import { ContextPanel } from "./components/ContextPanel";
 import { FooterNav } from "./components/FooterNav";
 import { DiffSearch } from "./components/DiffSearch";
 import { ConnectGitHubModal } from "./components/ConnectGitHubModal";
-import { confirm, ConfirmationHost, useConfirmationOpen } from "./components/confirmation";
+import { confirm, ConfirmationHost, useConfirmationOpen } from "@extension/lib/confirmation";
 import { SubmitReviewModal } from "./components/SubmitReviewModal";
 import { ReviewSubmittedModal } from "./components/ReviewSubmittedModal";
-import { BUILD_PLAN_PRIMARY, buildPhaseDetail } from "./buildPhaseCopy";
+import { BUILD_PLAN_PRIMARY, buildPhaseDetail } from "./overlayCopy";
 
 interface OverlayProps {
   /** Invoked when the user exits so any in-flight stream can be cancelled. */

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { findDocsPage } from "@/config/docs";
+import { findDocsPage } from "@web/config/docs";
 
 export function DocsBreadcrumbs({ slug }: { slug: string }) {
   const page = findDocsPage(slug);

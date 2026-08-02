@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { parseReviewUnit, stripDuplicateHunks } from "./reviewPlan";
-import type { DiffFile, ReviewUnit } from "../types";
+import {
+  parseReviewUnit,
+  stripDuplicateHunks,
+  buildFileReviewPlan,
+  FILE_UNIT_TITLE_MAX,
+  isTestPath,
+  roleForPath,
+} from "./reviewPlan";
+import { resolveUnitFiles } from "@extension/content/overlay/buildSelectableLines";
+import { middleTruncate } from "@extension/lib/middleTruncate";
+import type { DiffFile, ParsedDiff, ReviewUnit } from "@extension/lib/types";
 
 /** The known-files map `parseReviewUnit` validates against. */
 function diffFixture(): Map<string, DiffFile> {
@@ -278,5 +287,141 @@ describe("parseReviewUnit structural checks", () => {
         diff,
       ),
     ).toEqual([]);
+  });
+});
+
+describe("isTestPath", () => {
+  it.each([
+    ["src/foo.test.ts", true],
+    ["src/foo.spec.tsx", true],
+    ["tests/helpers.ts", true],
+    ["test/unit/bar.ts", true],
+    ["__tests__/widget.tsx", true],
+    ["packages/app/src/spec/util.ts", true],
+    ["src/foo.ts", false],
+    ["src/testing/notes.md", false],
+    ["src/contest/foo.ts", false],
+  ])("%s → %s", (path, expected) => {
+    expect(isTestPath(path)).toBe(expected);
+  });
+});
+
+describe("roleForPath", () => {
+  it.each([
+    ["src/auth.test.ts", "test"],
+    ["__tests__/store.ts", "test"],
+    ["package-lock.json", "config_or_generated"],
+    ["yarn.lock", "config_or_generated"],
+    ["pnpm-lock.yaml", "config_or_generated"],
+    ["go.sum", "config_or_generated"],
+    ["Cargo.lock", "config_or_generated"],
+    ["tsconfig.json", "config_or_generated"],
+    ["config.yaml", "config_or_generated"],
+    ["settings.toml", "config_or_generated"],
+    ["app.config.ts", "config_or_generated"],
+    ["vite.config.js", "config_or_generated"],
+    ["src/auth.ts", "core_logic"],
+    ["packages/ui/src/Button.tsx", "core_logic"],
+  ] as const)("%s → %s", (path, role) => {
+    expect(roleForPath(path)).toBe(role);
+  });
+});
+
+function filePlanDiffFixture(): ParsedDiff {
+  return {
+    files: [
+      {
+        path: "src/core.ts",
+        status: "modified",
+        isBinaryOrElided: false,
+        hunks: [
+          {
+            id: "src/core.ts#0",
+            header: "@@ -1,1 +1,1 @@",
+            oldStart: 1,
+            oldLines: 1,
+            newStart: 1,
+            newLines: 1,
+            lines: [{ type: "add", content: "const x = 1;", newLine: 1 }],
+          },
+          {
+            id: "src/core.ts#1",
+            header: "@@ -9,1 +9,1 @@",
+            oldStart: 9,
+            oldLines: 1,
+            newStart: 9,
+            newLines: 1,
+            lines: [{ type: "add", content: "const y = 2;", newLine: 9 }],
+          },
+        ],
+      },
+      { path: "src/core.test.ts", status: "added", isBinaryOrElided: false, hunks: [] },
+      { path: "package.json", status: "modified", isBinaryOrElided: false, hunks: [] },
+    ],
+  };
+}
+
+describe("buildFileReviewPlan", () => {
+  it("creates one unit per changed file, in diff order, titled by path", () => {
+    const plan = buildFileReviewPlan(filePlanDiffFixture());
+
+    expect(plan.units.map((u) => u.title)).toEqual([
+      "src/core.ts",
+      "src/core.test.ts",
+      "package.json",
+    ]);
+    expect(plan.units.map((u) => u.displayTitle)).toEqual([
+      "src/core.ts",
+      "src/core.test.ts",
+      "package.json",
+    ]);
+    expect(new Set(plan.units.map((u) => u.id)).size).toBe(3);
+  });
+
+  it("middle-truncates long path labels into displayTitle, keeps full path on title", () => {
+    const longPath =
+      "apps/extension/src/content/overlay/components/VeryLongFileNameForTruncation.tsx";
+    const diff: ParsedDiff = {
+      files: [{ path: longPath, status: "modified", isBinaryOrElided: false, hunks: [] }],
+    };
+
+    const plan = buildFileReviewPlan(diff);
+    expect(plan.units[0].title).toBe(longPath);
+    expect(plan.units[0].displayTitle).toBe(middleTruncate(longPath, FILE_UNIT_TITLE_MAX));
+    expect(plan.units[0].displayTitle!.length).toBe(FILE_UNIT_TITLE_MAX);
+    expect(plan.units[0].displayTitle).toContain("…");
+  });
+
+  it("leaves context empty rather than inventing commentary", () => {
+    const plan = buildFileReviewPlan(filePlanDiffFixture());
+    expect(plan.units.every((u) => u.context === "")).toBe(true);
+  });
+
+  it("references whole files so every hunk renders", () => {
+    const diff = filePlanDiffFixture();
+    const plan = buildFileReviewPlan(diff);
+
+    const resolved = resolveUnitFiles(plan.units[0], diff);
+    expect(resolved).toHaveLength(1);
+    expect(resolved[0].file.path).toBe("src/core.ts");
+    expect(resolved[0].hunks).toHaveLength(2);
+  });
+
+  it("labels test and config files by path", () => {
+    const plan = buildFileReviewPlan(filePlanDiffFixture());
+    expect(plan.units.map((u) => u.files[0].role)).toEqual([
+      "core_logic",
+      "test",
+      "config_or_generated",
+    ]);
+  });
+
+  it("sets kind tests only for test paths", () => {
+    const plan = buildFileReviewPlan(filePlanDiffFixture());
+    expect(plan.units.map((u) => u.kind)).toEqual(["change", "tests", "change"]);
+  });
+
+  it("returns an empty plan for an empty diff", () => {
+    expect(buildFileReviewPlan({ files: [] })).toEqual({ units: [] });
   });
 });

@@ -2,15 +2,15 @@ import type { Metadata } from "next";
 import { Newsreader, Victor_Mono } from "next/font/google";
 import logoSvg from "@guided-review/ui/assets/logo.svg";
 import Link from "next/link";
-import { AnalyticsPageView } from "../components/analytics/AnalyticsPageView";
-import { AnalyticsProvider } from "../components/analytics/AnalyticsProvider";
-import { InstallButton, StarOnGitHubButton } from "../components/CtaButtons";
-import { Footer } from "../components/Footer";
-import { JsonLd } from "../components/JsonLd";
-import { LineGutter } from "../components/LineGutter";
-import { SiteShortcuts } from "../components/SiteShortcuts";
-import { GITHUB_REPO_URL } from "../lib/links";
-import { DEFAULT_DESCRIPTION, openGraphSite, SITE_NAME, SITE_URL } from "../lib/site";
+import { AnalyticsPageView } from "@web/components/analytics/AnalyticsPageView";
+import { AnalyticsProvider } from "@web/components/analytics/AnalyticsProvider";
+import { InstallButton, StarOnGitHubButton } from "@web/components/CtaButtons";
+import { Footer } from "@web/components/Footer";
+import { JsonLd } from "@web/components/JsonLd";
+import { LineGutter } from "@web/components/LineGutter";
+import { SiteShortcuts } from "@web/components/SiteShortcuts";
+import { GITHUB_REPO_URL } from "@web/lib/links";
+import { DEFAULT_DESCRIPTION, openGraphSite, SITE_NAME, SITE_URL } from "@web/lib/site";
 import "./globals.css";
 
 const victorMono = Victor_Mono({

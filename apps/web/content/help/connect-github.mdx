@@ -8,7 +8,7 @@ export const toc = [
 
 # Connect GitHub
 
-Connecting GitHub is **optional** for reading a PR and generating a guided plan. It is required if you want to **[submit a review](/docs/submit-review)** (line comments, approve, request changes) from the overlay.
+Connecting GitHub is **optional** for reading a PR and generating a guided plan. It is required if you want to **[submit a review](/docs/submit-review)** (line comments, approve, request changes) from Guided Review.
 
 You still need an [AI provider](/docs/configure-provider) to build the plan. Auth for GitHub and your LLM are separate.
 
@@ -23,7 +23,7 @@ Without GitHub auth, Guided Review can still:
 - Stream a plan and [walk units](/docs/first-review)
 - [Draft line comments](/docs/leave-comments) **locally** (they stay in the session until submit)
 
-With auth, the overlay can also post those drafts and your overall review decision through the GitHub API as you — see [Submit a review](/docs/submit-review).
+With auth, Guided Review can also post those drafts and your overall review decision through the GitHub API as you — see [Submit a review](/docs/submit-review).
 
 Also answered in the [FAQ](/docs/faq#do-i-need-github-auth).
 
@@ -59,6 +59,6 @@ Step-by-step recovery: [Troubleshooting → Private repos and SSO](/docs/trouble
 
 ## Disconnect
 
-Use **Disconnect** / sign-out in Options to clear stored GitHub credentials. You can still [generate guided plans](/docs/first-review) and [draft comments](/docs/leave-comments); only [submit-from-overlay](/docs/submit-review) stops working until you connect again.
+Use **Disconnect** / sign-out in Options to clear stored GitHub credentials. You can still [generate guided plans](/docs/first-review) and [draft comments](/docs/leave-comments); only [submit from Guided Review](/docs/submit-review) stops working until you connect again.
 
 **Next.** [Leave line comments](/docs/leave-comments) · [Submit a review](/docs/submit-review) · [Privacy & data](/docs/privacy-and-data)

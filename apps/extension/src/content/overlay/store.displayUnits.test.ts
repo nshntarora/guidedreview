@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildDisplayUnits, displayUnitCount } from "./displayUnits";
-import type { ReviewPlan } from "../../lib/types";
+import { buildDisplayUnits, displayUnitCount } from "./store";
+import type { ReviewPlan } from "@extension/lib/types";
 
 const plan: ReviewPlan = {
   units: [

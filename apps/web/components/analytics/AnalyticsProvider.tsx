@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
-import { createAnalyticsClient, type AnalyticsClient } from "../../lib/analytics";
+import { createAnalyticsClient, type AnalyticsClient } from "@web/lib/analytics";
 
 const AnalyticsContext = createContext<AnalyticsClient | null>(null);
 

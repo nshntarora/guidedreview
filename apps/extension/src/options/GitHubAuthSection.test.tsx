@@ -1,11 +1,11 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { resetConfirmationQueueForTests } from "../content/overlay/components/confirmation";
+import { resetConfirmationQueueForTests } from "@extension/lib/confirmation";
 import { GitHubAuthSection } from "./GitHubAuthSection";
-import * as messaging from "../lib/messaging";
-import * as oauthConfig from "../lib/github/oauthConfig";
-import * as deviceAuth from "../lib/github/useGitHubDeviceAuth";
+import * as messaging from "@extension/lib/messaging";
+import * as oauthConfig from "@extension/lib/github/oauthConfig";
+import * as deviceAuth from "@extension/lib/github/useGitHubDeviceAuth";
 
 vi.mock("../lib/messaging", () => ({
   getGitHubAuthStatus: vi.fn(),
@@ -17,7 +17,7 @@ vi.mock("../lib/messaging", () => ({
 // Only the configured check is stubbed — the copy constants come from the real
 // module so a wording/name change is caught here rather than mocked away.
 vi.mock("../lib/github/oauthConfig", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../lib/github/oauthConfig")>()),
+  ...(await importOriginal<typeof import("@extension/lib/github/oauthConfig")>()),
   isGitHubOAuthConfigured: vi.fn(() => true),
 }));
 

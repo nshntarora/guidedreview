@@ -22,23 +22,31 @@ import type {
   SubmitReviewResponse,
   TestConnectionRequest,
   TestConnectionResponse,
-} from "../lib/types";
-import { NO_API_KEY_ERROR_CODE } from "../lib/types";
-import { clearGitHubAuth, getGitHubAuth, setGitHubAuth } from "../lib/github/authStorage";
-import { fetchGitHubUser, pollAccessToken, requestDeviceCode } from "../lib/github/deviceOAuth";
+} from "@extension/lib/types";
+import { NO_API_KEY_ERROR_CODE } from "@extension/lib/types";
+import { clearGitHubAuth, getGitHubAuth, setGitHubAuth } from "@extension/lib/github/authStorage";
+import {
+  fetchGitHubUser,
+  pollAccessToken,
+  requestDeviceCode,
+} from "@extension/lib/github/deviceOAuth";
 import {
   GITHUB_OAUTH_CLIENT_ID,
   GITHUB_OAUTH_NOT_CONFIGURED,
   GITHUB_OAUTH_SCOPES,
   isGitHubOAuthConfigured,
-} from "../lib/github/oauthConfig";
-import { fetchPRDiff, parsePRUrl } from "../lib/github/diffFetch";
-import { submitPullRequestReview } from "../lib/github/submitReview";
-import { chunkDiffByFile } from "../lib/review/buildPrompt";
-import { StreamPlanParser } from "../lib/review/streamPlanParser";
-import { parseReviewUnit, prefixChunkUnitId, stripDuplicateHunks } from "../lib/review/reviewPlan";
-import { getProviderSettings } from "../lib/settings";
-import { grantSessionAccessToContentScripts } from "../lib/storage";
+} from "@extension/lib/github/oauthConfig";
+import { fetchPRDiff, parsePRUrl } from "@extension/lib/github/diffFetch";
+import { submitPullRequestReview } from "@extension/lib/github/submitReview";
+import { chunkDiffByFile } from "@extension/lib/review/buildPrompt";
+import { StreamPlanParser } from "@extension/lib/review/streamPlanParser";
+import {
+  parseReviewUnit,
+  prefixChunkUnitId,
+  stripDuplicateHunks,
+} from "@extension/lib/review/reviewPlan";
+import { getProviderSettings } from "@extension/lib/settings";
+import { grantSessionAccessToContentScripts } from "@extension/lib/storage";
 import { getProviderClient } from "./providers";
 import { ProviderError, type ProviderClient } from "./providers/types";
 

@@ -25,7 +25,7 @@ The background service worker is the only context that holds the API key and per
 
 - Provider choice, model, and API key (`chrome.storage.local`) — [Configure AI provider](/docs/configure-provider#where-settings-live)
 - Active review session: diff, plan, step index (`chrome.storage.session`, keyed by `owner/repo#number`) — [Resume later](/docs/first-review#resume-later)
-- [Draft comments](/docs/leave-comments) in the overlay until you submit
+- [Draft comments](/docs/leave-comments) in Guided Review until you submit
 - GitHub tokens after [Connect GitHub](/docs/connect-github), until you disconnect
 
 Closing the browser session clears session storage; local settings remain until you change or clear them. Session edge cases: [Troubleshooting](/docs/troubleshooting#session-and-resume).

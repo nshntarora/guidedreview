@@ -1,9 +1,12 @@
-import type { ReviewErrorInfo, ReviewUnit } from "../../../lib/types";
+import type { ReviewErrorInfo, ReviewUnit } from "@extension/lib/types";
 import { ConnectProviderPrompt } from "./ConnectProviderPrompt";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { Button, Spinner } from "@guided-review/ui";
-import { BUILD_PLAN_PRIMARY } from "../buildPhaseCopy";
-import { missingMetadataHint, PR_DESCRIPTION_HINT } from "../missingMetadata";
+import {
+  BUILD_PLAN_PRIMARY,
+  missingMetadataHint,
+  PR_DESCRIPTION_HINT,
+} from "@extension/content/overlay/overlayCopy";
 
 interface ContextPanelProps {
   /** When null, the synthetic PR-description unit is active. */
@@ -99,7 +102,7 @@ export function ContextPanel({
         </div>
         {loading ? (
           <div
-            className="mt-4 flex items-start gap-2.5 border-t border-border-strong pt-3"
+            className="mt-4 flex items-center gap-2.5 border-t border-border-strong pt-3"
             data-testid="context-panel-loading"
           >
             <Spinner

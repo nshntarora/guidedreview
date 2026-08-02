@@ -13,7 +13,7 @@ const shared = {
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@extension": path.resolve(__dirname, "./src"),
     },
   },
 };
@@ -21,7 +21,7 @@ const shared = {
 const domTestTs = [
   "src/content/buttonAnchor.test.ts",
   "src/content/overlay/focusTrap.test.ts",
-  "src/content/overlay/prConversationUrl.test.ts",
+  "src/lib/github/prUrls.test.ts",
   "src/lib/github/prContext.test.ts",
   "src/popup/main.test.ts",
 ];

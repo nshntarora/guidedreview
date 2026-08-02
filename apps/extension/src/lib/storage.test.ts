@@ -7,7 +7,7 @@ import {
   writeLocal,
   writeSession,
 } from "./storage";
-import type { ChromeMock } from "../test/chromeMock";
+import type { ChromeMock } from "@extension/test/chromeMock";
 
 function chromeMock(): ChromeMock {
   return chrome as unknown as ChromeMock;

@@ -18,18 +18,21 @@ Concept overviews: [How a review plan works](/docs/how-it-works) · [FAQ](/docs/
 
 ## No Start Guided Review button
 
-1. Confirm the tab is a **pull request** URL on `github.com` (Conversation, Files changed, or Commits) — same as [Your first review](/docs/first-review#open-a-pull-request).
-2. Reload the page. SPA navigations from the PR list should still inject the button; a full reload clears stuck DOM.
-3. Check the extension is enabled and allowed on GitHub in `chrome://extensions`.
-4. If you loaded unpacked, confirm you selected **`apps/extension/dist`**, then **Reload** the extension and refresh the tab ([Install](/docs/install#load-unpacked-development)).
+1. Confirm the tab is a **pull request** URL on `github.com` (Conversation, Files changed, or Commits) — same as [Your first review](/docs/first-review#open-a-pull-request). Hosts other than github.com are not supported ([FAQ](/docs/faq#does-it-work-outside-github-com)).
+2. Avoid PR **sub-pages that aren’t review surfaces** — for example conflict resolution (`…/pull/N/conflicts`). The extension intentionally does not inject there; open Conversation, Files changed, or Commits instead. The toolbar popup says so when the active tab is one of those paths.
+3. Reload the page. SPA navigations from the PR list should still inject the button; a full reload clears stuck DOM.
+4. Check the extension is enabled and allowed on GitHub in `chrome://extensions`.
+5. If you loaded unpacked, confirm you selected **`apps/extension/dist`**, then **Reload** the extension and refresh the tab ([Install](/docs/install#load-unpacked-development)).
+
+If the on-page button is missing but the PR URL is valid, try the **toolbar icon** while that tab is active ([Install → After install](/docs/install#after-install)).
 
 ## Provider and API key
 
-| Symptom                              | What to try                                                                                                                                                           |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Prompted for a key on start          | Open Options → [configure a provider](/docs/configure-provider) → paste a valid key → Save                                                                            |
-| **Test connection** fails            | Wrong key or model, expired key, or network/VPN blocking the provider. Fix the key, [pick a model](/docs/configure-provider#pick-a-model) your account can use, retry |
-| Auth / invalid key from the provider | Regenerate the key in the provider console; don’t paste org-restricted keys your seat can’t use                                                                       |
+| Symptom                              | What to try                                                                                                                                                                        |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prompted to connect a provider       | Open Options → [configure a provider](/docs/configure-provider) → paste a valid key → Save. You can still walk [file by file](/docs/how-it-works#without-a-provider) without a key |
+| **Test connection** fails            | Wrong key or model, expired key, or network/VPN blocking the provider. Fix the key, [pick a model](/docs/configure-provider#pick-a-model) your account can use, retry              |
+| Auth / invalid key from the provider | Regenerate the key in the provider console; don’t paste org-restricted keys your seat can’t use                                                                                    |
 
 Keys live only in `chrome.storage.local` and leave the machine toward **your** provider when annotating — not toward Guided Review servers ([Privacy & data](/docs/privacy-and-data#what-the-extension-sends)).
 

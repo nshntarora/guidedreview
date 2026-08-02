@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Hero } from "../components/Hero";
-import { Why } from "../components/Why";
-import { FeatureGrid } from "../components/FeatureGrid";
-import { TrustBand } from "../components/TrustBand";
-import { Faqs } from "../components/Faqs";
-import { InstallCta } from "../components/InstallCta";
-import { JsonLd } from "../components/JsonLd";
-import { getGitHubStarCount } from "../lib/github";
-import { CHROME_WEB_STORE_URL } from "../lib/links";
-import { HOME_DESCRIPTION, openGraphSite, SITE_NAME, SITE_URL } from "../lib/site";
+import { Hero } from "@web/components/Hero";
+import { Why } from "@web/components/Why";
+import { FeatureGrid } from "@web/components/FeatureGrid";
+import { TrustBand } from "@web/components/TrustBand";
+import { Faqs } from "@web/components/Faqs";
+import { InstallCta } from "@web/components/InstallCta";
+import { JsonLd } from "@web/components/JsonLd";
+import { getGitHubStarCount } from "@web/lib/github";
+import { CHROME_WEB_STORE_URL } from "@web/lib/links";
+import { HOME_DESCRIPTION, openGraphSite, SITE_NAME, SITE_URL } from "@web/lib/site";
 
 export const metadata: Metadata = {
   title: "Guided Review — a better way to review AI generated code",

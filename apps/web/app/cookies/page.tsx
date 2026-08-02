@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Content from "@/content/legal/cookies.mdx";
-import { LegalDocument } from "@/components/LegalDocument";
-import { openGraphSite } from "@/lib/site";
+import Content from "@web/content/legal/cookies.mdx";
+import { LegalDocument } from "@web/components/LegalDocument";
+import { openGraphSite } from "@web/lib/site";
 
 export const metadata: Metadata = {
   title: "Cookies Policy",

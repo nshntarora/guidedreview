@@ -3,7 +3,7 @@
  * Shared submit-API shapes (`ReviewEvent`, `ReviewCommentInput`) live in `src/lib/types.ts`.
  */
 
-import type { DiffLine, ReviewEvent } from "../../lib/types";
+import type { DiffLine, ReviewEvent } from "@extension/lib/types";
 
 export type { ReviewEvent };
 export type DiffSide = "LEFT" | "RIGHT";

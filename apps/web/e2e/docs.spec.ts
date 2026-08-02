@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { DOCS_PAGES } from "../config/docs";
+import { DOCS_PAGES } from "@web/config/docs";
 import { docsPath } from "./helpers/routes";
 import { assertStatusOk } from "./helpers/http";
 

@@ -1,4 +1,4 @@
-import type { DiffFile, FileChangeStatus, ParsedDiff } from "../types";
+import type { DiffFile, FileChangeStatus, ParsedDiff } from "@extension/lib/types";
 
 export interface FileDiffSummary {
   path: string;

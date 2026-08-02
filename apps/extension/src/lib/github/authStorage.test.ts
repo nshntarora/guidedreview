@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { clearGitHubAuth, getGitHubAuth, setGitHubAuth } from "./authStorage";
-import type { GitHubAuthState } from "../types";
+import type { GitHubAuthState } from "@extension/lib/types";
 
 const sample: GitHubAuthState = {
   accessToken: "gho_test",

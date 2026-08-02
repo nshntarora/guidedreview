@@ -5,10 +5,10 @@ import type {
   ReviewErrorInfo,
   ReviewPlan,
   ReviewUnit,
-} from "../../lib/types";
-import { NO_API_KEY_ERROR_CODE } from "../../lib/types";
-import type { PRIdentity } from "../../lib/github/diffFetch";
-import { buildFileReviewPlan } from "../../lib/review/fileReviewPlan";
+} from "@extension/lib/types";
+import { NO_API_KEY_ERROR_CODE } from "@extension/lib/types";
+import type { PRIdentity } from "@extension/lib/github/diffFetch";
+import { buildFileReviewPlan } from "@extension/lib/review/reviewPlan";
 import {
   displayLineNumber,
   linesInSelection,
@@ -17,14 +17,13 @@ import {
   type SelectableLine,
   type UiMode,
 } from "./commentTypes";
-import { readSession, writeSession } from "../../lib/storage";
-import { displayUnitCount } from "./displayUnits";
+import { readSession, writeSession } from "@extension/lib/storage";
 import {
   DEFAULT_DIFF_VIEW_MODE,
   getStoredDiffViewMode,
   setStoredDiffViewMode,
   type DiffViewMode,
-} from "./diffViewMode";
+} from "@extension/lib/preferences";
 
 export type ReviewStatus = "idle" | "loading" | "streaming" | "ready" | "error";
 
@@ -40,6 +39,36 @@ export type BuildPhase =
   | "tokens_streaming";
 
 export type { DiffViewMode };
+
+/** Display list unit: synthetic PR description first, then plan units. */
+export type DisplayUnit =
+  | { kind: "pr_description"; id: "__pr_description"; title: "PR Description" }
+  | { kind: "review"; id: string; title: string; unit: ReviewUnit; planIndex: number };
+
+/** Ordered units shown in the overlay (description is UI-only, not model output). */
+export function buildDisplayUnits(plan: ReviewPlan | null): DisplayUnit[] {
+  const description: DisplayUnit = {
+    kind: "pr_description",
+    id: "__pr_description",
+    title: "PR Description",
+  };
+  if (!plan) return [description];
+  return [
+    description,
+    ...plan.units.map((unit, planIndex): DisplayUnit => ({
+      kind: "review",
+      id: unit.id,
+      title: unit.title,
+      unit,
+      planIndex,
+    })),
+  ];
+}
+
+/** Navigable display unit count (always at least 1 for the description). */
+export function displayUnitCount(plan: ReviewPlan | null): number {
+  return 1 + (plan?.units.length ?? 0);
+}
 
 interface PersistedSession {
   diff: ParsedDiff;

@@ -1,5 +1,5 @@
-import type { ParsedDiff, PRContext } from "../../../lib/types";
-import { summarizeDiff } from "../../../lib/github/diffSummary";
+import type { ParsedDiff, PRContext } from "@extension/lib/types";
+import { summarizeDiff } from "@extension/lib/github/diffSummary";
 import { Kbd } from "@guided-review/ui";
 import { ModEnterChord } from "./ShortcutKeys";
 

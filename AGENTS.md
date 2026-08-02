@@ -8,6 +8,17 @@ Chrome MV3 extension: GitHub PR diff → user's LLM → ordered **review units**
 | `apps/web`       | Marketing + docs (Next.js static export → `out/`)                  |
 | `packages/ui`    | Shared tokens/UI — source-only; no `chrome.*` or extension imports |
 
+## Import aliases
+
+Prefer absolute imports over deep `../../` relatives:
+
+| Alias          | Resolves to            |
+| -------------- | ---------------------- |
+| `@extension/*` | `apps/extension/src/*` |
+| `@web/*`       | `apps/web/*`           |
+
+Same-directory `./foo` is fine. Cross-folder imports should use the alias.
+
 ## Commands
 
 `npm run dev` · `dev:web` · `build` · `build:extension` · `typecheck` · `test` · `test:e2e` · `lint` · `format`
@@ -37,3 +48,13 @@ Match `apps/web` landing copy — peer engineer, specific, dry.
 - BYO key; no product backend. Traffic: GitHub + user's provider only.
 - Name **Guided Review**. CTA **Start Guided Review**. Terms: review units, cluster, overlay, keyboard-first.
 - Errors: what failed + what to try. No SaaS clichés or overclaiming model accuracy.
+
+## Tests
+
+Goal is **not** coverage. Goal is the fewest tests that still give confidence to ship. Every test is guilty until proven useful; if deleting it does not reduce shipping confidence, delete it. Prefer one meaningful integration test over ten tiny implementation tests.
+
+**Unit:** test observable business logic, not rendering or React internals. Avoid mocks unless isolation is required.
+**E2E:** executable journeys a user would care about. Do not E2E static marketing pages, "button exists," or exact wording.
+**a11y:** interactive paths only (keyboard, focus trap, dialogs, forms) — not decorative markup.
+
+Prefer consolidating overlapping tests and extracting shared setup over adding more cases. If a feature's complexity is mostly test surface, consider removing the feature instead.

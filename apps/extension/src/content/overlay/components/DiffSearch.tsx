@@ -17,8 +17,8 @@ import {
   searchDiff,
   type DiffSearchResult,
   type MatchRange,
-} from "../diffSearch";
-import type { ParsedDiff } from "../../../lib/types";
+} from "@extension/content/overlay/diffSearch";
+import type { ParsedDiff } from "@extension/lib/types";
 
 export interface DiffSearchProps {
   open: boolean;

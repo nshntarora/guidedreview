@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { cn } from "@guided-review/ui";
-import type { TocEntry } from "@/config/docs";
+import type { TocEntry } from "@web/config/docs";
 
 export function TocCard({ toc }: { toc: TocEntry[] }) {
   if (!toc.length) return null;

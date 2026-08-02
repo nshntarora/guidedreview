@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ChromeMock, MockPort } from "../test/chromeMock";
-import type { FetchDiffResponse, ParsedDiff } from "../lib/types";
-import { setProviderSettings } from "../lib/settings";
+import type { ChromeMock, MockPort } from "@extension/test/chromeMock";
+import type { FetchDiffResponse, ParsedDiff } from "@extension/lib/types";
+import { setProviderSettings } from "@extension/lib/settings";
 import { useReviewStore } from "./overlay/store";
 
 // The overlay itself is covered by Overlay.test.tsx; these tests are about the

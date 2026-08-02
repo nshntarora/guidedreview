@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { Options } from "./Options";
-import { defaultModelFor } from "../lib/providers/catalog";
+import { defaultModelFor } from "@extension/lib/providers/catalog";
 
 async function chooseOption(
   user: ReturnType<typeof userEvent.setup>,

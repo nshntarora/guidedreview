@@ -1,4 +1,4 @@
-import { GITHUB_REPO_URL } from "../lib/links";
+import { GITHUB_REPO_URL } from "@web/lib/links";
 import { NoBackendIllustration } from "./FeatureIllustrations";
 import { GitHubIcon } from "./icons";
 

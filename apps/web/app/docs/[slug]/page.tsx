@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { DOCS_PAGES, findDocsPage } from "@/config/docs";
-import { DocsPageWrapper } from "@/components/docs/DocsPageWrapper";
-import { JsonLd } from "@/components/JsonLd";
-import { openGraphSite, SITE_NAME, SITE_URL } from "@/lib/site";
+import { DOCS_PAGES, findDocsPage } from "@web/config/docs";
+import { DocsPageWrapper } from "@web/components/docs/DocsPageWrapper";
+import { JsonLd } from "@web/components/JsonLd";
+import { openGraphSite, SITE_NAME, SITE_URL } from "@web/lib/site";
 
 type Props = { params: Promise<{ slug: string }> };
 

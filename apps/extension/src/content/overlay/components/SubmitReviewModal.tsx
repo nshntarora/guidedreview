@@ -7,10 +7,9 @@ import {
   type MutableRefObject,
   type Ref,
 } from "react";
-import type { ReviewEvent, ReviewSubmission } from "../commentTypes";
-import { CloseButton } from "./CloseButton";
+import type { ReviewEvent, ReviewSubmission } from "@extension/content/overlay/commentTypes";
 import { Button, Kbd, KbdGroup, Textarea } from "@guided-review/ui";
-import { ModalShell } from "./ModalShell";
+import { CloseButton, ModalShell } from "./ModalShell";
 import { ModEnterChord } from "./ShortcutKeys";
 
 interface SubmitReviewModalProps {

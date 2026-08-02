@@ -1,14 +1,14 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Overlay } from "./Overlay";
-import { resetConfirmationQueueForTests } from "./components/confirmation";
-import { DEFAULT_DIFF_VIEW_MODE } from "./diffViewMode";
+import { resetConfirmationQueueForTests } from "@extension/lib/confirmation";
+import { DEFAULT_DIFF_VIEW_MODE } from "@extension/lib/preferences";
 import { useReviewStore } from "./store";
-import { VIEW_CHORD_WINDOW_MS } from "./viewModeChord";
-import { buildFileReviewPlan } from "../../lib/review/fileReviewPlan";
-import type { ParsedDiff, PRContext, ReviewPlan } from "../../lib/types";
-import * as messaging from "../../lib/messaging";
-import * as oauthConfig from "../../lib/github/oauthConfig";
+import { VIEW_CHORD_WINDOW_MS } from "./useOverlayKeyboard";
+import { buildFileReviewPlan } from "@extension/lib/review/reviewPlan";
+import type { ParsedDiff, PRContext, ReviewPlan } from "@extension/lib/types";
+import * as messaging from "@extension/lib/messaging";
+import * as oauthConfig from "@extension/lib/github/oauthConfig";
 
 const sampleAuth = {
   accessToken: "gho_test",

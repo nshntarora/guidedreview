@@ -3,6 +3,7 @@ export const toc = [
   { id: "set-your-api-key", label: "Set your API key", level: 2 },
   { id: "pick-a-model", label: "Pick a model", level: 2 },
   { id: "test-connection", label: "Test connection", level: 2 },
+  { id: "cost-and-usage", label: "Cost and usage", level: 2 },
   { id: "where-settings-live", label: "Where settings live", level: 2 },
 ];
 
@@ -10,7 +11,7 @@ export const toc = [
 
 Guided Review calls **your** LLM account. There is no Guided Review cloud that holds your key or rewrites diffs for you. That design is spelled out in [Privacy & data](/docs/privacy-and-data).
 
-You need a provider before [your first review](/docs/first-review). GitHub auth is separate and only required to [submit a review](/docs/submit-review) — see [Connect GitHub](/docs/connect-github).
+A provider unlocks AI clustering and unit summaries. You can still [open a review without a key](/docs/how-it-works#without-a-provider) (file-by-file walk). GitHub auth is separate and only required to [submit a review](/docs/submit-review) — see [Connect GitHub](/docs/connect-github).
 
 <TocCard toc={toc} />
 
@@ -55,16 +56,23 @@ Use **Test connection** on the options page. That runs the same provider path as
 
 If the test fails, step through [Troubleshooting → Provider and API key](/docs/troubleshooting#provider-and-api-key).
 
+## Cost and usage
+
+- **Annotate** — one provider call per [diff chunk](/docs/how-it-works#chunking-large-prs). Small PRs usually cost one call; large ones cost one call per chunk.
+- **Not billed to the model** — stepping units, [searching](/docs/keyboard-shortcuts#diff-search), drafting comments, and [submitting to GitHub](/docs/submit-review).
+- **Test connection** — a cheap health-check request when you run it from Options.
+
+Token usage and cost are entirely between you and your provider. Guided Review does not meter or resell LLM usage. Short version: [FAQ → Will this run up my API bill?](/docs/faq#will-this-run-up-my-api-bill).
+
 ## Where settings live
 
 | Setting                             | Storage                  | Used by                          |
 | ----------------------------------- | ------------------------ | -------------------------------- |
 | Provider, model, API key            | `chrome.storage.local`   | Background worker                |
 | Automatically open on Files changed | `chrome.storage.local`   | Content script (auto-open)       |
+| Diff view (unified / split)         | `chrome.storage.local`   | Overlay (default: split)         |
 | Active review session               | `chrome.storage.session` | Content overlay (session-scoped) |
 
 Session resume behavior: [Your first review → Resume later](/docs/first-review#resume-later) and [Troubleshooting](/docs/troubleshooting#session-and-resume).
-
-> **Billing.** Token usage and cost are entirely between you and your provider. Guided Review does not meter or resell LLM usage.
 
 **Next.** [Your first review](/docs/first-review) · [How a review plan works](/docs/how-it-works) · [Privacy & data](/docs/privacy-and-data)

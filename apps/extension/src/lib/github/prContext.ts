@@ -1,5 +1,5 @@
 import DOMPurify, { type Config } from "dompurify";
-import type { PRContext } from "../types";
+import type { PRContext } from "@extension/lib/types";
 import type { PRIdentity } from "./diffFetch";
 
 // Open links from the PR description in a new tab instead of navigating the

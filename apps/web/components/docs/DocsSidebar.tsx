@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { DOCS_PAGES, docsPath } from "@/config/docs";
+import { DOCS_PAGES, docsPath } from "@web/config/docs";
 import { cn } from "@guided-review/ui";
 
 export function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {

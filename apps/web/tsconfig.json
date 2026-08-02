@@ -19,7 +19,7 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@web/*": ["./*"]
     },
     "noUnusedLocals": true,
     "noUnusedParameters": true,

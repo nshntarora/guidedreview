@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
-import type { GitHubPublicAuthState } from "../lib/types";
-import { GitHubLogo } from "../components/GitHubLogo";
-import { GITHUB_CLIENT_ID_ENV_VAR, isGitHubOAuthConfigured } from "../lib/github/oauthConfig";
-import { useCopyToClipboard } from "../lib/useCopyToClipboard";
-import { openVerificationUri, useGitHubDeviceAuth } from "../lib/github/useGitHubDeviceAuth";
-import { clearGitHubAuthSession, getGitHubAuthStatus } from "../lib/messaging";
-import { confirm, ConfirmationHost } from "../content/overlay/components/confirmation";
+import type { GitHubPublicAuthState } from "@extension/lib/types";
+import { GitHubLogo } from "@extension/components/GitHubLogo";
+import {
+  GITHUB_CLIENT_ID_ENV_VAR,
+  isGitHubOAuthConfigured,
+} from "@extension/lib/github/oauthConfig";
+import { useCopyToClipboard } from "@extension/lib/useCopyToClipboard";
+import {
+  openVerificationUri,
+  useGitHubDeviceAuth,
+} from "@extension/lib/github/useGitHubDeviceAuth";
+import { clearGitHubAuthSession, getGitHubAuthStatus } from "@extension/lib/messaging";
+import { confirm, ConfirmationHost } from "@extension/lib/confirmation";
 import { Button, Spinner, cn } from "@guided-review/ui";
 import { SettingsCard } from "./SettingsCard";
 
@@ -87,7 +93,7 @@ export function GitHubAuthSection() {
     if (disconnectBusy || connectBusy) return;
     confirm({
       title: "Disconnect GitHub?",
-      body: "Guided Review will not submit reviews on your behalf until you connect again. AI provider settings are unchanged.",
+      body: "You won't be able to submit reviews from Guided Review until you connect again. AI provider settings are unchanged.",
       variant: "destructive",
       okButtonText: "Disconnect",
       cancelButtonText: "Cancel",
@@ -110,7 +116,7 @@ export function GitHubAuthSection() {
           <GitHubLogo size={18} data-testid="github-auth-logo" />
         </span>
       }
-      description="Connect GitHub so Guided Review can submit reviews on your behalf. Uses device sign-in — no password is stored. Token stays in this browser only."
+      description="Connect GitHub so you can submit reviews from Guided Review. Device sign-in — no password stored. Token stays in this browser only."
       data-testid="github-auth-section"
     >
       {!configured && (

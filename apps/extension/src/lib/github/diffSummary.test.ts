@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { DiffFile, DiffHunk, ParsedDiff } from "../types";
+import type { DiffFile, DiffHunk, ParsedDiff } from "@extension/lib/types";
 import { summarizeDiff } from "./diffSummary";
 
 function hunk(lines: Array<{ type: "add" | "del" | "context"; content: string }>): DiffHunk {

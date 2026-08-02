@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { DiffLine } from "../../lib/types";
+import type { DiffLine } from "@extension/lib/types";
 import { buildSplitRows } from "./buildSplitRows";
 
 describe("buildSplitRows", () => {

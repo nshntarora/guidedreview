@@ -1,5 +1,5 @@
 import { parseUnifiedDiff } from "./diffParser";
-import type { ParsedDiff } from "../types";
+import type { ParsedDiff } from "@extension/lib/types";
 
 export interface PRIdentity {
   owner: string;

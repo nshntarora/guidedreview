@@ -1,4 +1,4 @@
-import { DOCS_PAGES } from "../../config/docs";
+import { DOCS_PAGES } from "@web/config/docs";
 
 /** Static marketing + legal routes (always present). */
 const STATIC_ROUTES = ["/", "/docs", "/privacy", "/terms", "/cookies"] as const;

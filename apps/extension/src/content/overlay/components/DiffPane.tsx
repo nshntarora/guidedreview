@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@guided-review/ui";
 
-import { languageForPath } from "../../../lib/highlight";
-import { displayLineNumber, linesInSelection, type SelectableLine } from "../commentTypes";
-import type { SearchScrollTarget } from "../diffSearch";
-import { hydrateDiffViewMode, useReviewStore } from "../store";
-import type { ResolvedUnitFile } from "../selectors";
+import { buildPRFileDiffUrl } from "@extension/lib/github/prUrls";
+import { languageForPath } from "@extension/lib/highlight";
+import {
+  displayLineNumber,
+  linesInSelection,
+  type SelectableLine,
+} from "@extension/content/overlay/commentTypes";
+import type { SearchScrollTarget } from "@extension/content/overlay/diffSearch";
+import { hydrateDiffViewMode, useReviewStore } from "@extension/content/overlay/store";
+import type { ResolvedUnitFile } from "@extension/content/overlay/buildSelectableLines";
 import { AddCommentButton, CommentModeChip, DiffViewToggle } from "./diff/DiffToolbar";
-import { BinaryElidedEmptyState } from "./diff/BinaryElidedEmptyState";
 import { SplitHunk } from "./diff/SplitHunk";
 import { UnifiedHunk } from "./diff/UnifiedHunk";
 import { useSelectionDerived } from "./diff/useSelectionDerived";
@@ -39,6 +43,51 @@ interface DiffPaneProps {
   /** One-shot scroll/highlight target after picking a diff search result. */
   searchScrollTarget?: SearchScrollTarget | null;
   onSearchScrollTargetConsumed?: () => void;
+}
+
+/** Empty body for binary/LFS/elided files; optional deep link to GitHub Files tab. */
+function BinaryElidedEmptyState({ filePath }: { filePath: string }) {
+  const prContext = useReviewStore((s) => s.prContext);
+  const [githubUrl, setGithubUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!prContext) {
+      setGithubUrl(null);
+      return;
+    }
+    let cancelled = false;
+    void buildPRFileDiffUrl(
+      { owner: prContext.owner, repo: prContext.repo, number: prContext.number },
+      filePath,
+    ).then((url) => {
+      if (!cancelled) setGithubUrl(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [prContext, filePath]);
+
+  return (
+    <div
+      className="flex min-h-[8rem] flex-col items-center justify-center gap-3 px-4 py-12 text-center"
+      data-testid="binary-elided-empty"
+    >
+      <span className="font-mono text-base leading-relaxed text-muted">
+        (binary or elided — no textual diff available)
+      </span>
+      {githubUrl && (
+        <a
+          href={githubUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-base font-medium text-primary underline-offset-2 hover:underline"
+          data-testid="binary-elided-github-link"
+        >
+          View File Diff on GitHub
+        </a>
+      )}
+    </div>
+  );
 }
 
 export function DiffPane({
@@ -160,12 +209,16 @@ export function DiffPane({
       </div>
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2
-          className="flex min-w-0 items-center gap-1.5 text-lg font-semibold text-foreground"
+          className="min-w-0 text-lg font-semibold text-foreground"
           data-testid="diff-unit-title"
           title={unitTitleTooltip ?? unitTitle}
         >
-          <span className="min-w-0 break-words">{unitTitle}</span>
-          {isTestsUnit && <TestsUnitIcon className="shrink-0 text-muted" size={16} />}
+          <span className="break-words">
+            {isTestsUnit && (
+              <TestsUnitIcon className="mr-1.5 inline-block align-[-0.125em] text-muted" />
+            )}
+            {unitTitle}
+          </span>
         </h2>
         <div className="flex shrink-0 items-center gap-2">
           {commentModeActive ? (

@@ -2,6 +2,7 @@ export const toc = [
   { id: "open-a-pull-request", label: "Open a pull request", level: 2 },
   { id: "start-guided-review", label: "Start Guided Review", level: 2 },
   { id: "walk-the-plan", label: "Walk the plan", level: 2 },
+  { id: "search-the-diff", label: "Search the diff", level: 2 },
   { id: "leave-comments-and-submit", label: "Leave comments and submit", level: 2 },
   { id: "resume-later", label: "Resume later", level: 2 },
 ];
@@ -16,18 +17,24 @@ From a normal GitHub PR page to a structured walkthrough in a few clicks. If the
 
 Navigate to any pull request on `github.com` (Conversation, Files changed, or Commits). The content script is injected on `https://github.com/*` so SPA navigation from the PR list still shows the button when you land on a PR.
 
-No button? See [Troubleshooting](/docs/troubleshooting#no-start-guided-review-button).
+No button? See [Troubleshooting](/docs/troubleshooting#no-start-guided-review-button). Some PR sub-pages (for example conflict resolution) are intentionally ignored — same troubleshooting page.
 
 ## Start Guided Review
 
+You can open the overlay any of these ways:
+
 1. Click **Start Guided Review** on the PR page.
-2. The overlay opens in a Shadow DOM host so its styles don’t fight GitHub’s CSS.
-3. The extension fetches the PR diff, builds a prompt, and streams a [review plan](/docs/how-it-works) from your configured provider.
-4. Units appear progressively as the stream completes each chunk; the final merged plan is what you step through.
+2. Click the **Guided Review toolbar icon** while a PR tab is active (pin it from Chrome’s puzzle-piece menu so it stays visible — [Install](/docs/install#after-install)).
+3. Optionally enable **Automatically open on Files changed** in Options so the review starts (or resumes) when you open that tab (classic `/files` or the newer `/changes` path). Off by default.
 
-Optional: in Options, enable **Automatically open when I go to Files changed tab in a PR** to start (or resume) the review automatically when you open that tab (classic `/files` or the newer `/changes` path). Off by default.
+Then:
 
-> **No provider configured?** You’ll be prompted to open Options and [add an API key](/docs/configure-provider) first. Connection failures: [Troubleshooting](/docs/troubleshooting#provider-and-api-key).
+1. The overlay opens in a Shadow DOM host so its styles don’t fight GitHub’s CSS.
+2. The extension fetches the PR diff.
+3. With a [provider configured](/docs/configure-provider), it streams a [review plan](/docs/how-it-works) from your model. Units appear progressively as each chunk finishes; the final merged plan is what you step through.
+4. **Without a provider key**, you still get a walkthrough: **one unit per changed file**, in diff order. The context panel prompts you to connect Claude, OpenAI, or Grok so related changes can be clustered and summarized. See [How a review plan works → Without a provider](/docs/how-it-works#without-a-provider).
+
+Connection failures after a key is set: [Troubleshooting](/docs/troubleshooting#provider-and-api-key).
 
 ## Walk the plan
 
@@ -36,10 +43,14 @@ The overlay shows **display units** in order: a synthetic PR description step fi
 For each unit you can:
 
 - Read the unit’s title and guidance (take summaries with a grain of salt — see the [FAQ](/docs/faq#does-the-ai-approve-prs))
-- See the linked hunks from the real diff (unified or split — `v u` / `v s`, or the toolbar)
+- See the linked hunks from the real diff (default **split** view; switch with `v u` / `v s`, or the toolbar — choice is remembered)
 - Move next / previous with the footer or [keyboard shortcuts](/docs/keyboard-shortcuts)
 
-The model chooses order and commentary; it does **not** supply the code lines you see. Hunk ids that don’t match the parsed diff are dropped.
+With AI, the model chooses order and commentary; it does **not** supply the code lines you see. Hunk ids that don’t match the parsed diff are dropped. Without AI, order is file order and commentary is empty until you connect a provider.
+
+## Search the diff
+
+Press `⌘/Ctrl` + `F` to search file paths and code across the whole PR diff. Pick a result to jump to the unit that owns that match. Full behavior: [Keyboard shortcuts → Diff search](/docs/keyboard-shortcuts#diff-search).
 
 ## Leave comments and submit
 

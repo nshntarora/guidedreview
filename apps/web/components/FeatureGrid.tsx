@@ -29,8 +29,7 @@ const features: Feature[] = [
     Illustration: KeyboardFirstIllustration,
     title: "Read and navigate how you write",
     body: [
-      "We've designed the whole code review experience to be keyboard first.",
-      "You will not need to lift your hands from your keyboard to browse, comment, or review.",
+      "Guided Review is keyboard-first. Browse units, comment, and submit without leaving the keys — same muscle memory as writing code.",
     ],
   },
   {

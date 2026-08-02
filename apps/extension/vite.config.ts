@@ -12,7 +12,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss(), crx({ manifest })],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@extension": path.resolve(__dirname, "./src"),
     },
     dedupe: ["react", "react-dom"],
   },

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { formatLineRangeLabel } from "../commentTypes";
+import { formatLineRangeLabel } from "@extension/content/overlay/commentTypes";
 import { Button, Kbd, Textarea } from "@guided-review/ui";
 import { ModEnterChord } from "./ShortcutKeys";
 

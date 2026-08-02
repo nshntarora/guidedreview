@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Content from "@/content/legal/privacy.mdx";
-import { LegalDocument } from "@/components/LegalDocument";
-import { openGraphSite } from "@/lib/site";
+import Content from "@web/content/legal/privacy.mdx";
+import { LegalDocument } from "@web/components/LegalDocument";
+import { openGraphSite } from "@web/lib/site";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",

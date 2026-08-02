@@ -1,6 +1,38 @@
-import type { DiffFile, FileRole, ReviewUnit, ReviewUnitFileRef } from "../types";
-import { DEFAULT_FILE_ROLE, FILE_ROLES } from "../types";
-import { isTestPath } from "./pathClass";
+import { middleTruncate } from "@extension/lib/middleTruncate";
+import type {
+  DiffFile,
+  FileRole,
+  ParsedDiff,
+  ReviewPlan,
+  ReviewUnit,
+  ReviewUnitFileRef,
+} from "@extension/lib/types";
+import { DEFAULT_FILE_ROLE, FILE_ROLES } from "@extension/lib/types";
+
+// ---- Path → role heuristics -------------------------------------------------
+
+/** Paths that belong in `kind: "tests"` units (role `test`). */
+const TEST_PATH = /(^|\/)(tests?|__tests__|spec)\/|\.(test|spec)\.[jt]sx?$/i;
+
+/** Lockfiles and obvious config/generated paths (role `config_or_generated`). */
+const CONFIG_PATH =
+  /(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|go\.sum|Cargo\.lock)$|\.(json|ya?ml|toml|ini|lock)$|\.config\.[jt]s$/i;
+
+export function isTestPath(path: string): boolean {
+  return TEST_PATH.test(path);
+}
+
+/**
+ * Deterministic path → role heuristic used by the no-provider fallback and
+ * by validation (force test paths to role `test` so mixed units can be split).
+ */
+export function roleForPath(path: string): FileRole {
+  if (isTestPath(path)) return "test";
+  if (CONFIG_PATH.test(path)) return "config_or_generated";
+  return "core_logic";
+}
+
+// ---- Unit parse / dedupe ----------------------------------------------------
 
 const KNOWN_FILE_ROLES: ReadonlySet<string> = new Set(FILE_ROLES);
 
@@ -195,4 +227,33 @@ export function stripDuplicateHunks(
 
   if (files.length === 0) return null;
   return { ...unit, files: sortFileRefs(files) };
+}
+
+// ---- No-AI fallback plan ----------------------------------------------------
+
+/**
+ * Character budget for path titles in the no-AI one-unit-per-file plan.
+ * Full path stays on `title` for tooltips; truncated form is `displayTitle`.
+ */
+export const FILE_UNIT_TITLE_MAX = 40;
+
+/**
+ * Fallback plan when no AI provider is configured: one review unit per
+ * changed file, in diff order. Full walkthrough without AI ordering/context.
+ */
+export function buildFileReviewPlan(diff: ParsedDiff): ReviewPlan {
+  const units: ReviewUnit[] = diff.files.map((file, index) => {
+    const role = roleForPath(file.path);
+    return {
+      id: `file-${index}-${file.path}`,
+      title: file.path,
+      displayTitle: middleTruncate(file.path, FILE_UNIT_TITLE_MAX),
+      kind: role === "test" ? "tests" : "change",
+      // Empty: context panel shows connect-provider prompt, not invented copy.
+      context: "",
+      files: [{ fileId: file.path, hunkIds: [], role }],
+    };
+  });
+
+  return { units };
 }
