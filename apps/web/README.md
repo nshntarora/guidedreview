@@ -97,7 +97,7 @@ The site is a pure static export. `npm run build` writes to `apps/web/out/`, whi
 
 ### CI deploy
 
-Deploy runs only after **Lint and test** succeeds on a **push to `main`** when web-related paths change (or via manual `workflow_dispatch`). PRs and non-main branches never deploy. Workflow: [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml).
+Deploy runs only after **Tests** succeeds on a **push to `main`** when web-related paths change (or via manual `workflow_dispatch`). PRs and non-main branches never deploy. Workflow: [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml).
 
 | Event                                        | What deploys                                 |
 | -------------------------------------------- | -------------------------------------------- |

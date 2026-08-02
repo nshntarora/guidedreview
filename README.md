@@ -1,164 +1,142 @@
-![Guided Review](packages/ui/src/assets/icons/icon48.png)
+![Guided Review](packages/ui/src/assets/icons/icon128.png)
 
 # Guided Review
 
-**A better way for humans to review AI-generated code.**
+![Tests](https://github.com/nshntarora/guidedreview/actions/workflows/tests.yml/badge.svg)
 
-Guided Review is a free, open-source Chrome extension for GitHub pull requests. It clusters related changes into ordered **review units**, adds short summaries, and gives you a keyboard-first review so you can walk the PR schema-first, then logic, then call-sites, then tests — instead of drowning in an alphabetical file dump.
+Chrome extension for GitHub pull requests that clusters related changes into ordered **review units** so you can actually read AI-generated code.
 
-AI helps structure the review. **You still read the code and have the final say.**
+1. Open a pull request and hit **Start Guided Review**.
+2. Your LLM clusters the diff into ordered units with short summaries — schema, then logic, then call-sites, then tests — instead of an alphabetical file dump.
+3. Walk the change keyboard-first. AI structures the pass — **you still read the code and decide**.
 
-- **Bring your own LLM key** — Anthropic, OpenAI, or Grok (xAI). No Guided Review backend.
-- **No servers of ours** — the extension talks to GitHub and your AI provider only.
-- **Free · Open source** — fork it, audit it, keep it.
+Free, open source, bring your own LLM key. The extension talks to GitHub and your AI provider only — no Guided Review backend. Install from the [Chrome Web Store](https://chromewebstore.google.com/detail/pdnnimoajmnjpccboemeomoeomancodd), or build from source below. Site and docs: [guidedreview.dev](https://guidedreview.dev) · [docs](https://guidedreview.dev/docs).
 
-|                      |                                                                                                    |
-| -------------------- | -------------------------------------------------------------------------------------------------- |
-| **Website**          | [guidedreview.dev](https://guidedreview.dev)                                                       |
-| **Docs**             | [guidedreview.dev/docs](https://guidedreview.dev/docs)                                             |
-| **Chrome Web Store** | [Install Guided Review](https://chromewebstore.google.com/detail/pdnnimoajmnjpccboemeomoeomancodd) |
-| **License**          | [Apache-2.0](LICENSE)                                                                              |
+- [Why?](#why)
+- [How does it work?](#how-does-it-work)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Running](#running)
+  - [Development](#development)
+  - [Building](#building)
+  - [Testing](#testing)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [License](#license)
+- [Acknowledgements](#acknowledgements)
 
----
+## Why?
 
-## Repository layout
+AI agents are writing a lot of the code landing in your PRs. Review agents help find bugs and edge cases you missed — useful — but they are not a replacement for you. They lack taste: product context, people, when an abstraction is unnecessary, when to break the rules.
 
-This is an **npm workspaces** monorepo.
+Nothing beats reading the code. GitHub still hands you every changed file in alphabetical order and leaves you to reconstruct the story. That was awkward for human-written diffs; for large AI-shaped PRs it is actively hostile.
 
-| Path                               | Package                    | Description                                           |
-| ---------------------------------- | -------------------------- | ----------------------------------------------------- |
-| [`apps/extension`](apps/extension) | `@guided-review/extension` | Chrome Manifest V3 extension (the product)            |
-| [`apps/web`](apps/web)             | `@guided-review/web`       | Marketing site & product docs (Next.js)               |
-| [`packages/ui`](packages/ui)       | `@guided-review/ui`        | Shared design tokens, brand assets, presentational UI |
+Guided Review uses AI only where it helps: clustering related hunks into a walkable order and adding short summaries you can take or ignore. It does not auto-approve, and it does not invent the code you see. You still decide.
 
-Package-specific setup, architecture, deploy, and tests live in each package’s README:
+## Getting Started
 
-- **[Extension](apps/extension/README.md)** — load unpacked, OAuth, dev HMR, architecture, [adding an AI provider](apps/extension/README.md#adding-a-new-ai-provider)
-- **[Marketing site](apps/web/README.md)** — routes, analytics, Cloudflare Pages deploy
-- **[Shared UI](packages/ui/README.md)** — tokens, components, contribution rules
-
----
-
-## Requirements
+### Prerequisites
 
 - **Node.js** ≥ 22
 - **npm** (workspaces)
-- **Chrome** (for the extension)
+- **Chrome**
 
----
+### Running
 
-## Getting started
+Once you have the project cloned:
+
+1. Install dependencies from the monorepo root:
 
 ```bash
-git clone https://github.com/nshntarora/guidedreview.git
-cd guidedreview
 npm install
 ```
 
-### Run the extension (local)
+2. Build the extension:
 
 ```bash
 npm run build:extension
 ```
 
-1. Open `chrome://extensions`
-2. Enable **Developer mode**
-3. **Load unpacked** → select **`apps/extension/dist`** (never a root-level `dist/`)
+3. Load it in Chrome:
+   - Open `chrome://extensions`
+   - Enable **Developer mode**
+   - **Load unpacked** → select **`apps/extension/dist`** (never a root-level `dist/`)
+
 4. Open Options → add an LLM API key → open a GitHub PR → **Start Guided Review**
 
-For day-to-day development with HMR:
+That's it. You can start reviewing.
+
+### Development
+
+For day-to-day work with HMR:
 
 ```bash
-npm run dev                 # extension Vite / crx on :5173
+npm run dev                 # extension Vite / crx on port 5173
 ```
 
-After code changes, rebuild if needed (`npm run build:extension`), reload the extension card in `chrome://extensions`, and refresh the PR tab. Full details: **[apps/extension/README.md](apps/extension/README.md)**.
+After code changes, rebuild if needed (`npm run build:extension`), **Reload** the extension card in `chrome://extensions`, and refresh the PR tab. Chrome serves whatever is currently in `dist/` — a running dev server alone does not replace that reload.
 
-### Run the marketing site
+Marketing site (optional):
 
 ```bash
 npm run dev:web             # http://localhost:3000
 ```
 
-Full details: **[apps/web/README.md](apps/web/README.md)**.
+More detail: [apps/extension/README.md](apps/extension/README.md) · [apps/web/README.md](apps/web/README.md).
 
-### Optional: GitHub OAuth (device flow)
+### Building
 
-Submitting reviews from Guided Review needs a GitHub OAuth App client ID (device flow). Copy the example env and set the client ID, then rebuild the extension:
+```bash
+npm run build:extension     # typecheck + Vite → apps/extension/dist (+ zip)
+npm run build               # extension, then marketing site
+npm run build:web           # Next.js static export → apps/web/out
+```
+
+### Testing
+
+From the monorepo root:
+
+```bash
+npm test                    # unit tests (extension + UI)
+npm run test:e2e:install    # Chromium for extension e2e (once)
+npm run test:e2e            # extension Playwright e2e (builds first)
+npm run test:e2e:web        # marketing site e2e (builds first)
+```
+
+Also available: `npm run typecheck`, `npm run lint`, `npm run format`. Workspace-scoped runs use `npm run <script> -w @guided-review/<package>`.
+
+## Usage
+
+On a GitHub pull request, click **Start Guided Review** (or open from the extension once you are on the PR). The overlay walks you through review units — related hunks grouped and ordered — with keyboard shortcuts for next/prev unit, commenting, and submit.
+
+- Without an API key, you still get a **one unit per file** fallback so navigation and comments work; connect a provider for clustered plans.
+- Reading a PR and generating a plan does **not** require GitHub OAuth. Submitting a review (approve / comment / request changes) does — device flow, public client id only.
+- Line comments attach to the **real** diff lines shown for a unit, not to model-invented code.
+
+Docs for the happy path: [Your first review](https://guidedreview.dev/docs/first-review) · [Keyboard shortcuts](https://guidedreview.dev/docs/keyboard-shortcuts) · [Submit a review](https://guidedreview.dev/docs/submit-review).
+
+## Configuration
+
+**LLM provider** — Options page: Anthropic, OpenAI, or Grok, with your own API key. Keys live in `chrome.storage.local` on your machine. See [Configure AI provider](https://guidedreview.dev/docs/configure-provider).
+
+**GitHub OAuth (optional)** — needed only to submit reviews from the overlay. Create an OAuth App with **Device Flow** enabled, then at the monorepo root:
 
 ```bash
 cp .env.example .env        # set VITE_GITHUB_CLIENT_ID
 npm run build:extension
 ```
 
-See **[apps/extension/README.md](apps/extension/README.md#github-oauth)** for the full setup.
+Full setup: [apps/extension/README.md — GitHub OAuth](apps/extension/README.md#github-oauth).
 
----
+**Monorepo** — npm workspaces:
 
-## Command index
+| Path                               | What                                           |
+| ---------------------------------- | ---------------------------------------------- |
+| [`apps/extension`](apps/extension) | Chrome MV3 extension (the product)             |
+| [`apps/web`](apps/web)             | Marketing site and docs (Next.js)              |
+| [`packages/ui`](packages/ui)       | Shared tokens, brand assets, presentational UI |
 
-All commands below are run from the **monorepo root** unless noted.
-
-### Develop
-
-| Command                 | What it does                   |
-| ----------------------- | ------------------------------ |
-| `npm install`           | Install all workspaces         |
-| `npm run dev`           | Extension HMR (port **5173**)  |
-| `npm run dev:extension` | Same as `dev`                  |
-| `npm run dev:web`       | Marketing site (port **3000**) |
-
-### Build & preview
-
-| Command                   | What it does                                           |
-| ------------------------- | ------------------------------------------------------ |
-| `npm run build`           | Extension, then web                                    |
-| `npm run build:extension` | Typecheck + Vite build → `apps/extension/dist` (+ zip) |
-| `npm run build:web`       | Next.js static export → `apps/web/out`                 |
-| `npm run start:web`       | Production preview of the marketing site               |
-
-### Test
-
-| Command                    | What it does                                 |
-| -------------------------- | -------------------------------------------- |
-| `npm test`                 | Unit tests (extension + UI)                  |
-| `npm run test:watch`       | Extension unit tests in watch mode           |
-| `npm run test:coverage`    | Extension unit coverage                      |
-| `npm run test:e2e`         | Extension Playwright e2e (builds first)      |
-| `npm run test:e2e:ui`      | Extension e2e with Playwright UI             |
-| `npm run test:e2e:install` | Install Chromium for extension e2e           |
-| `npm run test:e2e:web`     | Marketing site Playwright e2e (builds first) |
-| `npm run test:e2e:web:ui`  | Marketing site e2e with Playwright UI        |
-
-### Quality
-
-| Command                | What it does                                    |
-| ---------------------- | ----------------------------------------------- |
-| `npm run typecheck`    | Typecheck all workspaces that define the script |
-| `npm run lint`         | ESLint                                          |
-| `npm run lint:fix`     | ESLint with autofix                             |
-| `npm run format`       | Prettier write                                  |
-| `npm run format:check` | Prettier check                                  |
-
-### Workspace-scoped examples
-
-```bash
-npm run test -w @guided-review/extension
-npm run test -w @guided-review/ui
-npm run deploy -w @guided-review/web          # local Cloudflare Pages deploy
-```
-
----
-
-## Ports
-
-| Service                     | Port |
-| --------------------------- | ---- |
-| Extension Vite / crx HMR    | 5173 |
-| Marketing site (`next dev`) | 3000 |
-| Web e2e static server       | 4173 |
-
----
+Package READMEs own architecture, deploy, and contribution detail for each.
 
 ## License
 

@@ -1,6 +1,6 @@
 # Deploy the marketing site (apps/web) to Cloudflare Pages.
 #
-# Runs only after the "Lint and test" workflow succeeds on a push to main
+# Runs only after the "Tests" workflow succeeds on a push to main
 # (or via workflow_dispatch). Static Next export (`apps/web/out`) is uploaded
 # with `wrangler pages deploy` to the production branch.
 #
@@ -16,7 +16,7 @@ name: Deploy
 
 on:
   workflow_run:
-    workflows: [Lint and test]
+    workflows: [Tests]
     types:
       - completed
     branches:
@@ -36,7 +36,7 @@ jobs:
   changes:
     name: Detect changes
     runs-on: ubuntu-latest
-    # Only proceed when Lint and test succeeded on a push to main
+    # Only proceed when Tests succeeded on a push to main
     # (or this was a manual run). workflow_run also fires for PRs whose head
     # is main in edge cases; require event == push to stay production-only.
     if: |

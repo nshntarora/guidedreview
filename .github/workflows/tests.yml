@@ -1,4 +1,4 @@
-name: Lint and test
+name: Tests
 
 on:
   push:
@@ -13,7 +13,7 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: lint-and-test-${{ github.workflow }}-${{ github.ref }}
+  group: tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
