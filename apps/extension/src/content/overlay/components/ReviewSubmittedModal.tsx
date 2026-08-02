@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef } from "react";
-import type { ReviewEvent } from "../commentTypes";
+import type { ReviewEvent } from "@extension/content/overlay/commentTypes";
 import { Button, Kbd } from "@guided-review/ui";
 import { ModalShell } from "./ModalShell";
 

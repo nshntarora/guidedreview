@@ -13,7 +13,7 @@ const shared = {
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@extension": path.resolve(__dirname, "./src"),
     },
   },
 };

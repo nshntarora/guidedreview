@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ParsedDiff, ReviewPlan } from "../../lib/types";
+import type { ParsedDiff, ReviewPlan } from "@extension/lib/types";
 import {
   buildDiffSearchIndex,
   buildLinePreview,

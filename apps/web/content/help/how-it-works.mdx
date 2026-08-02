@@ -1,6 +1,7 @@
 export const toc = [
   { id: "diff-to-plan", label: "Diff → plan", level: 2 },
   { id: "review-units", label: "Review units", level: 2 },
+  { id: "without-a-provider", label: "Without a provider", level: 2 },
   { id: "chunking-large-prs", label: "Chunking large PRs", level: 2 },
   { id: "streaming-and-validation", label: "Streaming and validation", level: 2 },
   { id: "what-the-model-must-not-invent", label: "What the model must not invent", level: 2 },
@@ -20,7 +21,7 @@ A short tour of the pipeline behind **Start Guided Review**. For the hands-on pa
 4. **Validate** — Each unit is cleaned against real file/hunk ids; hallucinated refs are dropped.
 5. **Display** — The overlay resolves unit refs back to the real diff for rendering.
 
-If annotation fails mid-stream, see [Troubleshooting → Plan generation fails](/docs/troubleshooting#plan-generation-fails).
+If no API key is configured, step 3 is skipped and a [local file-per-unit plan](#without-a-provider) is used instead. If annotation fails mid-stream, see [Troubleshooting → Plan generation fails](/docs/troubleshooting#plan-generation-fails).
 
 ## Review units
 
@@ -28,15 +29,26 @@ A **review unit** is a logical step in the plan: a title, intent context, and on
 
 Units aim for a consistent structure on the same diff: same hunk partition, order, and change-vs-tests kind. Titles and wording may still vary slightly across models.
 
-The first display step is a synthetic **PR description** unit built from page context, then the model’s units. You step through them with the footer or [keyboard shortcuts](/docs/keyboard-shortcuts).
+The first display step is a synthetic **PR description** unit built from page context, then the plan’s units. You step through them with the footer or [keyboard shortcuts](/docs/keyboard-shortcuts).
 
 Summaries are optional guidance — you still judge the code ([FAQ](/docs/faq#does-the-ai-approve-prs)).
+
+## Without a provider
+
+If you start a review before [configuring an API key](/docs/configure-provider), Guided Review still opens:
+
+- The diff is parsed and shown as usual.
+- The plan is **one unit per changed file**, in the order files appear in the diff (tests still get the flask kind when the path looks like a test file).
+- Unit titles are file paths; commentary is empty so the context panel can show the **Connect an AI provider** prompt instead of invented text.
+- You can still navigate, [search the diff](/docs/keyboard-shortcuts#diff-search), [draft comments](/docs/leave-comments), and [submit](/docs/submit-review) once GitHub is connected.
+
+Connecting a provider and starting again (or retrying when prompted) replaces that fallback with an AI-clustered plan for the current diff.
 
 ## Chunking large PRs
 
 Large diffs are split **by file** into chunks (~60k characters each). A single file’s hunks are never split across chunks. Each chunk is annotated separately; unit ids are namespaced so multi-chunk plans don’t collide, then merged for the final plan.
 
-That chunk size is why [model choice](/docs/configure-provider#pick-a-model) still matters on big PRs: each chunk is a full model call.
+That chunk size is why [model choice](/docs/configure-provider#pick-a-model) still matters on big PRs: **each chunk is a full model call**, so cost scales with diff size and model — see the [FAQ on cost](/docs/faq#will-this-run-up-my-api-bill).
 
 ## Streaming and validation
 

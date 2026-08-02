@@ -5,11 +5,11 @@ import type {
   GitHubAuthState,
   ParsedDiff,
   ReviewUnit,
-} from "../lib/types";
-import { setGitHubAuth } from "../lib/github/authStorage";
-import { setProviderSettings } from "../lib/settings";
-import { MOCK_EXTENSION_ID } from "../test/chromeMock";
-import type { MockPort } from "../test/chromeMock";
+} from "@extension/lib/types";
+import { setGitHubAuth } from "@extension/lib/github/authStorage";
+import { setProviderSettings } from "@extension/lib/settings";
+import { MOCK_EXTENSION_ID } from "@extension/test/chromeMock";
+import type { MockPort } from "@extension/test/chromeMock";
 import type { AnnotateReviewInput, AnnotateStreamEvent } from "./providers/types";
 
 /**

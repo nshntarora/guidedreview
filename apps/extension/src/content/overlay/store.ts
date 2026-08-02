@@ -5,10 +5,10 @@ import type {
   ReviewErrorInfo,
   ReviewPlan,
   ReviewUnit,
-} from "../../lib/types";
-import { NO_API_KEY_ERROR_CODE } from "../../lib/types";
-import type { PRIdentity } from "../../lib/github/diffFetch";
-import { buildFileReviewPlan } from "../../lib/review/reviewPlan";
+} from "@extension/lib/types";
+import { NO_API_KEY_ERROR_CODE } from "@extension/lib/types";
+import type { PRIdentity } from "@extension/lib/github/diffFetch";
+import { buildFileReviewPlan } from "@extension/lib/review/reviewPlan";
 import {
   displayLineNumber,
   linesInSelection,
@@ -17,13 +17,13 @@ import {
   type SelectableLine,
   type UiMode,
 } from "./commentTypes";
-import { readSession, writeSession } from "../../lib/storage";
+import { readSession, writeSession } from "@extension/lib/storage";
 import {
   DEFAULT_DIFF_VIEW_MODE,
   getStoredDiffViewMode,
   setStoredDiffViewMode,
   type DiffViewMode,
-} from "../../lib/preferences";
+} from "@extension/lib/preferences";
 
 export type ReviewStatus = "idle" | "loading" | "streaming" | "ready" | "error";
 

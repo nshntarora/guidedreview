@@ -1,5 +1,5 @@
-import type { GitHubAuthState } from "../types";
-import { readLocal, removeLocal, writeLocal } from "../storage";
+import type { GitHubAuthState } from "@extension/lib/types";
+import { readLocal, removeLocal, writeLocal } from "@extension/lib/storage";
 
 const STORAGE_KEY = "guidedReview.githubAuth";
 

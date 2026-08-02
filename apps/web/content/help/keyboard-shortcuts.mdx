@@ -1,6 +1,7 @@
 export const toc = [
   { id: "review-navigation", label: "Review navigation", level: 2 },
   { id: "diff-view", label: "Diff view", level: 2 },
+  { id: "diff-search", label: "Diff search", level: 2 },
   { id: "comment-mode", label: "Comment mode", level: 2 },
   { id: "submit-and-modals", label: "Submit and modals", level: 2 },
   { id: "marketing-site", label: "Marketing site", level: 2 },
@@ -23,6 +24,7 @@ The Guided Review sidebar always lists the same shortcuts as this page. Hands-on
 | `↑` / `↓`          | Scroll the code pane                                                                            |
 | `Esc`              | Exit Guided Review (when not in comment mode or a modal)                                        |
 | `c`                | Enter [comment mode](/docs/leave-comments) (if the unit has selectable lines)                   |
+| `⌘/Ctrl` + `F`     | Open [diff search](#diff-search)                                                                |
 | `⌘/Ctrl` + `Enter` | Open [Submit review](/docs/submit-review) (or [Connect GitHub](/docs/connect-github) if needed) |
 
 While Guided Review is open, keys are not passed through to GitHub’s page shortcuts. What a “unit” is: [How a review plan works](/docs/how-it-works#review-units).
@@ -35,6 +37,21 @@ While Guided Review is open, keys are not passed through to GitHub’s page shor
 | `v` then `s` | Split view   |
 
 Type `v`, then `u` or `s` within about a second. You can also toggle unified / split from the toolbar while [walking the plan](/docs/first-review#walk-the-plan).
+
+**Default is split.** Your choice is remembered in `chrome.storage.local` for the next review on this browser.
+
+## Diff search
+
+Search **every** file path and line in the PR’s parsed diff — not only the active unit.
+
+1. Press `⌘/Ctrl` + `F` while the overlay is open.
+2. Type a path fragment or code snippet. Results are fuzzy-ranked (paths rank above line hits).
+3. Move with `↑` / `↓`, open a hit with `Enter`, or close with `Esc`.
+4. Selecting a result jumps to the unit that owns that file (or hunk) and scrolls the match into view.
+
+Press `⌘/Ctrl` + `F` again while the palette is open to re-focus and select the query. Renames match on the old or new path. Binary / elided files contribute path hits only.
+
+This is Guided Review’s own search palette. GitHub’s page find does not run while the overlay owns the keyboard.
 
 ## Comment mode
 

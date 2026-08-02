@@ -1,4 +1,4 @@
-import { CHROME_WEB_STORE_URL } from "@/lib/links";
+import { CHROME_WEB_STORE_URL } from "@web/lib/links";
 
 export const toc = [
   { id: "chrome-web-store", label: "Chrome Web Store", level: 2 },
@@ -16,7 +16,7 @@ Guided Review runs as a Chrome Manifest V3 extension. Install it once, then use 
 
 1. Open the <a href={CHROME_WEB_STORE_URL}>Guided Review listing</a> on the Chrome Web Store.
 2. Click **Add to Chrome** and confirm.
-3. Pin the extension from the puzzle-piece menu if you want one-click access to options.
+3. Pin the extension from the puzzle-piece menu so the toolbar icon stays visible — unpinned extensions are easy to forget.
 
 > **Site shortcut.** On [guidedreview.dev](https://guidedreview.dev), `⌘/Ctrl` + `I` opens the Chrome Web Store listing — see [Keyboard shortcuts](/docs/keyboard-shortcuts#marketing-site).
 
@@ -40,9 +40,17 @@ npm run build:extension
 
 ## After install
 
-1. Open the extension **Options** page (right-click the extension icon → Options, or open it from `chrome://extensions`).
-2. [Configure an AI provider](/docs/configure-provider) and save your API key.
+Chrome opens a short **welcome** page on first install (pin → connect provider → open a PR). You can also:
+
+1. Open the extension **Options** page (right-click the toolbar icon → Options, or open it from `chrome://extensions`).
+2. [Configure an AI provider](/docs/configure-provider) and save your API key (optional for a [file-by-file walk](/docs/how-it-works#without-a-provider); required for clustering and summaries).
 3. Optionally [connect GitHub](/docs/connect-github) if you want to [submit reviews](/docs/submit-review) from Guided Review.
 4. Open a PR and follow [Your first review](/docs/first-review).
+
+**Ways to start a review** once you’re on a PR tab:
+
+- Click **Start Guided Review** on the page.
+- Click the **toolbar icon** — on a PR it starts (or resumes) the review; off a PR it tells you to open one.
+- Enable **Automatically open on Files changed** in Options if you want that tab to open Guided Review for you.
 
 Keys and tokens stay on your machine — details in [Privacy & data](/docs/privacy-and-data). If the **Start Guided Review** button never appears, see [Troubleshooting](/docs/troubleshooting#no-start-guided-review-button).

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
-import { DOCS_PAGES } from "@/config/docs";
-import { SITE_URL } from "@/lib/site";
+import { DOCS_PAGES } from "@web/config/docs";
+import { SITE_URL } from "@web/lib/site";
 
 export const dynamic = "force-static";
 

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ParsedDiff } from "../../../lib/types";
+import type { ParsedDiff } from "@extension/lib/types";
 import { DiffSearch } from "./DiffSearch";
 
 function sampleDiff(): ParsedDiff {

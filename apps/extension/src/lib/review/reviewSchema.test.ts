@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { REVIEW_PLAN_JSON_SCHEMA } from "./reviewSchema";
 import { parseReviewUnit } from "./reviewPlan";
-import { FILE_ROLES, UNIT_KINDS, type DiffFile, type ReviewUnit } from "../types";
+import { FILE_ROLES, UNIT_KINDS, type DiffFile, type ReviewUnit } from "@extension/lib/types";
 
 const roleSchema =
   REVIEW_PLAN_JSON_SCHEMA.properties.units.items.properties.files.items.properties.role;

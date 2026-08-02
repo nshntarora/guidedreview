@@ -5,8 +5,8 @@
  * @see https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request
  */
 
-import type { ReviewCommentInput, ReviewEvent, SubmitReviewResponse } from "../types";
-import { EMPTY_REVIEW_BODY_MESSAGE } from "../types";
+import type { ReviewCommentInput, ReviewEvent, SubmitReviewResponse } from "@extension/lib/types";
+import { EMPTY_REVIEW_BODY_MESSAGE } from "@extension/lib/types";
 import type { PRIdentity } from "./diffFetch";
 
 type SubmitReviewFailure = Extract<SubmitReviewResponse, { ok: false }>;

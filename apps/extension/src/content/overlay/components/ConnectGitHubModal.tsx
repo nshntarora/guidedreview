@@ -1,8 +1,14 @@
 import { useEffect, useId, useRef, type MutableRefObject } from "react";
-import { GitHubLogo } from "../../../components/GitHubLogo";
-import { GITHUB_CLIENT_ID_ENV_VAR, isGitHubOAuthConfigured } from "../../../lib/github/oauthConfig";
-import { useCopyToClipboard } from "../../../lib/useCopyToClipboard";
-import { openVerificationUri, useGitHubDeviceAuth } from "../../../lib/github/useGitHubDeviceAuth";
+import { GitHubLogo } from "@extension/components/GitHubLogo";
+import {
+  GITHUB_CLIENT_ID_ENV_VAR,
+  isGitHubOAuthConfigured,
+} from "@extension/lib/github/oauthConfig";
+import { useCopyToClipboard } from "@extension/lib/useCopyToClipboard";
+import {
+  openVerificationUri,
+  useGitHubDeviceAuth,
+} from "@extension/lib/github/useGitHubDeviceAuth";
 import { Button, Kbd, Spinner } from "@guided-review/ui";
 import { CloseButton, ModalShell } from "./ModalShell";
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { DocsMobileNav } from "@/components/docs/DocsMobileNav";
-import { DocsSidebar } from "@/components/docs/DocsSidebar";
+import { DocsMobileNav } from "@web/components/docs/DocsMobileNav";
+import { DocsSidebar } from "@web/components/docs/DocsSidebar";
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
   return (

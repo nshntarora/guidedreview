@@ -8,6 +8,17 @@ Chrome MV3 extension: GitHub PR diff → user's LLM → ordered **review units**
 | `apps/web`       | Marketing + docs (Next.js static export → `out/`)                  |
 | `packages/ui`    | Shared tokens/UI — source-only; no `chrome.*` or extension imports |
 
+## Import aliases
+
+Prefer absolute imports over deep `../../` relatives:
+
+| Alias          | Resolves to            |
+| -------------- | ---------------------- |
+| `@extension/*` | `apps/extension/src/*` |
+| `@web/*`       | `apps/web/*`           |
+
+Same-directory `./foo` is fine. Cross-folder imports should use the alias.
+
 ## Commands
 
 `npm run dev` · `dev:web` · `build` · `build:extension` · `typecheck` · `test` · `test:e2e` · `lint` · `format`

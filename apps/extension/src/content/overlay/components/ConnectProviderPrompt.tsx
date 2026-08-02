@@ -1,5 +1,5 @@
 import { Button, buttonClassName } from "@guided-review/ui";
-import { openOptionsPage } from "../../../lib/messaging";
+import { openOptionsPage } from "@extension/lib/messaging";
 
 /** Docs: configure Anthropic / OpenAI / Grok and paste an API key. */
 const CONFIGURE_PROVIDER_DOCS_URL = "https://guidedreview.dev/docs/configure-provider";

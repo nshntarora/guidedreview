@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ReviewPlan } from "../../../lib/types";
+import type { ReviewPlan } from "@extension/lib/types";
 import { Sidebar } from "./Sidebar";
 
 function planWithUnits(count: number): ReviewPlan {

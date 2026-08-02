@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@guided-review/ui";
 
-import { buildPRFileDiffUrl } from "../../../lib/github/prUrls";
-import { languageForPath } from "../../../lib/highlight";
-import { displayLineNumber, linesInSelection, type SelectableLine } from "../commentTypes";
-import type { SearchScrollTarget } from "../diffSearch";
-import { hydrateDiffViewMode, useReviewStore } from "../store";
-import type { ResolvedUnitFile } from "../buildSelectableLines";
+import { buildPRFileDiffUrl } from "@extension/lib/github/prUrls";
+import { languageForPath } from "@extension/lib/highlight";
+import {
+  displayLineNumber,
+  linesInSelection,
+  type SelectableLine,
+} from "@extension/content/overlay/commentTypes";
+import type { SearchScrollTarget } from "@extension/content/overlay/diffSearch";
+import { hydrateDiffViewMode, useReviewStore } from "@extension/content/overlay/store";
+import type { ResolvedUnitFile } from "@extension/content/overlay/buildSelectableLines";
 import { AddCommentButton, CommentModeChip, DiffViewToggle } from "./diff/DiffToolbar";
 import { SplitHunk } from "./diff/SplitHunk";
 import { UnifiedHunk } from "./diff/UnifiedHunk";

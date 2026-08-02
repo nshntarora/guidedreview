@@ -1,4 +1,4 @@
-import type { DiffFile, ParsedDiff, PRContext } from "../types";
+import type { DiffFile, ParsedDiff, PRContext } from "@extension/lib/types";
 
 export const SYSTEM_PROMPT = `You are an expert senior engineer helping a human review a pull request that may have been written by an AI coding agent. You do not write or rewrite code — you plan how a human should walk through an existing diff, and explain intent.
 

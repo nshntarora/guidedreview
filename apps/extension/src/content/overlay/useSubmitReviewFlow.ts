@@ -1,9 +1,9 @@
 import { useCallback, useRef, useState } from "react";
-import { getGitHubAuthStatus, requestSubmitReview } from "../../lib/messaging";
-import type { PRContext, ReviewCommentInput } from "../../lib/types";
-import { EMPTY_REVIEW_BODY_MESSAGE } from "../../lib/types";
+import { getGitHubAuthStatus, requestSubmitReview } from "@extension/lib/messaging";
+import type { PRContext, ReviewCommentInput } from "@extension/lib/types";
+import { EMPTY_REVIEW_BODY_MESSAGE } from "@extension/lib/types";
 import type { DraftComment, ReviewEvent, ReviewSubmission } from "./commentTypes";
-import { navigateToPrConversation } from "../../lib/github/prUrls";
+import { navigateToPrConversation } from "@extension/lib/github/prUrls";
 
 /** Map local draft comments to GitHub create-review `comments[]` payloads. */
 function mapDraftsToReviewComments(drafts: DraftComment[]): ReviewCommentInput[] {

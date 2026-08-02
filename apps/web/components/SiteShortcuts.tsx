@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { AnalyticsEvents } from "../lib/analytics";
-import { SITE_SHORTCUTS } from "../lib/shortcuts";
+import { AnalyticsEvents } from "@web/lib/analytics";
+import { SITE_SHORTCUTS } from "@web/lib/shortcuts";
 import { useAnalytics } from "./analytics/AnalyticsProvider";
 
 function isEditableTarget(target: EventTarget | null): boolean {

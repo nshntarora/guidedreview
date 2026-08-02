@@ -1,6 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { ReviewPlan } from "../src/lib/types";
+import type { ReviewPlan } from "@extension/lib/types";
 import { expect, test } from "./fixtures";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

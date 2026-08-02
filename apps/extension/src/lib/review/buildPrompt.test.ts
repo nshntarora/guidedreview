@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildUserPrompt, chunkDiffByFile, SYSTEM_PROMPT } from "./buildPrompt";
-import type { DiffFile, ParsedDiff, PRContext } from "../types";
+import type { DiffFile, ParsedDiff, PRContext } from "@extension/lib/types";
 
 function fileFixture(path: string, extraLineCount = 0): DiffFile {
   return {

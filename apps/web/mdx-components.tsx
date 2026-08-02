@@ -1,11 +1,11 @@
 import type { MDXComponents } from "mdx/types";
 import { Children, isValidElement, type HTMLAttributes, type ReactNode } from "react";
 import type { TdHTMLAttributes, ThHTMLAttributes } from "react";
-import { Callout } from "@/components/docs/Callout";
-import { DocsIndex } from "@/components/docs/DocsIndex";
-import { LegalContactBlock } from "@/components/LegalDocument";
-import { CopyButton } from "@/components/docs/CopyButton";
-import { TocCard } from "@/components/docs/TocCard";
+import { Callout } from "@web/components/docs/Callout";
+import { DocsIndex } from "@web/components/docs/DocsIndex";
+import { LegalContactBlock } from "@web/components/LegalDocument";
+import { CopyButton } from "@web/components/docs/CopyButton";
+import { TocCard } from "@web/components/docs/TocCard";
 
 /** Flatten heading children to plain text for slug generation. */
 function textFromChildren(children: ReactNode): string {

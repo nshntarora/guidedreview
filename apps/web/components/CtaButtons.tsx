@@ -1,8 +1,8 @@
 "use client";
 
 import { buttonClassName, type ButtonSize } from "@guided-review/ui";
-import { AnalyticsEvents, type CtaEventProperties, type CtaLocation } from "../lib/analytics";
-import { ariaKeyShortcuts, SITE_SHORTCUTS } from "../lib/shortcuts";
+import { AnalyticsEvents, type CtaEventProperties, type CtaLocation } from "@web/lib/analytics";
+import { ariaKeyShortcuts, SITE_SHORTCUTS } from "@web/lib/shortcuts";
 import { useAnalytics } from "./analytics/AnalyticsProvider";
 import { GitHubIcon } from "./icons";
 import { ShortcutChord } from "./ShortcutChord";

@@ -1,4 +1,10 @@
-import type { DiffFile, DiffHunk, DiffLine, FileChangeStatus, ParsedDiff } from "../types";
+import type {
+  DiffFile,
+  DiffHunk,
+  DiffLine,
+  FileChangeStatus,
+  ParsedDiff,
+} from "@extension/lib/types";
 
 const FILE_HEADER_PREFIX = "diff --git ";
 const HUNK_HEADER_RE = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)$/;

@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
-import type { GitHubPublicAuthState } from "../lib/types";
-import { GitHubLogo } from "../components/GitHubLogo";
-import { GITHUB_CLIENT_ID_ENV_VAR, isGitHubOAuthConfigured } from "../lib/github/oauthConfig";
-import { useCopyToClipboard } from "../lib/useCopyToClipboard";
-import { openVerificationUri, useGitHubDeviceAuth } from "../lib/github/useGitHubDeviceAuth";
-import { clearGitHubAuthSession, getGitHubAuthStatus } from "../lib/messaging";
-import { confirm, ConfirmationHost } from "../lib/confirmation";
+import type { GitHubPublicAuthState } from "@extension/lib/types";
+import { GitHubLogo } from "@extension/components/GitHubLogo";
+import {
+  GITHUB_CLIENT_ID_ENV_VAR,
+  isGitHubOAuthConfigured,
+} from "@extension/lib/github/oauthConfig";
+import { useCopyToClipboard } from "@extension/lib/useCopyToClipboard";
+import {
+  openVerificationUri,
+  useGitHubDeviceAuth,
+} from "@extension/lib/github/useGitHubDeviceAuth";
+import { clearGitHubAuthSession, getGitHubAuthStatus } from "@extension/lib/messaging";
+import { confirm, ConfirmationHost } from "@extension/lib/confirmation";
 import { Button, Spinner, cn } from "@guided-review/ui";
 import { SettingsCard } from "./SettingsCard";
 

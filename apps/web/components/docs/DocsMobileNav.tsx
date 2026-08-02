@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import { buttonClassName, cn } from "@guided-review/ui";
-import { DocsSidebar } from "@/components/docs/DocsSidebar";
+import { DocsSidebar } from "@web/components/docs/DocsSidebar";
 
 export function DocsMobileNav() {
   const [open, setOpen] = useState(false);

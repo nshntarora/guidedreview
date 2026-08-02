@@ -11,7 +11,7 @@ import {
   requestTestConnection,
 } from "./messaging";
 import type { ParsedDiff, PRContext, ReviewUnit } from "./types";
-import type { MockPort } from "../test/chromeMock";
+import type { MockPort } from "@extension/test/chromeMock";
 
 describe("messaging", () => {
   it("requestPRDiff sends a typed FETCH_DIFF message", async () => {

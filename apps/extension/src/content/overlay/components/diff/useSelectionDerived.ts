@@ -5,7 +5,7 @@ import {
   type DraftComment,
   type LineSelection,
   type SelectableLine,
-} from "../../commentTypes";
+} from "@extension/content/overlay/commentTypes";
 import type { ComposerRange } from "./hunkShared";
 
 export function useSelectionDerived(

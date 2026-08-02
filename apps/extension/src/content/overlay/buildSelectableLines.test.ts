@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { DiffFile, DiffHunk } from "../../lib/types";
+import type { DiffFile, DiffHunk } from "@extension/lib/types";
 import { buildSelectableLines } from "./buildSelectableLines";
 import type { ResolvedUnitFile } from "./buildSelectableLines";
 

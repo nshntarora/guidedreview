@@ -4,13 +4,13 @@
  */
 
 import { cn } from "@guided-review/ui";
-import { confirm } from "../../../../lib/confirmation";
-import { highlightToLines } from "../../../../lib/highlight";
-import type { DiffHunk } from "../../../../lib/types";
-import type { DraftComment } from "../../commentTypes";
-import { useReviewStore } from "../../store";
-import { CommentComposer } from "../CommentComposer";
-import { DraftCommentCard } from "../DraftCommentCard";
+import { confirm } from "@extension/lib/confirmation";
+import { highlightToLines } from "@extension/lib/highlight";
+import type { DiffHunk } from "@extension/lib/types";
+import type { DraftComment } from "@extension/content/overlay/commentTypes";
+import { useReviewStore } from "@extension/content/overlay/store";
+import { CommentComposer } from "@extension/content/overlay/components/CommentComposer";
+import { DraftCommentCard } from "@extension/content/overlay/components/DraftCommentCard";
 
 /** File + line span the comment composer is currently anchored to. */
 export type ComposerRange = {

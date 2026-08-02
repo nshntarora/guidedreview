@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_DIFF_VIEW_MODE } from "../../lib/preferences";
+import { DEFAULT_DIFF_VIEW_MODE } from "@extension/lib/preferences";
 import { useReviewStore, persistSession, restoreSession, buildSessionKey } from "./store";
-import type { ParsedDiff, PRContext, ReviewPlan } from "../../lib/types";
+import type { ParsedDiff, PRContext, ReviewPlan } from "@extension/lib/types";
 
 function diffFixture(): ParsedDiff {
   return { files: [] };

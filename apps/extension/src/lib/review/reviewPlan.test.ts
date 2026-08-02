@@ -7,9 +7,9 @@ import {
   isTestPath,
   roleForPath,
 } from "./reviewPlan";
-import { resolveUnitFiles } from "../../content/overlay/buildSelectableLines";
-import { middleTruncate } from "../middleTruncate";
-import type { DiffFile, ParsedDiff, ReviewUnit } from "../types";
+import { resolveUnitFiles } from "@extension/content/overlay/buildSelectableLines";
+import { middleTruncate } from "@extension/lib/middleTruncate";
+import type { DiffFile, ParsedDiff, ReviewUnit } from "@extension/lib/types";
 
 /** The known-files map `parseReviewUnit` validates against. */
 function diffFixture(): Map<string, DiffFile> {

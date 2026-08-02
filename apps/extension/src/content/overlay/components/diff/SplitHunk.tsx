@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { cn } from "@guided-review/ui";
-import { buildSplitRows, type SplitCell } from "../../buildSplitRows";
+import { buildSplitRows, type SplitCell } from "@extension/content/overlay/buildSplitRows";
 import {
   CodeContent,
   DIFF_LINE_WRAP,
@@ -10,7 +10,7 @@ import {
   selectionClasses,
   type HunkViewProps,
 } from "./hunkShared";
-import { lineIdFor } from "../../commentTypes";
+import { lineIdFor } from "@extension/content/overlay/commentTypes";
 
 function SplitCellView({
   cell,

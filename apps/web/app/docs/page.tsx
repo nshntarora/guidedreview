@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Content from "@/content/help/index.mdx";
-import { DocsPageWrapper } from "@/components/docs/DocsPageWrapper";
-import { JsonLd } from "@/components/JsonLd";
-import { openGraphSite, SITE_NAME, SITE_URL } from "@/lib/site";
+import Content from "@web/content/help/index.mdx";
+import { DocsPageWrapper } from "@web/components/docs/DocsPageWrapper";
+import { JsonLd } from "@web/components/JsonLd";
+import { openGraphSite, SITE_NAME, SITE_URL } from "@web/lib/site";
 
 const DOCS_DESCRIPTION =
   "Learn how to install Guided Review, configure your AI provider, and walk through GitHub pull requests with structured review plans.";

@@ -122,8 +122,17 @@ export default tseslint.config(
           ],
           patterns: [
             {
-              group: ["**/apps/extension/**", "@guided-review/extension"],
+              group: [
+                "**/apps/extension/**",
+                "@guided-review/extension",
+                "@extension",
+                "@extension/**",
+              ],
               message: "Shared UI must not import the extension app.",
+            },
+            {
+              group: ["**/apps/web/**", "@web", "@web/**"],
+              message: "Shared UI must not import the web app.",
             },
           ],
         },
@@ -139,8 +148,39 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ["**/apps/extension/**", "@guided-review/extension", "@/../extension/**"],
+              group: [
+                "**/apps/extension/**",
+                "@guided-review/extension",
+                "@extension",
+                "@extension/**",
+              ],
               message: "Web app must not import the Chrome extension package.",
+            },
+            {
+              // Prefer @web/* over deep relative paths.
+              group: ["**/../../*", "../../*", "../../../*", "../../../../*"],
+              message: "Use @web/... instead of deep relative imports.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // apps/extension must not import the web app; prefer @extension/* over deep relatives
+  {
+    files: ["apps/extension/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/apps/web/**", "@web", "@web/**"],
+              message: "Extension must not import the web app.",
+            },
+            {
+              group: ["**/../../*", "../../*", "../../../*", "../../../../*"],
+              message: "Use @extension/... instead of deep relative imports.",
             },
           ],
         },

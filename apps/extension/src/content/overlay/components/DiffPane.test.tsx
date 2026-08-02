@@ -1,11 +1,14 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { buildPRFileDiffUrl } from "../../../lib/github/prUrls";
-import type { DiffFile, DiffHunk, PRContext } from "../../../lib/types";
-import { buildSelectableLines } from "../buildSelectableLines";
-import { DEFAULT_DIFF_VIEW_MODE } from "../../../lib/preferences";
-import { resetDiffViewModeHydrationForTests, useReviewStore } from "../store";
-import type { ResolvedUnitFile } from "../buildSelectableLines";
+import { buildPRFileDiffUrl } from "@extension/lib/github/prUrls";
+import type { DiffFile, DiffHunk, PRContext } from "@extension/lib/types";
+import { buildSelectableLines } from "@extension/content/overlay/buildSelectableLines";
+import { DEFAULT_DIFF_VIEW_MODE } from "@extension/lib/preferences";
+import {
+  resetDiffViewModeHydrationForTests,
+  useReviewStore,
+} from "@extension/content/overlay/store";
+import type { ResolvedUnitFile } from "@extension/content/overlay/buildSelectableLines";
 import { DiffPane } from "./DiffPane";
 
 function prContextFixture(overrides: Partial<PRContext> = {}): PRContext {

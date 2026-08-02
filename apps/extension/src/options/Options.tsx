@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import type { ProviderSettings } from "../lib/types";
+import type { ProviderSettings } from "@extension/lib/types";
 import {
   defaultModelFor,
   getProvider,
   modelsForProvider,
   PROVIDER_LIST,
   type ProviderId,
-} from "../lib/providers/catalog";
-import { getAutoOpenOnFilesTab, setAutoOpenOnFilesTab } from "../lib/preferences";
-import { getProviderSettings, setProviderSettings } from "../lib/settings";
-import { requestTestConnection } from "../lib/messaging";
+} from "@extension/lib/providers/catalog";
+import { getAutoOpenOnFilesTab, setAutoOpenOnFilesTab } from "@extension/lib/preferences";
+import { getProviderSettings, setProviderSettings } from "@extension/lib/settings";
+import { requestTestConnection } from "@extension/lib/messaging";
 import { GitHubAuthSection } from "./GitHubAuthSection";
 import { SettingsCard } from "./SettingsCard";
 import { Button, cn, Input, Label, Select, Spinner, type SelectOption } from "@guided-review/ui";

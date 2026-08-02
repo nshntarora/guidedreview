@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@guided-review/ui";
 
-import { middleTruncate } from "../../../lib/middleTruncate";
+import { middleTruncate } from "@extension/lib/middleTruncate";
 
 interface MiddleEllipsisTextProps {
   /** Full text to display; truncated in the middle when it overflows. */

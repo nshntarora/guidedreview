@@ -1,4 +1,4 @@
-import { middleTruncate } from "../middleTruncate";
+import { middleTruncate } from "@extension/lib/middleTruncate";
 import type {
   DiffFile,
   FileRole,
@@ -6,8 +6,8 @@ import type {
   ReviewPlan,
   ReviewUnit,
   ReviewUnitFileRef,
-} from "../types";
-import { DEFAULT_FILE_ROLE, FILE_ROLES } from "../types";
+} from "@extension/lib/types";
+import { DEFAULT_FILE_ROLE, FILE_ROLES } from "@extension/lib/types";
 
 // ---- Path → role heuristics -------------------------------------------------
 

@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { GitHubAuthState } from "../types";
-import * as messaging from "../messaging";
+import type { GitHubAuthState } from "@extension/lib/types";
+import * as messaging from "@extension/lib/messaging";
 import { openVerificationUri, useGitHubDeviceAuth } from "./useGitHubDeviceAuth";
 
 vi.mock("../messaging", () => ({

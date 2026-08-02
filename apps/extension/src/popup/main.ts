@@ -1,6 +1,6 @@
-import { parsePRUrl } from "../lib/github/diffFetch";
-import { isIgnoredPrPath } from "../lib/github/prUrls";
-import type { StartGuidedReviewMessage } from "../lib/types";
+import { parsePRUrl } from "@extension/lib/github/diffFetch";
+import { isIgnoredPrPath } from "@extension/lib/github/prUrls";
+import type { StartGuidedReviewMessage } from "@extension/lib/types";
 import "./popup.css";
 
 const NOT_ON_PR = "Open a GitHub pull request page to start a review.";

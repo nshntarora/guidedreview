@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { DOCS_PAGES, docsPath } from "@/config/docs";
+import { DOCS_PAGES, docsPath } from "@web/config/docs";
 
 /**
  * The docs table of contents, rendered from `config/docs.ts` so the index page

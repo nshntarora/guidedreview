@@ -1,6 +1,6 @@
-import type { ProviderSettings } from "../../lib/types";
-import { buildUserPrompt, SYSTEM_PROMPT } from "../../lib/review/buildPrompt";
-import { REVIEW_PLAN_JSON_SCHEMA } from "../../lib/review/reviewSchema";
+import type { ProviderSettings } from "@extension/lib/types";
+import { buildUserPrompt, SYSTEM_PROMPT } from "@extension/lib/review/buildPrompt";
+import { REVIEW_PLAN_JSON_SCHEMA } from "@extension/lib/review/reviewSchema";
 import { postProviderJson } from "./http";
 import { readSseJsonStream } from "./sse";
 import type { AnnotateReviewInput, AnnotateStreamEvent, ProviderClient } from "./types";

@@ -1,15 +1,15 @@
 import { createRoot } from "react-dom/client";
-import { getAutoOpenOnFilesTab, onAutoOpenOnFilesTabChanged } from "../lib/preferences";
-import { parsePRUrl, type PRIdentity } from "../lib/github/diffFetch";
-import { isIgnoredPrPath } from "../lib/github/prUrls";
-import { fetchConversationDescription, scrapePRContext } from "../lib/github/prContext";
-import { requestPRDiff, streamReviewPlan } from "../lib/messaging";
-import { getProvider } from "../lib/providers/catalog";
-import { getProviderSettings, onProviderSettingsChanged } from "../lib/settings";
-import type { ContentRequest, ParsedDiff, PRContext } from "../lib/types";
+import { getAutoOpenOnFilesTab, onAutoOpenOnFilesTabChanged } from "@extension/lib/preferences";
+import { parsePRUrl, type PRIdentity } from "@extension/lib/github/diffFetch";
+import { isIgnoredPrPath } from "@extension/lib/github/prUrls";
+import { fetchConversationDescription, scrapePRContext } from "@extension/lib/github/prContext";
+import { requestPRDiff, streamReviewPlan } from "@extension/lib/messaging";
+import { getProvider } from "@extension/lib/providers/catalog";
+import { getProviderSettings, onProviderSettingsChanged } from "@extension/lib/settings";
+import type { ContentRequest, ParsedDiff, PRContext } from "@extension/lib/types";
 import { ensureFallbackHost, FALLBACK_HOST_ID, findButtonAnchor } from "./buttonAnchor";
 import { Overlay } from "./overlay/Overlay";
-import { isPrFilesChangedPath } from "../lib/github/prUrls";
+import { isPrFilesChangedPath } from "@extension/lib/github/prUrls";
 import overlayStyles from "./overlay/styles/overlay.css?inline";
 import { useReviewStore, restoreSession, buildSessionKey } from "./overlay/store";
 

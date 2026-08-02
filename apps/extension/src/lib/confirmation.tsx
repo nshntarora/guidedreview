@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { Button, Kbd } from "@guided-review/ui";
-import { ModalShell } from "../content/overlay/components/ModalShell";
+import { ModalShell } from "@extension/content/overlay/components/ModalShell";
 
 export type ConfirmVariant = "primary" | "destructive";
 

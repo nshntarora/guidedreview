@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import type { ParsedDiff, PRContext } from "../../../lib/types";
+import type { ParsedDiff, PRContext } from "@extension/lib/types";
 import { DescriptionPane } from "./DescriptionPane";
 
 function prContext(overrides: Partial<PRContext> = {}): PRContext {

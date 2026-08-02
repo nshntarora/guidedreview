@@ -9,7 +9,7 @@ import {
   selectionClasses,
   type HunkViewProps,
 } from "./hunkShared";
-import { lineIdFor, sideForLine } from "../../commentTypes";
+import { lineIdFor, sideForLine } from "@extension/content/overlay/commentTypes";
 
 export function UnifiedHunk({
   hunk,

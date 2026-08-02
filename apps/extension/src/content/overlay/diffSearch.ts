@@ -3,7 +3,7 @@
  * highlight matches, and map hits back to display units.
  */
 import Fuse, { type IFuseOptions } from "fuse.js";
-import type { DiffLine, ParsedDiff, ReviewPlan } from "../../lib/types";
+import type { DiffLine, ParsedDiff, ReviewPlan } from "@extension/lib/types";
 import type { DiffSide } from "./commentTypes";
 import { buildDisplayUnits } from "./store";
 

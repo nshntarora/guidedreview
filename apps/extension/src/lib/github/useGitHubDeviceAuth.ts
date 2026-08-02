@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { GitHubAuthState } from "../types";
-import { pollGitHubDeviceAuth, startGitHubDeviceAuth } from "../messaging";
+import type { GitHubAuthState } from "@extension/lib/types";
+import { pollGitHubDeviceAuth, startGitHubDeviceAuth } from "@extension/lib/messaging";
 
 /** In-progress device OAuth UI state owned by the caller’s poll loop. */
 type DeviceAuthFlowView =

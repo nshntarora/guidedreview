@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CHROME_WEB_STORE_URL, GITHUB_REPO_URL } from "../lib/links";
+import { CHROME_WEB_STORE_URL, GITHUB_REPO_URL } from "@web/lib/links";
 import { WindowFrame } from "./WindowFrame";
 
 type Faq = {

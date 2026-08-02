@@ -1,7 +1,7 @@
 import { useEffect, useRef, type MutableRefObject, type RefObject } from "react";
-import { getConfirmationDialogElement, isConfirmationOpen } from "../../lib/confirmation";
+import { getConfirmationDialogElement, isConfirmationOpen } from "@extension/lib/confirmation";
 import type { SelectableLine } from "./commentTypes";
-import type { DiffViewMode } from "../../lib/preferences";
+import type { DiffViewMode } from "@extension/lib/preferences";
 import { trapTabKey } from "./focusTrap";
 import { useReviewStore } from "./store";
 

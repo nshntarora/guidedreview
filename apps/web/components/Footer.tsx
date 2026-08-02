@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GITHUB_REPO_URL } from "../lib/links";
+import { GITHUB_REPO_URL } from "@web/lib/links";
 
 export function Footer() {
   return (

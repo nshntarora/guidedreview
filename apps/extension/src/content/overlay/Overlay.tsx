@@ -13,7 +13,7 @@ import { ContextPanel } from "./components/ContextPanel";
 import { FooterNav } from "./components/FooterNav";
 import { DiffSearch } from "./components/DiffSearch";
 import { ConnectGitHubModal } from "./components/ConnectGitHubModal";
-import { confirm, ConfirmationHost, useConfirmationOpen } from "../../lib/confirmation";
+import { confirm, ConfirmationHost, useConfirmationOpen } from "@extension/lib/confirmation";
 import { SubmitReviewModal } from "./components/SubmitReviewModal";
 import { ReviewSubmittedModal } from "./components/ReviewSubmittedModal";
 import { BUILD_PLAN_PRIMARY, buildPhaseDetail } from "./overlayCopy";
