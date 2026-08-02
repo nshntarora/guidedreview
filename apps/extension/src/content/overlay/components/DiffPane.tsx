@@ -213,8 +213,10 @@ export function DiffPane({
           data-testid="diff-unit-title"
           title={unitTitleTooltip ?? unitTitle}
         >
-          <span className="min-w-0 break-words">{unitTitle}</span>
-          {isTestsUnit && <TestsUnitIcon className="shrink-0 text-muted" size={16} />}
+          <span className="min-w-0 break-words">
+            {isTestsUnit && <TestsUnitIcon className="shrink-0 text-muted" size={16} />}
+            {unitTitle}
+          </span>
         </h2>
         <div className="flex shrink-0 items-center gap-2">
           {commentModeActive ? (

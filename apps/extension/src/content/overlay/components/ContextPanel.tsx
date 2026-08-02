@@ -102,7 +102,7 @@ export function ContextPanel({
         </div>
         {loading ? (
           <div
-            className="mt-4 flex items-start gap-2.5 border-t border-border-strong pt-3"
+            className="mt-4 flex items-center gap-2.5 border-t border-border-strong pt-3"
             data-testid="context-panel-loading"
           >
             <Spinner

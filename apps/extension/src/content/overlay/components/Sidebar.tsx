@@ -63,12 +63,12 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
               <span className={cn("mr-1.5 shrink-0", isActive ? "text-primary" : "text-muted")}>
                 {displayIndex + 1}.
               </span>
-              <span className="min-w-0 break-words">{label}</span>
               {isTestsUnit && (
                 <TestsUnitIcon
-                  className={cn("ml-1.5 mt-0.5 shrink-0", isActive ? "text-primary" : "text-muted")}
+                  className={cn("mr-1.5 mt-0.5 shrink-0", isActive ? "text-primary" : "text-muted")}
                 />
               )}
+              <span className="min-w-0 break-words">{label}</span>
             </button>
           );
         })}
