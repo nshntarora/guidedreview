@@ -87,7 +87,7 @@ export function GitHubAuthSection() {
     if (disconnectBusy || connectBusy) return;
     confirm({
       title: "Disconnect GitHub?",
-      body: "Guided Review will not submit reviews on your behalf until you connect again. AI provider settings are unchanged.",
+      body: "You won't be able to submit reviews from Guided Review until you connect again. AI provider settings are unchanged.",
       variant: "destructive",
       okButtonText: "Disconnect",
       cancelButtonText: "Cancel",
@@ -110,7 +110,7 @@ export function GitHubAuthSection() {
           <GitHubLogo size={18} data-testid="github-auth-logo" />
         </span>
       }
-      description="Connect GitHub so Guided Review can submit reviews on your behalf. Uses device sign-in — no password is stored. Token stays in this browser only."
+      description="Connect GitHub so you can submit reviews from Guided Review. Device sign-in — no password stored. Token stays in this browser only."
       data-testid="github-auth-section"
     >
       {!configured && (

@@ -47,7 +47,7 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Getting Started",
     title: "Your first review",
     description:
-      "Open a GitHub PR, start Guided Review, walk review units, and leave comments from the overlay.",
+      "Open a GitHub PR, start Guided Review, walk review units, and leave comments from Guided Review.",
     blurb: "from a PR page to walking units",
     load: () => import("@/content/help/first-review.mdx"),
   },
@@ -65,8 +65,8 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Setup",
     title: "Connect GitHub",
     description:
-      "Optionally connect GitHub with device flow so you can submit reviews and line comments from the overlay.",
-    blurb: "optional auth for submitting reviews from the overlay",
+      "Optionally connect GitHub with device flow so you can submit reviews and line comments from Guided Review.",
+    blurb: "optional auth for submitting reviews from Guided Review",
     load: () => import("@/content/help/connect-github.mdx"),
   },
   {
@@ -83,7 +83,7 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Product",
     title: "Leave line comments",
     description:
-      "Draft multi-line GitHub comments from the overlay while you walk the review plan.",
+      "Draft multi-line GitHub comments in Guided Review while you walk the review plan.",
     blurb: "comment mode, drafts, multi-line ranges",
     load: () => import("@/content/help/leave-comments.mdx"),
   },
@@ -92,8 +92,8 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Product",
     title: "Submit a review",
     description:
-      "Post drafted comments and Comment, Approve, or Request Changes without leaving the overlay.",
-    blurb: "Comment / Approve / Request Changes from the overlay",
+      "Post drafted comments and Comment, Approve, or Request Changes without leaving Guided Review.",
+    blurb: "Comment / Approve / Request Changes from Guided Review",
     load: () => import("@/content/help/submit-review.mdx"),
   },
   {
@@ -101,7 +101,7 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Product",
     title: "Keyboard shortcuts",
     description:
-      "Keyboard-first shortcuts for overlay navigation, diff view, comments, and submitting a review.",
+      "Keyboard-first shortcuts for review navigation, diff view, comments, and submitting a review.",
     blurb: "navigate, comment, and submit without leaving the keyboard",
     load: () => import("@/content/help/keyboard-shortcuts.mdx"),
   },

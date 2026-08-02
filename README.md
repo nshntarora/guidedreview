@@ -4,7 +4,7 @@
 
 **A better way for humans to review AI-generated code.**
 
-Guided Review is a free, open-source Chrome extension for GitHub pull requests. It clusters related changes into ordered **review units**, adds short summaries, and gives you a keyboard-first overlay so you can walk the PR schema-first, then logic, then call-sites, then tests — instead of drowning in an alphabetical file dump.
+Guided Review is a free, open-source Chrome extension for GitHub pull requests. It clusters related changes into ordered **review units**, adds short summaries, and gives you a keyboard-first review so you can walk the PR schema-first, then logic, then call-sites, then tests — instead of drowning in an alphabetical file dump.
 
 AI helps structure the review. **You still read the code and have the final say.**
 
@@ -84,7 +84,7 @@ Full details: **[apps/web/README.md](apps/web/README.md)**.
 
 ### Optional: GitHub OAuth (device flow)
 
-Submitting reviews from the overlay needs a GitHub OAuth App client ID (device flow). Copy the example env and set the client ID, then rebuild the extension:
+Submitting reviews from Guided Review needs a GitHub OAuth App client ID (device flow). Copy the example env and set the client ID, then rebuild the extension:
 
 ```bash
 cp .env.example .env        # set VITE_GITHUB_CLIENT_ID

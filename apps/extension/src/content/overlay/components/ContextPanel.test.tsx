@@ -77,14 +77,14 @@ describe("ContextPanel needs-provider state", () => {
     });
   });
 
-  it("links Learn more to the configure-provider docs", () => {
+  it("links Setup docs to the configure-provider docs", () => {
     render(<ContextPanel unit={null} needsProvider />);
 
-    const learnMore = screen.getByTestId("connect-provider-learn-more");
-    expect(learnMore).toHaveAttribute("href", "https://guidedreview.dev/docs/configure-provider");
-    expect(learnMore).toHaveAttribute("target", "_blank");
-    expect(learnMore).toHaveAttribute("rel", "noopener noreferrer");
-    expect(learnMore).toHaveTextContent(/learn more/i);
+    const setupDocs = screen.getByTestId("connect-provider-learn-more");
+    expect(setupDocs).toHaveAttribute("href", "https://guidedreview.dev/docs/configure-provider");
+    expect(setupDocs).toHaveAttribute("target", "_blank");
+    expect(setupDocs).toHaveAttribute("rel", "noopener noreferrer");
+    expect(setupDocs).toHaveTextContent(/setup docs/i);
   });
 
   it("takes precedence over an error so no red error box is shown", () => {

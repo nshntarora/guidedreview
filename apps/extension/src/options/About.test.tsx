@@ -13,12 +13,13 @@ describe("About", () => {
 
     expect(screen.getByRole("heading", { name: "Guided Review" })).toBeInTheDocument();
     expect(screen.getByText(/v\d+\.\d+\.\d+/)).toBeInTheDocument();
-    expect(screen.getByText(/makes reading code better/i)).toBeInTheDocument();
+    expect(screen.getByText(/clusters related changes into review units/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/you still judge the code/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Free · Open source · Bring your own LLM key/)).toBeInTheDocument();
 
     expect(screen.getByRole("heading", { name: "How it works" })).toBeInTheDocument();
     expect(screen.getByText(/Start Guided Review/i)).toBeInTheDocument();
-    expect(screen.getByText(/clusters related changes/i)).toBeInTheDocument();
+    expect(screen.getByText(/ordered review plan/i)).toBeInTheDocument();
 
     expect(screen.getByRole("heading", { name: "Privacy" })).toBeInTheDocument();
     expect(screen.getByText(/never touches our infrastructure/i)).toBeInTheDocument();

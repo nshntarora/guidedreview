@@ -122,7 +122,8 @@ export function ConnectProviderPrompt() {
       <h2 className="m-0 text-lg font-semibold text-foreground">Connect an AI provider</h2>
 
       <p className="m-0 text-base leading-relaxed text-muted">
-        You&rsquo;re reviewing this PR file by file. Setup AI and get your review done faster.
+        You&rsquo;re walking this PR file by file. Connect Claude, OpenAI, or Grok and Guided Review
+        will cluster related changes into review units — you still read the code.
       </p>
 
       <div className="flex flex-col items-center gap-2">
@@ -143,7 +144,7 @@ export function ConnectProviderPrompt() {
           })}
           data-testid="connect-provider-learn-more"
         >
-          Learn more
+          Setup docs
         </a>
       </div>
     </div>

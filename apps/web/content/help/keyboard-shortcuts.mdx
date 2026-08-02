@@ -1,5 +1,5 @@
 export const toc = [
-  { id: "overlay-navigation", label: "Overlay navigation", level: 2 },
+  { id: "review-navigation", label: "Review navigation", level: 2 },
   { id: "diff-view", label: "Diff view", level: 2 },
   { id: "comment-mode", label: "Comment mode", level: 2 },
   { id: "submit-and-modals", label: "Submit and modals", level: 2 },
@@ -10,22 +10,22 @@ export const toc = [
 
 Move through a guided review without leaving the keyboard. Focus must not be in an editable field for most of these — when the comment composer is open, typing goes to the text field and only Esc / ⌘/Ctrl+Enter are intercepted.
 
-The overlay sidebar always lists the same shortcuts as the product. Hands-on walkthrough: [Your first review](/docs/first-review).
+The Guided Review sidebar always lists the same shortcuts as this page. Hands-on walkthrough: [Your first review](/docs/first-review).
 
 <TocCard toc={toc} />
 
-## Overlay navigation
+## Review navigation
 
 | Shortcut           | Action                                                                                          |
 | ------------------ | ----------------------------------------------------------------------------------------------- |
 | `→`                | Next unit                                                                                       |
 | `←`                | Previous unit                                                                                   |
 | `↑` / `↓`          | Scroll the code pane                                                                            |
-| `Esc`              | Close the overlay (when not in comment mode or a modal)                                         |
+| `Esc`              | Exit Guided Review (when not in comment mode or a modal)                                        |
 | `c`                | Enter [comment mode](/docs/leave-comments) (if the unit has selectable lines)                   |
 | `⌘/Ctrl` + `Enter` | Open [Submit review](/docs/submit-review) (or [Connect GitHub](/docs/connect-github) if needed) |
 
-While the overlay is open, keys are not passed through to GitHub’s page shortcuts. What a “unit” is: [How a review plan works](/docs/how-it-works#review-units).
+While Guided Review is open, keys are not passed through to GitHub’s page shortcuts. What a “unit” is: [How a review plan works](/docs/how-it-works#review-units).
 
 ## Diff view
 
@@ -34,7 +34,7 @@ While the overlay is open, keys are not passed through to GitHub’s page shortc
 | `v` then `u` | Unified view |
 | `v` then `s` | Split view   |
 
-Type `v`, then `u` or `s` within about a second. You can also toggle unified / split from the overlay toolbar while [walking the plan](/docs/first-review#walk-the-plan).
+Type `v`, then `u` or `s` within about a second. You can also toggle unified / split from the toolbar while [walking the plan](/docs/first-review#walk-the-plan).
 
 ## Comment mode
 

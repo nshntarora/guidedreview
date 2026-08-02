@@ -41,8 +41,8 @@ export function About() {
           <p className="mt-2 m-0 font-mono text-xs text-muted tabular-nums">v{version}</p>
         ) : null}
         <p className="mt-5 m-0 text-base leading-relaxed text-muted text-balance sm:text-lg">
-          A Chrome extension that makes reading code better — clustered changes, short summaries,
-          and a keyboard-first review overlay for GitHub pull requests.
+          Chrome extension for GitHub PRs: clusters related changes into review units, short
+          summaries, keyboard-first. AI structures the plan — you still judge the code.
         </p>
         <p className="mt-3 m-0 font-mono text-xs text-muted">
           Free · Open source · Bring your own LLM key
@@ -67,7 +67,7 @@ export function About() {
             clusters related changes into an ordered review plan.
           </li>
           <li>
-            Step through the plan in the overlay — real diff hunks, short context, you still judge
+            Step through the plan in Guided Review — real diff hunks, short context, you still judge
             the code.
           </li>
         </ol>
