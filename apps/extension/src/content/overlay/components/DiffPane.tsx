@@ -16,7 +16,7 @@ import { AddCommentButton, CommentModeChip, DiffViewToggle } from "./diff/DiffTo
 import { HunkGapPlaceholder } from "./diff/HunkGapPlaceholder";
 import { SplitHunk } from "./diff/SplitHunk";
 import { UnifiedHunk } from "./diff/UnifiedHunk";
-import { useSelectionDerived } from "./diff/useSelectionDerived";
+import { deriveSelection } from "./diff/deriveSelection";
 import { MiddleEllipsisText } from "./MiddleEllipsisText";
 import { TestsUnitIcon } from "./TestsUnitIcon";
 
@@ -120,7 +120,7 @@ export function DiffPane({
   const filePaths = useMemo(() => new Set(files.map((f) => f.file.path)), [files]);
 
   const { selectedIds, focusId, composerPlacementId, composerRange, draftsByEndLineId } =
-    useSelectionDerived(
+    deriveSelection(
       uiMode === "comment" ? selectableLines : [],
       uiMode === "comment" ? lineSelection : null,
       composerOpen,

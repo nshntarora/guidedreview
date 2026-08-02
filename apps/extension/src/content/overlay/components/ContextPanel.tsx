@@ -25,6 +25,10 @@ interface ContextPanelProps {
   onRetry?: () => void;
 }
 
+/**
+ * Right-pane copy for the active unit. Branch precedence:
+ * needsProvider (no AI context yet) → error → description unit → unit context.
+ */
 export function ContextPanel({
   unit,
   hasTitle = true,

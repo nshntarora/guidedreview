@@ -21,13 +21,13 @@ interface SubmitReviewModalProps {
   /** User-facing error from the last submit attempt. */
   error?: string | null;
   /**
-   * Bound to the latest submit action so the overlay capture keydown can
-   * fire ⌘/Ctrl+Enter (React handlers on the textarea do not see real keys
-   * after the window capture stopPropagation).
+   * Action-ref for overlay capture keyboard (see useOverlayKeyboard module
+   * comment). Latest ⌘/Ctrl+Enter submit — element React handlers never see
+   * real keys after window capture stopPropagation.
    */
   submitActionRef?: MutableRefObject<(() => void) | null>;
   /**
-   * Choose-step key handler for the overlay capture path (↑/↓/Enter).
+   * Action-ref for overlay capture keyboard: choose-step ↑/↓/Enter.
    * Returns true when the key was handled (caller should preventDefault).
    */
   keyActionRef?: MutableRefObject<((e: KeyboardEvent) => boolean) | null>;

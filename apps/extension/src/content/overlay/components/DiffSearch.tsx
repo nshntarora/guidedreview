@@ -30,8 +30,9 @@ export interface DiffSearchProps {
    */
   focusRequestId?: number;
   /**
-   * Overlay capture-phase keyboard routes Arrow/Enter here (React handlers on
-   * the input never see keydown because the overlay stops propagation).
+   * Action-ref for overlay capture keyboard (see useOverlayKeyboard module
+   * comment). Arrow/Enter while the palette is open — React input handlers
+   * never see those keys after capture stopPropagation.
    * Return true when the key was handled.
    */
   keyActionRef?: MutableRefObject<((e: globalThis.KeyboardEvent) => boolean) | null>;

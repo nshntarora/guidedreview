@@ -1,5 +1,13 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { buildDisplayUnits, displayUnitCount, useReviewStore, persistSession } from "./store";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import type { ReviewErrorInfo, ReviewPlan } from "@extension/lib/types";
+import {
+  buildDisplayUnits,
+  displayUnitCount,
+  useReviewStore,
+  persistSession,
+  type BuildPhase,
+  type ReviewStatus,
+} from "./store";
 import { buildSelectableLines, resolveUnitFiles } from "./buildSelectableLines";
 import { getFocusableElements, restoreFocusAfterOverlay } from "./focusTrap";
 import { useOverlayKeyboard, type ViewChordPending } from "./useOverlayKeyboard";
@@ -23,6 +31,38 @@ interface OverlayProps {
   onRequestClose?: () => void;
   /** Retry a failed annotate / review-build step. */
   onRetry?: () => void;
+}
+
+/** Polite live-region text for build / error / ready status. */
+function statusAnnouncementText(
+  status: ReviewStatus,
+  error: ReviewErrorInfo | null,
+  plan: ReviewPlan | null,
+  needsProvider: boolean,
+  buildPhase: BuildPhase | null,
+  providerLabel: string | null,
+): string {
+  if (status === "error" && error) {
+    return `Error: ${error.message}`;
+  }
+  if (needsProvider && status === "ready" && plan) {
+    return `${displayUnitCount(plan)} steps, one per changed file. Connect an AI provider for guided ordering and context.`;
+  }
+  if (needsProvider) {
+    return "Connect an AI provider to enable the AI features.";
+  }
+  if (status === "loading" || status === "streaming") {
+    const detail = buildPhase != null ? buildPhaseDetail(buildPhase, providerLabel) : null;
+    const n = plan?.units.length ?? 0;
+    if (status === "streaming" && n > 0) {
+      return `${BUILD_PLAN_PRIMARY}. ${n} review unit${n === 1 ? "" : "s"} ready.${detail ? ` ${detail}` : ""}`;
+    }
+    return detail ? `${BUILD_PLAN_PRIMARY}. ${detail}` : `${BUILD_PLAN_PRIMARY}…`;
+  }
+  if (status === "ready" && plan) {
+    return `Review plan ready. ${displayUnitCount(plan)} steps.`;
+  }
+  return "";
 }
 
 export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
@@ -64,43 +104,40 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   /** Set by search navigation so unit-change scroll-to-top does not fight the match jump. */
   const skipCodeScrollOnUnitChange = useRef(false);
 
-  const openDiffSearch = useCallback(() => {
+  function openDiffSearch() {
     setDiffSearchOpen(true);
     setDiffSearchFocusId((n) => n + 1);
-  }, []);
+  }
 
-  const closeDiffSearch = useCallback(() => {
+  function closeDiffSearch() {
     setDiffSearchOpen(false);
-  }, []);
+  }
 
-  const handleDiffSearchSelect = useCallback(
-    (result: DiffSearchResult) => {
-      const hunkId = result.kind === "line" ? result.hunkId : undefined;
-      const unitIndex = findUnitForFile(plan, result.filePath, hunkId);
-      if (unitIndex !== null && unitIndex !== currentUnitIndex) {
-        skipCodeScrollOnUnitChange.current = true;
-        goToUnit(unitIndex);
-      }
-      setSearchScrollTarget({
-        filePath: result.filePath,
-        lineId: result.kind === "line" ? result.id : undefined,
-      });
-      setDiffSearchOpen(false);
-    },
-    [plan, goToUnit, currentUnitIndex],
-  );
+  function handleDiffSearchSelect(result: DiffSearchResult) {
+    const hunkId = result.kind === "line" ? result.hunkId : undefined;
+    const unitIndex = findUnitForFile(plan, result.filePath, hunkId);
+    if (unitIndex !== null && unitIndex !== currentUnitIndex) {
+      skipCodeScrollOnUnitChange.current = true;
+      goToUnit(unitIndex);
+    }
+    setSearchScrollTarget({
+      filePath: result.filePath,
+      lineId: result.kind === "line" ? result.id : undefined,
+    });
+    setDiffSearchOpen(false);
+  }
 
-  const clearSearchScrollTarget = useCallback(() => {
+  function clearSearchScrollTarget() {
     setSearchScrollTarget(null);
-  }, []);
+  }
 
-  const handleExit = useCallback(() => {
+  function handleExit() {
     onRequestClose?.();
     close();
-  }, [onRequestClose, close]);
+  }
 
   /** Esc (and Exit button) — confirm before leaving the review. */
-  const requestExit = useCallback(() => {
+  function requestExit() {
     confirm({
       title: "Exit review?",
       body: "You can reopen on this PR later. Draft comments stay for this browser session.",
@@ -111,7 +148,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         handleExit();
       },
     });
-  }, [handleExit]);
+  }
 
   const {
     submitReviewOpen,
@@ -244,29 +281,14 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
     diffSearchKeyRef,
   });
 
-  const statusAnnouncement = useMemo(() => {
-    if (status === "error" && error) {
-      return `Error: ${error.message}`;
-    }
-    if (needsProvider && status === "ready" && plan) {
-      return `${displayUnitCount(plan)} steps, one per changed file. Connect an AI provider for guided ordering and context.`;
-    }
-    if (needsProvider) {
-      return "Connect an AI provider to enable the AI features.";
-    }
-    if (status === "loading" || status === "streaming") {
-      const detail = buildPhase != null ? buildPhaseDetail(buildPhase, providerLabel) : null;
-      const n = plan?.units.length ?? 0;
-      if (status === "streaming" && n > 0) {
-        return `${BUILD_PLAN_PRIMARY}. ${n} review unit${n === 1 ? "" : "s"} ready.${detail ? ` ${detail}` : ""}`;
-      }
-      return detail ? `${BUILD_PLAN_PRIMARY}. ${detail}` : `${BUILD_PLAN_PRIMARY}…`;
-    }
-    if (status === "ready" && plan) {
-      return `Review plan ready. ${displayUnitCount(plan)} steps.`;
-    }
-    return "";
-  }, [status, error, plan, needsProvider, buildPhase, providerLabel]);
+  const statusAnnouncement = statusAnnouncementText(
+    status,
+    error,
+    plan,
+    needsProvider,
+    buildPhase,
+    providerLabel,
+  );
 
   if (!isOpen) return null;
 

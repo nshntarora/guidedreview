@@ -18,8 +18,8 @@ export interface ConnectGitHubModalProps {
   /** Fired after device flow succeeds and the token is stored in the background. */
   onAuthenticated: () => void;
   /**
-   * Bound to the latest primary action (Connect / Try again / open GitHub) so
-   * the overlay capture keydown can fire Enter without relying on element React handlers.
+   * Action-ref for overlay capture keyboard (see useOverlayKeyboard module
+   * comment). Latest primary action: Connect / Try again / open verification URI.
    */
   connectActionRef?: MutableRefObject<(() => void) | null>;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ProviderSettings } from "@extension/lib/types";
 import {
   defaultModelFor,
@@ -158,26 +158,19 @@ export function Options() {
     void getAutoOpenOnFilesTab().then(setAutoOpenOnFilesTabState);
   }, []);
 
-  const providerOptions: SelectOption<ProviderId>[] = useMemo(
-    () =>
-      PROVIDER_LIST.map((p) => ({
-        value: p.id,
-        label: p.displayName,
-        content: () => <OptionRow icon={p.id} label={p.displayName} />,
-      })),
-    [],
-  );
-
-  const modelOptions: SelectOption[] = useMemo(() => {
-    if (!settings) return [];
-    return modelsForProvider(settings.provider).map((m) => ({
-      value: m.id,
-      label: m.displayName,
-      content: () => <OptionRow icon={m.provider} label={m.displayName} />,
-    }));
-  }, [settings?.provider]);
-
   if (!settings) return null;
+
+  const providerOptions: SelectOption<ProviderId>[] = PROVIDER_LIST.map((p) => ({
+    value: p.id,
+    label: p.displayName,
+    content: () => <OptionRow icon={p.id} label={p.displayName} />,
+  }));
+
+  const modelOptions: SelectOption[] = modelsForProvider(settings.provider).map((m) => ({
+    value: m.id,
+    label: m.displayName,
+    content: () => <OptionRow icon={m.provider} label={m.displayName} />,
+  }));
 
   const providerDef = getProvider(settings.provider);
   const busy = saveStatus.kind === "working" || connection.kind === "working";

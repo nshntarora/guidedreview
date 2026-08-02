@@ -1,3 +1,29 @@
+/**
+ * Overlay keyboard architecture
+ * -----------------------------
+ * While the overlay is open we listen on `window` in the **capture** phase and
+ * always `stopPropagation` so GitHub's document-level shortcuts never fire.
+ *
+ * Because capture + stopPropagation runs before target React handlers, real
+ * keystrokes never reach element `onKeyDown` for actions we own (⌘Enter submit,
+ * listbox arrows, search arrows). Modals and DiffSearch therefore register their
+ * current primary actions via **mutable refs** (`submitActionRef`, `keyActionRef`,
+ * `connectActionRef`, `diffSearchKeyRef`). Those components write the latest
+ * handler into the ref each render; this hook only reads `.current`.
+ *
+ * Priority while a key is handled (first match wins):
+ *  1. Tab trap (confirmation → submit modal → overlay)
+ *  2. Modals: confirmation → success → connect-GitHub → submit-review
+ *  3. ⌘/Ctrl+F diff search (open or re-focus)
+ *  4. Diff search keys while the palette is open
+ *  5. Comment composer / any editable (Esc, ⌘Enter save)
+ *  6. ⌘/Ctrl+Enter open Submit Review
+ *  7. View chords (`v` then `u`/`s`)
+ *  8. Comment mode keys, else navigate mode keys
+ *
+ * Do not redesign this as a generic keyboard framework. The ref pattern exists
+ * only because capture ownership and React synthetic handlers cannot both win.
+ */
 import { useEffect, useRef, type MutableRefObject, type RefObject } from "react";
 import { getConfirmationDialogElement, isConfirmationOpen } from "@extension/lib/confirmation";
 import type { SelectableLine } from "./commentTypes";
@@ -85,8 +111,11 @@ interface UseOverlayKeyboardOptions {
   connectGitHubOpen: boolean;
   /** Truthy while the post-submit success modal should own the keyboard. */
   submitSuccess: object | null;
+  /** Submit Review modal: latest ⌘/Ctrl+Enter submit action (compose step). */
   submitReviewActionRef: MutableRefObject<(() => void) | null>;
+  /** Submit Review modal: choose-step ↑/↓/Enter handler. */
   submitReviewKeyRef: MutableRefObject<((e: KeyboardEvent) => boolean) | null>;
+  /** Connect GitHub modal: latest Connect / Try again / open verification URI. */
   connectGitHubActionRef: MutableRefObject<(() => void) | null>;
   exitAfterSubmit: () => void;
   requestOpenSubmitReview: () => void | Promise<void>;
@@ -98,19 +127,13 @@ interface UseOverlayKeyboardOptions {
   diffSearchOpen: boolean;
   openDiffSearch: () => void;
   closeDiffSearch: () => void;
-  /** Arrow/Enter/Esc routing while the search palette owns the keyboard. */
+  /** Diff search: Arrow/Enter routing while the palette owns the keyboard. */
   diffSearchKeyRef: MutableRefObject<((e: KeyboardEvent) => boolean) | null>;
 }
 
 /**
- * Global keyboard handling for the guided-review overlay: modal precedence
- * (confirmation → success → connect-GitHub → submit-review), the comment
- * composer, view-mode chords (`v u` / `v s`), and navigate/comment mode keys.
- *
- * Listens on window in the capture phase so the overlay sees keys before
- * GitHub's own document-level shortcuts, and always stops propagation while
- * open. Modal open flags are read through refs so the listener is current as
- * soon as state commits, not only after the effect re-runs.
+ * Global keyboard handling for the guided-review overlay.
+ * See module comment above for capture-phase ownership and action-ref contract.
  */
 export function useOverlayKeyboard({
   isOpen,
