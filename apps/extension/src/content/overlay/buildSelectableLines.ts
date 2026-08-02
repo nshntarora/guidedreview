@@ -1,6 +1,6 @@
 import type { DiffFile, DiffHunk, DiffLine, ParsedDiff, ReviewUnit } from "../../lib/types";
 import { buildSplitRows } from "./buildSplitRows";
-import type { DiffViewMode } from "./diffViewMode";
+import type { DiffViewMode } from "../../lib/preferences";
 import { lineIdFor, sideForLine, type DiffSide, type SelectableLine } from "./commentTypes";
 
 export interface ResolvedUnitFile {

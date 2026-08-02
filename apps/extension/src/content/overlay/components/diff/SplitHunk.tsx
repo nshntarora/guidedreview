@@ -1,14 +1,15 @@
 import { useMemo } from "react";
 import { cn } from "@guided-review/ui";
 import { buildSplitRows, type SplitCell } from "../../buildSplitRows";
-import { CodeContent, highlightHunkLines } from "./hunkHighlight";
-import { LineExtras } from "./LineExtras";
 import {
+  CodeContent,
   DIFF_LINE_WRAP,
+  highlightHunkLines,
+  LineExtras,
   lineNumberClasses,
   selectionClasses,
   type HunkViewProps,
-} from "./hunkStyles";
+} from "./hunkShared";
 import { lineIdFor } from "../../commentTypes";
 
 function SplitCellView({

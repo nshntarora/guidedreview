@@ -3,9 +3,8 @@ import { GitHubLogo } from "../../../components/GitHubLogo";
 import { GITHUB_CLIENT_ID_ENV_VAR, isGitHubOAuthConfigured } from "../../../lib/github/oauthConfig";
 import { useCopyToClipboard } from "../../../lib/useCopyToClipboard";
 import { openVerificationUri, useGitHubDeviceAuth } from "../../../lib/github/useGitHubDeviceAuth";
-import { CloseButton } from "./CloseButton";
 import { Button, Kbd, Spinner } from "@guided-review/ui";
-import { ModalShell } from "./ModalShell";
+import { CloseButton, ModalShell } from "./ModalShell";
 
 export interface ConnectGitHubModalProps {
   open: boolean;

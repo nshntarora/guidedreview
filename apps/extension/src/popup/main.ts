@@ -1,5 +1,5 @@
 import { parsePRUrl } from "../lib/github/diffFetch";
-import { isIgnoredPrPath } from "../lib/github/ignoredPrPaths";
+import { isIgnoredPrPath } from "../lib/github/prUrls";
 import type { StartGuidedReviewMessage } from "../lib/types";
 import "./popup.css";
 

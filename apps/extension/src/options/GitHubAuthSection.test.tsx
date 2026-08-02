@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { resetConfirmationQueueForTests } from "../content/overlay/components/confirmation";
+import { resetConfirmationQueueForTests } from "../lib/confirmation";
 import { GitHubAuthSection } from "./GitHubAuthSection";
 import * as messaging from "../lib/messaging";
 import * as oauthConfig from "../lib/github/oauthConfig";

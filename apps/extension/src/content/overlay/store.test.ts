@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_DIFF_VIEW_MODE } from "./diffViewMode";
+import { DEFAULT_DIFF_VIEW_MODE } from "../../lib/preferences";
 import { useReviewStore, persistSession, restoreSession, buildSessionKey } from "./store";
 import type { ParsedDiff, PRContext, ReviewPlan } from "../../lib/types";
 

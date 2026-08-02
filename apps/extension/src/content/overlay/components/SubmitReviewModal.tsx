@@ -8,9 +8,8 @@ import {
   type Ref,
 } from "react";
 import type { ReviewEvent, ReviewSubmission } from "../commentTypes";
-import { CloseButton } from "./CloseButton";
 import { Button, Kbd, KbdGroup, Textarea } from "@guided-review/ui";
-import { ModalShell } from "./ModalShell";
+import { CloseButton, ModalShell } from "./ModalShell";
 import { ModEnterChord } from "./ShortcutKeys";
 
 interface SubmitReviewModalProps {

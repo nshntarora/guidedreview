@@ -1,11 +1,11 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Overlay } from "./Overlay";
-import { resetConfirmationQueueForTests } from "./components/confirmation";
-import { DEFAULT_DIFF_VIEW_MODE } from "./diffViewMode";
+import { resetConfirmationQueueForTests } from "../../lib/confirmation";
+import { DEFAULT_DIFF_VIEW_MODE } from "../../lib/preferences";
 import { useReviewStore } from "./store";
 import { VIEW_CHORD_WINDOW_MS } from "./useOverlayKeyboard";
-import { buildFileReviewPlan } from "../../lib/review/fileReviewPlan";
+import { buildFileReviewPlan } from "../../lib/review/reviewPlan";
 import type { ParsedDiff, PRContext, ReviewPlan } from "../../lib/types";
 import * as messaging from "../../lib/messaging";
 import * as oauthConfig from "../../lib/github/oauthConfig";

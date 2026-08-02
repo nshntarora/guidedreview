@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  DEFAULT_DIFF_VIEW_MODE,
   getAutoOpenOnFilesTab,
+  getStoredDiffViewMode,
   onAutoOpenOnFilesTabChanged,
   setAutoOpenOnFilesTab,
-} from "./autoOpenOnFilesTab";
+  setStoredDiffViewMode,
+} from "./preferences";
 
 describe("autoOpenOnFilesTab", () => {
   beforeEach(async () => {
@@ -48,8 +51,6 @@ describe("autoOpenOnFilesTab", () => {
     unsubscribe();
   });
 
-  // Best-effort preference: `storage.ts` propagates failures, so the fallback
-  // to "off" lives here rather than being hidden in the storage helper.
   it("falls back to off and warns when the read fails", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.mocked(chrome.storage.local.get).mockRejectedValueOnce(new Error("quota"));
@@ -70,5 +71,25 @@ describe("autoOpenOnFilesTab", () => {
       expect.stringContaining("failed to persist guidedReview.autoOpenOnFilesTab"),
       expect.any(Error),
     );
+  });
+});
+
+describe("diffViewMode storage", () => {
+  beforeEach(async () => {
+    await chrome.storage.local.clear();
+  });
+
+  it("returns the default when nothing is stored", async () => {
+    await expect(getStoredDiffViewMode()).resolves.toBe(DEFAULT_DIFF_VIEW_MODE);
+  });
+
+  it("round-trips a saved mode", async () => {
+    await setStoredDiffViewMode("split");
+    await expect(getStoredDiffViewMode()).resolves.toBe("split");
+  });
+
+  it("ignores invalid stored values", async () => {
+    await chrome.storage.local.set({ "guidedReview.diffViewMode": "sideways" });
+    await expect(getStoredDiffViewMode()).resolves.toBe(DEFAULT_DIFF_VIEW_MODE);
   });
 });

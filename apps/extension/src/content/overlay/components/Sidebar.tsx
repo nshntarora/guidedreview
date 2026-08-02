@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { ReviewPlan } from "../../../lib/types";
 import { cn } from "@guided-review/ui";
-import { buildDisplayUnits } from "../displayUnits";
+import { buildDisplayUnits } from "../store";
 import { TestsUnitIcon } from "./TestsUnitIcon";
 
 const SKELETON_COUNT = 4;

@@ -7,7 +7,7 @@ import {
   PROVIDER_LIST,
   type ProviderId,
 } from "../lib/providers/catalog";
-import { getAutoOpenOnFilesTab, setAutoOpenOnFilesTab } from "../lib/autoOpenOnFilesTab";
+import { getAutoOpenOnFilesTab, setAutoOpenOnFilesTab } from "../lib/preferences";
 import { getProviderSettings, setProviderSettings } from "../lib/settings";
 import { requestTestConnection } from "../lib/messaging";
 import { GitHubAuthSection } from "./GitHubAuthSection";

@@ -5,7 +5,7 @@ import { GITHUB_CLIENT_ID_ENV_VAR, isGitHubOAuthConfigured } from "../lib/github
 import { useCopyToClipboard } from "../lib/useCopyToClipboard";
 import { openVerificationUri, useGitHubDeviceAuth } from "../lib/github/useGitHubDeviceAuth";
 import { clearGitHubAuthSession, getGitHubAuthStatus } from "../lib/messaging";
-import { confirm, ConfirmationHost } from "../content/overlay/components/confirmation";
+import { confirm, ConfirmationHost } from "../lib/confirmation";
 import { Button, Spinner, cn } from "@guided-review/ui";
 import { SettingsCard } from "./SettingsCard";
 

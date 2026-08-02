@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDisplayUnits, displayUnitCount } from "./displayUnits";
+import { buildDisplayUnits, displayUnitCount } from "./store";
 import type { ReviewPlan } from "../../lib/types";
 
 const plan: ReviewPlan = {

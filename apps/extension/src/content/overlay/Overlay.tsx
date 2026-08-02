@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { useReviewStore, persistSession } from "./store";
-import { buildDisplayUnits, displayUnitCount } from "./displayUnits";
+import { buildDisplayUnits, displayUnitCount, useReviewStore, persistSession } from "./store";
 import { buildSelectableLines, resolveUnitFiles } from "./buildSelectableLines";
 import { getFocusableElements, restoreFocusAfterOverlay } from "./focusTrap";
 import { useOverlayKeyboard, type ViewChordPending } from "./useOverlayKeyboard";
@@ -14,7 +13,7 @@ import { ContextPanel } from "./components/ContextPanel";
 import { FooterNav } from "./components/FooterNav";
 import { DiffSearch } from "./components/DiffSearch";
 import { ConnectGitHubModal } from "./components/ConnectGitHubModal";
-import { confirm, ConfirmationHost, useConfirmationOpen } from "./components/confirmation";
+import { confirm, ConfirmationHost, useConfirmationOpen } from "../../lib/confirmation";
 import { SubmitReviewModal } from "./components/SubmitReviewModal";
 import { ReviewSubmittedModal } from "./components/ReviewSubmittedModal";
 import { BUILD_PLAN_PRIMARY, buildPhaseDetail } from "./overlayCopy";

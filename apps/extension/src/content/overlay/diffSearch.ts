@@ -5,7 +5,7 @@
 import Fuse, { type IFuseOptions } from "fuse.js";
 import type { DiffLine, ParsedDiff, ReviewPlan } from "../../lib/types";
 import type { DiffSide } from "./commentTypes";
-import { buildDisplayUnits } from "./displayUnits";
+import { buildDisplayUnits } from "./store";
 
 // ---- Types ------------------------------------------------------------------
 

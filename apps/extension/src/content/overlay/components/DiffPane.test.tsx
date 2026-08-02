@@ -1,9 +1,9 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { buildPRFileDiffUrl } from "../../../lib/github/prFileDiffUrl";
+import { buildPRFileDiffUrl } from "../../../lib/github/prUrls";
 import type { DiffFile, DiffHunk, PRContext } from "../../../lib/types";
 import { buildSelectableLines } from "../buildSelectableLines";
-import { DEFAULT_DIFF_VIEW_MODE } from "../diffViewMode";
+import { DEFAULT_DIFF_VIEW_MODE } from "../../../lib/preferences";
 import { resetDiffViewModeHydrationForTests, useReviewStore } from "../store";
 import type { ResolvedUnitFile } from "../buildSelectableLines";
 import { DiffPane } from "./DiffPane";

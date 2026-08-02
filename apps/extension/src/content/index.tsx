@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
-import { getAutoOpenOnFilesTab, onAutoOpenOnFilesTabChanged } from "../lib/autoOpenOnFilesTab";
+import { getAutoOpenOnFilesTab, onAutoOpenOnFilesTabChanged } from "../lib/preferences";
 import { parsePRUrl, type PRIdentity } from "../lib/github/diffFetch";
-import { isIgnoredPrPath } from "../lib/github/ignoredPrPaths";
+import { isIgnoredPrPath } from "../lib/github/prUrls";
 import { fetchConversationDescription, scrapePRContext } from "../lib/github/prContext";
 import { requestPRDiff, streamReviewPlan } from "../lib/messaging";
 import { getProvider } from "../lib/providers/catalog";
