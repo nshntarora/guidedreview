@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { buildPRFileDiffUrl } from "@extension/lib/github/prUrls";
+import { buildFileLineUrl, buildPRFileDiffUrl } from "@extension/lib/github/prUrls";
 import type { DiffFile, DiffHunk, PRContext } from "@extension/lib/types";
 import { buildSelectableLines } from "@extension/content/overlay/buildSelectableLines";
 import { DEFAULT_DIFF_VIEW_MODE } from "@extension/lib/preferences";
@@ -266,5 +266,52 @@ describe("DiffPane", () => {
       const stored = await chrome.storage.local.get("guidedReview.diffViewMode");
       expect(stored["guidedReview.diffViewMode"]).toBe("unified");
     });
+  });
+
+  it("does not show a gap placeholder for a single-hunk file", () => {
+    renderPane();
+    expect(screen.queryByTestId("hunk-gap-placeholder")).not.toBeInTheDocument();
+  });
+
+  it("shows a clickable gap ellipsis between non-adjacent hunks", async () => {
+    const first = hunkFixture({
+      id: "src/foo.ts#0",
+      header: "@@ -1,2 +1,2 @@",
+      oldStart: 1,
+      oldLines: 2,
+      newStart: 1,
+      newLines: 2,
+      lines: [
+        { type: "context", content: "a", oldLine: 1, newLine: 1 },
+        { type: "add", content: "b", newLine: 2 },
+      ],
+    });
+    const second = hunkFixture({
+      id: "src/foo.ts#1",
+      header: "@@ -20,2 +20,2 @@",
+      oldStart: 20,
+      oldLines: 2,
+      newStart: 20,
+      newLines: 2,
+      lines: [
+        { type: "context", content: "c", oldLine: 20, newLine: 20 },
+        { type: "add", content: "d", newLine: 21 },
+      ],
+    });
+    const file = fileFixture({ hunks: [first, second] });
+    useReviewStore.setState({ prContext: prContextFixture() });
+
+    const expectedHref = await buildFileLineUrl(
+      { owner: "acme", repo: "widgets", number: 42 },
+      { filePath: "src/foo.ts", line: 2, headRef: "feature" },
+    );
+
+    renderPane([{ file, hunks: [first, second] }]);
+
+    // URL is built async via buildFileLineUrl — wait until the div becomes a link.
+    const gap = await screen.findByRole("link", { name: "Open file at line 2" });
+    expect(gap).toHaveAttribute("data-testid", "hunk-gap-placeholder");
+    expect(gap).toHaveAttribute("href", expectedHref);
+    expect(gap).toHaveAttribute("target", "_blank");
   });
 });
