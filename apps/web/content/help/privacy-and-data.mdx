@@ -24,7 +24,7 @@ The background service worker is the only context that holds the API key and per
 ## What stays local
 
 - Provider choice, model, and API key (`chrome.storage.local`) — [Configure AI provider](/docs/configure-provider#where-settings-live)
-- Active review session: diff, plan, step index (`chrome.storage.session`, keyed by `owner/repo#number`) — [Resume later](/docs/first-review#resume-later)
+- Active review session: diff, plan, step index, viewed unit marks (`chrome.storage.session`, keyed by `owner/repo#number`) — [Resume later](/docs/first-review#resume-later)
 - [Draft comments](/docs/leave-comments) in Guided Review until you submit
 - GitHub tokens after [Connect GitHub](/docs/connect-github), until you disconnect
 

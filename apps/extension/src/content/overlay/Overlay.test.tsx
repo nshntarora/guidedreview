@@ -104,6 +104,7 @@ function resetStore(): void {
     lineSelection: null,
     composerOpen: false,
     draftComments: [],
+    viewedUnitIds: [],
   });
 }
 
@@ -272,6 +273,7 @@ describe("Overlay", () => {
     expect(screen.getByLabelText(/keyboard shortcuts/i)).toBeInTheDocument();
     expect(screen.getByText(/previous \/ next step/i)).toBeInTheDocument();
     expect(screen.getByText(/scroll the code pane/i)).toBeInTheDocument();
+    expect(screen.getByText(/mark unit viewed/i)).toBeInTheDocument();
     expect(screen.getByText(/^unified view$/i)).toBeInTheDocument();
     expect(screen.getByText(/^split view$/i)).toBeInTheDocument();
     expect(screen.getByText(/^enter comment mode$/i)).toBeInTheDocument();
@@ -1077,6 +1079,35 @@ describe("Overlay", () => {
         "data-event",
         "APPROVE",
       );
+    });
+  });
+
+  describe("mark unit viewed (e)", () => {
+    it("toggles the current unit as viewed and updates the sidebar", () => {
+      seedReadyReview(1);
+      render(<Overlay />);
+
+      expect(useReviewStore.getState().viewedUnitIds).toEqual([]);
+      fireEvent.keyDown(window, { key: "e" });
+      expect(useReviewStore.getState().viewedUnitIds).toEqual(["u1"]);
+      expect(screen.getByTestId("unit-viewed-icon")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /2\. Update foo, viewed/i })).toBeInTheDocument();
+
+      fireEvent.keyDown(window, { key: "e" });
+      expect(useReviewStore.getState().viewedUnitIds).toEqual([]);
+      expect(screen.queryByTestId("unit-viewed-icon")).not.toBeInTheDocument();
+    });
+
+    it("does not toggle while the comment composer is open", () => {
+      seedReadyReview(1);
+      render(<Overlay />);
+
+      fireEvent.keyDown(window, { key: "c" });
+      fireEvent.keyDown(window, { key: "Enter" });
+      expect(useReviewStore.getState().composerOpen).toBe(true);
+
+      fireEvent.keyDown(window, { key: "e" });
+      expect(useReviewStore.getState().viewedUnitIds).toEqual([]);
     });
   });
 

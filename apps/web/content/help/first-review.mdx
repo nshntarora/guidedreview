@@ -45,6 +45,7 @@ For each unit you can:
 - Read the unit’s title and guidance (take summaries with a grain of salt — see the [FAQ](/docs/faq#does-the-ai-approve-prs))
 - See the linked hunks from the real diff (default **split** view; switch with `v u` / `v s`, or the toolbar — choice is remembered)
 - Move next / previous with the footer or [keyboard shortcuts](/docs/keyboard-shortcuts)
+- Press `e` to mark the unit viewed (strikethrough + checkmark in the list). Visual memory only — viewed units stay fully navigable; press `e` again to clear
 
 With AI, the model chooses order and commentary; it does **not** supply the code lines you see. Hunk ids that don’t match the parsed diff are dropped. Without AI, order is file order and commentary is empty until you connect a provider.
 
@@ -63,6 +64,6 @@ Submit needs [GitHub connected](/docs/connect-github). Walking the plan and draf
 
 ## Resume later
 
-Sessions (diff, plan, PR context, current step, drafts) are stored in `chrome.storage.session`, keyed by **owner/repo#number** — not the full URL — so you can switch between Conversation and Files changed tabs and resume the same plan until the browser session ends. Limits and clears: [Troubleshooting](/docs/troubleshooting#session-and-resume).
+Sessions (diff, plan, PR context, current step, drafts, viewed unit marks) are stored in `chrome.storage.session`, keyed by **owner/repo#number** — not the full URL — so you can switch between Conversation and Files changed tabs and resume the same plan until the browser session ends. Limits and clears: [Troubleshooting](/docs/troubleshooting#session-and-resume).
 
 If something fails mid-flight, see [Troubleshooting](/docs/troubleshooting).
