@@ -2,17 +2,7 @@ import { GITHUB_REPO_URL } from "@web/lib/links";
 import { NoBackendIllustration } from "./FeatureIllustrations";
 import { GitHubIcon } from "./icons";
 
-type TrustBandProps = {
-  /** GitHub stargazer count, or null if it couldn't be fetched. */
-  starCount: number | null;
-};
-
-function formatStarCount(count: number): string {
-  if (count < 1000) return String(count);
-  return `${(count / 1000).toFixed(count % 1000 >= 100 ? 1 : 0)}k`;
-}
-
-export function TrustBand({ starCount }: TrustBandProps) {
+export function TrustBand() {
   return (
     <section className="relative px-4 py-16 sm:px-6 sm:py-28">
       <div className="mx-auto max-w-5xl text-center">
@@ -36,11 +26,7 @@ export function TrustBand({ starCount }: TrustBandProps) {
             className="inline-flex items-center gap-2 rounded-md border border-border bg-surface-raised/60 px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-primary/60 hover:bg-surface-raised"
           >
             <GitHubIcon className="h-4 w-4" />
-            {starCount !== null ? (
-              <span>{formatStarCount(starCount)} stars on GitHub</span>
-            ) : (
-              <span>Open source on GitHub</span>
-            )}
+            <span>Star on GitHub</span>
           </a>
           <a
             href="/docs/configure-provider"

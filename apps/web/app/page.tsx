@@ -6,7 +6,6 @@ import { TrustBand } from "@web/components/TrustBand";
 import { Faqs } from "@web/components/Faqs";
 import { InstallCta } from "@web/components/InstallCta";
 import { JsonLd } from "@web/components/JsonLd";
-import { getGitHubStarCount } from "@web/lib/github";
 import { CHROME_WEB_STORE_URL } from "@web/lib/links";
 import { HOME_DESCRIPTION, openGraphSite, SITE_NAME, SITE_URL } from "@web/lib/site";
 
@@ -51,16 +50,14 @@ const homeSchema = [
   },
 ];
 
-export default async function HomePage() {
-  const starCount = await getGitHubStarCount();
-
+export default function HomePage() {
   return (
     <>
       <JsonLd data={homeSchema} />
       <Hero />
       <Why />
       <FeatureGrid />
-      <TrustBand starCount={starCount} />
+      <TrustBand />
       <Faqs />
       <InstallCta />
     </>
