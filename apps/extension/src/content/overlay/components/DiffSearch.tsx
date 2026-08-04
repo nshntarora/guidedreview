@@ -15,6 +15,7 @@ import {
   fallbackMatchRanges,
   highlightSegments,
   searchDiff,
+  type DiffSearchDoc,
   type DiffSearchResult,
   type MatchRange,
 } from "@extension/content/overlay/diffSearch";
@@ -30,8 +31,9 @@ export interface DiffSearchProps {
    */
   focusRequestId?: number;
   /**
-   * Overlay capture-phase keyboard routes Arrow/Enter here (React handlers on
-   * the input never see keydown because the overlay stops propagation).
+   * Action-ref for overlay capture keyboard (see useOverlayKeyboard module
+   * comment). Arrow/Enter while the palette is open — React input handlers
+   * never see those keys after capture stopPropagation.
    * Return true when the key was handled.
    */
   keyActionRef?: MutableRefObject<((e: globalThis.KeyboardEvent) => boolean) | null>;
@@ -41,6 +43,51 @@ function linePrefix(type: "add" | "del" | "context"): string {
   if (type === "add") return "+";
   if (type === "del") return "−";
   return " ";
+}
+
+/** Wrap active index by `delta` within a result list (empty list → 0). */
+function nextActiveIndex(current: number, delta: number, length: number): number {
+  if (length === 0) return 0;
+  const next = current + delta;
+  if (next < 0) return length - 1;
+  if (next >= length) return 0;
+  return next;
+}
+
+/**
+ * Palette navigation keys shared by the capture-phase ref and the input
+ * keydown fallback. Returns true when the key was handled.
+ *
+ * `ignoreEnterWithModifier` mirrors the capture path (⌘/Ctrl+Enter must not
+ * steal the chord); the input fallback always treats Enter as select.
+ */
+function handlePaletteKey(
+  key: string,
+  options: {
+    ignoreEnterWithModifier: boolean;
+    hasModifier: boolean;
+    onMove: (delta: number) => void;
+    onSelectActive: () => void;
+    onClose: () => void;
+  },
+): boolean {
+  switch (key) {
+    case "ArrowDown":
+      options.onMove(1);
+      return true;
+    case "ArrowUp":
+      options.onMove(-1);
+      return true;
+    case "Enter":
+      if (options.ignoreEnterWithModifier && options.hasModifier) return false;
+      options.onSelectActive();
+      return true;
+    case "Escape":
+      options.onClose();
+      return true;
+    default:
+      return false;
+  }
 }
 
 /** Brand-colored mark spans for matched substrings. */
@@ -91,6 +138,61 @@ function rangesForField(
     return fromFuse;
   }
   return undefined;
+}
+
+interface DiffSearchResultRowProps {
+  result: DiffSearchResult;
+  index: number;
+  optionId: string;
+  isActive: boolean;
+  query: string;
+  docs: DiffSearchDoc[];
+  onActivate: (index: number) => void;
+  onSelect: (index: number) => void;
+}
+
+/** One combobox option: file path match or line match with preview. */
+function DiffSearchResultRow({
+  result,
+  index,
+  optionId,
+  isActive,
+  query,
+  docs,
+  onActivate,
+  onSelect,
+}: DiffSearchResultRowProps) {
+  const pathRanges = rangesForField(result, "path", result.filePath, query);
+
+  return (
+    <li
+      id={optionId}
+      role="option"
+      aria-selected={isActive}
+      data-search-index={index}
+      data-testid={result.kind === "file" ? "diff-search-result-file" : "diff-search-result-line"}
+      className={cn(
+        "cursor-pointer rounded-lg px-3 py-2.5",
+        isActive ? "bg-primary-muted" : "hover:bg-surface-raised",
+      )}
+      onMouseEnter={() => onActivate(index)}
+      onMouseDown={(e) => {
+        // Prevent input blur before click registers.
+        e.preventDefault();
+      }}
+      onClick={() => onSelect(index)}
+    >
+      <div className="truncate font-mono text-base text-foreground" title={result.filePath}>
+        <HighlightedText text={result.filePath} ranges={pathRanges} />
+      </div>
+
+      {result.kind === "file" ? (
+        <div className="mt-1 text-sm text-muted">File name match</div>
+      ) : (
+        <LineResultPreview result={result} docs={docs} query={query} />
+      )}
+    </li>
+  );
 }
 
 /**
@@ -163,41 +265,22 @@ export function DiffSearch({
   useEffect(() => {
     if (!keyActionRef || !open) return;
 
-    function moveActive(delta: number) {
-      const list = resultsRef.current;
-      if (list.length === 0) return;
-      setActiveIndex((i) => {
-        const next = i + delta;
-        if (next < 0) return list.length - 1;
-        if (next >= list.length) return 0;
-        return next;
-      });
-    }
-
-    function selectActive() {
-      const result = resultsRef.current[activeIndexRef.current];
-      if (!result) return;
-      onSelectRef.current(result);
-    }
-
     keyActionRef.current = (event: globalThis.KeyboardEvent) => {
-      switch (event.key) {
-        case "ArrowDown":
-          moveActive(1);
-          return true;
-        case "ArrowUp":
-          moveActive(-1);
-          return true;
-        case "Enter":
-          if (event.metaKey || event.ctrlKey || event.altKey) return false;
-          selectActive();
-          return true;
-        case "Escape":
-          onCloseRef.current();
-          return true;
-        default:
-          return false;
-      }
+      return handlePaletteKey(event.key, {
+        ignoreEnterWithModifier: true,
+        hasModifier: event.metaKey || event.ctrlKey || event.altKey,
+        onMove: (delta) => {
+          const list = resultsRef.current;
+          if (list.length === 0) return;
+          setActiveIndex((i) => nextActiveIndex(i, delta, list.length));
+        },
+        onSelectActive: () => {
+          const result = resultsRef.current[activeIndexRef.current];
+          if (!result) return;
+          onSelectRef.current(result);
+        },
+        onClose: () => onCloseRef.current(),
+      });
     };
 
     return () => {
@@ -215,31 +298,17 @@ export function DiffSearch({
 
   /** Fallback when the input still receives keydown (e.g. unit tests). */
   function onInputKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    switch (event.key) {
-      case "ArrowDown":
-        event.preventDefault();
-        setActiveIndex((i) => {
-          if (results.length === 0) return 0;
-          return i + 1 >= results.length ? 0 : i + 1;
-        });
-        return;
-      case "ArrowUp":
-        event.preventDefault();
-        setActiveIndex((i) => {
-          if (results.length === 0) return 0;
-          return i - 1 < 0 ? results.length - 1 : i - 1;
-        });
-        return;
-      case "Enter":
-        event.preventDefault();
-        selectIndex(activeIndex);
-        return;
-      case "Escape":
-        event.preventDefault();
-        onClose();
-        return;
-      default:
-        return;
+    const handled = handlePaletteKey(event.key, {
+      ignoreEnterWithModifier: false,
+      hasModifier: event.metaKey || event.ctrlKey || event.altKey,
+      onMove: (delta) => {
+        setActiveIndex((i) => nextActiveIndex(i, delta, results.length));
+      },
+      onSelectActive: () => selectIndex(activeIndex),
+      onClose,
+    });
+    if (handled) {
+      event.preventDefault();
     }
   }
 
@@ -317,46 +386,19 @@ export function DiffSearch({
               className="m-0 max-h-[min(28rem,55vh)] list-none overflow-y-auto p-2"
               data-testid="diff-search-results"
             >
-              {results.map((result, index) => {
-                const isActive = index === activeIndex;
-                const pathRanges = rangesForField(result, "path", result.filePath, query);
-
-                return (
-                  <li
-                    key={result.id}
-                    id={`${listboxId}-option-${index}`}
-                    role="option"
-                    aria-selected={isActive}
-                    data-search-index={index}
-                    data-testid={
-                      result.kind === "file" ? "diff-search-result-file" : "diff-search-result-line"
-                    }
-                    className={cn(
-                      "cursor-pointer rounded-lg px-3 py-2.5",
-                      isActive ? "bg-primary-muted" : "hover:bg-surface-raised",
-                    )}
-                    onMouseEnter={() => setActiveIndex(index)}
-                    onMouseDown={(e) => {
-                      // Prevent input blur before click registers.
-                      e.preventDefault();
-                    }}
-                    onClick={() => selectIndex(index)}
-                  >
-                    <div
-                      className="truncate font-mono text-base text-foreground"
-                      title={result.filePath}
-                    >
-                      <HighlightedText text={result.filePath} ranges={pathRanges} />
-                    </div>
-
-                    {result.kind === "file" ? (
-                      <div className="mt-1 text-sm text-muted">File name match</div>
-                    ) : (
-                      <LineResultPreview result={result} docs={docs} query={query} />
-                    )}
-                  </li>
-                );
-              })}
+              {results.map((result, index) => (
+                <DiffSearchResultRow
+                  key={result.id}
+                  result={result}
+                  index={index}
+                  optionId={`${listboxId}-option-${index}`}
+                  isActive={index === activeIndex}
+                  query={query}
+                  docs={docs}
+                  onActivate={setActiveIndex}
+                  onSelect={selectIndex}
+                />
+              ))}
             </ul>
           ) : null}
         </div>

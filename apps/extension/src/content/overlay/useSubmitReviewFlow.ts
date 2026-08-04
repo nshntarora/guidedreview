@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { getGitHubAuthStatus, requestSubmitReview } from "@extension/lib/messaging";
 import type { PRContext, ReviewCommentInput } from "@extension/lib/types";
 import { EMPTY_REVIEW_BODY_MESSAGE } from "@extension/lib/types";
@@ -39,6 +39,9 @@ interface UseSubmitReviewFlowOptions {
  * Owns the Submit Review / Connect GitHub modal flow: auth-gated open,
  * submission, success state, and post-submit exit. Extracted from Overlay
  * so the component itself stays focused on layout.
+ *
+ * Handlers are plain functions (not useCallback). useOverlayKeyboard mirrors
+ * them into refs each render, and modal re-renders are cheap.
  */
 export function useSubmitReviewFlow({
   prContext,
@@ -63,16 +66,16 @@ export function useSubmitReviewFlow({
   /** Prevent double-open while auth status is in flight. */
   const authCheckInFlightRef = useRef(false);
 
-  const exitAfterSubmit = useCallback(() => {
+  function exitAfterSubmit(): void {
     setSubmitSuccess(null);
     if (prContext) {
       navigateToPrConversation(prContext);
     }
     // Post-submit exit is intentional (single CTA) — skip the confirm prompt.
     handleExit();
-  }, [prContext, handleExit]);
+  }
 
-  const closeSubmitReviewModal = useCallback(() => {
+  function closeSubmitReviewModal(): void {
     if (submittingReview) return;
     setSubmitReviewOpen(false);
     setSubmitReviewError(null);
@@ -82,23 +85,23 @@ export function useSubmitReviewFlow({
         ?.querySelector<HTMLElement>('[data-testid="submit-review-button"]')
         ?.focus();
     });
-  }, [submittingReview, overlayRef]);
+  }
 
-  const closeConnectGitHubModal = useCallback(() => {
+  function closeConnectGitHubModal(): void {
     setConnectGitHubOpen(false);
-  }, []);
+  }
 
-  const openSubmitReviewModalAfterAuth = useCallback(() => {
+  function openSubmitReviewModalAfterAuth(): void {
     setConnectGitHubOpen(false);
     setSubmitReviewError(null);
     setSubmitReviewOpen(true);
-  }, []);
+  }
 
   /**
    * Gate Submit Review on a stored GitHub token. Missing auth → connect modal;
    * after successful device OAuth the connect modal re-opens submit.
    */
-  const requestOpenSubmitReview = useCallback(async () => {
+  async function requestOpenSubmitReview(): Promise<void> {
     if (
       authCheckInFlightRef.current ||
       submitReviewOpen ||
@@ -124,66 +127,63 @@ export function useSubmitReviewFlow({
     } finally {
       authCheckInFlightRef.current = false;
     }
-  }, [submitReviewOpen, connectGitHubOpen, submittingReview, submitSuccess]);
+  }
 
-  const handleSubmitReview = useCallback(
-    async (submission: ReviewSubmission) => {
-      if (submittingReview) return;
+  async function handleSubmitReview(submission: ReviewSubmission): Promise<void> {
+    if (submittingReview) return;
 
-      const trimmedBody = submission.body.trim();
-      if (
-        (submission.event === "COMMENT" || submission.event === "REQUEST_CHANGES") &&
-        trimmedBody.length === 0
-      ) {
-        setSubmitReviewError(EMPTY_REVIEW_BODY_MESSAGE[submission.event]);
+    const trimmedBody = submission.body.trim();
+    if (
+      (submission.event === "COMMENT" || submission.event === "REQUEST_CHANGES") &&
+      trimmedBody.length === 0
+    ) {
+      setSubmitReviewError(EMPTY_REVIEW_BODY_MESSAGE[submission.event]);
+      return;
+    }
+
+    const pr = prContext;
+    if (!pr) {
+      setSubmitReviewError(
+        "Missing pull request context. Close the review and try again from the PR page.",
+      );
+      return;
+    }
+
+    const generation = ++submitGenerationRef.current;
+    setSubmittingReview(true);
+    setSubmitReviewError(null);
+
+    const comments = mapDraftsToReviewComments(draftComments);
+
+    try {
+      const result = await requestSubmitReview(
+        { owner: pr.owner, repo: pr.repo, number: pr.number },
+        trimmedBody,
+        submission.event,
+        comments,
+      );
+
+      if (generation !== submitGenerationRef.current) return;
+
+      if (!result.ok) {
+        setSubmitReviewError(result.error);
         return;
       }
 
-      const pr = prContext;
-      if (!pr) {
-        setSubmitReviewError(
-          "Missing pull request context. Close the review and try again from the PR page.",
-        );
-        return;
-      }
-
-      const generation = ++submitGenerationRef.current;
-      setSubmittingReview(true);
+      clearDraftComments();
+      setSubmitReviewOpen(false);
       setSubmitReviewError(null);
-
-      const comments = mapDraftsToReviewComments(draftComments);
-
-      try {
-        const result = await requestSubmitReview(
-          { owner: pr.owner, repo: pr.repo, number: pr.number },
-          trimmedBody,
-          submission.event,
-          comments,
-        );
-
-        if (generation !== submitGenerationRef.current) return;
-
-        if (!result.ok) {
-          setSubmitReviewError(result.error);
-          return;
-        }
-
-        clearDraftComments();
-        setSubmitReviewOpen(false);
-        setSubmitReviewError(null);
-        setSubmitSuccess({ event: submission.event, commentCount: comments.length });
-      } catch (error: unknown) {
-        if (generation !== submitGenerationRef.current) return;
-        const message = error instanceof Error ? error.message : "Could not submit the review.";
-        setSubmitReviewError(message);
-      } finally {
-        if (generation === submitGenerationRef.current) {
-          setSubmittingReview(false);
-        }
+      setSubmitSuccess({ event: submission.event, commentCount: comments.length });
+    } catch (error: unknown) {
+      if (generation !== submitGenerationRef.current) return;
+      const message = error instanceof Error ? error.message : "Could not submit the review.";
+      setSubmitReviewError(message);
+    } finally {
+      if (generation === submitGenerationRef.current) {
+        setSubmittingReview(false);
       }
-    },
-    [submittingReview, prContext, draftComments, clearDraftComments],
-  );
+    }
+  }
 
   return {
     submitReviewOpen,

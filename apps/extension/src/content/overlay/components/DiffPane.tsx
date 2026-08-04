@@ -6,17 +6,21 @@ import { languageForPath } from "@extension/lib/highlight";
 import {
   displayLineNumber,
   linesInSelection,
+  type DraftComment,
+  type LineSelection,
   type SelectableLine,
 } from "@extension/content/overlay/commentTypes";
 import type { SearchScrollTarget } from "@extension/content/overlay/diffSearch";
 import { withHunkGaps } from "@extension/content/overlay/hunkGaps";
 import { hydrateDiffViewMode, useReviewStore } from "@extension/content/overlay/store";
 import type { ResolvedUnitFile } from "@extension/content/overlay/buildSelectableLines";
+import type { DiffViewMode } from "@extension/lib/preferences";
+import type { ComposerRange } from "./diff/hunkShared";
 import { AddCommentButton, CommentModeChip, DiffViewToggle } from "./diff/DiffToolbar";
 import { HunkGapPlaceholder } from "./diff/HunkGapPlaceholder";
 import { SplitHunk } from "./diff/SplitHunk";
 import { UnifiedHunk } from "./diff/UnifiedHunk";
-import { useSelectionDerived } from "./diff/useSelectionDerived";
+import { deriveSelection } from "./diff/deriveSelection";
 import { MiddleEllipsisText } from "./MiddleEllipsisText";
 import { TestsUnitIcon } from "./TestsUnitIcon";
 
@@ -92,6 +96,127 @@ function BinaryElidedEmptyState({ filePath }: { filePath: string }) {
   );
 }
 
+/**
+ * Polite live-region text for comment-mode focus/selection.
+ * Keeps announcement logic out of the render path so it is easy to scan.
+ */
+function selectionAnnouncementText(
+  uiMode: string,
+  lineSelection: LineSelection | null,
+  selectableLines: SelectableLine[],
+  selectableForUnit: SelectableLine[],
+): string {
+  if (uiMode !== "comment" || !lineSelection) return "";
+  const lines = selectableLines.length > 0 ? selectableLines : selectableForUnit;
+  const focused = lines[lineSelection.focusIndex];
+  if (!focused) return "Comment mode. No line focused.";
+  const selected = linesInSelection(lines, lineSelection);
+  const focusNum = displayLineNumber(focused);
+  if (selected.length > 1) {
+    const first = selected[0];
+    const last = selected[selected.length - 1];
+    const start = displayLineNumber(first);
+    const end = displayLineNumber(last);
+    return `Comment mode. ${focused.filePath}, lines ${start ?? "?"} to ${end ?? "?"} selected.`;
+  }
+  return `Comment mode. ${focused.filePath}, line ${focusNum ?? "?"}.`;
+}
+
+interface DiffFileCardProps {
+  resolved: ResolvedUnitFile;
+  diffViewMode: DiffViewMode;
+  selectedIds: Set<string>;
+  focusId: string | null;
+  draftsByEndLineId: Map<string, DraftComment[]>;
+  composerPlacementId: string | null;
+  composerRange: ComposerRange;
+  unitId?: string;
+  searchHighlight: SearchScrollTarget | null;
+}
+
+/** One file's path header + hunks (or binary empty state) inside the unit pane. */
+function DiffFileCard({
+  resolved,
+  diffViewMode,
+  selectedIds,
+  focusId,
+  draftsByEndLineId,
+  composerPlacementId,
+  composerRange,
+  unitId,
+  searchHighlight,
+}: DiffFileCardProps) {
+  const { file, hunks } = resolved;
+  const language = languageForPath(file.path);
+  const extension = file.path.includes(".") ? file.path.split(".").pop() : undefined;
+  const pathLabel = file.previousPath ? `${file.previousPath} → ${file.path}` : file.path;
+  const fileSearchHit =
+    searchHighlight != null && searchHighlight.filePath === file.path && !searchHighlight.lineId;
+  // When highlighting a line match, pass it as focus so existing focus styles apply.
+  const searchFocusId =
+    searchHighlight?.lineId && searchHighlight.filePath === file.path
+      ? searchHighlight.lineId
+      : null;
+  const effectiveFocusId = focusId ?? searchFocusId;
+
+  return (
+    <div
+      className={cn(
+        "mb-7 overflow-hidden rounded-lg border border-border bg-surface-raised",
+        fileSearchHit && "ring-2 ring-primary ring-offset-2 ring-offset-surface",
+      )}
+      data-file-path={file.path}
+      data-testid={fileSearchHit ? "diff-file-search-highlight" : undefined}
+    >
+      <div className="flex min-w-0 items-baseline gap-2.5 border-b border-border bg-background px-3 py-2 font-mono text-sm">
+        <MiddleEllipsisText text={pathLabel} maxWidth="100%" className="min-w-0 flex-1" />
+        {!language && !file.isBinaryOrElided && (
+          <span className="shrink-0 font-normal text-muted italic">
+            {extension ? `no syntax highlighting for .${extension}` : "no syntax highlighting"}
+          </span>
+        )}
+      </div>
+      {file.isBinaryOrElided ? (
+        <BinaryElidedEmptyState filePath={file.path} />
+      ) : (
+        withHunkGaps(hunks).map((item) => {
+          if (item.kind === "gap") {
+            return (
+              <HunkGapPlaceholder key={item.key} filePath={file.path} afterLine={item.afterLine} />
+            );
+          }
+          const { hunk } = item;
+          return diffViewMode === "split" ? (
+            <SplitHunk
+              hunk={hunk}
+              language={language}
+              key={hunk.id}
+              selectedIds={selectedIds}
+              focusId={effectiveFocusId}
+              draftsByEndLineId={draftsByEndLineId}
+              composerPlacementId={composerPlacementId}
+              composerRange={composerRange}
+              unitId={unitId}
+            />
+          ) : (
+            <UnifiedHunk
+              hunk={hunk}
+              language={language}
+              key={hunk.id}
+              selectedIds={selectedIds}
+              focusId={effectiveFocusId}
+              draftsByEndLineId={draftsByEndLineId}
+              composerPlacementId={composerPlacementId}
+              composerRange={composerRange}
+              unitId={unitId}
+            />
+          );
+        })
+      )}
+    </div>
+  );
+}
+
 export function DiffPane({
   files,
   unitTitle,
@@ -120,7 +245,7 @@ export function DiffPane({
   const filePaths = useMemo(() => new Set(files.map((f) => f.file.path)), [files]);
 
   const { selectedIds, focusId, composerPlacementId, composerRange, draftsByEndLineId } =
-    useSelectionDerived(
+    deriveSelection(
       uiMode === "comment" ? selectableLines : [],
       uiMode === "comment" ? lineSelection : null,
       composerOpen,
@@ -181,22 +306,12 @@ export function DiffPane({
   const commentModeDisabled = selectableForUnit.length === 0;
 
   // Announce focused/selected lines so comment mode is not color-only (1.4.1 / 4.1.3).
-  const selectionAnnouncement = useMemo(() => {
-    if (uiMode !== "comment" || !lineSelection) return "";
-    const lines = selectableLines.length > 0 ? selectableLines : selectableForUnit;
-    const focused = lines[lineSelection.focusIndex];
-    if (!focused) return "Comment mode. No line focused.";
-    const selected = linesInSelection(lines, lineSelection);
-    const focusNum = displayLineNumber(focused);
-    if (selected.length > 1) {
-      const first = selected[0];
-      const last = selected[selected.length - 1];
-      const start = displayLineNumber(first);
-      const end = displayLineNumber(last);
-      return `Comment mode. ${focused.filePath}, lines ${start ?? "?"} to ${end ?? "?"} selected.`;
-    }
-    return `Comment mode. ${focused.filePath}, line ${focusNum ?? "?"}.`;
-  }, [uiMode, lineSelection, selectableLines, selectableForUnit]);
+  const selectionAnnouncement = selectionAnnouncementText(
+    uiMode,
+    lineSelection,
+    selectableLines,
+    selectableForUnit,
+  );
 
   return (
     <div ref={rootRef}>
@@ -234,85 +349,20 @@ export function DiffPane({
           <DiffViewToggle mode={diffViewMode} onChange={setDiffViewMode} />
         </div>
       </div>
-      {files.map(({ file, hunks }) => {
-        const language = languageForPath(file.path);
-        const extension = file.path.includes(".") ? file.path.split(".").pop() : undefined;
-        const pathLabel = file.previousPath ? `${file.previousPath} → ${file.path}` : file.path;
-        const fileSearchHit =
-          searchHighlight != null &&
-          searchHighlight.filePath === file.path &&
-          !searchHighlight.lineId;
-        // When highlighting a line match, pass it as focus so existing focus styles apply.
-        const searchFocusId =
-          searchHighlight?.lineId && searchHighlight.filePath === file.path
-            ? searchHighlight.lineId
-            : null;
-        const effectiveFocusId = focusId ?? searchFocusId;
-
-        return (
-          <div
-            className={cn(
-              "mb-7 overflow-hidden rounded-lg border border-border bg-surface-raised",
-              fileSearchHit && "ring-2 ring-primary ring-offset-2 ring-offset-surface",
-            )}
-            key={file.path}
-            data-file-path={file.path}
-            data-testid={fileSearchHit ? "diff-file-search-highlight" : undefined}
-          >
-            <div className="flex min-w-0 items-baseline gap-2.5 border-b border-border bg-background px-3 py-2 font-mono text-sm">
-              <MiddleEllipsisText text={pathLabel} maxWidth="100%" className="min-w-0 flex-1" />
-              {!language && !file.isBinaryOrElided && (
-                <span className="shrink-0 font-normal text-muted italic">
-                  {extension
-                    ? `no syntax highlighting for .${extension}`
-                    : "no syntax highlighting"}
-                </span>
-              )}
-            </div>
-            {file.isBinaryOrElided ? (
-              <BinaryElidedEmptyState filePath={file.path} />
-            ) : (
-              withHunkGaps(hunks).map((item) => {
-                if (item.kind === "gap") {
-                  return (
-                    <HunkGapPlaceholder
-                      key={item.key}
-                      filePath={file.path}
-                      afterLine={item.afterLine}
-                    />
-                  );
-                }
-                const { hunk } = item;
-                return diffViewMode === "split" ? (
-                  <SplitHunk
-                    hunk={hunk}
-                    language={language}
-                    key={hunk.id}
-                    selectedIds={selectedIds}
-                    focusId={effectiveFocusId}
-                    draftsByEndLineId={draftsByEndLineId}
-                    composerPlacementId={composerPlacementId}
-                    composerRange={composerRange}
-                    unitId={unitId}
-                  />
-                ) : (
-                  <UnifiedHunk
-                    hunk={hunk}
-                    language={language}
-                    key={hunk.id}
-                    selectedIds={selectedIds}
-                    focusId={effectiveFocusId}
-                    draftsByEndLineId={draftsByEndLineId}
-                    composerPlacementId={composerPlacementId}
-                    composerRange={composerRange}
-                    unitId={unitId}
-                  />
-                );
-              })
-            )}
-          </div>
-        );
-      })}
+      {files.map((resolved) => (
+        <DiffFileCard
+          key={resolved.file.path}
+          resolved={resolved}
+          diffViewMode={diffViewMode}
+          selectedIds={selectedIds}
+          focusId={focusId}
+          draftsByEndLineId={draftsByEndLineId}
+          composerPlacementId={composerPlacementId}
+          composerRange={composerRange}
+          unitId={unitId}
+          searchHighlight={searchHighlight}
+        />
+      ))}
     </div>
   );
 }
