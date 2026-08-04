@@ -1,8 +1,6 @@
 import { WindowFrame } from "./WindowFrame";
 
 const X_PROFILE_URL = "https://x.com/nshntarora";
-const MITCHELL_TWEET_URL = "https://x.com/mitchellh/status/2072738025344565262";
-const MITCHELL_TWEET_IMG = "/mitchell-hashimoto-tweet.png";
 
 export function Why() {
   return (
@@ -45,38 +43,14 @@ export function Why() {
               </p>
             </div>
             <div className="space-y-4">
+              <p>And, for that...</p>
               <p className="font-semibold text-foreground">
                 Nothing beats &quot;reading&quot; the code.
               </p>
-              <figure className="max-w-sm">
-                <a
-                  href={MITCHELL_TWEET_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block overflow-hidden rounded-lg border border-border shadow-[0_1px_0_rgba(0,0,0,0.02)] transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                >
-                  <img
-                    src={MITCHELL_TWEET_IMG}
-                    alt='Mitchell Hashimoto (@mitchellh) on X: "I read the code"'
-                    width={352}
-                    height={135}
-                    className="block h-auto w-full"
-                    decoding="async"
-                    loading="lazy"
-                  />
-                </a>
-                <figcaption className="mt-2 font-mono text-xs leading-relaxed text-muted">
-                  Mitchell Hashimoto, saying the quiet part out loud.{" "}
-                  <a
-                    href={MITCHELL_TWEET_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary underline-offset-4 transition-colors hover:underline"
-                  >
-                    Source
-                  </a>
-                </figcaption>
-              </figure>
+              <p>
+                Problem is, reading code is not easy. It&apos;s even harder if your tools are
+                designed for storing code rather than reading it.
+              </p>
               <p>
                 AI has made writing code too easy. It&apos;s time we used it to make reading code
                 easy too. We need an experience designed for humans — not to avoid AI, but to use it
