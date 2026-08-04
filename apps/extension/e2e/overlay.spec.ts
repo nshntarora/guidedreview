@@ -1,10 +1,12 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import type { BrowserContext, Page } from "@playwright/test";
 import type { ReviewPlan } from "@extension/lib/types";
 import { expect, test } from "./fixtures";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PR_URL = "https://github.com/acme/widgets/pull/1";
+const PR_FILES_URL = `${PR_URL}/files`;
 const PULLS_LIST_URL = "https://github.com/acme/widgets/pulls";
 const PR_FIXTURE_PATH = path.resolve(__dirname, "fixtures/pr-page.html");
 const PR_MODERN_FIXTURE_PATH = path.resolve(__dirname, "fixtures/pr-page-modern.html");
@@ -56,6 +58,77 @@ function anthropicSseForPlan(plan: ReviewPlan): string {
   return events.join("");
 }
 
+/** Seed provider settings via the real options page (real chrome.storage.local). */
+async function seedProviderApiKey(
+  context: BrowserContext,
+  extensionId: string,
+  apiKey = "sk-e2e-test-key",
+): Promise<void> {
+  const optionsPage = await context.newPage();
+  await optionsPage.goto(`chrome-extension://${extensionId}/src/options/index.html`);
+  await optionsPage.getByLabel("API Key").fill(apiKey);
+  await optionsPage.getByRole("button", { name: "Save" }).click();
+  await expect(optionsPage.getByText("Saved")).toBeVisible();
+  await optionsPage.close();
+}
+
+/**
+ * Seed a GitHub OAuth session in chrome.storage.local so SUBMIT_REVIEW can run
+ * without the device-flow UI (which needs a build-time client id).
+ */
+async function seedGitHubAuth(context: BrowserContext, extensionId: string): Promise<void> {
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/src/options/index.html`);
+  await page.evaluate(async () => {
+    await chrome.storage.local.set({
+      "guidedReview.githubAuth": {
+        accessToken: "gho_e2e_test_token",
+        tokenType: "bearer",
+        scope: "repo read:user",
+        login: "e2e-bot",
+      },
+    });
+  });
+  await page.close();
+}
+
+/** Stub the PR HTML, raw `.diff`, and (optionally) a successful Anthropic plan stream. */
+async function stubPrPageAndDiff(
+  context: BrowserContext,
+  options: { plan?: ReviewPlan | null; pageUrls?: string[] } = {},
+): Promise<void> {
+  const pageUrls = options.pageUrls ?? [PR_URL];
+  for (const url of pageUrls) {
+    await context.route(url, (route) =>
+      route.fulfill({ path: PR_FIXTURE_PATH, contentType: "text/html" }),
+    );
+  }
+  await context.route(`${PR_URL}.diff`, (route) =>
+    route.fulfill({ status: 200, contentType: "text/plain", body: CANNED_DIFF }),
+  );
+  if (options.plan !== null) {
+    const plan = options.plan ?? CANNED_PLAN;
+    await context.route("https://api.anthropic.com/v1/messages", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "text/event-stream",
+        body: anthropicSseForPlan(plan),
+      }),
+    );
+  }
+}
+
+/** Open the PR, start the review, wait for the AI unit, and navigate to it. */
+async function startReviewOnCodeUnit(page: Page): Promise<void> {
+  await page.goto(PR_URL);
+  await page.getByRole("button", { name: "Start Guided Review" }).click();
+  await expect(page.getByText("PR Description").first()).toBeVisible();
+  await expect(page.getByText(CANNED_PLAN.units[0].title)).toBeVisible();
+  await page.getByRole("button", { name: /next/i }).click();
+  await expect(page.getByText(CANNED_PLAN.units[0].context)).toBeVisible();
+  await expect(page.getByTestId("diff-view-split")).toBeVisible();
+}
+
 test.describe("Guided review overlay", () => {
   test("clicking Start Guided Review builds and shows a review plan", async ({
     context,
@@ -63,28 +136,11 @@ test.describe("Guided review overlay", () => {
   }) => {
     // Seed provider settings via the real options page (real chrome.storage.local), the same
     // way a user would configure the extension before it can call an AI provider.
-    const optionsPage = await context.newPage();
-    await optionsPage.goto(`chrome-extension://${extensionId}/src/options/index.html`);
-    await optionsPage.getByLabel("API Key").fill("sk-e2e-test-key");
-    await optionsPage.getByRole("button", { name: "Save" }).click();
-    await expect(optionsPage.getByText("Saved")).toBeVisible();
-    await optionsPage.close();
+    await seedProviderApiKey(context, extensionId);
 
     // Stub every external call the extension makes for this PR: the page itself, the raw
     // diff, and the AI provider's streaming completion — nothing here touches the real internet.
-    await context.route(PR_URL, (route) =>
-      route.fulfill({ path: PR_FIXTURE_PATH, contentType: "text/html" }),
-    );
-    await context.route(`${PR_URL}.diff`, (route) =>
-      route.fulfill({ status: 200, contentType: "text/plain", body: CANNED_DIFF }),
-    );
-    await context.route("https://api.anthropic.com/v1/messages", (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: "text/event-stream",
-        body: anthropicSseForPlan(CANNED_PLAN),
-      }),
-    );
+    await stubPrPageAndDiff(context);
 
     const page = await context.newPage();
     await page.goto(PR_URL);
@@ -192,12 +248,7 @@ test.describe("Guided review overlay", () => {
   }) => {
     // No options seeding — default storage has no API key. Content script still
     // fetches the diff, then falls back to one unit per file + connect prompt.
-    await context.route(PR_URL, (route) =>
-      route.fulfill({ path: PR_FIXTURE_PATH, contentType: "text/html" }),
-    );
-    await context.route(`${PR_URL}.diff`, (route) =>
-      route.fulfill({ status: 200, contentType: "text/plain", body: CANNED_DIFF }),
-    );
+    await stubPrPageAndDiff(context, { plan: null });
 
     const page = await context.newPage();
     await page.goto(PR_URL);
@@ -221,26 +272,8 @@ test.describe("Guided review overlay", () => {
     context,
     extensionId,
   }) => {
-    const optionsPage = await context.newPage();
-    await optionsPage.goto(`chrome-extension://${extensionId}/src/options/index.html`);
-    await optionsPage.getByLabel("API Key").fill("sk-e2e-test-key");
-    await optionsPage.getByRole("button", { name: "Save" }).click();
-    await expect(optionsPage.getByText("Saved")).toBeVisible();
-    await optionsPage.close();
-
-    await context.route(PR_URL, (route) =>
-      route.fulfill({ path: PR_FIXTURE_PATH, contentType: "text/html" }),
-    );
-    await context.route(`${PR_URL}.diff`, (route) =>
-      route.fulfill({ status: 200, contentType: "text/plain", body: CANNED_DIFF }),
-    );
-    await context.route("https://api.anthropic.com/v1/messages", (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: "text/event-stream",
-        body: anthropicSseForPlan(CANNED_PLAN),
-      }),
-    );
+    await seedProviderApiKey(context, extensionId);
+    await stubPrPageAndDiff(context);
 
     const page = await context.newPage();
     await page.goto(PR_URL);
@@ -267,5 +300,186 @@ test.describe("Guided review overlay", () => {
 
     await expect(page.getByText("PR Description")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Start Guided Review" })).toBeVisible();
+  });
+
+  test("draft line comment via keyboard", async ({ context, extensionId }) => {
+    await seedProviderApiKey(context, extensionId);
+    await stubPrPageAndDiff(context);
+
+    const page = await context.newPage();
+    await startReviewOnCodeUnit(page);
+
+    // c → comment mode on the first selectable line; Enter opens the composer.
+    await page.keyboard.press("c");
+    await expect(page.getByTestId("comment-mode-chip")).toBeVisible();
+    await expect(page.getByTestId("diff-line-focus")).toBeVisible();
+
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("comment-composer")).toBeVisible();
+
+    const input = page.getByTestId("comment-composer-input");
+    await input.fill("Please add a test for the constant bump.");
+    // Overlay capture handler accepts Ctrl or Cmd; Ctrl is portable across CI.
+    await input.press("Control+Enter");
+
+    await expect(page.getByTestId("draft-comment")).toBeVisible();
+    await expect(page.getByTestId("draft-comment-body")).toHaveText(
+      "Please add a test for the constant bump.",
+    );
+    await expect(page.getByTestId("comment-composer")).toHaveCount(0);
+  });
+
+  test("submit review with seeded GitHub auth", async ({ context, extensionId }) => {
+    await seedProviderApiKey(context, extensionId);
+    await seedGitHubAuth(context, extensionId);
+    await stubPrPageAndDiff(context);
+
+    // Preflight GET pull + POST reviews from the background worker.
+    await context.route("https://api.github.com/repos/acme/widgets/pulls/1", (route) => {
+      if (route.request().method() === "GET") {
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ head: { sha: "abc123def4567890" } }),
+        });
+      }
+      return route.fallback();
+    });
+    await context.route("https://api.github.com/repos/acme/widgets/pulls/1/reviews", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: 999001,
+          html_url: "https://github.com/acme/widgets/pull/1#pullrequestreview-999001",
+        }),
+      }),
+    );
+
+    const page = await context.newPage();
+    await startReviewOnCodeUnit(page);
+
+    await page.getByTestId("submit-review-button").click();
+    await expect(page.getByTestId("submit-review-modal")).toBeVisible();
+    await expect(page.getByTestId("submit-review-modal")).toHaveAttribute("data-step", "choose");
+
+    await page.getByTestId("submit-review-event-APPROVE").click();
+    await expect(page.getByTestId("submit-review-modal")).toHaveAttribute("data-step", "compose");
+    await page.getByTestId("submit-review-body").fill("Looks good — constant bump is clear.");
+    await page.getByTestId("submit-review-confirm").click();
+
+    await expect(page.getByTestId("review-submitted-modal")).toBeVisible();
+    await expect(page.getByTestId("review-submitted-modal")).toHaveAttribute(
+      "data-event",
+      "APPROVE",
+    );
+    await expect(page.getByTestId("review-submitted-summary")).toBeVisible();
+  });
+
+  test("submit without GitHub opens connect modal", async ({ context, extensionId }) => {
+    // Provider key so the overlay is fully ready; no GitHub auth seeded.
+    await seedProviderApiKey(context, extensionId);
+    await stubPrPageAndDiff(context);
+
+    const page = await context.newPage();
+    await startReviewOnCodeUnit(page);
+
+    await page.getByTestId("submit-review-button").click();
+
+    await expect(page.getByTestId("connect-github-modal")).toBeVisible();
+    await expect(page.getByTestId("connect-github-prompt")).toBeVisible();
+    await expect(page.getByTestId("submit-review-modal")).toHaveCount(0);
+  });
+
+  test("provider 401 shows overlay error", async ({ context, extensionId }) => {
+    await seedProviderApiKey(context, extensionId);
+    await context.route(PR_URL, (route) =>
+      route.fulfill({ path: PR_FIXTURE_PATH, contentType: "text/html" }),
+    );
+    await context.route(`${PR_URL}.diff`, (route) =>
+      route.fulfill({ status: 200, contentType: "text/plain", body: CANNED_DIFF }),
+    );
+    await context.route("https://api.anthropic.com/v1/messages", (route) =>
+      route.fulfill({
+        status: 401,
+        contentType: "application/json",
+        body: JSON.stringify({
+          type: "error",
+          error: { type: "authentication_error", message: "invalid x-api-key" },
+        }),
+      }),
+    );
+
+    const page = await context.newPage();
+    await page.goto(PR_URL);
+    await page.getByRole("button", { name: "Start Guided Review" }).click();
+
+    // Diff still loads; annotation fails with the provider's auth error.
+    await expect(page.getByTestId("error-message")).toHaveText(/invalid x-api-key/i);
+    await expect(page.getByTestId("error-status-code")).toHaveText("401");
+    await expect(page.getByTestId("error-code")).toHaveText("authentication_error");
+    // Layout stays up (PR description unit) so the user can retry or exit.
+    await expect(page.getByText("PR Description").first()).toBeVisible();
+    await expect(page.getByRole("button", { name: /^retry$/i })).toBeVisible();
+  });
+
+  test("auto-open on Files changed", async ({ context, extensionId }) => {
+    // Enable the preference the same way a user would; no API key needed —
+    // auto-open still builds a file-per-unit plan and shows the connect prompt.
+    const optionsPage = await context.newPage();
+    await optionsPage.goto(`chrome-extension://${extensionId}/src/options/index.html`);
+    const toggle = optionsPage.getByRole("switch", {
+      name: /Automatically open on Files changed/i,
+    });
+    await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-checked", "true");
+    await optionsPage.close();
+
+    await stubPrPageAndDiff(context, { plan: null, pageUrls: [PR_FILES_URL] });
+
+    const page = await context.newPage();
+    await page.goto(PR_FILES_URL);
+
+    // Overlay should open without clicking Start Guided Review.
+    await expect(page.getByTestId("guided-review-overlay")).toBeVisible();
+    await expect(page.getByText("PR Description").first()).toBeVisible();
+    await expect(page.getByTestId("connect-provider-prompt")).toBeVisible();
+  });
+
+  test("diff view chord and search", async ({ context, extensionId }) => {
+    await seedProviderApiKey(context, extensionId);
+    await stubPrPageAndDiff(context);
+
+    const page = await context.newPage();
+    await startReviewOnCodeUnit(page);
+
+    await expect(page.getByTestId("diff-view-split")).toBeVisible();
+    await expect(page.getByTestId("diff-view-unified")).toHaveCount(0);
+
+    // v then u → unified; v then s → split (1s chord window).
+    await page.keyboard.press("v");
+    await page.keyboard.press("u");
+    await expect(page.getByTestId("diff-view-unified")).toBeVisible();
+    await expect(page.getByTestId("diff-view-split")).toHaveCount(0);
+
+    await page.keyboard.press("v");
+    await page.keyboard.press("s");
+    await expect(page.getByTestId("diff-view-split")).toBeVisible();
+
+    // ⌘/Ctrl+F can be claimed by the browser chrome; dispatch on window so the
+    // overlay's capture listener still sees it (same path as real key events).
+    await page.evaluate(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "f",
+          code: "KeyF",
+          ctrlKey: true,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+    await expect(page.getByTestId("diff-search")).toBeVisible();
+    await expect(page.getByTestId("diff-search-input")).toBeVisible();
   });
 });
