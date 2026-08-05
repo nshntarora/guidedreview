@@ -78,6 +78,8 @@ interface PersistedSession {
   currentUnitIndex: number;
   /** Local draft comments (session-scoped; not posted to GitHub). */
   draftComments?: DraftComment[];
+  /** Display unit ids the reviewer marked viewed (session-scoped memory aid). */
+  viewedUnitIds?: string[];
 }
 
 const COMMENT_UI_RESET = {
@@ -126,6 +128,11 @@ interface ReviewState {
   lineSelection: LineSelection | null;
   composerOpen: boolean;
   draftComments: DraftComment[];
+  /**
+   * Display unit ids the reviewer marked as viewed (`e` toggle). Visual only —
+   * navigation is unchanged. Session-scoped; not posted to GitHub.
+   */
+  viewedUnitIds: string[];
 
   open: () => void;
   close: () => void;
@@ -168,6 +175,8 @@ interface ReviewState {
   updateDraftComment: (id: string, body: string) => void;
   removeDraftComment: (id: string) => void;
   clearDraftComments: () => void;
+  /** Toggle viewed mark for the current display unit (navigate/comment mode). */
+  toggleCurrentUnitViewed: () => void;
 }
 
 /**
@@ -208,6 +217,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   lineSelection: null,
   composerOpen: false,
   draftComments: [],
+  viewedUnitIds: [],
 
   open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false, ...COMMENT_UI_RESET }),
@@ -225,6 +235,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       sessionKey,
       streamGeneration: state.streamGeneration + 1,
       draftComments: [],
+      viewedUnitIds: [],
       ...COMMENT_UI_RESET,
     })),
 
@@ -499,6 +510,19 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   },
 
   clearDraftComments: () => set({ draftComments: [] }),
+
+  toggleCurrentUnitViewed: () => {
+    const { plan, currentUnitIndex, viewedUnitIds } = get();
+    const unit = buildDisplayUnits(plan)[currentUnitIndex];
+    if (!unit) return;
+    const id = unit.id;
+    const already = viewedUnitIds.includes(id);
+    set({
+      viewedUnitIds: already
+        ? viewedUnitIds.filter((existing) => existing !== id)
+        : [...viewedUnitIds, id],
+    });
+  },
 }));
 
 /** Bumped when the user sets a mode so pending storage reads are dropped. */
@@ -553,6 +577,7 @@ export async function persistSession(): Promise<void> {
     currentUnitIndex,
     sessionKey,
     draftComments,
+    viewedUnitIds,
   } = useReviewStore.getState();
   if (status !== "ready" || !diff || !plan || !sessionKey) return;
   // The file-per-unit fallback is cheap to rebuild and would otherwise be
@@ -565,6 +590,7 @@ export async function persistSession(): Promise<void> {
     prContext,
     currentUnitIndex,
     draftComments,
+    viewedUnitIds,
   };
   try {
     await writeSession(storageKey(sessionKey), payload);
@@ -604,6 +630,7 @@ export async function restoreSession(sessionKey: string): Promise<boolean> {
     buildPhase: null,
     providerLabel: null,
     draftComments: saved.draftComments ?? [],
+    viewedUnitIds: saved.viewedUnitIds ?? [],
     ...COMMENT_UI_RESET,
   });
   return true;

@@ -326,6 +326,12 @@ export function useOverlayKeyboard({
           event.preventDefault();
           store.goPrev();
           return;
+        case "e":
+        case "E":
+          if (event.metaKey || event.ctrlKey || event.altKey) return;
+          event.preventDefault();
+          store.toggleCurrentUnitViewed();
+          return;
         default:
           return;
       }
@@ -368,6 +374,12 @@ export function useOverlayKeyboard({
           if (selectableForUnit.length > 0) {
             store.enterCommentMode(selectableForUnit);
           }
+          return;
+        case "e":
+        case "E":
+          if (event.metaKey || event.ctrlKey || event.altKey) return;
+          event.preventDefault();
+          store.toggleCurrentUnitViewed();
           return;
         default:
           return;
