@@ -386,8 +386,16 @@ test.describe("Guided review overlay", () => {
 
     await page.getByTestId("submit-review-button").click();
 
+    // Auth gate: Connect GitHub modal, not Submit Review. Body copy depends on
+    // whether VITE_GITHUB_CLIENT_ID was baked in (local often has it; CI often
+    // doesn't) — either the device-flow prompt or the unconfigured message.
     await expect(page.getByTestId("connect-github-modal")).toBeVisible();
-    await expect(page.getByTestId("connect-github-prompt")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Connect GitHub" })).toBeVisible();
+    await expect(
+      page
+        .getByTestId("connect-github-prompt")
+        .or(page.getByText(/GitHub connection isn’t configured/i)),
+    ).toBeVisible();
     await expect(page.getByTestId("submit-review-modal")).toHaveCount(0);
   });
 
