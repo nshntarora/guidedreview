@@ -93,8 +93,8 @@ function FeatureCard({ feature: f, wide = false }: { feature: Feature; wide?: bo
   return (
     <WindowFrame
       label={f.file}
-      className="group w-full transition-colors duration-300 hover:border-primary/60"
-      bodyClassName={`flex flex-col gap-6 ${wide ? "md:flex-row md:items-center md:gap-10" : ""}`}
+      className="group flex h-full w-full flex-col transition-colors duration-300 hover:border-primary/60"
+      bodyClassName={`flex flex-1 flex-col gap-6 ${wide ? "md:flex-row md:items-center md:gap-10" : ""}`}
     >
       <div className={`flex flex-col ${wide ? "md:flex-1" : ""}`}>
         <h3 className="m-0 text-xl font-semibold tracking-tight sm:text-2xl">{f.title}</h3>

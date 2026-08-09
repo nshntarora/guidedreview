@@ -118,7 +118,10 @@ export function WindowFrame({ label, children, className, bodyClassName }: Windo
         insets + inline width:auto beat w-full so the card can't spill past the
         viewport.
       */}
-      <div className="min-w-0 w-full" style={expanded ? { height: placeholderHeight } : undefined}>
+      <div
+        className="min-w-0 h-full w-full"
+        style={expanded ? { height: placeholderHeight } : undefined}
+      >
         <div
           ref={frameRef}
           role={expanded ? "dialog" : undefined}
@@ -130,7 +133,7 @@ export function WindowFrame({ label, children, className, bodyClassName }: Windo
               : undefined
           }
           className={cn(
-            "overflow-hidden rounded-lg border border-border bg-surface-raised/50 shadow-[0_1px_0_rgba(0,0,0,0.02)]",
+            "h-full overflow-hidden rounded-lg border border-border bg-surface-raised/50 shadow-[0_1px_0_rgba(0,0,0,0.02)]",
             className,
             expanded &&
               "fixed z-[51] flex flex-col bg-surface-raised shadow-[0_24px_80px_rgba(0,0,0,0.45)]",
