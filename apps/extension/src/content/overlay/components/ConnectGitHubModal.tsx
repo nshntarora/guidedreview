@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type MutableRefObject } from "react";
+import { useEffect, useId, useRef, type MutableRefObject, type RefObject } from "react";
 import { GitHubLogo } from "@extension/components/GitHubLogo";
 import {
   GITHUB_CLIENT_ID_ENV_VAR,
@@ -18,10 +18,167 @@ export interface ConnectGitHubModalProps {
   /** Fired after device flow succeeds and the token is stored in the background. */
   onAuthenticated: () => void;
   /**
-   * Bound to the latest primary action (Connect / Try again / open GitHub) so
-   * the overlay capture keydown can fire Enter without relying on element React handlers.
+   * Action-ref for overlay capture keyboard (see useOverlayKeyboard module
+   * comment). Latest primary action: Connect / Try again / open verification URI.
    */
   connectActionRef?: MutableRefObject<(() => void) | null>;
+}
+
+/** Device-flow states the modal body/CTA branch on (mirrors useGitHubDeviceAuth). */
+type DeviceFlowView =
+  | { kind: "idle" }
+  | { kind: "awaiting"; userCode: string; verificationUri: string; deviceCode: string }
+  | { kind: "error"; message: string };
+
+interface ConnectGitHubBodyProps {
+  configured: boolean;
+  flow: DeviceFlowView;
+  copied: boolean;
+  onCopyCode: (code: string) => void;
+}
+
+/** Center content: unconfigured / error / awaiting code / idle prompt. */
+function ConnectGitHubBody({ configured, flow, copied, onCopyCode }: ConnectGitHubBodyProps) {
+  if (!configured) {
+    return (
+      <p className="m-0 w-full text-center text-base leading-relaxed text-muted" role="status">
+        GitHub connection isn’t configured in this build. Set{" "}
+        <code className="rounded bg-surface px-1 py-0.5 text-sm text-foreground">
+          {GITHUB_CLIENT_ID_ENV_VAR}
+        </code>{" "}
+        and rebuild.
+      </p>
+    );
+  }
+
+  if (flow.kind === "error") {
+    return (
+      <p
+        className="m-0 w-full rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-left text-base leading-snug text-red-200"
+        role="alert"
+        data-testid="connect-github-error"
+      >
+        {flow.message}
+      </p>
+    );
+  }
+
+  if (flow.kind === "awaiting") {
+    return (
+      <div className="w-full space-y-3 text-left" data-testid="connect-github-awaiting">
+        <div className="flex flex-wrap items-center justify-center gap-2 my-4">
+          <code
+            className="rounded-md border border-border bg-surface px-3 py-2 font-mono text-lg tracking-widest text-foreground"
+            data-testid="connect-github-user-code"
+          >
+            {flow.userCode}
+          </code>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => void onCopyCode(flow.userCode)}
+            data-testid="connect-github-copy-code"
+          >
+            {copied ? "Copied" : "Copy Code"}
+          </Button>
+        </div>
+        <p
+          className="m-0 text-center text-base leading-relaxed text-muted"
+          data-testid="connect-github-copy-hint"
+        >
+          Copy this code, then paste it on the GitHub tab.
+        </p>
+        <span className="flex items-center justify-center gap-2 text-base text-muted" role="status">
+          <Spinner label="Waiting for GitHub authorization" size={16} />
+          Waiting for authorization…
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <p
+      className="m-0 w-full text-center text-base leading-relaxed text-muted"
+      data-testid="connect-github-prompt"
+    >
+      Connect GitHub to submit this review. Uses device sign-in; the token stays in this browser
+      only.
+    </p>
+  );
+}
+
+interface ConnectGitHubPrimaryActionProps {
+  configured: boolean;
+  flow: DeviceFlowView;
+  busy: boolean;
+  connectButtonRef: RefObject<HTMLButtonElement | null>;
+  onStartConnect: () => void;
+  onOpenVerificationUri: (uri: string) => void;
+}
+
+/** Footer primary CTA for the current flow state (or null when unconfigured). */
+function ConnectGitHubPrimaryAction({
+  configured,
+  flow,
+  busy,
+  connectButtonRef,
+  onStartConnect,
+  onOpenVerificationUri,
+}: ConnectGitHubPrimaryActionProps) {
+  if (!configured) return null;
+
+  if (flow.kind === "error") {
+    return (
+      <Button size="sm" onClick={onStartConnect} disabled={busy} data-testid="connect-github-retry">
+        {busy ? (
+          <>
+            <Spinner label="Connecting to GitHub" size={14} />
+            Connecting…
+          </>
+        ) : (
+          <>
+            Try Again
+            <Kbd>Enter</Kbd>
+          </>
+        )}
+      </Button>
+    );
+  }
+
+  if (flow.kind === "awaiting") {
+    return (
+      <Button
+        size="sm"
+        onClick={() => onOpenVerificationUri(flow.verificationUri)}
+        data-testid="connect-github-enter-code"
+      >
+        Enter Code On GitHub
+        <Kbd>Enter</Kbd>
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      ref={connectButtonRef}
+      size="sm"
+      onClick={onStartConnect}
+      disabled={busy}
+      data-testid="connect-github-connect"
+    >
+      {busy ? (
+        <>
+          <Spinner label="Connecting to GitHub" size={14} />
+          Connecting…
+        </>
+      ) : (
+        <>
+          Connect GitHub
+          <Kbd>Enter</Kbd>
+        </>
+      )}
+    </Button>
+  );
 }
 
 /**
@@ -129,63 +286,12 @@ export function ConnectGitHubModal({
           Connect GitHub
         </h2>
 
-        {!configured ? (
-          <p className="m-0 w-full text-center text-base leading-relaxed text-muted" role="status">
-            GitHub connection isn’t configured in this build. Set{" "}
-            <code className="rounded bg-surface px-1 py-0.5 text-sm text-foreground">
-              {GITHUB_CLIENT_ID_ENV_VAR}
-            </code>{" "}
-            and rebuild.
-          </p>
-        ) : flow.kind === "error" ? (
-          <p
-            className="m-0 w-full rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-left text-base leading-snug text-red-200"
-            role="alert"
-            data-testid="connect-github-error"
-          >
-            {flow.message}
-          </p>
-        ) : flow.kind === "awaiting" ? (
-          <div className="w-full space-y-3 text-left" data-testid="connect-github-awaiting">
-            <div className="flex flex-wrap items-center justify-center gap-2 my-4">
-              <code
-                className="rounded-md border border-border bg-surface px-3 py-2 font-mono text-lg tracking-widest text-foreground"
-                data-testid="connect-github-user-code"
-              >
-                {flow.userCode}
-              </code>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => void copyUserCode(flow.userCode)}
-                data-testid="connect-github-copy-code"
-              >
-                {copied ? "Copied" : "Copy Code"}
-              </Button>
-            </div>
-            <p
-              className="m-0 text-center text-base leading-relaxed text-muted"
-              data-testid="connect-github-copy-hint"
-            >
-              Copy this code, then paste it on the GitHub tab.
-            </p>
-            <span
-              className="flex items-center justify-center gap-2 text-base text-muted"
-              role="status"
-            >
-              <Spinner label="Waiting for GitHub authorization" size={16} />
-              Waiting for authorization…
-            </span>
-          </div>
-        ) : (
-          <p
-            className="m-0 w-full text-center text-base leading-relaxed text-muted"
-            data-testid="connect-github-prompt"
-          >
-            Connect GitHub to submit this review. Uses device sign-in; the token stays in this
-            browser only.
-          </p>
-        )}
+        <ConnectGitHubBody
+          configured={configured}
+          flow={flow}
+          copied={copied}
+          onCopyCode={copyUserCode}
+        />
       </div>
 
       <div className="flex items-center justify-end gap-2 border-t border-border px-4 py-3">
@@ -198,55 +304,14 @@ export function ConnectGitHubModal({
           Cancel
           <Kbd>Esc</Kbd>
         </Button>
-        {configured && flow.kind === "error" ? (
-          <Button
-            size="sm"
-            onClick={() => void startConnect()}
-            disabled={busy}
-            data-testid="connect-github-retry"
-          >
-            {busy ? (
-              <>
-                <Spinner label="Connecting to GitHub" size={14} />
-                Connecting…
-              </>
-            ) : (
-              <>
-                Try Again
-                <Kbd>Enter</Kbd>
-              </>
-            )}
-          </Button>
-        ) : configured && flow.kind === "awaiting" ? (
-          <Button
-            size="sm"
-            onClick={() => void openVerificationUri(flow.verificationUri)}
-            data-testid="connect-github-enter-code"
-          >
-            Enter Code On GitHub
-            <Kbd>Enter</Kbd>
-          </Button>
-        ) : configured ? (
-          <Button
-            ref={connectButtonRef}
-            size="sm"
-            onClick={() => void startConnect()}
-            disabled={busy}
-            data-testid="connect-github-connect"
-          >
-            {busy ? (
-              <>
-                <Spinner label="Connecting to GitHub" size={14} />
-                Connecting…
-              </>
-            ) : (
-              <>
-                Connect GitHub
-                <Kbd>Enter</Kbd>
-              </>
-            )}
-          </Button>
-        ) : null}
+        <ConnectGitHubPrimaryAction
+          configured={configured}
+          flow={flow}
+          busy={busy}
+          connectButtonRef={connectButtonRef}
+          onStartConnect={() => void startConnect()}
+          onOpenVerificationUri={(uri) => void openVerificationUri(uri)}
+        />
       </div>
     </ModalShell>
   );
