@@ -1,22 +1,32 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { ReviewPlan } from "@extension/lib/types";
 import { cn } from "@guided-review/ui";
 import { buildDisplayUnits } from "@extension/content/overlay/store";
 import { TestsUnitIcon } from "./TestsUnitIcon";
+import { ViewedUnitIcon } from "./ViewedUnitIcon";
 
 const SKELETON_COUNT = 4;
 
 interface SidebarProps {
   plan: ReviewPlan | null;
   currentUnitIndex: number;
+  /** Display unit ids marked viewed (visual memory aid only). */
+  viewedUnitIds?: readonly string[];
   /** When true, show trailing skeleton rows after any completed units. */
   stillBuilding: boolean;
   onSelectUnit: (index: number) => void;
 }
 
-export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }: SidebarProps) {
+export function Sidebar({
+  plan,
+  currentUnitIndex,
+  viewedUnitIds = [],
+  stillBuilding,
+  onSelectUnit,
+}: SidebarProps) {
   const displayUnits = buildDisplayUnits(plan);
   const activeItemRef = useRef<HTMLButtonElement>(null);
+  const viewedSet = useMemo(() => new Set(viewedUnitIds), [viewedUnitIds]);
 
   // Keep the active unit visible when navigating via keyboard (←/→) or footer
   // buttons — the sidebar is independently scrollable and can leave the
@@ -40,18 +50,21 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
 
         {displayUnits.map((unit, displayIndex) => {
           const isActive = displayIndex === currentUnitIndex;
+          const isViewed = viewedSet.has(unit.id);
           const isTestsUnit = unit.kind === "review" && unit.unit.kind === "tests";
           // displayTitle is pre-truncated in buildFileReviewPlan for path labels;
           // AI units omit it and show title. Render as plain text either way.
           const label =
             unit.kind === "review" ? (unit.unit.displayTitle ?? unit.unit.title) : unit.title;
           const tooltip = unit.kind === "review" ? unit.unit.title : unit.title;
+          const accessibleName = `${displayIndex + 1}. ${label}${isViewed ? ", viewed" : ""}`;
           return (
             <button
               key={unit.id}
               type="button"
               ref={isActive ? activeItemRef : undefined}
               aria-current={isActive ? "true" : undefined}
+              aria-label={accessibleName}
               title={tooltip}
               className={cn(
                 "mb-0.5 flex w-full cursor-pointer items-start rounded-md border-none bg-transparent p-2 text-left text-base leading-snug text-foreground",
@@ -63,7 +76,13 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
               <span className={cn("mr-1.5 shrink-0", isActive ? "text-primary" : "text-muted")}>
                 {displayIndex + 1}.
               </span>
-              <span className="min-w-0 break-words">
+              <span
+                className={cn(
+                  "min-w-0 flex-1 break-words",
+                  isViewed && "text-muted line-through",
+                  isViewed && isActive && "text-primary/70!",
+                )}
+              >
                 {isTestsUnit && (
                   <TestsUnitIcon
                     className={cn(
@@ -74,6 +93,14 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
                 )}
                 {label}
               </span>
+              {isViewed && (
+                <ViewedUnitIcon
+                  className={cn(
+                    "ml-1.5 shrink-0 self-start",
+                    isActive ? "text-primary" : "text-muted",
+                  )}
+                />
+              )}
             </button>
           );
         })}

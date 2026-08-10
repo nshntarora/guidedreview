@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReviewPlan } from "@extension/lib/types";
 import { Sidebar } from "./Sidebar";
@@ -76,6 +76,31 @@ describe("Sidebar", () => {
     expect(screen.getByText("Unit 1")).toBeInTheDocument();
     expect(screen.getByText("Unit 2")).toBeInTheDocument();
     expect(screen.getAllByTestId("unit-skeleton")).toHaveLength(4);
+  });
+
+  it("shows a checkmark and strikethrough for viewed units and keeps them selectable", () => {
+    const onSelectUnit = vi.fn();
+    render(
+      <Sidebar
+        plan={planWithUnits(2)}
+        currentUnitIndex={0}
+        viewedUnitIds={["u1"]}
+        stillBuilding={false}
+        onSelectUnit={onSelectUnit}
+      />,
+    );
+
+    expect(screen.getByTestId("unit-viewed-icon")).toBeInTheDocument();
+    // Display index 1 → "2. Unit 1" (0 is PR description).
+    const viewedButton = screen.getByRole("button", { name: /2\. Unit 1, viewed/i });
+    expect(viewedButton.querySelector(".line-through")).not.toBeNull();
+
+    // Unviewed plan unit has no checkmark.
+    expect(screen.getByRole("button", { name: /3\. Unit 2$/i })).toBeInTheDocument();
+    expect(screen.getAllByTestId("unit-viewed-icon")).toHaveLength(1);
+
+    fireEvent.click(viewedButton);
+    expect(onSelectUnit).toHaveBeenCalledWith(1);
   });
 
   it("hides skeletons when not still building", () => {

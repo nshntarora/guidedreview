@@ -23,6 +23,7 @@ type ShortcutRow =
 const SHORTCUTS: readonly ShortcutRow[] = [
   { keys: ["←", "→"], join: "none", description: "Previous / next step" },
   { keys: ["↑", "↓"], join: "none", description: "Scroll the code pane" },
+  { keys: ["e"], join: "none", description: "Mark unit viewed" },
   { keys: ["v", "u"], join: "sequence", description: "Unified view" },
   { keys: ["v", "s"], join: "sequence", description: "Split view" },
   {

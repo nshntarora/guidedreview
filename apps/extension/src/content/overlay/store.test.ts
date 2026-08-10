@@ -57,6 +57,7 @@ function resetStore(): void {
     lineSelection: null,
     composerOpen: false,
     draftComments: [],
+    viewedUnitIds: [],
   });
 }
 
@@ -486,6 +487,49 @@ describe("useReviewStore", () => {
       expect(drafts).toHaveLength(1);
       expect(drafts[0].body).toBe("Looks good");
       expect(useReviewStore.getState().uiMode).toBe("navigate");
+    });
+
+    it("persistSession / restoreSession round-trips viewed unit ids", async () => {
+      resetStore();
+      useReviewStore.getState().startLoading(SESSION_KEY);
+      useReviewStore.getState().setReady(diffFixture(), planFixture(2));
+      // Index 0 is PR description; mark it, then a plan unit.
+      useReviewStore.getState().toggleCurrentUnitViewed();
+      useReviewStore.getState().goToUnit(1);
+      useReviewStore.getState().toggleCurrentUnitViewed();
+
+      await persistSession();
+      resetStore();
+      await restoreSession(SESSION_KEY);
+
+      expect(useReviewStore.getState().viewedUnitIds).toEqual(["__pr_description", "u0"]);
+    });
+  });
+
+  describe("toggleCurrentUnitViewed", () => {
+    it("toggles the current display unit id on and off", () => {
+      resetStore();
+      useReviewStore.getState().setReady(diffFixture(), planFixture(2));
+      // Description unit at index 0.
+      useReviewStore.getState().toggleCurrentUnitViewed();
+      expect(useReviewStore.getState().viewedUnitIds).toEqual(["__pr_description"]);
+
+      useReviewStore.getState().goToUnit(1);
+      useReviewStore.getState().toggleCurrentUnitViewed();
+      expect(useReviewStore.getState().viewedUnitIds).toEqual(["__pr_description", "u0"]);
+
+      useReviewStore.getState().toggleCurrentUnitViewed();
+      expect(useReviewStore.getState().viewedUnitIds).toEqual(["__pr_description"]);
+    });
+
+    it("startLoading clears viewed unit ids", () => {
+      resetStore();
+      useReviewStore.getState().setReady(diffFixture(), planFixture(1));
+      useReviewStore.getState().toggleCurrentUnitViewed();
+      expect(useReviewStore.getState().viewedUnitIds).toHaveLength(1);
+
+      useReviewStore.getState().startLoading(SESSION_KEY);
+      expect(useReviewStore.getState().viewedUnitIds).toEqual([]);
     });
   });
 

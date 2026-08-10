@@ -102,6 +102,7 @@ describe("content script review orchestration", () => {
       currentUnitIndex: 0,
       sessionKey: null,
       draftComments: [],
+      viewedUnitIds: [],
     });
     stubDiffResponse({ ok: true, diff: diffFixture() });
   });

@@ -84,6 +84,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   const goNext = useReviewStore((s) => s.goNext);
   const goPrev = useReviewStore((s) => s.goPrev);
   const draftComments = useReviewStore((s) => s.draftComments);
+  const viewedUnitIds = useReviewStore((s) => s.viewedUnitIds);
   const clearDraftComments = useReviewStore((s) => s.clearDraftComments);
   const overlayRef = useRef<HTMLDivElement>(null);
   const submitModalDialogRef = useRef<HTMLDivElement>(null);
@@ -175,7 +176,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
 
   useEffect(() => {
     if (status === "ready") void persistSession();
-  }, [status, currentUnitIndex, sessionKey, draftComments]);
+  }, [status, currentUnitIndex, sessionKey, draftComments, viewedUnitIds]);
 
   // Drop search UI when the overlay closes so the next open starts clean.
   useEffect(() => {
@@ -378,6 +379,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
           <Sidebar
             plan={plan}
             currentUnitIndex={currentUnitIndex}
+            viewedUnitIds={viewedUnitIds}
             stillBuilding={planStillBuilding}
             onSelectUnit={goToUnit}
           />
