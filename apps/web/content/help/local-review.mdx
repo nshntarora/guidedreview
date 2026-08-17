@@ -8,7 +8,7 @@ export const toc = [
 
 # Review local changes
 
-The Chrome extension still reviews GitHub pull requests. The CLI reviews the changes in your working tree against the main branch, using the same engine and walkthrough.
+The Chrome extension still reviews GitHub pull requests. The CLI reviews a local branch, a commit, or your working tree, using the same engine and walkthrough. It does not start an AI plan until you ask.
 
 <TocCard toc={toc} />
 
@@ -32,17 +32,28 @@ The CLI binds `127.0.0.1`, prints a tokenized URL, and opens it unless you pass 
 
 ## What it compares
 
-Default: working tree (staged + unstaged) plus untracked files (gitignore respected) versus the merge-base of `HEAD` and the default base branch.
+The header shows the current branch and the base branch. A dropdown picks the diff:
+
+- **Branch vs base** — committed work on this branch since it diverged from the base (`git diff <merge-base> HEAD`)
+- **Uncommitted** — staged and unstaged work versus `HEAD` (untracked files included unless you passed `--no-untracked`)
+- **Unstaged** — worktree versus the index only
+- **A specific commit** — that commit’s patch
+
+Default selected scope: the first non-empty of branch, uncommitted, unstaged, then the newest commit. `--staged` starts on index-only uncommitted work.
 
 Base resolution, in order: `--base` → `origin/HEAD` → `main` → `master`.
 
-Empty diff: `Nothing to review against <base>.` and exit 0. Not a git repo: an error that says what failed.
+If every scope is empty: `Nothing to review against <base>.` and exit 0. Not a git repo: an error that says what failed.
+
+The walkthrough starts one unit per file. **Structure with AI** on the Change summary card is the opt-in LLM call. It groups files and adds context — it does not review for you.
 
 ## API keys
 
-Same providers as the extension: Anthropic, OpenAI, Grok. Resolution: flags → env (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `XAI_API_KEY` or `GROK_API_KEY`) → `~/.config/guided-review/config.json`.
+Same providers as the extension: Anthropic, OpenAI, Grok.
 
-No key still walks one unit per file. The browser UI can save a key to that config file.
+Resolution, in order: `--provider` / `--model` / `--agent` and env (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `XAI_API_KEY` or `GROK_API_KEY`) → a key already saved in `~/.config/guided-review/config.json` → a coding agent already on this machine (Claude Code, Codex, or Grok). If more than one agent has a usable key, the CLI asks which to use each run (Enter keeps the last choice). The chosen agent is shown in the browser UI. It reads the agent's own store at review time and does not copy the secret into Guided Review config.
+
+No key still walks one unit per file. **Structure with AI** asks for a key. The browser UI can save one to that config file.
 
 ## Notes
 
@@ -51,5 +62,5 @@ Line comments stay in the session. There is no GitHub submit. **Copy notes** put
 ## Flags
 
 ```
-npm run review -- [dir] --base main --port 8787 --no-open --staged --no-untracked
+npm run review -- [dir] --base main --port 8787 --no-open --staged --no-untracked --agent claude-code
 ```
