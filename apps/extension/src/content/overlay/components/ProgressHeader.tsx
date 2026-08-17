@@ -1,8 +1,16 @@
 import type { ParsedDiff } from "@extension/lib/types";
 import type { ReviewContext } from "@guided-review/core";
 import { summarizeDiff } from "@guided-review/core";
-import { Kbd } from "@guided-review/ui";
+import { Kbd, Select } from "@guided-review/ui";
 import { useReviewHost } from "../host";
+import {
+  isCommitScopeId,
+  limitCommitScopes,
+  RECENT_COMMITS_GROUP,
+  type LocalDiffControls,
+  type LocalDiffScopeOption,
+} from "../localReview";
+import { DiffStatCounts } from "./DiffStatCounts";
 import { ModEnterChord } from "./ShortcutKeys";
 
 interface ProgressHeaderProps {
@@ -13,14 +21,38 @@ interface ProgressHeaderProps {
   /** Accessible / visible title text. */
   title: string;
   onExit: () => void;
+  /** When false, hide Exit (local CLI — the process owns the window). */
+  allowExit?: boolean;
   /** Opens the Submit Review modal or copies local notes. */
   onSubmitReview: () => void;
   /** When set, the primary action is copy-notes (no GitHub submit). */
   notesCount?: number;
+  localDiff?: LocalDiffControls;
 }
 
 const headerBtn =
   "inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-3 py-1.5 text-base font-medium";
+
+function scopeMetaPrefix(scope: LocalDiffScopeOption): string | undefined {
+  const parts = scope.meta.split(" · ");
+  return parts.length >= 3 ? parts.slice(0, -2).join(" · ") : undefined;
+}
+
+function ScopeMeta({ scope }: { scope: LocalDiffScopeOption }) {
+  const stat = scope.stat;
+  if (!stat || stat.files === 0) {
+    return <span className="truncate font-mono text-xs text-muted">{scope.meta}</span>;
+  }
+  return (
+    <DiffStatCounts
+      prefix={scopeMetaPrefix(scope)}
+      files={stat.files}
+      additions={stat.additions}
+      deletions={stat.deletions}
+      className="truncate font-mono text-xs"
+    />
+  );
+}
 
 export function ProgressHeader({
   prContext,
@@ -28,8 +60,10 @@ export function ProgressHeader({
   titleId,
   title,
   onExit,
+  allowExit = true,
   onSubmitReview,
   notesCount,
+  localDiff,
 }: ProgressHeaderProps) {
   const host = useReviewHost();
   const stats = diff ? summarizeDiff(diff) : null;
@@ -37,6 +71,21 @@ export function ProgressHeader({
   const showPrNumber = host.kind === "github" && prContext?.number != null;
   const primaryIsExport = !host.submit && Boolean(host.exportNotes);
   const primaryDisabled = primaryIsExport && (notesCount ?? 0) === 0;
+  const isLocal = host.kind === "local";
+  const scopeOptions = (localDiff ? limitCommitScopes(localDiff.scopes) : []).map((scope) => ({
+    value: scope.id,
+    label: scope.label,
+    disabled: scope.empty,
+    group: isCommitScopeId(scope.id) ? RECENT_COMMITS_GROUP : undefined,
+    trigger: () => <span className="truncate">{scope.label}</span>,
+    content: () => (
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="truncate">{scope.label}</span>
+        <span className="truncate text-xs text-muted">{scope.description}</span>
+        <ScopeMeta scope={scope} />
+      </span>
+    ),
+  }));
 
   return (
     <header className="flex shrink-0 flex-col gap-1.5 border-b border-border bg-background px-5 py-3.5">
@@ -50,33 +99,60 @@ export function ProgressHeader({
             height={16}
             aria-hidden="true"
           />
-          <div className="flex min-w-0 flex-col gap-1">
-            <div className="flex min-w-0 items-baseline gap-2">
-              <h1 id={titleId} className="m-0 truncate text-lg font-semibold leading-snug">
+          {isLocal ? (
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5 text-sm text-muted">
+              <h1 id={titleId} className="gr-sr-only">
                 {title}
               </h1>
-              {showPrNumber && (
-                <span className="shrink-0 text-base text-muted">#{prContext!.number}</span>
+              {localDiff && scopeOptions.length > 0 && (
+                <Select
+                  aria-label="Diff to review"
+                  className="w-auto min-w-[10rem] max-w-[16rem]"
+                  menuClassName="min-w-[20rem] max-w-[24rem]"
+                  value={localDiff.selectedScope}
+                  options={scopeOptions}
+                  disabled={localDiff.scopeBusy}
+                  onChange={localDiff.onSelectScope}
+                />
+              )}
+              {stats && (
+                <span>
+                  {stats.files} file{stats.files === 1 ? "" : "s"} changed
+                  <span className="ml-1 text-diff-add"> +{stats.additions}</span>
+                  <span className="ml-1 text-diff-del"> −{stats.deletions}</span>
+                </span>
               )}
             </div>
-            {prContext && (prContext.author || prContext.baseRef || prContext.headRef || stats) && (
-              <div className="flex items-center gap-2.5 text-sm text-muted">
-                {prContext.author && <span>@{prContext.author}</span>}
-                {(prContext.baseRef || prContext.headRef) && (
-                  <span className="inline-block rounded-full border border-border bg-surface px-2.5 py-px font-mono text-xs text-foreground">
-                    {prContext.baseRef || "?"} ← {prContext.headRef || "?"}
-                  </span>
-                )}
-                {stats && (
-                  <span>
-                    {stats.files} file{stats.files === 1 ? "" : "s"} changed
-                    <span className="ml-1 text-diff-add"> +{stats.additions}</span>
-                    <span className="ml-1 text-diff-del"> −{stats.deletions}</span>
-                  </span>
+          ) : (
+            <div className="flex min-w-0 flex-col gap-1">
+              <div className="flex min-w-0 items-baseline gap-2">
+                <h1 id={titleId} className="m-0 truncate text-lg font-semibold leading-snug">
+                  {title}
+                </h1>
+                {showPrNumber && (
+                  <span className="shrink-0 text-base text-muted">#{prContext!.number}</span>
                 )}
               </div>
-            )}
-          </div>
+              {prContext &&
+                (prContext.author || prContext.baseRef || prContext.headRef || stats) && (
+                  <div className="flex flex-wrap items-center gap-2.5 text-sm text-muted">
+                    {prContext.author && <span>@{prContext.author}</span>}
+                    {(prContext.baseRef || prContext.headRef) && (
+                      <span className="inline-block rounded-full border border-border bg-surface px-2.5 py-px font-mono text-xs text-foreground">
+                        {prContext.baseRef || "?"} ← {prContext.headRef || "?"}
+                      </span>
+                    )}
+                    {stats && (
+                      <span>
+                        {stats.files} file{stats.files === 1 ? "" : "s"} changed
+                        <span className="ml-1 text-diff-add"> +{stats.additions}</span>
+                        <span className="ml-1 text-diff-del"> −{stats.deletions}</span>
+                      </span>
+                    )}
+                  </div>
+                )}
+            </div>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-3">
           <button
@@ -89,14 +165,16 @@ export function ProgressHeader({
             {primaryIsExport ? "Copy notes" : "Submit Review"}
             <ModEnterChord />
           </button>
-          <button
-            type="button"
-            className={`${headerBtn} gap-2 border-border bg-surface text-foreground hover:bg-surface-muted`}
-            onClick={onExit}
-          >
-            Exit
-            <Kbd>Esc</Kbd>
-          </button>
+          {allowExit && (
+            <button
+              type="button"
+              className={`${headerBtn} gap-2 border-border bg-surface text-foreground hover:bg-surface-muted`}
+              onClick={onExit}
+            >
+              Exit
+              <Kbd>Esc</Kbd>
+            </button>
+          )}
         </div>
       </div>
     </header>

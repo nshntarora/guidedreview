@@ -45,6 +45,12 @@ const SHORTCUTS: readonly ShortcutRow[] = [
   { keys: ["Esc"], join: "none", description: "Exit comment mode / exit review" },
 ];
 
+const LOCAL_SHORTCUTS: readonly ShortcutRow[] = SHORTCUTS.map((row) =>
+  "keys" in row && row.keys[0] === "Esc"
+    ? { keys: ["Esc"], join: "none" as const, description: "Exit comment mode" }
+    : row,
+);
+
 function ShortcutRowKeys({ row }: { row: ShortcutRow }) {
   if ("chordWithAlternatives" in row) {
     const { modifier, alternatives } = row.chordWithAlternatives;
@@ -63,7 +69,8 @@ function ShortcutRowKeys({ row }: { row: ShortcutRow }) {
   return <ShortcutKeys keys={row.keys} join={row.join} />;
 }
 
-export function KeyboardShortcuts() {
+export function KeyboardShortcuts({ allowExit = true }: { allowExit?: boolean }) {
+  const rows = allowExit ? SHORTCUTS : LOCAL_SHORTCUTS;
   return (
     <section
       className="mt-4 border-t border-border-strong pt-3"
@@ -76,7 +83,7 @@ export function KeyboardShortcuts() {
         Keyboard Shortcuts
       </h2>
       <ul className="m-0 flex list-none flex-col gap-2 p-0">
-        {SHORTCUTS.map((row) => (
+        {rows.map((row) => (
           <li key={row.description} className="flex items-center gap-3 text-base text-muted">
             <span className="inline-flex min-w-[72px] shrink-0 items-center gap-1">
               <ShortcutRowKeys row={row} />

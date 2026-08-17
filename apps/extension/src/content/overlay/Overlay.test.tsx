@@ -101,6 +101,7 @@ function resetStore(): void {
     streamGeneration: 0,
     sessionKey: null,
     diffViewMode: DEFAULT_DIFF_VIEW_MODE,
+    planSource: null,
     uiMode: "navigate",
     selectableLines: [],
     lineSelection: null,
@@ -161,12 +162,128 @@ describe("Overlay", () => {
       }),
     );
     seedReadyReview(0);
-    render(<Overlay />);
+    render(<Overlay allowExit={false} />);
 
     expect(screen.getByTestId("submit-review-button")).toHaveTextContent("Copy notes");
     expect(screen.getByTestId("submit-review-button")).toBeDisabled();
     expect(screen.getAllByText("Change summary").length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText("#1")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^exit$/i })).not.toBeInTheDocument();
+  });
+
+  it("does not exit a local review on Escape, but still leaves comment mode", () => {
+    setActiveReviewHost(
+      createMemoryReviewHost({
+        kind: "local",
+        exportNotes: vi.fn(),
+        submit: undefined,
+      }),
+    );
+    seedReadyReview(1);
+    render(<Overlay allowExit={false} />);
+
+    fireEvent.keyDown(window, { key: "c" });
+    expect(useReviewStore.getState().uiMode).toBe("comment");
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(useReviewStore.getState().uiMode).toBe("navigate");
+    expect(useReviewStore.getState().isOpen).toBe(true);
+    expect(screen.queryByText("Exit review?")).not.toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByText("Exit review?")).not.toBeInTheDocument();
+    expect(useReviewStore.getState().isOpen).toBe(true);
+  });
+
+  it("shows the local scope picker, commit cards, and structure trigger", () => {
+    setActiveReviewHost(
+      createMemoryReviewHost({
+        kind: "local",
+        exportNotes: vi.fn(),
+        submit: undefined,
+      }),
+    );
+    seedReadyReview(0);
+    useReviewStore.setState({
+      prContext: prContextFixture({
+        source: "local",
+        title: "feat",
+        description: "raw log",
+        descriptionHtml: "",
+        author: undefined,
+        number: undefined,
+      }),
+    });
+    const onSelectScope = vi.fn();
+    const onStructureReview = vi.fn();
+    render(
+      <Overlay
+        allowExit={false}
+        localDiff={{
+          scopes: [
+            {
+              id: "branch",
+              label: "feat vs main",
+              description: "Committed work on this branch.",
+              meta: "1 commit · 1 file · +1 −0",
+              stat: { files: 1, additions: 1, deletions: 0 },
+              empty: false,
+            },
+            {
+              id: "uncommitted",
+              label: "Uncommitted changes",
+              description: "Staged and unstaged work versus HEAD.",
+              meta: "1 file · +2 −0",
+              stat: { files: 1, additions: 2, deletions: 0 },
+              empty: false,
+            },
+            {
+              id: "commit:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              label: "Add header",
+              description: "Ada · 2026-01-02",
+              meta: "aaaaaaa · 1 file · +1 −0",
+              stat: { files: 1, additions: 1, deletions: 0 },
+              empty: false,
+            },
+          ],
+          selectedScope: "branch",
+          commits: [
+            {
+              sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              shortSha: "aaaaaaa",
+              subject: "Add header",
+              body: "",
+              author: "Ada",
+              authoredAt: "2026-01-02T00:00:00Z",
+              stat: { files: 1, additions: 1, deletions: 0 },
+            },
+          ],
+          onSelectScope,
+          onStructureReview,
+          structuring: false,
+          structured: false,
+        }}
+      />,
+    );
+
+    const picker = screen.getByRole("combobox", { name: /diff to review/i });
+    expect(picker).toBeInTheDocument();
+    expect(picker).toHaveTextContent("feat vs main");
+    expect(picker).not.toHaveTextContent("1 commit · 1 file");
+    expect(screen.queryByText(/main\s*←\s*feat/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/main\s*←\s*feature/)).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "feat" })).toHaveClass("gr-sr-only");
+    expect(screen.getByTestId("uncommitted-card")).toHaveTextContent("Uncommitted changes");
+    expect(screen.getByTestId("commit-card")).toHaveTextContent("Add header");
+    expect(screen.getByTestId("structure-review")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^exit$/i })).not.toBeInTheDocument();
+
+    fireEvent.click(picker);
+    expect(screen.getByText("Last 5 commits")).toBeInTheDocument();
+    const commitOption = screen.getByRole("option", { name: /add header/i });
+    expect(commitOption).toBeInTheDocument();
+    expect(commitOption.querySelector(".text-diff-add")).toHaveTextContent("+1");
+    expect(commitOption.querySelector(".text-diff-del")).toHaveTextContent("−0");
   });
 
   it("shows the full layout with the PR description unit while loading", () => {
