@@ -273,7 +273,7 @@ function CommitIcon(props: SVGProps<SVGSVGElement>) {
         width="8.25"
         height="4.35"
         rx="1.75"
-        className={INSET}
+        className={ACCENT_WASH}
         strokeWidth="1.1"
       />
       <rect
@@ -282,8 +282,8 @@ function CommitIcon(props: SVGProps<SVGSVGElement>) {
         width="5.25"
         height="1.5"
         rx="0.75"
-        className="fill-[var(--color-muted)]"
-        opacity="0.6"
+        className="fill-[var(--color-primary)]"
+        opacity="0.9"
       />
       <rect
         x="3.5"
