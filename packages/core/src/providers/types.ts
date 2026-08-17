@@ -6,7 +6,11 @@ export interface AnnotateReviewInput {
   settings: ProviderSettings;
 }
 
-export type AnnotateStreamEvent = { type: "text_delta"; text: string } | { type: "done" };
+export type AnnotateStreamEvent =
+  | { type: "text_delta"; text: string }
+  /** Provider is alive (e.g. reasoning tokens) but has not emitted plan JSON yet. */
+  | { type: "heartbeat" }
+  | { type: "done" };
 
 export interface ProviderClient {
   /**

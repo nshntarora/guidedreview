@@ -20,7 +20,10 @@ export function createOpenAICompatibleProvider(
   displayName: string,
 ): ProviderClient {
   const chatUrl = `${baseUrl}/chat/completions`;
-  const headers = (apiKey: string) => ({ authorization: `Bearer ${apiKey}` });
+  const headers = (settings: ProviderSettings) => ({
+    authorization: `Bearer ${settings.apiKey}`,
+    ...settings.extraHeaders,
+  });
 
   return {
     async *annotateReviewStream(
@@ -29,7 +32,7 @@ export function createOpenAICompatibleProvider(
     ): AsyncGenerator<AnnotateStreamEvent, void, unknown> {
       const response = await postProviderJson(
         chatUrl,
-        headers(settings.apiKey),
+        headers(settings),
         {
           model: settings.model,
           stream: true,
@@ -59,7 +62,10 @@ export function createOpenAICompatibleProvider(
       for await (const event of readSseJsonStream(response.body, { signal: options?.signal })) {
         if (!event || typeof event !== "object") continue;
         const data = event as {
-          choices?: Array<{ delta?: { content?: string | null }; finish_reason?: string | null }>;
+          choices?: Array<{
+            delta?: { content?: string | null; reasoning_content?: string | null };
+            finish_reason?: string | null;
+          }>;
           error?: { message?: string; code?: string; type?: string };
         };
 
@@ -69,7 +75,12 @@ export function createOpenAICompatibleProvider(
           });
         }
 
-        const content = data.choices?.[0]?.delta?.content;
+        const delta = data.choices?.[0]?.delta;
+        const reasoning = delta?.reasoning_content;
+        if (typeof reasoning === "string" && reasoning.length > 0) {
+          yield { type: "heartbeat" };
+        }
+        const content = delta?.content;
         if (typeof content === "string" && content.length > 0) {
           sawContent = true;
           yield { type: "text_delta", text: content };
@@ -86,7 +97,7 @@ export function createOpenAICompatibleProvider(
     async testConnection(settings: ProviderSettings): Promise<void> {
       await postProviderJson(
         chatUrl,
-        headers(settings.apiKey),
+        headers(settings),
         {
           model: settings.model,
           max_tokens: 8,

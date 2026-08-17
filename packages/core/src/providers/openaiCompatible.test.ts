@@ -92,6 +92,25 @@ describe("createOpenAICompatibleProvider", () => {
     ]);
   });
 
+  it("emits heartbeats for reasoning tokens without treating them as plan JSON", async () => {
+    postMock.mockResolvedValue(
+      okStreamResponse(
+        streamOf(
+          'data: {"choices":[{"delta":{"reasoning_content":"thinking"}}]}\n',
+          'data: {"choices":[{"delta":{"content":"{}"}}]}\n',
+          "data: [DONE]\n",
+        ),
+      ),
+    );
+
+    const events = await collect(provider.annotateReviewStream(input));
+    expect(events).toEqual([
+      { type: "heartbeat" },
+      { type: "text_delta", text: "{}" },
+      { type: "done" },
+    ]);
+  });
+
   it("throws when the response body is empty", async () => {
     postMock.mockResolvedValue(new Response(null, { status: 200 }));
 
