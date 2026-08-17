@@ -33,4 +33,11 @@ describe("parseArgs", () => {
     expect(args.provider).toBe("grok");
     expect(args.agent).toBe("codex");
   });
+
+  it("requires a value after flags that take one", () => {
+    expect(() => parseArgs(["--base"])).toThrow(/--base requires a value/);
+    expect(() => parseArgs(["--base", "--port", "0"])).toThrow(/--base requires a value/);
+    expect(() => parseArgs(["--provider"])).toThrow(/--provider requires a value/);
+    expect(() => parseArgs(["--port"])).toThrow(/--port requires a value/);
+  });
 });
