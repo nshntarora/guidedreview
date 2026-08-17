@@ -1,11 +1,6 @@
 import { create } from "zustand";
-import type {
-  ParsedDiff,
-  PRContext,
-  ReviewErrorInfo,
-  ReviewPlan,
-  ReviewUnit,
-} from "@extension/lib/types";
+import type { ParsedDiff, ReviewErrorInfo, ReviewPlan, ReviewUnit } from "@extension/lib/types";
+import type { ReviewContext } from "@guided-review/core";
 import { NO_API_KEY_ERROR_CODE } from "@extension/lib/types";
 import type { PRIdentity } from "@extension/lib/github/diffFetch";
 import { buildFileReviewPlan } from "@guided-review/core";
@@ -17,7 +12,7 @@ import {
   type SelectableLine,
   type UiMode,
 } from "./commentTypes";
-import { DEFAULT_DIFF_VIEW_MODE, type DiffViewMode } from "@extension/lib/preferences";
+import { DEFAULT_DIFF_VIEW_MODE, type DiffViewMode } from "./diffView";
 import { getActiveReviewHost } from "./host";
 
 export type ReviewStatus = "idle" | "loading" | "streaming" | "ready" | "error";
@@ -75,7 +70,7 @@ export function displayUnitCount(plan: ReviewPlan | null): number {
 interface PersistedSession {
   diff: ParsedDiff;
   plan: ReviewPlan;
-  prContext: PRContext | null;
+  prContext: ReviewContext | null;
   /** Index into the display unit list (0 = PR description, then plan units). */
   currentUnitIndex: number;
   /** Local draft comments (session-scoped; not posted to GitHub). */
@@ -105,7 +100,7 @@ interface ReviewState {
   providerLabel: string | null;
   diff: ParsedDiff | null;
   plan: ReviewPlan | null;
-  prContext: PRContext | null;
+  prContext: ReviewContext | null;
   /** Index into the display unit list (0 = PR description, then plan units). */
   currentUnitIndex: number;
   /**
@@ -132,7 +127,7 @@ interface ReviewState {
   open: () => void;
   close: () => void;
   startLoading: (sessionKey: string) => void;
-  setPRContext: (prContext: PRContext) => void;
+  setPRContext: (prContext: ReviewContext) => void;
   setDiff: (diff: ParsedDiff) => void;
   setBuildPhase: (phase: BuildPhase, generation?: number) => void;
   setProviderLabel: (label: string | null) => void;

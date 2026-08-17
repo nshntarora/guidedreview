@@ -1,5 +1,5 @@
 import { cn, Kbd } from "@guided-review/ui";
-import type { DiffViewMode } from "@extension/lib/preferences";
+import type { DiffViewMode } from "@extension/content/overlay/diffView";
 import { ShortcutKeys } from "@extension/content/overlay/components/ShortcutKeys";
 
 export function DiffViewToggle({

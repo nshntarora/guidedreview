@@ -1,11 +1,12 @@
-import type { ParsedDiff, PRContext } from "@extension/lib/types";
+import type { ParsedDiff } from "@extension/lib/types";
+import type { ReviewContext } from "@guided-review/core";
 import { summarizeDiff } from "@guided-review/core";
 import { Kbd } from "@guided-review/ui";
 import { useReviewHost } from "../host";
 import { ModEnterChord } from "./ShortcutKeys";
 
 interface ProgressHeaderProps {
-  prContext: PRContext | null;
+  prContext: ReviewContext | null;
   diff: ParsedDiff | null;
   /** Id for the dialog title (overlay aria-labelledby). */
   titleId: string;

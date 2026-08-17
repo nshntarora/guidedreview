@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildFileLineUrl, buildPRFileDiffUrl } from "@extension/lib/github/prUrls";
 import type { DiffFile, DiffHunk, PRContext } from "@extension/lib/types";
 import { buildSelectableLines } from "@extension/content/overlay/buildSelectableLines";
-import { DEFAULT_DIFF_VIEW_MODE } from "@extension/lib/preferences";
+import { DEFAULT_DIFF_VIEW_MODE } from "@extension/content/overlay/diffView";
 import { createGitHubReviewHost } from "@extension/content/githubHost";
 import { setActiveReviewHost } from "../host";
 import {

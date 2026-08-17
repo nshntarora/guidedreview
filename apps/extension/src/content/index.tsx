@@ -6,7 +6,8 @@ import { fetchConversationDescription, scrapePRContext } from "@extension/lib/gi
 import { requestPRDiff } from "@extension/lib/messaging";
 import { getProvider } from "@guided-review/core";
 import { getProviderSettings, onProviderSettingsChanged } from "@extension/lib/settings";
-import type { ContentRequest, ParsedDiff, PRContext } from "@extension/lib/types";
+import type { ContentRequest, ParsedDiff } from "@extension/lib/types";
+import type { ReviewContext } from "@guided-review/core";
 import { ensureFallbackHost, FALLBACK_HOST_ID, findButtonAnchor } from "./buttonAnchor";
 import { createGitHubReviewHost } from "./githubHost";
 import { Overlay } from "./overlay/Overlay";
@@ -228,7 +229,7 @@ function cancelActiveStream(): void {
 
 function startAnnotationStream(
   diff: ParsedDiff,
-  prContext: PRContext,
+  prContext: ReviewContext,
   streamGeneration: number,
 ): void {
   // Request is on the wire — show "Sent it to …" until the worker reports waiting/tokens.
