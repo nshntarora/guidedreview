@@ -40,7 +40,15 @@ export function createLocalReviewHost(options: {
         fn();
       };
       source.onmessage = (event) => {
-        const message = JSON.parse(event.data) as AnnotateReviewStreamEvent;
+        let message: AnnotateReviewStreamEvent;
+        try {
+          message = JSON.parse(event.data) as AnnotateReviewStreamEvent;
+        } catch {
+          finish(() =>
+            handlers.onError({ message: "The local review server sent an unreadable response." }),
+          );
+          return;
+        }
         switch (message.type) {
           case "STATUS":
             handlers.onStatus?.(message.phase);
