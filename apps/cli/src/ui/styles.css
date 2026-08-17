@@ -1,0 +1,14 @@
+@import "tailwindcss";
+@import "@guided-review/ui/theme.css";
+@import "@extension/content/overlay/styles/overlay.css";
+@source "../../../../packages/ui/src/**/*.{ts,tsx}";
+@source "../../../extension/src/content/overlay/**/*.{ts,tsx}";
+@source "./**/*.{ts,tsx}";
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: var(--color-background);
+}
