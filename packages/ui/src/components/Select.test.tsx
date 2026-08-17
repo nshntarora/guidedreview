@@ -1,8 +1,8 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useState } from "react";
+import { createRef, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { Select, type SelectOption } from "./Select";
+import { Select, type SelectHandle, type SelectOption } from "./Select";
 
 const OPTIONS: SelectOption[] = [
   { value: "a", label: "Alpha" },
@@ -119,6 +119,22 @@ describe("Select", () => {
     expect(screen.getAllByRole("option")).toHaveLength(3);
   });
 
+  it("renders trailing content on the trigger before the chevron", () => {
+    render(
+      <Select
+        aria-label="Fruit"
+        value="a"
+        options={OPTIONS}
+        onChange={() => {}}
+        trailing={<span data-testid="shortcut-hint">d</span>}
+      />,
+    );
+
+    const combobox = screen.getByRole("combobox", { name: /fruit/i });
+    expect(within(combobox).getByTestId("shortcut-hint")).toHaveTextContent("d");
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
   it("renders custom option content", async () => {
     const user = userEvent.setup();
     render(
@@ -143,5 +159,46 @@ describe("Select", () => {
     expect(screen.getByTestId("custom-a")).toBeInTheDocument();
     await user.click(screen.getByRole("combobox"));
     expect(within(screen.getByRole("listbox")).getByTestId("custom-a")).toBeInTheDocument();
+  });
+
+  it("focusAndOpen focuses the trigger and opens the listbox", () => {
+    const selectRef = createRef<SelectHandle>();
+    render(
+      <Select
+        aria-label="Fruit"
+        value="a"
+        options={OPTIONS}
+        onChange={() => {}}
+        selectRef={selectRef}
+      />,
+    );
+
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    act(() => {
+      selectRef.current?.focusAndOpen();
+    });
+
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+    expect(screen.getByRole("combobox")).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("combobox")).toHaveFocus();
+  });
+
+  it("focusAndOpen is a no-op when disabled", () => {
+    const selectRef = createRef<SelectHandle>();
+    render(
+      <Select
+        aria-label="Fruit"
+        value="a"
+        options={OPTIONS}
+        onChange={() => {}}
+        selectRef={selectRef}
+        disabled
+      />,
+    );
+
+    act(() => {
+      selectRef.current?.focusAndOpen();
+    });
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 });
