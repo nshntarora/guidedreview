@@ -18,12 +18,23 @@ import {
   type DetectedAgent,
 } from "./codingAgents";
 
+export class ConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ConfigError";
+  }
+}
+
 export interface CliConfigFile {
   provider?: ProviderId;
   model?: string;
   apiKey?: string;
   codingAgent?: CodingAgentId;
 }
+
+export type ConfigPatch = Omit<Partial<CliConfigFile>, "codingAgent"> & {
+  codingAgent?: CodingAgentId | null;
+};
 
 export interface ResolvedCliSettings {
   settings: ProviderSettings;
@@ -53,11 +64,19 @@ function envKeyFor(provider: ProviderId): string | undefined {
 }
 
 export async function readConfigFile(): Promise<CliConfigFile> {
+  let raw: string;
   try {
-    const raw = await readFile(configPath(), "utf8");
+    raw = await readFile(configPath(), "utf8");
+  } catch (error) {
+    if ((error as { code?: string }).code === "ENOENT") return {};
+    throw error;
+  }
+  try {
     return JSON.parse(raw) as CliConfigFile;
   } catch {
-    return {};
+    throw new ConfigError(
+      `Could not parse ${configPath()}. Fix or delete that file and try again.`,
+    );
   }
 }
 
@@ -66,9 +85,51 @@ export async function writeConfigFile(next: CliConfigFile): Promise<void> {
   await writeFile(configPath(), `${JSON.stringify(next, null, 2)}\n`, { mode: 0o600 });
 }
 
-export async function patchConfigFile(partial: Partial<CliConfigFile>): Promise<void> {
+export async function patchConfigFile(partial: ConfigPatch): Promise<void> {
   const current = await readConfigFile();
-  await writeConfigFile({ ...current, ...partial });
+  const { codingAgent, ...rest } = partial;
+  const next: CliConfigFile = { ...current, ...rest };
+  if (codingAgent === null) delete next.codingAgent;
+  else if (codingAgent !== undefined) next.codingAgent = codingAgent;
+  await writeConfigFile(next);
+}
+
+/**
+ * Apply a settings-panel PATCH. A blank/missing apiKey keeps the in-memory
+ * secret and agent auth fields; only a pasted key is persisted.
+ */
+export function applyProviderSettings(
+  current: ProviderSettings,
+  codingAgent: CodingAgentId | null,
+  body: Partial<Pick<ProviderSettings, "provider" | "model" | "apiKey">>,
+): {
+  settings: ProviderSettings;
+  codingAgent: CodingAgentId | null;
+  persist: ConfigPatch;
+} {
+  const hasNewKey = typeof body.apiKey === "string" && body.apiKey.length > 0;
+  const requestedModel = body.model ?? current.model;
+  const normalized = normalizeProviderSettings({
+    provider: body.provider ?? current.provider,
+    model: requestedModel,
+    apiKey: hasNewKey ? body.apiKey : current.apiKey,
+    authScheme: hasNewKey ? undefined : current.authScheme,
+    extraHeaders: hasNewKey ? undefined : current.extraHeaders,
+  });
+  const settings: ProviderSettings = {
+    ...normalized,
+    // Keep a coding-agent model that is not in the catalog yet.
+    model: requestedModel || normalized.model,
+  };
+  return {
+    settings,
+    codingAgent: hasNewKey ? null : codingAgent,
+    persist: {
+      provider: settings.provider,
+      model: settings.model,
+      ...(hasNewKey ? { apiKey: settings.apiKey, codingAgent: null } : {}),
+    },
+  };
 }
 
 export async function resolveSettings(flags: {
@@ -93,8 +154,7 @@ export async function resolveSettings(flags: {
   const envKey = envKeyFor(normalized.provider);
   const settings: ProviderSettings = {
     ...normalized,
-    apiKey:
-      flags.provider || flags.model ? (envKey ?? normalized.apiKey) : (envKey ?? file.apiKey ?? ""),
+    apiKey: envKey ?? file.apiKey ?? "",
     model: flags.model ?? normalized.model ?? defaultModelFor(normalized.provider),
   };
 
