@@ -14,7 +14,7 @@ import type { SearchScrollTarget } from "@extension/content/overlay/diffSearch";
 import { withHunkGaps } from "@extension/content/overlay/hunkGaps";
 import { hydrateDiffViewMode, useReviewStore } from "@extension/content/overlay/store";
 import type { ResolvedUnitFile } from "@extension/content/overlay/buildSelectableLines";
-import type { DiffViewMode } from "@extension/lib/preferences";
+import type { DiffViewMode } from "@extension/content/overlay/diffView";
 import type { ComposerRange } from "./diff/hunkShared";
 import { AddCommentButton, CommentModeChip, DiffViewToggle } from "./diff/DiffToolbar";
 import { HunkGapPlaceholder } from "./diff/HunkGapPlaceholder";

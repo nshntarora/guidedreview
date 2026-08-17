@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_DIFF_VIEW_MODE } from "@extension/lib/preferences";
+import { DEFAULT_DIFF_VIEW_MODE } from "./diffView";
 import { useReviewStore, persistSession, restoreSession, buildSessionKey } from "./store";
 import type { ParsedDiff, PRContext, ReviewPlan } from "@extension/lib/types";
 import { createGitHubReviewHost } from "@extension/content/githubHost";

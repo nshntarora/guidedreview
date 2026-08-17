@@ -1,4 +1,5 @@
-import type { FileChangeStatus, ParsedDiff, PRContext } from "@extension/lib/types";
+import type { FileChangeStatus, ParsedDiff } from "@extension/lib/types";
+import type { ReviewContext } from "@guided-review/core";
 import { summarizeDiff, type FileDiffSummary } from "@guided-review/core";
 import { cn } from "@guided-review/ui";
 import { missingMetadataHint } from "@extension/content/overlay/overlayCopy";
@@ -7,7 +8,7 @@ import { useReviewHost } from "@extension/content/overlay/host";
 import { MiddleEllipsisText } from "./MiddleEllipsisText";
 
 interface DescriptionPaneProps {
-  prContext: PRContext | null;
+  prContext: ReviewContext | null;
   diff: ParsedDiff | null;
 }
 

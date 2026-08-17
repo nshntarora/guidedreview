@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Overlay } from "./Overlay";
 import { resetConfirmationQueueForTests } from "@extension/lib/confirmation";
-import { DEFAULT_DIFF_VIEW_MODE } from "@extension/lib/preferences";
+import { DEFAULT_DIFF_VIEW_MODE } from "./diffView";
 import { useReviewStore } from "./store";
 import { VIEW_CHORD_WINDOW_MS } from "./useOverlayKeyboard";
 import { buildFileReviewPlan } from "@guided-review/core";

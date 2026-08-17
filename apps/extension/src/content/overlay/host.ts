@@ -13,7 +13,7 @@ import type {
   SubmitReviewResponse,
 } from "@extension/lib/types";
 import type { ReviewCommentInput, ReviewEvent } from "@extension/lib/types";
-import type { DiffViewMode } from "@extension/lib/preferences";
+import type { DiffViewMode } from "./diffView";
 import type { DraftComment } from "./commentTypes";
 
 export interface StreamPlanHandlers {

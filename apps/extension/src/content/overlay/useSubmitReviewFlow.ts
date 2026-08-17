@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import type { PRContext, ReviewCommentInput } from "@extension/lib/types";
+import type { ReviewCommentInput } from "@extension/lib/types";
+import type { ReviewContext } from "@guided-review/core";
 import { EMPTY_REVIEW_BODY_MESSAGE } from "@extension/lib/types";
 import type { DraftComment, ReviewEvent, ReviewSubmission } from "./commentTypes";
 import { useReviewHost } from "./host";
@@ -27,7 +28,7 @@ export interface SubmitSuccessInfo {
 }
 
 interface UseSubmitReviewFlowOptions {
-  prContext: PRContext | null;
+  prContext: ReviewContext | null;
   draftComments: DraftComment[];
   clearDraftComments: () => void;
   handleExit: () => void;
@@ -144,7 +145,7 @@ export function useSubmitReviewFlow({
     }
 
     const pr = prContext;
-    if (!pr) {
+    if (!pr || pr.owner == null || pr.repo == null || pr.number == null) {
       setSubmitReviewError(
         "Missing pull request context. Close the review and try again from the PR page.",
       );

@@ -1,7 +1,7 @@
 import type { DiffLine } from "@extension/lib/types";
 import { type ResolvedUnitFile } from "@guided-review/core";
 import { buildSplitRows } from "./buildSplitRows";
-import type { DiffViewMode } from "@extension/lib/preferences";
+import type { DiffViewMode } from "./diffView";
 import { lineIdFor, sideForLine, type DiffSide, type SelectableLine } from "./commentTypes";
 
 export { resolveUnitFiles } from "@guided-review/core";
