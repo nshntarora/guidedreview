@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@fontsource/victor-mono": "^5.3.0",
+    "@guided-review/core": "*",
     "@guided-review/ui": "*",
     "dompurify": "^3.4.13",
     "fuse.js": "^7.5.0",

@@ -5,7 +5,7 @@ import { resetConfirmationQueueForTests } from "@extension/lib/confirmation";
 import { DEFAULT_DIFF_VIEW_MODE } from "@extension/lib/preferences";
 import { useReviewStore } from "./store";
 import { VIEW_CHORD_WINDOW_MS } from "./useOverlayKeyboard";
-import { buildFileReviewPlan } from "@extension/lib/review/reviewPlan";
+import { buildFileReviewPlan } from "@guided-review/core";
 import type { ParsedDiff, PRContext, ReviewPlan } from "@extension/lib/types";
 import * as messaging from "@extension/lib/messaging";
 import * as oauthConfig from "@extension/lib/github/oauthConfig";

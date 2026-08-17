@@ -2,20 +2,22 @@
 
 Chrome MV3 extension: GitHub PR diff → user's LLM → ordered **review units** in a Shadow DOM overlay. npm workspaces, Node ≥ 22.
 
-| Path             | What                                                               |
-| ---------------- | ------------------------------------------------------------------ |
-| `apps/extension` | Product — load unpacked from **`apps/extension/dist` only**        |
-| `apps/web`       | Marketing + docs (Next.js static export → `out/`)                  |
-| `packages/ui`    | Shared tokens/UI — source-only; no `chrome.*` or extension imports |
+| Path             | What                                                                         |
+| ---------------- | ---------------------------------------------------------------------------- |
+| `apps/extension` | Chrome MV3 product — load unpacked from **`apps/extension/dist` only**       |
+| `apps/web`       | Marketing + docs (Next.js static export → `out/`)                            |
+| `packages/core`  | Review engine — parse, cluster, summarise, providers; no `chrome.*` or React |
+| `packages/ui`    | Shared tokens/UI — source-only; no `chrome.*` or extension imports           |
 
 ## Import aliases
 
 Prefer absolute imports over deep `../../` relatives:
 
-| Alias          | Resolves to            |
-| -------------- | ---------------------- |
-| `@extension/*` | `apps/extension/src/*` |
-| `@web/*`       | `apps/web/*`           |
+| Alias                 | Resolves to            |
+| --------------------- | ---------------------- |
+| `@extension/*`        | `apps/extension/src/*` |
+| `@web/*`              | `apps/web/*`           |
+| `@guided-review/core` | `packages/core/src`    |
 
 Same-directory `./foo` is fine. Cross-folder imports should use the alias.
 
@@ -29,11 +31,11 @@ After extension edits: `build:extension`, reload in `chrome://extensions`, refre
 
 Contexts talk only via `chrome.runtime.sendMessage`: **content** (DOM/overlay), **background** (fetch/keys/LLM), **options**. Types: `src/lib/types.ts`.
 
-**Pipeline:** `diffParser` → `buildPrompt` (chunk by file, never split a file) → provider stream → `streamPlanParser` / `reviewPlan` (drop bad hunk ids) → overlay from the **real** diff.
+**Pipeline:** `parseDiff` → `buildPrompt` (chunk by file, never split a file) → `annotateReview` → overlay from the **real** diff. The engine lives in `@guided-review/core`; the extension is a GitHub host on top of it.
 
 **Invariant:** LLM plans structure + commentary only; never supplies code shown to the user.
 
-Sessions: `chrome.storage.session`, key `owner/repo#number` (`buildSessionKey`). Providers: `background/providers/` (`ProviderClient`).
+Sessions: `chrome.storage.session`, key `owner/repo#number` (`buildSessionKey`). Providers: `@guided-review/core` (`ProviderClient`).
 
 ## packages/ui · apps/web
 

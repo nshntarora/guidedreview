@@ -3,7 +3,7 @@
  *
  * UI labels, icons, key placeholders, and model lists all come from here.
  * Adding a model is a single MODELS row. Adding a provider also requires a
- * background client in src/background/providers/.
+ * client in this package (`providers/`).
  */
 
 export type ProviderId = "anthropic" | "openai" | "grok";

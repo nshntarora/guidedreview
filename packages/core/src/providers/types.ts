@@ -1,8 +1,8 @@
-import type { ParsedDiff, PRContext, ProviderSettings } from "@extension/lib/types";
+import type { ParsedDiff, ProviderSettings, ReviewContext } from "../types";
 
 export interface AnnotateReviewInput {
   diff: ParsedDiff;
-  prContext: PRContext;
+  context: ReviewContext;
   settings: ProviderSettings;
 }
 

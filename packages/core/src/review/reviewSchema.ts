@@ -1,4 +1,4 @@
-import { FILE_ROLES, UNIT_KINDS } from "@extension/lib/types";
+import { FILE_ROLES, UNIT_KINDS } from "../types";
 
 /**
  * JSON schema for the structured `ReviewPlan` output. Shared by every

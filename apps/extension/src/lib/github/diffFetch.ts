@@ -1,4 +1,4 @@
-import { parseUnifiedDiff } from "./diffParser";
+import { parseUnifiedDiff } from "@guided-review/core";
 import type { ParsedDiff } from "@extension/lib/types";
 
 export interface PRIdentity {

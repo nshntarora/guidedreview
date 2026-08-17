@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseUnifiedDiff } from "./diffParser";
+import { parseUnifiedDiff } from "./parse";
 
 describe("parseUnifiedDiff", () => {
   it("parses a simple modified file with one hunk", () => {

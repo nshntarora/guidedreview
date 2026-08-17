@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { getProviderSettings, onProviderSettingsChanged, setProviderSettings } from "./settings";
-import { defaultModelFor } from "./providers/catalog";
+import { defaultModelFor } from "@guided-review/core";
 
 describe("settings", () => {
   it("returns fallback settings when nothing is stored", async () => {

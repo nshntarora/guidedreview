@@ -4,7 +4,7 @@ import { parsePRUrl, type PRIdentity } from "@extension/lib/github/diffFetch";
 import { isIgnoredPrPath } from "@extension/lib/github/prUrls";
 import { fetchConversationDescription, scrapePRContext } from "@extension/lib/github/prContext";
 import { requestPRDiff, streamReviewPlan } from "@extension/lib/messaging";
-import { getProvider } from "@extension/lib/providers/catalog";
+import { getProvider } from "@guided-review/core";
 import { getProviderSettings, onProviderSettingsChanged } from "@extension/lib/settings";
 import type { ContentRequest, ParsedDiff, PRContext } from "@extension/lib/types";
 import { ensureFallbackHost, FALLBACK_HOST_ID, findButtonAnchor } from "./buttonAnchor";

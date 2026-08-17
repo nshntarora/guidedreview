@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildUserPrompt, chunkDiffByFile, SYSTEM_PROMPT } from "./buildPrompt";
-import type { DiffFile, ParsedDiff, PRContext } from "@extension/lib/types";
+import type { DiffFile, ParsedDiff, ReviewContext } from "../types";
 
 function fileFixture(path: string, extraLineCount = 0): DiffFile {
   return {
@@ -75,7 +75,8 @@ describe("SYSTEM_PROMPT", () => {
 });
 
 describe("buildUserPrompt", () => {
-  const prContext: PRContext = {
+  const reviewContext: ReviewContext = {
+    source: "github",
     owner: "acme",
     repo: "widgets",
     number: 1,
@@ -89,34 +90,34 @@ describe("buildUserPrompt", () => {
   };
 
   it("includes title, description, and branch refs", () => {
-    const prompt = buildUserPrompt({ files: [fileFixture("src/foo.ts")] }, prContext);
-    expect(prompt).toContain("<PR_TITLE>\nAdd feature X\n</PR_TITLE>");
+    const prompt = buildUserPrompt({ files: [fileFixture("src/foo.ts")] }, reviewContext);
+    expect(prompt).toContain("<CHANGE_TITLE>\nAdd feature X\n</CHANGE_TITLE>");
     expect(prompt).toContain("Because reasons");
     expect(prompt).toContain("Merging feature-x into main.");
   });
 
   it("falls back to a placeholder when there is no description", () => {
-    const prompt = buildUserPrompt({ files: [] }, { ...prContext, description: "" });
-    expect(prompt).toContain("<PR_DESCRIPTION>\n(none provided)\n</PR_DESCRIPTION>");
+    const prompt = buildUserPrompt({ files: [] }, { ...reviewContext, description: "" });
+    expect(prompt).toContain("<CHANGE_DESCRIPTION>\n(none provided)\n</CHANGE_DESCRIPTION>");
   });
 
   it("falls back to a placeholder when there is no title", () => {
-    const prompt = buildUserPrompt({ files: [] }, { ...prContext, title: "" });
-    expect(prompt).toContain("<PR_TITLE>\n(none provided)\n</PR_TITLE>");
+    const prompt = buildUserPrompt({ files: [] }, { ...reviewContext, title: "" });
+    expect(prompt).toContain("<CHANGE_TITLE>\n(none provided)\n</CHANGE_TITLE>");
   });
 
   it("treats whitespace-only title and description as missing", () => {
     const prompt = buildUserPrompt(
       { files: [] },
-      { ...prContext, title: "   ", description: "  \n  " },
+      { ...reviewContext, title: "   ", description: "  \n  " },
     );
-    expect(prompt).toContain("<PR_TITLE>\n(none provided)\n</PR_TITLE>");
-    expect(prompt).toContain("<PR_DESCRIPTION>\n(none provided)\n</PR_DESCRIPTION>");
+    expect(prompt).toContain("<CHANGE_TITLE>\n(none provided)\n</CHANGE_TITLE>");
+    expect(prompt).toContain("<CHANGE_DESCRIPTION>\n(none provided)\n</CHANGE_DESCRIPTION>");
   });
 
   it("fences author-controlled title, description and diff as untrusted sections", () => {
-    const prompt = buildUserPrompt({ files: [fileFixture("src/foo.ts")] }, prContext);
-    for (const tag of ["PR_TITLE", "PR_DESCRIPTION", "DIFF"]) {
+    const prompt = buildUserPrompt({ files: [fileFixture("src/foo.ts")] }, reviewContext);
+    for (const tag of ["CHANGE_TITLE", "CHANGE_DESCRIPTION", "DIFF"]) {
       expect(prompt).toContain(`<${tag}>`);
       expect(prompt).toContain(`</${tag}>`);
     }
@@ -124,28 +125,28 @@ describe("buildUserPrompt", () => {
   });
 
   it("omits the merge line when either ref is missing", () => {
-    const prompt = buildUserPrompt({ files: [] }, { ...prContext, baseRef: "", headRef: "" });
+    const prompt = buildUserPrompt({ files: [] }, { ...reviewContext, baseRef: "", headRef: "" });
     expect(prompt).not.toContain("Merging");
   });
 
   it("annotates each hunk with its stable id", () => {
-    const prompt = buildUserPrompt({ files: [fileFixture("src/foo.ts")] }, prContext);
+    const prompt = buildUserPrompt({ files: [fileFixture("src/foo.ts")] }, reviewContext);
     expect(prompt).toContain("[hunk id: src/foo.ts#0]");
     expect(prompt).toContain("### File: src/foo.ts (modified)");
   });
 
   it("includes a hunk inventory and slice disclaimer", () => {
-    const prompt = buildUserPrompt({ files: [fileFixture("src/foo.ts")] }, prContext);
+    const prompt = buildUserPrompt({ files: [fileFixture("src/foo.ts")] }, reviewContext);
     expect(prompt).toContain("Hunk inventory");
     expect(prompt).toContain("src/foo.ts: src/foo.ts#0");
-    expect(prompt).toContain("slice of a larger PR");
+    expect(prompt).toContain("slice of a larger changeset");
     expect(prompt).not.toContain("Checklist before you finish");
   });
 
   it("marks binary files without dumping hunk content", () => {
     const prompt = buildUserPrompt(
       { files: [{ path: "logo.png", status: "modified", isBinaryOrElided: true, hunks: [] }] },
-      prContext,
+      reviewContext,
     );
     expect(prompt).toContain("binary or elided");
   });
@@ -153,7 +154,7 @@ describe("buildUserPrompt", () => {
   it("labels a renamed file with both paths", () => {
     const prompt = buildUserPrompt(
       { files: [{ ...fileFixture("new.ts"), status: "renamed", previousPath: "old.ts" }] },
-      prContext,
+      reviewContext,
     );
     expect(prompt).toContain("renamed from old.ts to new.ts");
   });

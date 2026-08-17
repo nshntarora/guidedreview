@@ -1,4 +1,4 @@
-import type { DiffFile, FileChangeStatus, ParsedDiff } from "@extension/lib/types";
+import type { DiffFile, FileChangeStatus, ParsedDiff } from "../types";
 
 export interface FileDiffSummary {
   path: string;
@@ -9,7 +9,7 @@ export interface FileDiffSummary {
   isBinaryOrElided: boolean;
 }
 
-interface DiffSummary {
+export interface DiffSummary {
   files: number;
   additions: number;
   deletions: number;

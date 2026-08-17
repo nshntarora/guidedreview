@@ -1,5 +1,5 @@
 import type { FileChangeStatus, ParsedDiff, PRContext } from "@extension/lib/types";
-import { summarizeDiff, type FileDiffSummary } from "@extension/lib/github/diffSummary";
+import { summarizeDiff, type FileDiffSummary } from "@guided-review/core";
 import { cn } from "@guided-review/ui";
 import { missingMetadataHint } from "@extension/content/overlay/overlayCopy";
 import { MiddleEllipsisText } from "./MiddleEllipsisText";
