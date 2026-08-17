@@ -11,6 +11,7 @@ import * as messaging from "@extension/lib/messaging";
 import * as oauthConfig from "@extension/lib/github/oauthConfig";
 import { createGitHubReviewHost } from "@extension/content/githubHost";
 import { createMemoryReviewHost, setActiveReviewHost } from "./host";
+import type { LocalDiffControls } from "./localReview";
 
 const sampleAuth = {
   accessToken: "gho_test",
@@ -121,6 +122,78 @@ function seedReadyReview(unitIndex = 1): void {
   });
 }
 
+function localDiffFixture(overrides: Partial<LocalDiffControls> = {}): LocalDiffControls {
+  return {
+    scopes: [
+      {
+        id: "branch",
+        label: "feat vs main",
+        description: "Committed work on this branch.",
+        meta: "1 commit · 1 file · +1 −0",
+        stat: { files: 1, additions: 1, deletions: 0 },
+        empty: false,
+      },
+      {
+        id: "uncommitted",
+        label: "Uncommitted changes",
+        description: "Staged and unstaged work versus HEAD.",
+        meta: "1 file · +2 −0",
+        stat: { files: 1, additions: 2, deletions: 0 },
+        empty: false,
+      },
+      {
+        id: "commit:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        label: "Add header",
+        description: "Ada · 2026-01-02",
+        meta: "aaaaaaa · 1 file · +1 −0",
+        stat: { files: 1, additions: 1, deletions: 0 },
+        empty: false,
+      },
+    ],
+    selectedScope: "branch",
+    commits: [
+      {
+        sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        shortSha: "aaaaaaa",
+        subject: "Add header",
+        body: "",
+        author: "Ada",
+        authoredAt: "2026-01-02T00:00:00Z",
+        stat: { files: 1, additions: 1, deletions: 0 },
+      },
+    ],
+    onSelectScope: vi.fn(),
+    onStructureReview: vi.fn(),
+    structuring: false,
+    structured: false,
+    ...overrides,
+  };
+}
+
+function renderLocalOverlay(overrides: Partial<LocalDiffControls> = {}): LocalDiffControls {
+  setActiveReviewHost(
+    createMemoryReviewHost({
+      kind: "local",
+      exportNotes: vi.fn(),
+      submit: undefined,
+    }),
+  );
+  seedReadyReview(0);
+  useReviewStore.setState({
+    prContext: prContextFixture({
+      source: "local",
+      title: "feat",
+      description: "raw log",
+      descriptionHtml: "",
+      author: undefined,
+      number: undefined,
+    }),
+  });
+  const localDiff = localDiffFixture(overrides);
+  render(<Overlay allowExit={false} localDiff={localDiff} />);
+  return localDiff;
+}
+
 describe("Overlay", () => {
   beforeEach(() => {
     setActiveReviewHost(createGitHubReviewHost());
@@ -196,79 +269,12 @@ describe("Overlay", () => {
   });
 
   it("shows the local scope picker, commit cards, and structure trigger", () => {
-    setActiveReviewHost(
-      createMemoryReviewHost({
-        kind: "local",
-        exportNotes: vi.fn(),
-        submit: undefined,
-      }),
-    );
-    seedReadyReview(0);
-    useReviewStore.setState({
-      prContext: prContextFixture({
-        source: "local",
-        title: "feat",
-        description: "raw log",
-        descriptionHtml: "",
-        author: undefined,
-        number: undefined,
-      }),
-    });
-    const onSelectScope = vi.fn();
-    const onStructureReview = vi.fn();
-    render(
-      <Overlay
-        allowExit={false}
-        localDiff={{
-          scopes: [
-            {
-              id: "branch",
-              label: "feat vs main",
-              description: "Committed work on this branch.",
-              meta: "1 commit · 1 file · +1 −0",
-              stat: { files: 1, additions: 1, deletions: 0 },
-              empty: false,
-            },
-            {
-              id: "uncommitted",
-              label: "Uncommitted changes",
-              description: "Staged and unstaged work versus HEAD.",
-              meta: "1 file · +2 −0",
-              stat: { files: 1, additions: 2, deletions: 0 },
-              empty: false,
-            },
-            {
-              id: "commit:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-              label: "Add header",
-              description: "Ada · 2026-01-02",
-              meta: "aaaaaaa · 1 file · +1 −0",
-              stat: { files: 1, additions: 1, deletions: 0 },
-              empty: false,
-            },
-          ],
-          selectedScope: "branch",
-          commits: [
-            {
-              sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-              shortSha: "aaaaaaa",
-              subject: "Add header",
-              body: "",
-              author: "Ada",
-              authoredAt: "2026-01-02T00:00:00Z",
-              stat: { files: 1, additions: 1, deletions: 0 },
-            },
-          ],
-          onSelectScope,
-          onStructureReview,
-          structuring: false,
-          structured: false,
-        }}
-      />,
-    );
+    renderLocalOverlay();
 
     const picker = screen.getByRole("combobox", { name: /diff to review/i });
     expect(picker).toBeInTheDocument();
     expect(picker).toHaveTextContent("feat vs main");
+    expect(picker.querySelector("[data-slot=kbd]")).toHaveTextContent("d");
     expect(picker).not.toHaveTextContent("1 commit · 1 file");
     expect(screen.queryByText(/main\s*←\s*feat/)).not.toBeInTheDocument();
     expect(screen.queryByText(/main\s*←\s*feature/)).not.toBeInTheDocument();
@@ -284,6 +290,43 @@ describe("Overlay", () => {
     expect(commitOption).toBeInTheDocument();
     expect(commitOption.querySelector(".text-diff-add")).toHaveTextContent("+1");
     expect(commitOption.querySelector(".text-diff-del")).toHaveTextContent("−0");
+  });
+
+  describe("local review keyboard", () => {
+    it("opens the scope picker on d and structures on ⌘/Ctrl+I", () => {
+      const { onStructureReview } = renderLocalOverlay();
+
+      const picker = screen.getByRole("combobox", { name: /diff to review/i });
+      expect(picker).toHaveAttribute("aria-expanded", "false");
+
+      fireEvent.keyDown(window, { key: "i", metaKey: true });
+      expect(onStructureReview).toHaveBeenCalledTimes(1);
+      fireEvent.keyDown(window, { key: "i", ctrlKey: true });
+      expect(onStructureReview).toHaveBeenCalledTimes(2);
+
+      fireEvent.keyDown(window, { key: "d" });
+      expect(picker).toHaveAttribute("aria-expanded", "true");
+      expect(screen.getByRole("listbox")).toBeInTheDocument();
+    });
+
+    it("does not structure after the review is already structured", () => {
+      const { onStructureReview } = renderLocalOverlay({ structured: true });
+
+      expect(screen.queryByTestId("structure-review")).not.toBeInTheDocument();
+      fireEvent.keyDown(window, { key: "i", metaKey: true });
+      expect(onStructureReview).not.toHaveBeenCalled();
+    });
+
+    it("does not bind local shortcuts on a GitHub review", () => {
+      seedReadyReview(0);
+      render(<Overlay />);
+
+      expect(screen.queryByRole("combobox", { name: /diff to review/i })).not.toBeInTheDocument();
+      fireEvent.keyDown(window, { key: "d" });
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+      fireEvent.keyDown(window, { key: "i", metaKey: true });
+      expect(useReviewStore.getState().isOpen).toBe(true);
+    });
   });
 
   it("shows the full layout with the PR description unit while loading", () => {
