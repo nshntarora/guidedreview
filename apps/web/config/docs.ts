@@ -110,8 +110,8 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Product",
     title: "Keyboard shortcuts",
     description:
-      "Keyboard-first shortcuts for review navigation, diff search, unified/split view, comments, and submitting a review.",
-    blurb: "navigate, search, comment, and submit without leaving the keyboard",
+      "Keyboard-first shortcuts for review navigation, diff search, unified/split view, comments, submitting a review, and local CLI review.",
+    blurb: "navigate, search, comment, submit, and local review",
     load: () => import("@web/content/help/keyboard-shortcuts.mdx"),
   },
   {
