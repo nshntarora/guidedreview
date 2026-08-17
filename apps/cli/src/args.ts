@@ -69,9 +69,10 @@ export function parseArgs(argv: string[]): CliArgs {
   return args;
 }
 
-export const HELP = `Usage: guided-review [dir] [options]
+export const HELP = `Usage: npm run review -- [dir] [options]
 
 Review local changes against the main branch. Opens a browser UI.
+(Workspace CLI: @guided-review/cli. Not the npm package named guided-review.)
 
   --base <ref>       Base branch (default: origin/HEAD, then main, then master)
   --port <n>         Listen port (default: first free port)

@@ -14,6 +14,7 @@
     "dev:cli": "npm run dev -w @guided-review/cli",
     "build": "npm run build:extension && npm run build:web",
     "build:cli": "npm run build -w @guided-review/cli",
+    "review": "npm run start -w @guided-review/cli --",
     "build:extension": "npm run build -w @guided-review/extension",
     "build:web": "npm run build -w @guided-review/web",
     "start:web": "npm run start -w @guided-review/web",
