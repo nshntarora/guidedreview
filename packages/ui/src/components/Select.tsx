@@ -5,12 +5,14 @@ import {
   useCallback,
   useEffect,
   useId,
+  useImperativeHandle,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type KeyboardEvent,
   type ReactNode,
+  type Ref,
 } from "react";
 import { cn } from "../cn";
 
@@ -34,11 +36,17 @@ export interface SelectOption<T extends string = string> {
   group?: string;
 }
 
+export type SelectHandle = {
+  /** Focus the trigger and open the list. No-op when disabled. */
+  focusAndOpen: () => void;
+};
+
 export interface SelectProps<T extends string = string> {
   id?: string;
   /** Accessible name when no visible label is associated via htmlFor. */
   "aria-labelledby"?: string;
   "aria-label"?: string;
+  "aria-keyshortcuts"?: string;
   value: T;
   options: SelectOption<T>[];
   onChange: (value: T) => void;
@@ -48,6 +56,10 @@ export interface SelectProps<T extends string = string> {
   menuClassName?: string;
   /** Placeholder when value is not in options (should be rare after normalize). */
   placeholder?: string;
+  /** Imperative handle — used so a parent keyboard layer can open the list. */
+  selectRef?: Ref<SelectHandle | null>;
+  /** Rendered on the closed trigger, before the chevron (e.g. a shortcut badge). */
+  trailing?: ReactNode;
 }
 
 function findNextEnabled(options: SelectOption[], from: number, direction: 1 | -1): number {
@@ -69,6 +81,7 @@ export function Select<T extends string = string>({
   id,
   "aria-labelledby": ariaLabelledBy,
   "aria-label": ariaLabel,
+  "aria-keyshortcuts": ariaKeyShortcuts,
   value,
   options,
   onChange,
@@ -76,6 +89,8 @@ export function Select<T extends string = string>({
   className,
   menuClassName,
   placeholder = "Select…",
+  selectRef,
+  trailing,
 }: SelectProps<T>) {
   const listboxId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -105,6 +120,18 @@ export function Select<T extends string = string>({
     setHighlightIndex(selectedIndex >= 0 ? selectedIndex : findNextEnabled(options, -1, 1));
     setOpen(true);
   }, [disabled, options, selectedIndex]);
+
+  useImperativeHandle(
+    selectRef,
+    () => ({
+      focusAndOpen: () => {
+        if (disabled) return;
+        triggerRef.current?.focus();
+        openList();
+      },
+    }),
+    [disabled, openList],
+  );
 
   const selectIndex = useCallback(
     (index: number) => {
@@ -237,6 +264,7 @@ export function Select<T extends string = string>({
         aria-activedescendant={activeDescendant}
         aria-labelledby={ariaLabelledBy}
         aria-label={ariaLabel}
+        aria-keyshortcuts={ariaKeyShortcuts}
         disabled={disabled}
         className={cn(
           "flex w-full items-center gap-2 rounded-md border border-border bg-surface-raised px-2.5 py-2 text-left text-base text-foreground",
@@ -259,6 +287,7 @@ export function Select<T extends string = string>({
             <span className="text-muted">{placeholder}</span>
           )}
         </span>
+        {trailing ? <span className="shrink-0">{trailing}</span> : null}
         <svg
           aria-hidden
           className={cn(
