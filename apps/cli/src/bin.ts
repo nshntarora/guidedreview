@@ -6,8 +6,8 @@ import { fileURLToPath } from "node:url";
 import { HELP, parseArgs } from "./args";
 import { resolveSettings } from "./config";
 import { GitError } from "./git/run";
-import { buildLocalDiff } from "./git/localDiff";
-import { createReviewServer, listen } from "./server/createServer";
+import { buildLocalReview, reviewHasChanges } from "./git/localDiff";
+import { createReviewServer, createServerShutdown, listen } from "./server/createServer";
 
 function openBrowser(url: string): void {
   const command =
@@ -23,30 +23,30 @@ async function main(): Promise<void> {
     return;
   }
 
-  const local = await buildLocalDiff({
+  const local = await buildLocalReview({
     cwd: path.resolve(args.cwd),
     base: args.base,
     staged: args.staged,
     includeUntracked: args.includeUntracked,
   });
 
-  if (local.empty) {
+  if (!reviewHasChanges(local)) {
     process.stdout.write(`Nothing to review against ${local.context.baseRef}.\n`);
     return;
   }
 
-  const settings = await resolveSettings({
+  const resolved = await resolveSettings({
     provider: args.provider,
     model: args.model,
+    agent: args.agent,
   });
 
   const token = randomBytes(16).toString("hex");
   const staticDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "ui");
   const server = createReviewServer({
-    context: local.context,
-    diff: local.diff,
-    sessionKey: local.sessionKey,
-    settings,
+    snapshot: local,
+    settings: resolved.settings,
+    codingAgent: resolved.codingAgent,
     token,
     staticDir,
   });
@@ -55,16 +55,18 @@ async function main(): Promise<void> {
   const url = `http://127.0.0.1:${port}/?token=${token}`;
 
   process.stdout.write(
-    `Reviewing ${local.diff.files.length} file(s) vs ${local.context.baseRef}.\n`,
+    `Reviewing ${local.diff.files.length} file(s) on ${local.context.headRef} vs ${local.context.baseRef}.\n`,
   );
   process.stdout.write(`${url}\n`);
   process.stdout.write("Ctrl+C to stop.\n");
+  const { settings, codingAgent } = resolved;
+  process.stderr.write(
+    `${settings.provider}/${settings.model}${codingAgent ? ` via ${codingAgent}` : ""}${settings.apiKey ? "" : "  no key"}\n`,
+  );
 
   if (args.open) openBrowser(url);
 
-  const shutdown = () => {
-    server.close(() => process.exit(0));
-  };
+  const shutdown = createServerShutdown(server);
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
 }
