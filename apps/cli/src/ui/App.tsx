@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildFileReviewPlan, getProvider, type ProviderId } from "@guided-review/core";
 import type { ReviewSessionPayload } from "../server/createServer";
 import { Overlay } from "@extension/content/overlay/Overlay";
-import { ReviewHostProvider, setActiveReviewHost } from "@extension/content/overlay/host";
+import { ReviewHostProvider } from "@extension/content/overlay/host";
 import { restoreSession, useReviewStore } from "@extension/content/overlay/store";
 import type { LocalDiffControls } from "@extension/content/overlay/localReview";
 import { createLocalReviewHost } from "./host";
@@ -35,7 +35,6 @@ export function App() {
       }),
     [token],
   );
-  setActiveReviewHost(host);
 
   const applyMeta = useCallback((session: ReviewSessionPayload) => {
     setCommits(session.commits);
