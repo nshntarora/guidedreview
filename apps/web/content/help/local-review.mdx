@@ -14,18 +14,18 @@ The Chrome extension still reviews GitHub pull requests. The CLI reviews the cha
 
 ## Run it
 
-From the monorepo (workspace binary, not published to npm yet):
+From this repo (the CLI is not on npm — `npx guided-review` is a different package):
 
 ```bash
 npm install
-npx guided-review
+npm run build:cli
+npm run review
 ```
 
-Or after a build:
+Pass flags after `--`:
 
 ```bash
-npm run build:cli
-npm run start -w @guided-review/cli
+npm run review -- --base main --no-open
 ```
 
 The CLI binds `127.0.0.1`, prints a tokenized URL, and opens it unless you pass `--no-open`. Ctrl+C stops the server.
@@ -51,5 +51,5 @@ Line comments stay in the session. There is no GitHub submit. **Copy notes** put
 ## Flags
 
 ```
-guided-review [dir] --base main --port 8787 --no-open --staged --no-untracked
+npm run review -- [dir] --base main --port 8787 --no-open --staged --no-untracked
 ```
