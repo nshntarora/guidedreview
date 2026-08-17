@@ -99,6 +99,26 @@ describe("Select", () => {
     expect(selected).toHaveAttribute("aria-selected", "true");
   });
 
+  it("renders a group title before grouped options", async () => {
+    const user = userEvent.setup();
+    render(
+      <Select
+        aria-label="Grouped"
+        value="branch"
+        options={[
+          { value: "branch", label: "feat vs main" },
+          { value: "c1", label: "First commit", group: "Last 5 commits" },
+          { value: "c2", label: "Second commit", group: "Last 5 commits" },
+        ]}
+        onChange={() => {}}
+      />,
+    );
+
+    await user.click(screen.getByRole("combobox", { name: /grouped/i }));
+    expect(screen.getByText("Last 5 commits")).toBeInTheDocument();
+    expect(screen.getAllByRole("option")).toHaveLength(3);
+  });
+
   it("renders custom option content", async () => {
     const user = userEvent.setup();
     render(
