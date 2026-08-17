@@ -1,6 +1,7 @@
 import type { ParsedDiff, PRContext } from "@extension/lib/types";
 import { summarizeDiff } from "@guided-review/core";
 import { Kbd } from "@guided-review/ui";
+import { useReviewHost } from "../host";
 import { ModEnterChord } from "./ShortcutKeys";
 
 interface ProgressHeaderProps {
@@ -11,8 +12,10 @@ interface ProgressHeaderProps {
   /** Accessible / visible title text. */
   title: string;
   onExit: () => void;
-  /** Opens the Submit Review modal. */
+  /** Opens the Submit Review modal or copies local notes. */
   onSubmitReview: () => void;
+  /** When set, the primary action is copy-notes (no GitHub submit). */
+  notesCount?: number;
 }
 
 const headerBtn =
@@ -25,9 +28,14 @@ export function ProgressHeader({
   title,
   onExit,
   onSubmitReview,
+  notesCount,
 }: ProgressHeaderProps) {
+  const host = useReviewHost();
   const stats = diff ? summarizeDiff(diff) : null;
-  const logomarkUrl = chrome.runtime.getURL("logomark.svg");
+  const logomarkUrl = host.assetUrl("logomark.svg");
+  const showPrNumber = host.kind === "github" && prContext?.number != null;
+  const primaryIsExport = !host.submit && Boolean(host.exportNotes);
+  const primaryDisabled = primaryIsExport && (notesCount ?? 0) === 0;
 
   return (
     <header className="flex shrink-0 flex-col gap-1.5 border-b border-border bg-background px-5 py-3.5">
@@ -46,8 +54,8 @@ export function ProgressHeader({
               <h1 id={titleId} className="m-0 truncate text-lg font-semibold leading-snug">
                 {title}
               </h1>
-              {prContext && (
-                <span className="shrink-0 text-base text-muted">#{prContext.number}</span>
+              {showPrNumber && (
+                <span className="shrink-0 text-base text-muted">#{prContext!.number}</span>
               )}
             </div>
             {prContext && (prContext.author || prContext.baseRef || prContext.headRef || stats) && (
@@ -72,11 +80,12 @@ export function ProgressHeader({
         <div className="flex shrink-0 items-center gap-3">
           <button
             type="button"
-            className={`${headerBtn} border-primary bg-primary text-primary-foreground hover:border-primary-hover hover:bg-primary-hover [&_[data-slot=kbd]]:bg-[rgba(13,8,6,0.12)] [&_[data-slot=kbd]]:text-inherit`}
+            className={`${headerBtn} border-primary bg-primary text-primary-foreground hover:border-primary-hover hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50 [&_[data-slot=kbd]]:bg-[rgba(13,8,6,0.12)] [&_[data-slot=kbd]]:text-inherit`}
             onClick={onSubmitReview}
+            disabled={primaryDisabled}
             data-testid="submit-review-button"
           >
-            Submit Review
+            {primaryIsExport ? "Copy notes" : "Submit Review"}
             <ModEnterChord />
           </button>
           <button

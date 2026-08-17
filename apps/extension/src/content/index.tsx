@@ -3,15 +3,20 @@ import { getAutoOpenOnFilesTab, onAutoOpenOnFilesTabChanged } from "@extension/l
 import { parsePRUrl, type PRIdentity } from "@extension/lib/github/diffFetch";
 import { isIgnoredPrPath } from "@extension/lib/github/prUrls";
 import { fetchConversationDescription, scrapePRContext } from "@extension/lib/github/prContext";
-import { requestPRDiff, streamReviewPlan } from "@extension/lib/messaging";
+import { requestPRDiff } from "@extension/lib/messaging";
 import { getProvider } from "@guided-review/core";
 import { getProviderSettings, onProviderSettingsChanged } from "@extension/lib/settings";
 import type { ContentRequest, ParsedDiff, PRContext } from "@extension/lib/types";
 import { ensureFallbackHost, FALLBACK_HOST_ID, findButtonAnchor } from "./buttonAnchor";
+import { createGitHubReviewHost } from "./githubHost";
 import { Overlay } from "./overlay/Overlay";
+import { ReviewHostProvider, setActiveReviewHost } from "./overlay/host";
 import { isPrFilesChangedPath } from "@extension/lib/github/prUrls";
 import overlayStyles from "./overlay/styles/overlay.css?inline";
 import { useReviewStore, restoreSession, buildSessionKey } from "./overlay/store";
+
+const reviewHost = createGitHubReviewHost();
+setActiveReviewHost(reviewHost);
 
 const BUTTON_ID = "guided-review-start-btn";
 const BUTTON_STYLE_ID = "guided-review-start-btn-styles";
@@ -229,7 +234,7 @@ function startAnnotationStream(
   // Request is on the wire — show "Sent it to …" until the worker reports waiting/tokens.
   useReviewStore.getState().setBuildPhase("sent_to_provider", streamGeneration);
 
-  const { cancel } = streamReviewPlan(diff, prContext, {
+  const { cancel } = reviewHost.streamPlan(diff, prContext, {
     onStatus: (phase) => useReviewStore.getState().setBuildPhase(phase, streamGeneration),
     onUnit: (unit) => useReviewStore.getState().appendUnit(unit, streamGeneration),
     onDone: (plan) => {
@@ -353,6 +358,8 @@ function ensureOverlayMounted(): void {
   // Overlay reads the active session key from the store, so SPA navigation to
   // another PR never leaves a stale prUrl prop from the first mount.
   createRoot(appRoot).render(
-    <Overlay onRequestClose={cancelActiveStream} onRetry={retryAnnotation} />,
+    <ReviewHostProvider host={reviewHost}>
+      <Overlay onRequestClose={cancelActiveStream} onRetry={retryAnnotation} />
+    </ReviewHostProvider>,
   );
 }

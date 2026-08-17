@@ -4,6 +4,8 @@ import { buildFileLineUrl, buildPRFileDiffUrl } from "@extension/lib/github/prUr
 import type { DiffFile, DiffHunk, PRContext } from "@extension/lib/types";
 import { buildSelectableLines } from "@extension/content/overlay/buildSelectableLines";
 import { DEFAULT_DIFF_VIEW_MODE } from "@extension/lib/preferences";
+import { createGitHubReviewHost } from "@extension/content/githubHost";
+import { setActiveReviewHost } from "../host";
 import {
   resetDiffViewModeHydrationForTests,
   useReviewStore,
@@ -84,6 +86,7 @@ function resetStore(): void {
 
 describe("DiffPane", () => {
   beforeEach(async () => {
+    setActiveReviewHost(createGitHubReviewHost());
     await chrome.storage.local.clear();
     resetStore();
   });
