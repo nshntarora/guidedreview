@@ -274,6 +274,21 @@ describe("buildLocalReview", () => {
     expect(scoped.selectedScope).toBe(`commit:${first!.sha}`);
   });
 
+  it("rebuilds the same scope to the same files and session-key shape", async () => {
+    const root = await makeRepo();
+    await writeFile(path.join(root, "readme.md"), "hello rebuild\n");
+    const built = await buildLocalReview({ cwd: root });
+    const rebuilt = await rebuildLocalReview(built.repo, built.selectedScope);
+    expect(rebuilt.selectedScope).toBe(built.selectedScope);
+    expect(rebuilt.diff.files.map((file) => file.path)).toEqual(
+      built.diff.files.map((file) => file.path),
+    );
+    expect(rebuilt.sessionKey.split(":").slice(0, 4)).toEqual(
+      built.sessionKey.split(":").slice(0, 4),
+    );
+    expect(rebuilt.sessionKey).toBe(built.sessionKey);
+  });
+
   it("fails outside a git repo", async () => {
     const dir = await mkdir(path.join(os.tmpdir(), `gr-nongit-${Date.now()}`), { recursive: true });
     await expect(buildLocalReview({ cwd: dir! })).rejects.toBeInstanceOf(GitError);
