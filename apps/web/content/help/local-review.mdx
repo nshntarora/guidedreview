@@ -1,0 +1,55 @@
+export const toc = [
+  { id: "run-it", label: "Run it", level: 2 },
+  { id: "what-it-compares", label: "What it compares", level: 2 },
+  { id: "keys", label: "API keys", level: 2 },
+  { id: "notes", label: "Notes", level: 2 },
+  { id: "flags", label: "Flags", level: 2 },
+];
+
+# Review local changes
+
+The Chrome extension still reviews GitHub pull requests. The CLI reviews the changes in your working tree against the main branch, using the same engine and walkthrough.
+
+<TocCard toc={toc} />
+
+## Run it
+
+From the monorepo (workspace binary, not published to npm yet):
+
+```bash
+npm install
+npx guided-review
+```
+
+Or after a build:
+
+```bash
+npm run build:cli
+npm run start -w @guided-review/cli
+```
+
+The CLI binds `127.0.0.1`, prints a tokenized URL, and opens it unless you pass `--no-open`. Ctrl+C stops the server.
+
+## What it compares
+
+Default: working tree (staged + unstaged) plus untracked files (gitignore respected) versus the merge-base of `HEAD` and the default base branch.
+
+Base resolution, in order: `--base` → `origin/HEAD` → `main` → `master`.
+
+Empty diff: `Nothing to review against <base>.` and exit 0. Not a git repo: an error that says what failed.
+
+## API keys
+
+Same providers as the extension: Anthropic, OpenAI, Grok. Resolution: flags → env (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `XAI_API_KEY` or `GROK_API_KEY`) → `~/.config/guided-review/config.json`.
+
+No key still walks one unit per file. The browser UI can save a key to that config file.
+
+## Notes
+
+Line comments stay in the session. There is no GitHub submit. **Copy notes** puts markdown on the clipboard.
+
+## Flags
+
+```
+guided-review [dir] --base main --port 8787 --no-open --staged --no-untracked
+```
