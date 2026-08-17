@@ -12,7 +12,7 @@ import {
   type AnnotateReviewStreamEvent,
   type ProviderSettings,
 } from "@guided-review/core";
-import { publicSettings, patchConfigFile } from "../config";
+import { applyProviderSettings, publicSettings, patchConfigFile } from "../config";
 import type { CodingAgentId } from "../codingAgents";
 import {
   isDiffScopeId,
@@ -92,6 +92,18 @@ function readBody(req: IncomingMessage): Promise<string> {
   });
 }
 
+async function readJsonBody(
+  req: IncomingMessage,
+): Promise<{ ok: true; value: unknown } | { ok: false }> {
+  const raw = await readBody(req);
+  if (!raw.trim()) return { ok: false };
+  try {
+    return { ok: true, value: JSON.parse(raw) as unknown };
+  } catch {
+    return { ok: false };
+  }
+}
+
 function contentTypeFor(filePath: string): string {
   if (filePath.endsWith(".html")) return "text/html; charset=utf-8";
   if (filePath.endsWith(".js")) return "text/javascript; charset=utf-8";
@@ -155,20 +167,16 @@ export function createReviewServer(options: CreateReviewServerOptions) {
       }
 
       if (req.method === "PUT" && url.pathname === "/api/settings") {
-        const body = JSON.parse(await readBody(req)) as Partial<ProviderSettings>;
-        const nextKey =
-          body.apiKey !== undefined && body.apiKey !== "" ? body.apiKey : settings.apiKey;
-        settings = {
-          provider: body.provider ?? settings.provider,
-          model: body.model ?? settings.model,
-          apiKey: nextKey,
-        };
-        if (body.apiKey) codingAgent = null;
-        await patchConfigFile({
-          provider: settings.provider,
-          model: settings.model,
-          apiKey: settings.apiKey,
-        });
+        const parsed = await readJsonBody(req);
+        if (!parsed.ok || !parsed.value || typeof parsed.value !== "object") {
+          sendJson(res, 400, { error: "Request body must be JSON." });
+          return;
+        }
+        const body = parsed.value as Partial<ProviderSettings>;
+        const applied = applyProviderSettings(settings, codingAgent, body);
+        settings = applied.settings;
+        codingAgent = applied.codingAgent;
+        await patchConfigFile(applied.persist);
         options.onSettings?.(settings);
         const published = publicSettings(settings, codingAgent);
         log(
@@ -179,7 +187,12 @@ export function createReviewServer(options: CreateReviewServerOptions) {
       }
 
       if (req.method === "PUT" && url.pathname === "/api/diff") {
-        const body = JSON.parse(await readBody(req)) as { scope?: string };
+        const parsed = await readJsonBody(req);
+        if (!parsed.ok || !parsed.value || typeof parsed.value !== "object") {
+          sendJson(res, 400, { error: "Request body must be JSON." });
+          return;
+        }
+        const body = parsed.value as { scope?: string };
         const scope = body.scope;
         if (!scope || !isDiffScopeId(scope)) {
           sendJson(res, 400, { error: "Unknown diff scope." });
