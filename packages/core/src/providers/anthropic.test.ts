@@ -144,6 +144,41 @@ describe("anthropicProvider", () => {
     );
   });
 
+  it("sends bearer auth and extra headers when settings request it", async () => {
+    postMock.mockResolvedValue(
+      okStreamResponse(
+        streamOf(
+          'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"{}"}}\n',
+        ),
+      ),
+    );
+
+    await collect(
+      anthropicProvider.annotateReviewStream({
+        ...input,
+        settings: {
+          ...input.settings,
+          apiKey: "sk-ant-oat01-test",
+          authScheme: "bearer",
+          extraHeaders: { "anthropic-beta": "oauth-2025-04-20" },
+        },
+      }),
+    );
+
+    expect(postMock).toHaveBeenCalledWith(
+      "https://api.anthropic.com/v1/messages",
+      expect.objectContaining({
+        authorization: "Bearer sk-ant-oat01-test",
+        "anthropic-beta": "oauth-2025-04-20",
+      }),
+      expect.any(Object),
+      "Claude",
+      undefined,
+    );
+    const sent = postMock.mock.calls[0]?.[1] as Record<string, string>;
+    expect(sent["x-api-key"]).toBeUndefined();
+  });
+
   it("testConnection posts a minimal probe request", async () => {
     postMock.mockResolvedValue(new Response("{}", { status: 200 }));
 

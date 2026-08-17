@@ -8,14 +8,20 @@ import { ProviderError } from "./types";
 
 const API_URL = "https://api.anthropic.com/v1/messages";
 
-function headers(apiKey: string): Record<string, string> {
-  return {
-    "x-api-key": apiKey,
+function headers(settings: ProviderSettings): Record<string, string> {
+  const result: Record<string, string> = {
     "anthropic-version": "2023-06-01",
     // Documented "bring your own API key" browser-CORS opt-in, which lets the
     // background worker call the Messages API directly.
     "anthropic-dangerous-direct-browser-access": "true",
+    ...settings.extraHeaders,
   };
+  if (settings.authScheme === "bearer") {
+    result.authorization = `Bearer ${settings.apiKey}`;
+  } else {
+    result["x-api-key"] = settings.apiKey;
+  }
+  return result;
 }
 
 /**
@@ -30,7 +36,7 @@ export const anthropicProvider: ProviderClient = {
   ): AsyncGenerator<AnnotateStreamEvent, void, unknown> {
     const response = await postProviderJson(
       API_URL,
-      headers(settings.apiKey),
+      headers(settings),
       {
         model: settings.model,
         max_tokens: 8000,
@@ -86,7 +92,7 @@ export const anthropicProvider: ProviderClient = {
   async testConnection(settings: ProviderSettings): Promise<void> {
     await postProviderJson(
       API_URL,
-      headers(settings.apiKey),
+      headers(settings),
       {
         model: settings.model,
         max_tokens: 8,
