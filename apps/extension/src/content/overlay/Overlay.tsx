@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import type { SelectHandle } from "@guided-review/ui";
 import type { ReviewErrorInfo, ReviewPlan } from "@extension/lib/types";
 import {
   buildDisplayUnits,
@@ -100,6 +101,7 @@ export function Overlay({ onRequestClose, onRetry, allowExit = true, localDiff }
   const previousFocusRef = useRef<Element | null>(null);
   /** Pending `v` leader for view-mode chords (`v+u` / `v+s`). */
   const viewChordRef = useRef<ViewChordPending>(null);
+  const scopeSelectRef = useRef<SelectHandle | null>(null);
   const confirmationOpen = useConfirmationOpen();
   const titleId = useId();
 
@@ -290,6 +292,14 @@ export function Overlay({ onRequestClose, onRetry, allowExit = true, localDiff }
     openDiffSearch,
     closeDiffSearch,
     diffSearchKeyRef,
+    openScopePicker:
+      localDiff && localDiff.scopes.length > 0
+        ? () => scopeSelectRef.current?.focusAndOpen()
+        : undefined,
+    structureReview:
+      localDiff && !localDiff.structured && !localDiff.structuring
+        ? localDiff.onStructureReview
+        : undefined,
   });
 
   const statusAnnouncement = statusAnnouncementText(
@@ -333,6 +343,7 @@ export function Overlay({ onRequestClose, onRetry, allowExit = true, localDiff }
         onExit={requestExit}
         allowExit={allowExit}
         localDiff={localDiff}
+        scopeSelectRef={scopeSelectRef}
         notesCount={draftComments.length}
         onSubmitReview={() => {
           if (host.exportNotes) {

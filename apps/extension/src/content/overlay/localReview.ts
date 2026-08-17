@@ -1,4 +1,4 @@
-/** Individual commit scopes and the Change summary list. */
+/** Individual commit scopes and the Change summary list. Keep in sync with apps/cli/src/git/localDiff.ts. */
 export const MAX_RECENT_COMMITS = 5;
 
 export const RECENT_COMMITS_GROUP = "Last 5 commits";
@@ -42,6 +42,8 @@ export interface LocalDiffScopeOption {
   label: string;
   description: string;
   meta: string;
+  /** Extra shown ahead of file/+− counts (commit count, short SHA). */
+  metaPrefix?: string;
   stat?: DiffStat;
   empty: boolean;
 }

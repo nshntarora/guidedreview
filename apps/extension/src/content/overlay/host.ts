@@ -1,5 +1,5 @@
 /**
- * Host adapter for the review overlay. Chrome/GitHub (and later the CLI)
+ * Host adapter for the review overlay. Chrome/GitHub and the local CLI
  * implement this; overlay components must not import `chrome.*`.
  */
 

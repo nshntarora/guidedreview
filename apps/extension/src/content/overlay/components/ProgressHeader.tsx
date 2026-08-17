@@ -1,7 +1,8 @@
+import type { Ref } from "react";
 import type { ParsedDiff } from "@extension/lib/types";
 import type { ReviewContext } from "@guided-review/core";
 import { summarizeDiff } from "@guided-review/core";
-import { Kbd, Select } from "@guided-review/ui";
+import { Kbd, Select, type SelectHandle } from "@guided-review/ui";
 import { useReviewHost } from "../host";
 import {
   isCommitScopeId,
@@ -11,6 +12,7 @@ import {
   type LocalDiffScopeOption,
 } from "../localReview";
 import { DiffStatCounts } from "./DiffStatCounts";
+import { ScopeIcon } from "./ScopeIcons";
 import { ModEnterChord } from "./ShortcutKeys";
 
 interface ProgressHeaderProps {
@@ -28,15 +30,11 @@ interface ProgressHeaderProps {
   /** When set, the primary action is copy-notes (no GitHub submit). */
   notesCount?: number;
   localDiff?: LocalDiffControls;
+  scopeSelectRef?: Ref<SelectHandle | null>;
 }
 
 const headerBtn =
   "inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-3 py-1.5 text-base font-medium";
-
-function scopeMetaPrefix(scope: LocalDiffScopeOption): string | undefined {
-  const parts = scope.meta.split(" · ");
-  return parts.length >= 3 ? parts.slice(0, -2).join(" · ") : undefined;
-}
 
 function ScopeMeta({ scope }: { scope: LocalDiffScopeOption }) {
   const stat = scope.stat;
@@ -45,12 +43,34 @@ function ScopeMeta({ scope }: { scope: LocalDiffScopeOption }) {
   }
   return (
     <DiffStatCounts
-      prefix={scopeMetaPrefix(scope)}
+      prefix={scope.metaPrefix}
       files={stat.files}
       additions={stat.additions}
       deletions={stat.deletions}
       className="truncate font-mono text-xs"
     />
+  );
+}
+
+function ScopeTrigger({ scope }: { scope: LocalDiffScopeOption }) {
+  return (
+    <span className="flex min-w-0 items-center gap-2">
+      <ScopeIcon scope={scope} />
+      <span className="truncate">{scope.label}</span>
+    </span>
+  );
+}
+
+function ScopeOption({ scope }: { scope: LocalDiffScopeOption }) {
+  return (
+    <span className="flex min-w-0 items-start gap-2.5">
+      <ScopeIcon scope={scope} className="mt-0.5" />
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="truncate">{scope.label}</span>
+        <span className="truncate text-xs text-muted">{scope.description}</span>
+        <ScopeMeta scope={scope} />
+      </span>
+    </span>
   );
 }
 
@@ -64,6 +84,7 @@ export function ProgressHeader({
   onSubmitReview,
   notesCount,
   localDiff,
+  scopeSelectRef,
 }: ProgressHeaderProps) {
   const host = useReviewHost();
   const stats = diff ? summarizeDiff(diff) : null;
@@ -77,14 +98,8 @@ export function ProgressHeader({
     label: scope.label,
     disabled: scope.empty,
     group: isCommitScopeId(scope.id) ? RECENT_COMMITS_GROUP : undefined,
-    trigger: () => <span className="truncate">{scope.label}</span>,
-    content: () => (
-      <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="truncate">{scope.label}</span>
-        <span className="truncate text-xs text-muted">{scope.description}</span>
-        <ScopeMeta scope={scope} />
-      </span>
-    ),
+    trigger: () => <ScopeTrigger scope={scope} />,
+    content: () => <ScopeOption scope={scope} />,
   }));
 
   return (
@@ -107,12 +122,15 @@ export function ProgressHeader({
               {localDiff && scopeOptions.length > 0 && (
                 <Select
                   aria-label="Diff to review"
+                  aria-keyshortcuts="d"
+                  selectRef={scopeSelectRef}
                   className="w-auto min-w-[10rem] max-w-[16rem]"
                   menuClassName="min-w-[20rem] max-w-[24rem]"
                   value={localDiff.selectedScope}
                   options={scopeOptions}
                   disabled={localDiff.scopeBusy}
                   onChange={localDiff.onSelectScope}
+                  trailing={<Kbd>d</Kbd>}
                 />
               )}
               {stats && (
