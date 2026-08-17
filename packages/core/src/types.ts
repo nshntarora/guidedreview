@@ -134,6 +134,13 @@ export interface ProviderSettings {
   provider: ProviderId;
   model: string;
   apiKey: string;
+  /**
+   * How to send `apiKey`. Anthropic defaults to `x-api-key`; OpenAI-compatible
+   * clients always use Bearer. Coding-agent OAuth tokens set `bearer`.
+   */
+  authScheme?: "api-key" | "bearer";
+  /** Merged into the provider request. Used by agent adapters (e.g. Anthropic beta). */
+  extraHeaders?: Record<string, string>;
 }
 
 // ---- Annotate stream (host-agnostic) ----------------------------------------
