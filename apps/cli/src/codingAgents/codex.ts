@@ -1,5 +1,6 @@
 import path from "node:path";
-import type { AgentAuth, AgentIo, CodingAgentAdapter, DetectedAgent } from "./types";
+import { detectIfInstalled, parseJson, stringField } from "./parse";
+import type { AgentAuth, AgentIo, CodingAgentAdapter } from "./types";
 import { unusableAuth } from "./types";
 
 const DISPLAY_NAME = "Codex";
@@ -8,19 +9,6 @@ const CHATGPT_REASON =
 
 function codexHome(io: AgentIo): string {
   return io.env("CODEX_HOME") ?? path.join(io.homedir(), ".codex");
-}
-
-function parseJson(raw: string | null): unknown {
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as unknown;
-  } catch {
-    return null;
-  }
-}
-
-function stringField(value: unknown): string | undefined {
-  return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
 /** Tiny pull of `model = "..."` — Codex config is TOML, we do not take a parser dep. */
@@ -50,15 +38,7 @@ export const codexAdapter: CodingAgentAdapter = {
   provider: "openai",
 
   async detect(io) {
-    if (!(await installed(io))) return null;
-    const auth = await this.resolveAuth(io);
-    const detected: DetectedAgent = {
-      id: this.id,
-      displayName: this.displayName,
-      provider: this.provider,
-      auth,
-    };
-    return detected;
+    return detectIfInstalled(this, io, installed);
   },
 
   async resolveAuth(io) {
