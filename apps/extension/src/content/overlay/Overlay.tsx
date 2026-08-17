@@ -26,12 +26,17 @@ import { SubmitReviewModal } from "./components/SubmitReviewModal";
 import { ReviewSubmittedModal } from "./components/ReviewSubmittedModal";
 import { BUILD_PLAN_PRIMARY, buildPhaseDetail } from "./overlayCopy";
 import { useReviewHost } from "./host";
+import type { LocalDiffControls } from "./localReview";
 
 interface OverlayProps {
   /** Invoked when the user exits so any in-flight stream can be cancelled. */
   onRequestClose?: () => void;
   /** Retry a failed annotate / review-build step. */
   onRetry?: () => void;
+  /** When false, hide Exit and ignore Esc-to-exit (local CLI). Default true. */
+  allowExit?: boolean;
+  /** CLI-only: scope picker, commit cards, opt-in structure. */
+  localDiff?: LocalDiffControls;
 }
 
 /** Polite live-region text for build / error / ready status. */
@@ -66,7 +71,7 @@ function statusAnnouncementText(
   return "";
 }
 
-export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
+export function Overlay({ onRequestClose, onRetry, allowExit = true, localDiff }: OverlayProps) {
   const host = useReviewHost();
   const isOpen = useReviewStore((s) => s.isOpen);
   const status = useReviewStore((s) => s.status);
@@ -140,6 +145,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
 
   /** Esc (and Exit button) — confirm before leaving the review. */
   function requestExit() {
+    if (!allowExit) return;
     confirm({
       title: "Exit review?",
       body:
@@ -325,6 +331,8 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         titleId={titleId}
         title={dialogTitle}
         onExit={requestExit}
+        allowExit={allowExit}
+        localDiff={localDiff}
         notesCount={draftComments.length}
         onSubmitReview={() => {
           if (host.exportNotes) {
@@ -344,7 +352,14 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
           tabIndex={-1}
         >
           {isDescriptionUnit ? (
-            <DescriptionPane prContext={prContext} diff={diff} />
+            <DescriptionPane
+              prContext={prContext}
+              diff={diff}
+              commits={localDiff?.commits}
+              uncommitted={localDiff?.scopes.find(
+                (scope) => scope.id === "uncommitted" && !scope.empty,
+              )}
+            />
           ) : (
             <DiffPane
               files={resolvedFiles}
@@ -382,6 +397,10 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
                 loading={showBuildingSpinner && isDescriptionUnit}
                 loadingDetail={showBuildingSpinner && isDescriptionUnit ? loadingDetail : null}
                 onRetry={status === "error" ? onRetry : undefined}
+                onStructureReview={
+                  localDiff && !localDiff.structured ? localDiff.onStructureReview : undefined
+                }
+                structured={localDiff?.structured}
               />
             </div>
           </div>

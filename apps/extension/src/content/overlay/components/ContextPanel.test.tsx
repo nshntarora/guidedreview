@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createGitHubReviewHost } from "@extension/content/githubHost";
-import { setActiveReviewHost } from "../host";
+import { createMemoryReviewHost, setActiveReviewHost } from "../host";
 import { ContextPanel } from "./ContextPanel";
 
 beforeEach(() => {
@@ -101,5 +101,69 @@ describe("ContextPanel needs-provider state", () => {
     expect(screen.getByTestId("connect-provider-prompt")).toBeInTheDocument();
     expect(screen.queryByTestId("context-panel-error")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^retry$/i })).not.toBeInTheDocument();
+  });
+});
+
+describe("ContextPanel structure trigger", () => {
+  it("offers Structure with AI on the local summary card", () => {
+    setActiveReviewHost(
+      createMemoryReviewHost({
+        kind: "local",
+        exportNotes: vi.fn(),
+        submit: undefined,
+      }),
+    );
+    const onStructureReview = vi.fn();
+    render(
+      <ContextPanel unit={null} hasTitle hasDescription onStructureReview={onStructureReview} />,
+    );
+
+    expect(screen.getByText(/one unit per file until you structure it/i)).toBeInTheDocument();
+    screen.getByTestId("structure-review").click();
+    expect(onStructureReview).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides the trigger after the review is structured", () => {
+    setActiveReviewHost(
+      createMemoryReviewHost({
+        kind: "local",
+        exportNotes: vi.fn(),
+        submit: undefined,
+      }),
+    );
+    render(
+      <ContextPanel unit={null} hasTitle hasDescription onStructureReview={vi.fn()} structured />,
+    );
+    expect(screen.queryByTestId("structure-review")).not.toBeInTheDocument();
+  });
+
+  it("shows structure prompt and shortcuts on empty-context file units", () => {
+    setActiveReviewHost(
+      createMemoryReviewHost({
+        kind: "local",
+        exportNotes: vi.fn(),
+        submit: undefined,
+      }),
+    );
+    const onStructureReview = vi.fn();
+    render(
+      <ContextPanel
+        unit={{
+          id: "file-0-src/foo.ts",
+          title: "src/foo.ts",
+          kind: "change",
+          context: "",
+          files: [{ fileId: "src/foo.ts", hunkIds: [], role: "core_logic" }],
+        }}
+        hasTitle
+        hasDescription
+        onStructureReview={onStructureReview}
+      />,
+    );
+
+    expect(screen.getByText(/one unit per file until you structure it/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/keyboard shortcuts/i)).toBeInTheDocument();
+    screen.getByTestId("structure-review").click();
+    expect(onStructureReview).toHaveBeenCalledTimes(1);
   });
 });

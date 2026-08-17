@@ -7,6 +7,10 @@ export const BUILD_PLAN_PRIMARY = "Building a review plan";
 export const PR_DESCRIPTION_HINT =
   "Author's summary of intent. Start here, then step through the planned units.";
 
+/** Right-pane copy on the local Change summary before an AI plan is requested. */
+export const STRUCTURE_REVIEW_HINT =
+  "One unit per file until you structure it. AI groups files and adds context — it does not review for you.";
+
 /** Subtext for the active pipeline phase. */
 export function buildPhaseDetail(phase: BuildPhase, providerLabel: string | null): string {
   switch (phase) {
@@ -38,12 +42,12 @@ export function missingMetadataHint(
       return "No branch summary. Intent will be inferred from the diff.";
     }
     if (!hasDescription) {
-      return "No commit log. Intent will be inferred from the branch name and diff.";
+      return "No commits on this branch. Intent will be inferred from the branch name and diff.";
     }
     if (!hasTitle) {
-      return "No branch name. Intent will be inferred from the commit log and diff.";
+      return "No branch name. Intent will be inferred from the commits and diff.";
     }
-    return "Commit log and dirty-tree notes. Start here, then step through the planned units.";
+    return "Commits on this branch. Start here, then step through the files.";
   }
   if (!hasTitle && !hasDescription) {
     return "No PR title or description. Intent will be inferred from the diff.";
