@@ -1,5 +1,6 @@
 import path from "node:path";
-import type { AgentAuth, AgentIo, CodingAgentAdapter, DetectedAgent } from "./types";
+import { detectIfInstalled, parseJson, stringField } from "./parse";
+import type { AgentAuth, AgentIo, CodingAgentAdapter } from "./types";
 import { unusableAuth } from "./types";
 
 const DISPLAY_NAME = "Claude Code";
@@ -63,19 +64,6 @@ function authFromSecret(secret: string, model?: string, expiresAt?: number): Age
   });
 }
 
-function parseJson(raw: string | null): unknown {
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as unknown;
-  } catch {
-    return null;
-  }
-}
-
-function stringField(value: unknown): string | undefined {
-  return typeof value === "string" && value.trim() ? value.trim() : undefined;
-}
-
 function oauthFromCredentials(value: unknown): { token: string; expiresAt?: number } | null {
   if (!value || typeof value !== "object") return null;
   const root = value as Record<string, unknown>;
@@ -88,21 +76,19 @@ function oauthFromCredentials(value: unknown): { token: string; expiresAt?: numb
   return { token, expiresAt };
 }
 
-async function readSettingsModel(io: AgentIo): Promise<string | undefined> {
+async function readSettings(io: AgentIo): Promise<{ model?: string; envKey?: string }> {
   const raw = await io.readFile(path.join(claudeHome(io), "settings.json"));
   const json = parseJson(raw);
-  if (!json || typeof json !== "object") return undefined;
+  if (!json || typeof json !== "object") return {};
   const settings = json as Record<string, unknown>;
-  return stringField(settings.model);
-}
-
-async function readSettingsEnvKey(io: AgentIo): Promise<string | undefined> {
-  const raw = await io.readFile(path.join(claudeHome(io), "settings.json"));
-  const json = parseJson(raw);
-  if (!json || typeof json !== "object") return undefined;
-  const env = (json as Record<string, unknown>).env;
-  if (!env || typeof env !== "object") return undefined;
-  return stringField((env as Record<string, unknown>).ANTHROPIC_API_KEY);
+  const env = settings.env;
+  return {
+    model: stringField(settings.model),
+    envKey:
+      env && typeof env === "object"
+        ? stringField((env as Record<string, unknown>).ANTHROPIC_API_KEY)
+        : undefined,
+  };
 }
 
 async function installed(io: AgentIo): Promise<boolean> {
@@ -121,24 +107,15 @@ export const claudeCodeAdapter: CodingAgentAdapter = {
   provider: "anthropic",
 
   async detect(io) {
-    if (!(await installed(io))) return null;
-    const auth = await this.resolveAuth(io);
-    const detected: DetectedAgent = {
-      id: this.id,
-      displayName: this.displayName,
-      provider: this.provider,
-      auth,
-    };
-    return detected;
+    return detectIfInstalled(this, io, installed);
   },
 
   async resolveAuth(io) {
-    const model = await readSettingsModel(io);
+    const { model, envKey: settingsKey } = await readSettings(io);
 
     const envKey = io.env("ANTHROPIC_API_KEY");
     if (envKey?.trim()) return authFromSecret(envKey.trim(), model);
 
-    const settingsKey = await readSettingsEnvKey(io);
     if (settingsKey) return authFromSecret(settingsKey, model);
 
     if (io.platform() === "darwin") {
