@@ -17,6 +17,9 @@ import { getActiveReviewHost } from "./host";
 
 export type ReviewStatus = "idle" | "loading" | "streaming" | "ready" | "error";
 
+/** How the current plan was produced. File plans are cheap and must not be persisted. */
+export type PlanSource = "files" | "ai";
+
 /**
  * Fine-grained progress while the review plan is being built (diff fetch →
  * provider stream). Orthogonal to coarse `status`; cleared when ready/error.
@@ -115,6 +118,8 @@ interface ReviewState {
   sessionKey: string | null;
   /** Unified vs side-by-side code view (UI preference, not session data). */
   diffViewMode: DiffViewMode;
+  /** `null` until a plan is installed. File plans are not persisted. */
+  planSource: PlanSource | null;
 
   /** navigate = unit walkthrough; comment = line selection for drafts. */
   uiMode: UiMode;
@@ -126,7 +131,12 @@ interface ReviewState {
 
   open: () => void;
   close: () => void;
-  startLoading: (sessionKey: string) => void;
+  startLoading: (sessionKey: string) => number;
+  /**
+   * Open a walkthrough on an already-built file plan without a loading flash
+   * or an annotation stream. Bumps streamGeneration so a late SSE is ignored.
+   */
+  bootReady: (args: { sessionKey: string; diff: ParsedDiff; plan: ReviewPlan }) => number;
   setPRContext: (prContext: ReviewContext) => void;
   setDiff: (diff: ParsedDiff) => void;
   setBuildPhase: (phase: BuildPhase, generation?: number) => void;
@@ -196,6 +206,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   streamGeneration: 0,
   sessionKey: null,
   diffViewMode: DEFAULT_DIFF_VIEW_MODE,
+  planSource: null,
   uiMode: "navigate",
   selectableLines: [],
   lineSelection: null,
@@ -205,8 +216,9 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false, ...COMMENT_UI_RESET }),
 
-  startLoading: (sessionKey) =>
-    set((state) => ({
+  startLoading: (sessionKey) => {
+    const streamGeneration = get().streamGeneration + 1;
+    set({
       status: "loading",
       error: null,
       needsProvider: false,
@@ -216,10 +228,32 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       plan: null,
       diff: null,
       sessionKey,
-      streamGeneration: state.streamGeneration + 1,
+      streamGeneration,
+      draftComments: [],
+      planSource: null,
+      ...COMMENT_UI_RESET,
+    });
+    return streamGeneration;
+  },
+
+  bootReady: ({ sessionKey, diff, plan }) => {
+    const streamGeneration = get().streamGeneration + 1;
+    set({
+      status: "ready",
+      error: null,
+      needsProvider: false,
+      buildPhase: null,
+      currentUnitIndex: 0,
+      plan,
+      diff,
+      sessionKey,
+      streamGeneration,
+      planSource: "files",
       draftComments: [],
       ...COMMENT_UI_RESET,
-    })),
+    });
+    return streamGeneration;
+  },
 
   setPRContext: (prContext) => set({ prContext }),
 
@@ -290,6 +324,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
         currentUnitIndex: index,
         error: null,
         buildPhase: null,
+        planSource: "ai",
       };
     });
   },
@@ -321,6 +356,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       plan: buildFileReviewPlan(diff),
       currentUnitIndex: 0,
       buildPhase: null,
+      planSource: "files",
       ...COMMENT_UI_RESET,
     });
   },
@@ -546,11 +582,12 @@ export async function persistSession(): Promise<void> {
     currentUnitIndex,
     sessionKey,
     draftComments,
+    planSource,
   } = useReviewStore.getState();
   if (status !== "ready" || !diff || !plan || !sessionKey) return;
   // The file-per-unit fallback is cheap to rebuild and would otherwise be
   // resumed in place of the AI plan once a provider is configured.
-  if (needsProvider) return;
+  if (needsProvider || planSource !== "ai") return;
 
   const host = getActiveReviewHost();
   if (!host) return;
@@ -594,6 +631,7 @@ export async function restoreSession(sessionKey: string): Promise<boolean> {
     status: "ready",
     // Persisted sessions are always AI-built (see persistSession).
     needsProvider: false,
+    planSource: "ai",
     diff: saved.diff,
     plan: saved.plan,
     prContext: saved.prContext ?? null,

@@ -282,8 +282,7 @@ async function onStartReview(): Promise<void> {
   const prContext = scrapePRContext(pr);
   useReviewStore.getState().open();
   useReviewStore.getState().setPRContext(prContext);
-  useReviewStore.getState().startLoading(sessionKey);
-  const streamGeneration = useReviewStore.getState().streamGeneration;
+  const streamGeneration = useReviewStore.getState().startLoading(sessionKey);
 
   try {
     const restored = await restoreSession(sessionKey);

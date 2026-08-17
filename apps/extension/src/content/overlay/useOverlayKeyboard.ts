@@ -84,6 +84,8 @@ function findEditableInPath(event: KeyboardEvent): HTMLElement | null {
     const tag = node.tagName;
     if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT") return node;
     if (node.isContentEditable) return node;
+    const role = node.getAttribute("role");
+    if (role === "combobox" || role === "listbox" || role === "option") return node;
   }
   return null;
 }
@@ -412,7 +414,20 @@ export function useOverlayKeyboard({
     // and would fire s/t/c/a/i/etc. Always stopPropagation so the page never
     // sees keys while the overlay is open. Only preventDefault when we consume
     // the key (so typing into the comment composer still inserts characters).
+    function isComboboxEvent(event: KeyboardEvent): boolean {
+      for (const node of event.composedPath()) {
+        if (!(node instanceof HTMLElement)) continue;
+        const role = node.getAttribute("role");
+        if (role === "combobox" || role === "listbox" || role === "option") return true;
+      }
+      return false;
+    }
+
     function onKeyDown(event: KeyboardEvent): void {
+      // Custom selects own their keys. Do not stopPropagation or GitHub-style
+      // capture handling — React onKeyDown on the combobox never fires otherwise.
+      if (isComboboxEvent(event)) return;
+
       event.stopPropagation();
 
       if (handleTabTrap(event)) return;
