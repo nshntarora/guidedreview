@@ -1,12 +1,13 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import net from "node:net";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import type { ParsedDiff } from "@guided-review/core";
 import { buildLocalReview, type LocalReviewSnapshot } from "../git/localDiff";
+import { configPath } from "../config";
 import {
   createReviewServer,
   createServerShutdown,
@@ -226,6 +227,121 @@ describe("createReviewServer", () => {
       }
       realClose(() => resolve());
       server.closeAllConnections();
+    });
+  });
+
+  describe("PUT /api/settings", () => {
+    const prevConfigDir = process.env.GUIDED_REVIEW_CONFIG_DIR;
+
+    afterEach(() => {
+      if (prevConfigDir === undefined) delete process.env.GUIDED_REVIEW_CONFIG_DIR;
+      else process.env.GUIDED_REVIEW_CONFIG_DIR = prevConfigDir;
+    });
+
+    async function withTempConfig(): Promise<string> {
+      const dir = await mkdir(path.join(os.tmpdir(), `gr-cfg-${Date.now()}`), { recursive: true });
+      process.env.GUIDED_REVIEW_CONFIG_DIR = dir!;
+      return dir!;
+    }
+
+    it("keeps agent auth in memory and does not persist the secret", async () => {
+      const dir = await withTempConfig();
+      const server = createReviewServer({
+        snapshot,
+        settings: {
+          provider: "anthropic",
+          model: "claude-sonnet-4-6",
+          apiKey: "sk-ant-oat01-live",
+          authScheme: "bearer",
+          extraHeaders: { "anthropic-beta": "oauth-2025-04-20" },
+        },
+        codingAgent: "claude-code",
+        token: "secret",
+      });
+      const port = await listen(server);
+      const base = `http://127.0.0.1:${port}`;
+
+      const saved = await fetch(`${base}/api/settings?token=secret`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ provider: "anthropic", model: "claude-opus-4-8" }),
+      }).then((r) => r.json() as Promise<{ codingAgent: string | null; hasKey: boolean }>);
+      expect(saved.codingAgent).toBe("claude-code");
+      expect(saved.hasKey).toBe(true);
+
+      const file = JSON.parse(await readFile(path.join(dir, "config.json"), "utf8")) as {
+        apiKey?: string;
+        codingAgent?: string;
+        model?: string;
+      };
+      expect(file.apiKey).toBeUndefined();
+      expect(file.codingAgent).toBeUndefined();
+      expect(file.model).toBe("claude-opus-4-8");
+
+      await new Promise<void>((resolve, reject) =>
+        server.close((err) => (err ? reject(err) : resolve())),
+      );
+    });
+
+    it("stores a pasted key and clears the coding agent", async () => {
+      await withTempConfig();
+      const server = createReviewServer({
+        snapshot,
+        settings: {
+          provider: "anthropic",
+          model: "claude-sonnet-4-6",
+          apiKey: "sk-ant-oat01-live",
+          authScheme: "bearer",
+          extraHeaders: { "anthropic-beta": "oauth-2025-04-20" },
+        },
+        codingAgent: "claude-code",
+        token: "secret",
+      });
+      const port = await listen(server);
+      const base = `http://127.0.0.1:${port}`;
+
+      const saved = await fetch(`${base}/api/settings?token=secret`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          provider: "openai",
+          model: "gpt-4.1",
+          apiKey: "sk-user",
+        }),
+      }).then((r) => r.json() as Promise<{ codingAgent: string | null; last4: string | null }>);
+      expect(saved.codingAgent).toBeNull();
+      expect(saved.last4).toBe("user");
+
+      const file = JSON.parse(await readFile(configPath(), "utf8")) as {
+        apiKey?: string;
+        codingAgent?: string;
+        provider?: string;
+      };
+      expect(file.apiKey).toBe("sk-user");
+      expect(file.codingAgent).toBeUndefined();
+      expect(file.provider).toBe("openai");
+
+      await new Promise<void>((resolve, reject) =>
+        server.close((err) => (err ? reject(err) : resolve())),
+      );
+    });
+
+    it("rejects invalid JSON with 400", async () => {
+      const server = createReviewServer({
+        snapshot,
+        settings: { provider: "anthropic", model: "claude-opus-4-8", apiKey: "" },
+        token: "secret",
+      });
+      const port = await listen(server);
+      const res = await fetch(`http://127.0.0.1:${port}/api/settings?token=secret`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: "{",
+      });
+      expect(res.status).toBe(400);
+      await new Promise<void>((resolve, reject) =>
+        server.close((err) => (err ? reject(err) : resolve())),
+      );
     });
   });
 });

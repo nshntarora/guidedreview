@@ -1,8 +1,14 @@
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { resolveSettings, writeConfigFile } from "./config";
+import {
+  applyProviderSettings,
+  ConfigError,
+  readConfigFile,
+  resolveSettings,
+  writeConfigFile,
+} from "./config";
 import { createMemoryIo } from "./codingAgents";
 
 const ENV_KEYS = [
@@ -120,5 +126,47 @@ describe("resolveSettings", () => {
     });
     expect(resolved.codingAgent).toBeNull();
     expect(resolved.settings.apiKey).toBe("");
+  });
+
+  it("rejects a corrupt config file instead of treating it as empty", async () => {
+    const dir = await withTempConfig();
+    await writeFile(path.join(dir, "config.json"), "{not json", "utf8");
+    await expect(readConfigFile()).rejects.toBeInstanceOf(ConfigError);
+  });
+});
+
+describe("applyProviderSettings", () => {
+  const agentSettings = {
+    provider: "anthropic" as const,
+    model: "claude-sonnet-4-6",
+    apiKey: "sk-ant-oat01-live",
+    authScheme: "bearer" as const,
+    extraHeaders: { "anthropic-beta": "oauth-2025-04-20" },
+  };
+
+  it("keeps agent auth when no key is pasted", () => {
+    const next = applyProviderSettings(agentSettings, "claude-code", {
+      provider: "anthropic",
+      model: "claude-opus-4-8",
+    });
+    expect(next.settings.authScheme).toBe("bearer");
+    expect(next.settings.extraHeaders).toEqual({ "anthropic-beta": "oauth-2025-04-20" });
+    expect(next.settings.apiKey).toBe("sk-ant-oat01-live");
+    expect(next.codingAgent).toBe("claude-code");
+    expect(next.persist.apiKey).toBeUndefined();
+    expect(next.persist.model).toBe("claude-opus-4-8");
+  });
+
+  it("drops agent auth when a console key is pasted", () => {
+    const next = applyProviderSettings(agentSettings, "claude-code", {
+      provider: "openai",
+      model: "gpt-4.1",
+      apiKey: "sk-user",
+    });
+    expect(next.settings.authScheme).toBeUndefined();
+    expect(next.settings.extraHeaders).toBeUndefined();
+    expect(next.settings.apiKey).toBe("sk-user");
+    expect(next.codingAgent).toBeNull();
+    expect(next.persist).toMatchObject({ apiKey: "sk-user", codingAgent: null });
   });
 });

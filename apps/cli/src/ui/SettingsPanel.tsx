@@ -49,7 +49,7 @@ export function SettingsPanel({ token, onClose, onSaved }: SettingsPanelProps) {
       const res = await fetch(`/api/settings?token=${encodeURIComponent(token)}`, {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ provider, model, apiKey }),
+        body: JSON.stringify({ provider, model, ...(apiKey ? { apiKey } : {}) }),
       });
       if (!res.ok) throw new Error("Save failed.");
       onSaved();
