@@ -139,6 +139,7 @@ Full setup: [apps/extension/README.md — GitHub OAuth](apps/extension/README.md
 | ---------------------------------- | ---------------------------------------------- |
 | [`apps/extension`](apps/extension) | Chrome MV3 extension (the product)             |
 | [`apps/web`](apps/web)             | Marketing site and docs (Next.js)              |
+| [`apps/cli`](apps/cli)             | Local git review CLI + browser UI              |
 | [`packages/core`](packages/core)   | Review engine (parse, cluster, summarise)      |
 | [`packages/ui`](packages/ui)       | Shared tokens, brand assets, presentational UI |
 

@@ -5,6 +5,7 @@ Chrome MV3 extension: GitHub PR diff → user's LLM → ordered **review units**
 | Path             | What                                                                         |
 | ---------------- | ---------------------------------------------------------------------------- |
 | `apps/extension` | Chrome MV3 product — load unpacked from **`apps/extension/dist` only**       |
+| `apps/cli`       | Local git review — CLI server + browser UI                                   |
 | `apps/web`       | Marketing + docs (Next.js static export → `out/`)                            |
 | `packages/core`  | Review engine — parse, cluster, summarise, providers; no `chrome.*` or React |
 | `packages/ui`    | Shared tokens/UI — source-only; no `chrome.*` or extension imports           |
@@ -23,7 +24,9 @@ Same-directory `./foo` is fine. Cross-folder imports should use the alias.
 
 ## Commands
 
-`npm run dev` · `dev:web` · `build` · `build:extension` · `typecheck` · `test` · `test:e2e` · `lint` · `format`
+`npm run dev` · `dev:web` · `dev:cli` · `build` · `build:extension` · `build:cli` · `typecheck` · `test` · `test:e2e` · `lint` · `format`
+
+After CLI edits: `npm test -w @guided-review/cli`, then `npx guided-review` from a git repo (or `npm run start -w @guided-review/cli -- --no-open`).
 
 After extension edits: `build:extension`, reload in `chrome://extensions`, refresh the PR tab. Tests live next to source (`*.test.*`); e2e under each app's `e2e/`.
 
