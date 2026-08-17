@@ -14,4 +14,4 @@ export { Textarea } from "./components/Textarea";
 export { Label } from "./components/Label";
 
 export { Select } from "./components/Select";
-export type { SelectOption } from "./components/Select";
+export type { SelectHandle, SelectOption } from "./components/Select";
