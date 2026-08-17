@@ -7,6 +7,7 @@ export interface CliArgs {
   includeUntracked: boolean;
   provider?: string;
   model?: string;
+  agent?: string;
   help: boolean;
 }
 
@@ -59,6 +60,10 @@ export function parseArgs(argv: string[]): CliArgs {
       args.model = argv[++i];
       continue;
     }
+    if (token === "--agent") {
+      args.agent = argv[++i];
+      continue;
+    }
     if (token.startsWith("-")) {
       throw new Error(`Unknown flag ${token}. Run guided-review --help.`);
     }
@@ -81,5 +86,6 @@ Review local changes against the main branch. Opens a browser UI.
   --no-untracked     Skip untracked files
   --provider <id>    anthropic | openai | grok
   --model <id>       Provider model id
+  --agent <id>       claude-code | codex | grok (reuse that coding agent's key)
   -h, --help         Show this help
 `;
