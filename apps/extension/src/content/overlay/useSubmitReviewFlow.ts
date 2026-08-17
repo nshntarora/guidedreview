@@ -1,9 +1,8 @@
 import { useRef, useState } from "react";
-import { getGitHubAuthStatus, requestSubmitReview } from "@extension/lib/messaging";
 import type { PRContext, ReviewCommentInput } from "@extension/lib/types";
 import { EMPTY_REVIEW_BODY_MESSAGE } from "@extension/lib/types";
 import type { DraftComment, ReviewEvent, ReviewSubmission } from "./commentTypes";
-import { navigateToPrConversation } from "@extension/lib/github/prUrls";
+import { useReviewHost } from "./host";
 
 /** Map local draft comments to GitHub create-review `comments[]` payloads. */
 function mapDraftsToReviewComments(drafts: DraftComment[]): ReviewCommentInput[] {
@@ -50,6 +49,7 @@ export function useSubmitReviewFlow({
   handleExit,
   overlayRef,
 }: UseSubmitReviewFlowOptions) {
+  const host = useReviewHost();
   const [submitReviewOpen, setSubmitReviewOpen] = useState(false);
   const [connectGitHubOpen, setConnectGitHubOpen] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -69,7 +69,7 @@ export function useSubmitReviewFlow({
   function exitAfterSubmit(): void {
     setSubmitSuccess(null);
     if (prContext) {
-      navigateToPrConversation(prContext);
+      host.submit?.afterSubmit?.(prContext);
     }
     // Post-submit exit is intentional (single CTA) — skip the confirm prompt.
     handleExit();
@@ -112,9 +112,11 @@ export function useSubmitReviewFlow({
       return;
     }
 
+    if (!host.submit) return;
+
     authCheckInFlightRef.current = true;
     try {
-      const status = await getGitHubAuthStatus();
+      const status = await host.submit.getAuthStatus();
       if (status.ok && status.auth) {
         setSubmitReviewError(null);
         setSubmitReviewOpen(true);
@@ -154,9 +156,14 @@ export function useSubmitReviewFlow({
     setSubmitReviewError(null);
 
     const comments = mapDraftsToReviewComments(draftComments);
+    const submit = host.submit;
+    if (!submit) {
+      setSubmitReviewError("This host cannot submit a GitHub review.");
+      return;
+    }
 
     try {
-      const result = await requestSubmitReview(
+      const result = await submit.submitReview(
         { owner: pr.owner, repo: pr.repo, number: pr.number },
         trimmedBody,
         submission.event,

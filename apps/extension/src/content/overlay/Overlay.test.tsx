@@ -9,6 +9,8 @@ import { buildFileReviewPlan } from "@guided-review/core";
 import type { ParsedDiff, PRContext, ReviewPlan } from "@extension/lib/types";
 import * as messaging from "@extension/lib/messaging";
 import * as oauthConfig from "@extension/lib/github/oauthConfig";
+import { createGitHubReviewHost } from "@extension/content/githubHost";
+import { createMemoryReviewHost, setActiveReviewHost } from "./host";
 
 const sampleAuth = {
   accessToken: "gho_test",
@@ -120,6 +122,7 @@ function seedReadyReview(unitIndex = 1): void {
 
 describe("Overlay", () => {
   beforeEach(() => {
+    setActiveReviewHost(createGitHubReviewHost());
     resetStore();
     resetConfirmationQueueForTests();
     Element.prototype.scrollIntoView = vi.fn();
@@ -147,6 +150,23 @@ describe("Overlay", () => {
   it("renders nothing when the review isn't open", () => {
     const { container } = render(<Overlay />);
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("uses Copy notes and Change summary for a local host", () => {
+    setActiveReviewHost(
+      createMemoryReviewHost({
+        kind: "local",
+        exportNotes: vi.fn(),
+        submit: undefined,
+      }),
+    );
+    seedReadyReview(0);
+    render(<Overlay />);
+
+    expect(screen.getByTestId("submit-review-button")).toHaveTextContent("Copy notes");
+    expect(screen.getByTestId("submit-review-button")).toBeDisabled();
+    expect(screen.getAllByText("Change summary").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText("#1")).not.toBeInTheDocument();
   });
 
   it("shows the full layout with the PR description unit while loading", () => {

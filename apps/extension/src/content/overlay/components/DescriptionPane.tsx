@@ -2,6 +2,8 @@ import type { FileChangeStatus, ParsedDiff, PRContext } from "@extension/lib/typ
 import { summarizeDiff, type FileDiffSummary } from "@guided-review/core";
 import { cn } from "@guided-review/ui";
 import { missingMetadataHint } from "@extension/content/overlay/overlayCopy";
+import { summaryUnitTitle } from "@extension/content/overlay/store";
+import { useReviewHost } from "@extension/content/overlay/host";
 import { MiddleEllipsisText } from "./MiddleEllipsisText";
 
 interface DescriptionPaneProps {
@@ -34,6 +36,7 @@ const STATUS_BADGE_CLASS: Record<FileChangeStatus, string> = {
  * When a parsed diff is available, also shows a summary of file changes.
  */
 export function DescriptionPane({ prContext, diff }: DescriptionPaneProps) {
+  const host = useReviewHost();
   const description = prContext?.description ?? "";
   const descriptionHtml = prContext?.descriptionHtml ?? "";
   const hasTitle = hasNonEmpty(prContext?.title);
@@ -51,7 +54,7 @@ export function DescriptionPane({ prContext, diff }: DescriptionPaneProps) {
     >
       <div className="min-w-0 max-w-[720px] flex-1">
         <h2 className="mb-5 text-[1.375rem] font-semibold leading-snug tracking-[-0.01em] text-foreground">
-          PR Description
+          {summaryUnitTitle(host.kind)}
         </h2>
         {descriptionHtml ? (
           <div
@@ -67,7 +70,7 @@ export function DescriptionPane({ prContext, diff }: DescriptionPaneProps) {
             className="m-0 text-[0.9375rem] leading-relaxed text-muted"
             data-testid="description-pane-empty"
           >
-            {missingMetadataHint(hasTitle, false)}
+            {missingMetadataHint(hasTitle, false, host.kind)}
           </p>
         )}
       </div>

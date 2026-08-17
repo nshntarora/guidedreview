@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReviewPlan } from "@extension/lib/types";
+import { createGitHubReviewHost } from "@extension/content/githubHost";
+import { setActiveReviewHost } from "../host";
 import { Sidebar } from "./Sidebar";
 
 function planWithUnits(count: number): ReviewPlan {
@@ -17,6 +19,7 @@ function planWithUnits(count: number): ReviewPlan {
 
 describe("Sidebar", () => {
   beforeEach(() => {
+    setActiveReviewHost(createGitHubReviewHost());
     // jsdom doesn't implement layout/scroll; stub scrollIntoView so we can
     // assert the active unit is kept in view on navigation.
     Element.prototype.scrollIntoView = vi.fn();

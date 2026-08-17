@@ -7,6 +7,7 @@ import {
   missingMetadataHint,
   PR_DESCRIPTION_HINT,
 } from "@extension/content/overlay/overlayCopy";
+import { useReviewHost } from "../host";
 
 interface ContextPanelProps {
   /** When null, the synthetic PR-description unit is active. */
@@ -39,6 +40,7 @@ export function ContextPanel({
   loadingDetail,
   onRetry,
 }: ContextPanelProps) {
+  const host = useReviewHost();
   // Takes precedence over `error`: a missing key is a setup step, not a failure.
   // Units built locally have no context to show; a restored AI unit still does,
   // so never cover real commentary with the prompt.
@@ -95,9 +97,9 @@ export function ContextPanel({
 
   if (!unit) {
     const hint =
-      hasTitle && hasDescription
+      hasTitle && hasDescription && host.kind === "github"
         ? PR_DESCRIPTION_HINT
-        : missingMetadataHint(hasTitle, hasDescription);
+        : missingMetadataHint(hasTitle, hasDescription, host.kind);
 
     return (
       <div className="rounded-none border-0 bg-transparent px-0 py-0.5 pb-1">

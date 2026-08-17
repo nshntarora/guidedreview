@@ -1,5 +1,5 @@
 import { Button, buttonClassName } from "@guided-review/ui";
-import { openOptionsPage } from "@extension/lib/messaging";
+import { useReviewHost } from "../host";
 
 /** Docs: configure Anthropic / OpenAI / Grok and paste an API key. */
 const CONFIGURE_PROVIDER_DOCS_URL = "https://guidedreview.dev/docs/configure-provider";
@@ -110,6 +110,7 @@ function DisconnectedProviderArt() {
  * sends the user to Settings.
  */
 export function ConnectProviderPrompt() {
+  const host = useReviewHost();
   return (
     // No live region here — the overlay's own status region already announces
     // this state, and two would double-announce it.
@@ -129,7 +130,7 @@ export function ConnectProviderPrompt() {
       <div className="flex flex-col items-center gap-2">
         <Button
           size="sm"
-          onClick={() => void openOptionsPage()}
+          onClick={() => host.connectProvider()}
           data-testid="connect-provider-open-settings"
         >
           Connect AI Provider

@@ -1,7 +1,13 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import type { ParsedDiff, PRContext } from "@extension/lib/types";
+import { createGitHubReviewHost } from "@extension/content/githubHost";
+import { setActiveReviewHost } from "../host";
 import { DescriptionPane } from "./DescriptionPane";
+
+beforeEach(() => {
+  setActiveReviewHost(createGitHubReviewHost());
+});
 
 function prContext(overrides: Partial<PRContext> = {}): PRContext {
   return {

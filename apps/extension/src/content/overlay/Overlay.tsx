@@ -25,6 +25,7 @@ import { confirm, ConfirmationHost, useConfirmationOpen } from "@extension/lib/c
 import { SubmitReviewModal } from "./components/SubmitReviewModal";
 import { ReviewSubmittedModal } from "./components/ReviewSubmittedModal";
 import { BUILD_PLAN_PRIMARY, buildPhaseDetail } from "./overlayCopy";
+import { useReviewHost } from "./host";
 
 interface OverlayProps {
   /** Invoked when the user exits so any in-flight stream can be cancelled. */
@@ -66,6 +67,7 @@ function statusAnnouncementText(
 }
 
 export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
+  const host = useReviewHost();
   const isOpen = useReviewStore((s) => s.isOpen);
   const status = useReviewStore((s) => s.status);
   const error = useReviewStore((s) => s.error);
@@ -140,7 +142,10 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   function requestExit() {
     confirm({
       title: "Exit review?",
-      body: "You can reopen on this PR later. Draft comments stay for this browser session.",
+      body:
+        host.kind === "local"
+          ? "Draft notes stay for this session. Re-run the command to start again."
+          : "You can reopen on this PR later. Draft comments stay for this browser session.",
       variant: "destructive",
       okButtonText: "Exit",
       cancelButtonText: "Stay",
@@ -231,7 +236,7 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
   // Spinner on the description unit only while the plan is still being built.
   const showBuildingSpinner = planStillBuilding && (!plan || currentUnitIndex === 0);
   const loadingDetail = buildPhase != null ? buildPhaseDetail(buildPhase, providerLabel) : null;
-  const displayUnits = buildDisplayUnits(plan);
+  const displayUnits = buildDisplayUnits(plan, host.kind);
   const total = displayUnitCount(plan);
   const currentDisplay = displayUnits[currentUnitIndex] ?? displayUnits[0];
   const isDescriptionUnit = !currentDisplay || currentDisplay.kind === "pr_description";
@@ -320,7 +325,12 @@ export function Overlay({ onRequestClose, onRetry }: OverlayProps) {
         titleId={titleId}
         title={dialogTitle}
         onExit={requestExit}
+        notesCount={draftComments.length}
         onSubmitReview={() => {
+          if (host.exportNotes) {
+            void host.exportNotes(draftComments);
+            return;
+          }
           void requestOpenSubmitReview();
         }}
       />
