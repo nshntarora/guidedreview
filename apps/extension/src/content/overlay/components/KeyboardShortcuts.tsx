@@ -51,6 +51,18 @@ const LOCAL_SHORTCUTS: readonly ShortcutRow[] = SHORTCUTS.map((row) =>
     : row,
 );
 
+const SCOPE_PICKER_SHORTCUT: ShortcutRow = {
+  keys: ["d"],
+  join: "none",
+  description: "Choose which diff to review",
+};
+
+const STRUCTURE_REVIEW_SHORTCUT: ShortcutRow = {
+  keys: ["mod", "I"],
+  join: "chord",
+  description: "Structure with AI",
+};
+
 function ShortcutRowKeys({ row }: { row: ShortcutRow }) {
   if ("chordWithAlternatives" in row) {
     const { modifier, alternatives } = row.chordWithAlternatives;
@@ -69,8 +81,20 @@ function ShortcutRowKeys({ row }: { row: ShortcutRow }) {
   return <ShortcutKeys keys={row.keys} join={row.join} />;
 }
 
-export function KeyboardShortcuts({ allowExit = true }: { allowExit?: boolean }) {
-  const rows = allowExit ? SHORTCUTS : LOCAL_SHORTCUTS;
+export function KeyboardShortcuts({
+  allowExit = true,
+  showScopePicker = false,
+  showStructureReview = false,
+}: {
+  allowExit?: boolean;
+  showScopePicker?: boolean;
+  showStructureReview?: boolean;
+}) {
+  const rows = [
+    ...(showScopePicker ? [SCOPE_PICKER_SHORTCUT] : []),
+    ...(showStructureReview ? [STRUCTURE_REVIEW_SHORTCUT] : []),
+    ...(allowExit ? SHORTCUTS : LOCAL_SHORTCUTS),
+  ];
   return (
     <section
       className="mt-4 border-t border-border-strong pt-3"

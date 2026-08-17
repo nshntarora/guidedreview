@@ -19,7 +19,7 @@
  *  5. Comment composer / any editable (Esc, ⌘Enter save)
  *  6. ⌘/Ctrl+Enter open Submit Review
  *  7. View chords (`v` then `u`/`s`)
- *  8. Comment mode keys, else navigate mode keys
+ *  8. Comment mode keys, else navigate mode keys (`d` scope picker, ⌘/Ctrl+I structure)
  *
  * Do not redesign this as a generic keyboard framework. The ref pattern exists
  * only because capture ownership and React synthetic handlers cannot both win.
@@ -131,6 +131,10 @@ interface UseOverlayKeyboardOptions {
   closeDiffSearch: () => void;
   /** Diff search: Arrow/Enter routing while the palette owns the keyboard. */
   diffSearchKeyRef: MutableRefObject<((e: KeyboardEvent) => boolean) | null>;
+  /** Local: focus and open the diff-scope picker. */
+  openScopePicker?: () => void;
+  /** Local: start Structure with AI when the CTA is still available. */
+  structureReview?: () => void;
 }
 
 /**
@@ -161,6 +165,8 @@ export function useOverlayKeyboard({
   openDiffSearch,
   closeDiffSearch,
   diffSearchKeyRef,
+  openScopePicker,
+  structureReview,
 }: UseOverlayKeyboardOptions): void {
   // Mirror modal flags into refs on every render so the capture listener never
   // sees a stale open state between React commit (modal paints) and this
@@ -188,6 +194,10 @@ export function useOverlayKeyboard({
   openDiffSearchRef.current = openDiffSearch;
   const closeDiffSearchRef = useRef(closeDiffSearch);
   closeDiffSearchRef.current = closeDiffSearch;
+  const openScopePickerRef = useRef(openScopePicker);
+  openScopePickerRef.current = openScopePicker;
+  const structureReviewRef = useRef(structureReview);
+  structureReviewRef.current = structureReview;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -394,7 +404,18 @@ export function useOverlayKeyboard({
             store.enterCommentMode(selectableForUnit);
           }
           return;
+        case "d":
+        case "D":
+          if (event.metaKey || event.ctrlKey || event.altKey) return;
+          if (!openScopePickerRef.current) return;
+          event.preventDefault();
+          openScopePickerRef.current();
+          return;
         default:
+          if (isStructureShortcut(event) && structureReviewRef.current) {
+            event.preventDefault();
+            structureReviewRef.current();
+          }
           return;
       }
     }
@@ -405,6 +426,15 @@ export function useOverlayKeyboard({
         !event.altKey &&
         !event.shiftKey &&
         event.key.toLowerCase() === "f"
+      );
+    }
+
+    function isStructureShortcut(event: KeyboardEvent): boolean {
+      return (
+        (event.metaKey || event.ctrlKey) &&
+        !event.altKey &&
+        !event.shiftKey &&
+        event.key.toLowerCase() === "i"
       );
     }
 

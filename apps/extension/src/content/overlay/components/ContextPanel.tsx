@@ -2,6 +2,7 @@ import type { ReviewErrorInfo, ReviewUnit } from "@extension/lib/types";
 import { ConnectProviderPrompt } from "./ConnectProviderPrompt";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { Button, Spinner } from "@guided-review/ui";
+import { ShortcutKeys } from "./ShortcutKeys";
 import {
   BUILD_PLAN_PRIMARY,
   missingMetadataHint,
@@ -119,8 +120,14 @@ export function ContextPanel({
         </div>
         {onStructureReview && !structured && !loading ? (
           <div className="mt-4">
-            <Button size="sm" onClick={onStructureReview} data-testid="structure-review">
+            <Button
+              size="sm"
+              onClick={onStructureReview}
+              data-testid="structure-review"
+              aria-keyshortcuts="Meta+I Control+I"
+            >
               Structure with AI
+              <ShortcutKeys keys={["mod", "I"]} join="chord" />
             </Button>
           </div>
         ) : null}
@@ -145,7 +152,11 @@ export function ContextPanel({
             </div>
           </div>
         ) : (
-          <KeyboardShortcuts allowExit={host.kind !== "local"} />
+          <KeyboardShortcuts
+            allowExit={host.kind !== "local"}
+            showScopePicker={host.kind === "local"}
+            showStructureReview={Boolean(onStructureReview && !structured)}
+          />
         )}
       </div>
     );
