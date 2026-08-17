@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Fragment,
   useCallback,
   useEffect,
   useId,
@@ -23,7 +24,14 @@ export interface SelectOption<T extends string = string> {
    * (a single React element cannot be mounted in two places).
    */
   content?: () => ReactNode;
+  /** Optional compact content for the closed trigger. Falls back to `content`. */
+  trigger?: () => ReactNode;
   disabled?: boolean;
+  /**
+   * When set, consecutive options that share a group are preceded by a
+   * separator and that group title (not selectable).
+   */
+  group?: string;
 }
 
 export interface SelectProps<T extends string = string> {
@@ -36,6 +44,8 @@ export interface SelectProps<T extends string = string> {
   onChange: (value: T) => void;
   disabled?: boolean;
   className?: string;
+  /** Extra classes for the open listbox (e.g. a wider menu than the trigger). */
+  menuClassName?: string;
   /** Placeholder when value is not in options (should be rare after normalize). */
   placeholder?: string;
 }
@@ -64,6 +74,7 @@ export function Select<T extends string = string>({
   onChange,
   disabled = false,
   className,
+  menuClassName,
   placeholder = "Select…",
 }: SelectProps<T>) {
   const listboxId = useId();
@@ -121,7 +132,8 @@ export function Select<T extends string = string>({
   useLayoutEffect(() => {
     if (!open || highlightIndex < 0) return;
     const list = listRef.current;
-    const item = list?.children[highlightIndex] as HTMLElement | undefined;
+    const item = list?.querySelectorAll('[role="option"]')[highlightIndex] as
+      HTMLElement | undefined;
     item?.scrollIntoView?.({ block: "nearest" });
   }, [open, highlightIndex]);
 
@@ -236,7 +248,9 @@ export function Select<T extends string = string>({
       >
         <span className="flex min-w-0 flex-1 items-center gap-2">
           {selected ? (
-            selected.content ? (
+            selected.trigger ? (
+              selected.trigger()
+            ) : selected.content ? (
               selected.content()
             ) : (
               selected.label
@@ -271,38 +285,51 @@ export function Select<T extends string = string>({
           role="listbox"
           tabIndex={-1}
           aria-labelledby={ariaLabelledBy}
-          className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-border bg-background py-1 text-foreground shadow-md"
+          className={cn(
+            "absolute z-50 mt-1 max-h-80 w-full overflow-auto rounded-md border border-border bg-background py-1 text-foreground shadow-md",
+            menuClassName,
+          )}
           onKeyDown={onListKeyDown}
         >
           {options.map((opt, index) => {
             const isSelected = opt.value === value;
             const isHighlighted = index === highlightIndex;
+            const prevGroup = index > 0 ? options[index - 1].group : undefined;
+            const showGroup = Boolean(opt.group && opt.group !== prevGroup);
             return (
-              <li
-                key={opt.value}
-                id={`${listboxId}-opt-${index}`}
-                role="option"
-                aria-selected={isSelected}
-                aria-disabled={opt.disabled || undefined}
-                className={cn(
-                  "flex cursor-pointer items-center gap-2 px-2.5 py-1.5 text-base",
-                  isHighlighted && "bg-surface-muted",
-                  isSelected && "font-semibold",
-                  opt.disabled && "cursor-not-allowed opacity-50",
+              <Fragment key={opt.value}>
+                {showGroup && (
+                  <li role="presentation" className="mt-1 border-t border-border">
+                    <div className="px-2.5 pb-1 pt-2.5 text-xs tracking-[0.04em] text-muted uppercase">
+                      {opt.group}
+                    </div>
+                  </li>
                 )}
-                onMouseEnter={() => {
-                  if (!opt.disabled) setHighlightIndex(index);
-                }}
-                onMouseDown={(e) => {
-                  // Prevent trigger blur before click handler runs.
-                  e.preventDefault();
-                }}
-                onClick={() => {
-                  if (!opt.disabled) selectIndex(index);
-                }}
-              >
-                {opt.content ? opt.content() : opt.label}
-              </li>
+                <li
+                  id={`${listboxId}-opt-${index}`}
+                  role="option"
+                  aria-selected={isSelected}
+                  aria-disabled={opt.disabled || undefined}
+                  className={cn(
+                    "flex cursor-pointer items-center gap-2 px-2.5 py-1.5 text-base text-foreground",
+                    isHighlighted && "bg-primary-muted",
+                    isSelected && "text-primary",
+                    opt.disabled && "cursor-not-allowed opacity-50",
+                  )}
+                  onMouseEnter={() => {
+                    if (!opt.disabled) setHighlightIndex(index);
+                  }}
+                  onMouseDown={(e) => {
+                    // Prevent trigger blur before click handler runs.
+                    e.preventDefault();
+                  }}
+                  onClick={() => {
+                    if (!opt.disabled) selectIndex(index);
+                  }}
+                >
+                  {opt.content ? opt.content() : opt.label}
+                </li>
+              </Fragment>
             );
           })}
         </ul>
