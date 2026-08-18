@@ -11,18 +11,10 @@ import { getAutoOpenOnFilesTab, setAutoOpenOnFilesTab } from "@extension/lib/pre
 import { getProviderSettings, setProviderSettings } from "@extension/lib/settings";
 import { requestTestConnection } from "@extension/lib/messaging";
 import { GitHubAuthSection } from "./GitHubAuthSection";
-import {
-  Button,
-  Callout,
-  Card,
-  cn,
-  Input,
-  Label,
-  Select,
-  Spinner,
-  Toggle,
-  type SelectOption,
-} from "@guided-review/ui";
+import { SettingsCard } from "./SettingsCard";
+import { StatusCallout } from "./StatusCallout";
+import { Toggle } from "./Toggle";
+import { Button, cn, Input, Label, Select, Spinner, type SelectOption } from "@guided-review/ui";
 
 interface ProviderIconProps {
   provider: ProviderId;
@@ -183,7 +175,7 @@ export function Options() {
       <div className="flex flex-col gap-4">
         <GitHubAuthSection />
 
-        <Card
+        <SettingsCard
           title="AI Provider"
           titleId="ai-provider-heading"
           description={
@@ -265,11 +257,13 @@ export function Options() {
               </Button>
             </div>
 
-            {statusMessage && <Callout kind={statusMessage.kind} message={statusMessage.message} />}
+            {statusMessage && (
+              <StatusCallout kind={statusMessage.kind} message={statusMessage.message} />
+            )}
           </div>
-        </Card>
+        </SettingsCard>
 
-        <Card
+        <SettingsCard
           title="Review"
           titleId="review-heading"
           description="How Guided Review behaves when you open a pull request."
@@ -295,7 +289,7 @@ export function Options() {
               aria-describedby="autoOpenOnFilesTab-hint"
             />
           </div>
-        </Card>
+        </SettingsCard>
       </div>
 
       <p className="mt-6 m-0 text-sm leading-relaxed text-muted">
