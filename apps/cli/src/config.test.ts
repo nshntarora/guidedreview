@@ -6,7 +6,6 @@ import {
   applyDetectedAgent,
   applyProviderSettings,
   ConfigError,
-  publicAgents,
   publicSettings,
   readConfigFile,
   resolveSettings,
@@ -213,7 +212,7 @@ describe("applyDetectedAgent", () => {
   });
 });
 
-describe("publicSettings / publicAgents", () => {
+describe("publicSettings", () => {
   it("includes the config path and never exposes the secret", async () => {
     const dir = await withTempConfig();
     const published = publicSettings(
@@ -225,48 +224,5 @@ describe("publicSettings / publicAgents", () => {
     expect(published.codingAgent).toBe("codex");
     expect(published.configPath).toBe(path.join(dir, "config.json"));
     expect(JSON.stringify(published)).not.toContain("sk-secret-key");
-  });
-
-  it("lists detected agents without secrets", () => {
-    const listed = publicAgents([
-      {
-        id: "claude-code",
-        displayName: "Claude Code",
-        provider: "anthropic",
-        auth: {
-          provider: "anthropic",
-          secret: "sk-ant-oat01-live",
-          kind: "oauth",
-          usableForReview: true,
-        },
-      },
-    ]);
-    expect(listed).toEqual([
-      {
-        id: "claude-code",
-        displayName: "Claude Code",
-        provider: "anthropic",
-        installed: true,
-        usable: true,
-        reason: null,
-      },
-      {
-        id: "codex",
-        displayName: "Codex",
-        provider: "openai",
-        installed: false,
-        usable: false,
-        reason: "Codex is not installed.",
-      },
-      {
-        id: "grok",
-        displayName: "Grok",
-        provider: "grok",
-        installed: false,
-        usable: false,
-        reason: "Grok is not installed.",
-      },
-    ]);
-    expect(JSON.stringify(listed)).not.toContain("sk-ant");
   });
 });

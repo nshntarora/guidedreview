@@ -1,12 +1,7 @@
-import {
-  createServer as createHttpServer,
-  type IncomingMessage,
-  type ServerResponse,
-} from "node:http";
-import { createReadStream } from "node:fs";
-import { stat } from "node:fs/promises";
+import { createServer as createHttpServer } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import express, { type NextFunction, type Request, type Response } from "express";
 import {
   annotateReview,
   describeErrorMessage,
@@ -34,7 +29,6 @@ import {
   hashDiff,
   isDiffScopeId,
   rebuildLocalReview,
-  type DiffScopeId,
   type DiffScopeOption,
   type LocalCommit,
   type LocalReviewSnapshot,
@@ -79,7 +73,7 @@ export interface ReviewSessionPayload {
   settings: ReturnType<typeof publicSettings>;
   commits: LocalCommit[];
   scopes: DiffScopeOption[];
-  selectedScope: DiffScopeId;
+  selectedScope: LocalReviewSnapshot["selectedScope"];
 }
 
 export interface CreateReviewServerOptions {
@@ -88,7 +82,6 @@ export interface CreateReviewServerOptions {
   codingAgent?: CodingAgentId | null;
   token: string;
   staticDir?: string;
-  onSettings?: (settings: ProviderSettings) => void;
   log?: ServerLog;
   detectAgents?: () => Promise<DetectedAgent[]>;
   testConnection?: (settings: ProviderSettings) => Promise<void>;
@@ -101,44 +94,16 @@ interface SettingsBody {
   codingAgent?: CodingAgentId | null;
 }
 
-function sendJson(res: ServerResponse, status: number, body: unknown): void {
-  const payload = JSON.stringify(body);
-  res.writeHead(status, {
-    "content-type": "application/json; charset=utf-8",
-    "cache-control": "no-store",
-  });
-  res.end(payload);
+type RequestWithRaw = Request & { rawBody?: Buffer };
+
+function sendJson(res: Response, status: number, body: unknown): void {
+  res.status(status).set("cache-control", "no-store").json(body);
 }
 
-function readBody(req: IncomingMessage): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    req.on("data", (chunk) => chunks.push(chunk as Buffer));
-    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
-    req.on("error", reject);
-  });
-}
-
-async function readJsonBody(
-  req: IncomingMessage,
-): Promise<{ ok: true; value: unknown } | { ok: false }> {
-  const raw = await readBody(req);
-  if (!raw.trim()) return { ok: false };
-  try {
-    return { ok: true, value: JSON.parse(raw) as unknown };
-  } catch {
-    return { ok: false };
-  }
-}
-
-function contentTypeFor(filePath: string): string {
-  if (filePath.endsWith(".html")) return "text/html; charset=utf-8";
-  if (filePath.endsWith(".js")) return "text/javascript; charset=utf-8";
-  if (filePath.endsWith(".css")) return "text/css; charset=utf-8";
-  if (filePath.endsWith(".svg")) return "image/svg+xml";
-  if (filePath.endsWith(".png")) return "image/png";
-  if (filePath.endsWith(".woff2")) return "font/woff2";
-  return "application/octet-stream";
+function readJsonBody(req: Request): { ok: true; value: unknown } | { ok: false } {
+  const raw = (req as RequestWithRaw).rawBody;
+  if (!raw || !raw.toString("utf8").trim()) return { ok: false };
+  return { ok: true, value: req.body as unknown };
 }
 
 function sessionPayload(
@@ -183,6 +148,8 @@ export function createReviewServer(options: CreateReviewServerOptions) {
   const testConnection =
     options.testConnection ??
     ((next: ProviderSettings) => getProviderClient(next.provider).testConnection(next));
+  const staticDir =
+    options.staticDir ?? path.join(path.dirname(fileURLToPath(import.meta.url)), "ui");
 
   async function applySettingsBody(
     body: SettingsBody,
@@ -213,241 +180,232 @@ export function createReviewServer(options: CreateReviewServerOptions) {
       codingAgent = applied.codingAgent;
       await patchConfigFile(applied.persist);
     }
-    options.onSettings?.(settings);
     return { ok: true, published: publicSettings(settings, codingAgent) };
   }
 
-  function authorized(req: IncomingMessage, url: URL): boolean {
+  const app = express();
+  app.disable("x-powered-by");
+  app.use(
+    express.json({
+      verify: (req, _res, buf) => {
+        (req as RequestWithRaw).rawBody = buf;
+      },
+    }),
+  );
+
+  app.use((req, res, next) => {
+    if (!req.path.startsWith("/api/")) {
+      next();
+      return;
+    }
     const header = req.headers.authorization;
-    if (header === `Bearer ${options.token}`) return true;
-    return url.searchParams.get("token") === options.token;
-  }
+    const token = typeof req.query.token === "string" ? req.query.token : undefined;
+    if (header === `Bearer ${options.token}` || token === options.token) {
+      next();
+      return;
+    }
+    log(`${req.method} ${req.path}  401 unauthorized`);
+    sendJson(res, 401, { error: "Unauthorized. Open the URL printed by the CLI." });
+  });
 
-  const server = createHttpServer(async (req, res) => {
+  app.get("/api/session", async (_req, res) => {
     try {
-      const host = req.headers.host ?? "127.0.0.1";
-      const url = new URL(req.url ?? "/", `http://${host}`);
-
-      if (url.pathname.startsWith("/api/") && !authorized(req, url)) {
-        log(`${req.method} ${url.pathname}  401 unauthorized`);
-        sendJson(res, 401, { error: "Unauthorized. Open the URL printed by the CLI." });
-        return;
-      }
-
-      if (req.method === "GET" && url.pathname === "/api/session") {
-        try {
-          snapshot = await rebuildLocalReview(snapshot.repo, snapshot.selectedScope);
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          log(`GET /api/session  rebuild failed, serving last snapshot  ${message}`);
-        }
-        const published = publicSettings(settings, codingAgent);
-        log(
-          `GET /api/session  ${snapshot.diff.files.length} file(s)  ${snapshot.selectedScope}  ${published.provider}/${published.model}  key=${published.hasKey ? "yes" : "no"}${published.codingAgent ? `  agent=${published.codingAgent}` : ""}`,
-        );
-        sendJson(res, 200, sessionPayload(snapshot, published));
-        return;
-      }
-
-      if (req.method === "GET" && url.pathname === "/api/diff-status") {
-        try {
-          const hash = await currentDiffHash(snapshot.repo, snapshot.selectedScope);
-          const served = hashDiff(snapshot.raw);
-          sendJson(res, 200, { hash, changed: hash !== served });
-        } catch (error) {
-          const message =
-            error instanceof GitError ? error.message : "Could not check the current diff.";
-          sendJson(res, 500, { error: message });
-        }
-        return;
-      }
-
-      if (req.method === "GET" && url.pathname === "/api/settings") {
-        sendJson(res, 200, publicSettings(settings, codingAgent));
-        return;
-      }
-
-      if (req.method === "PUT" && url.pathname === "/api/settings") {
-        const parsed = await readJsonBody(req);
-        if (!parsed.ok) {
-          sendJson(res, 400, { error: "Request body must be JSON." });
-          return;
-        }
-        const body = parseSettingsBody(parsed.value);
-        if (!body) {
-          sendJson(res, 400, { error: "Request body must be JSON." });
-          return;
-        }
-        const applied = await applySettingsBody(body);
-        if (!applied.ok) {
-          sendJson(res, 400, { error: applied.error });
-          return;
-        }
-        const published = applied.published;
-        log(
-          `PUT /api/settings  ${published.provider}/${published.model}  key=${published.hasKey ? "yes" : "no"}${published.codingAgent ? `  agent=${published.codingAgent}` : ""}`,
-        );
-        sendJson(res, 200, published);
-        return;
-      }
-
-      if (req.method === "POST" && url.pathname === "/api/settings/test") {
-        const parsed = await readJsonBody(req);
-        if (!parsed.ok) {
-          sendJson(res, 400, { error: "Request body must be JSON." });
-          return;
-        }
-        const body = parseSettingsBody(parsed.value);
-        if (!body) {
-          sendJson(res, 400, { error: "Request body must be JSON." });
-          return;
-        }
-        const applied = await applySettingsBody(body);
-        if (!applied.ok) {
-          sendJson(res, 400, { error: applied.error });
-          return;
-        }
-        if (!settings.apiKey) {
-          sendJson(res, 200, { ok: false, error: "No API key configured." });
-          return;
-        }
-        try {
-          await testConnection(settings);
-          log(`POST /api/settings/test  ok  ${settings.provider}/${settings.model}`);
-          sendJson(res, 200, { ok: true });
-        } catch (error) {
-          const message = describeErrorMessage(error);
-          log(`POST /api/settings/test  fail  ${message}`);
-          sendJson(res, 200, { ok: false, error: message });
-        }
-        return;
-      }
-
-      if (req.method === "GET" && url.pathname === "/api/agents") {
-        const detected = await detectAgents();
-        sendJson(res, 200, { agents: publicAgents(detected) });
-        return;
-      }
-
-      if (req.method === "PUT" && url.pathname === "/api/diff") {
-        const parsed = await readJsonBody(req);
-        if (!parsed.ok || !parsed.value || typeof parsed.value !== "object") {
-          sendJson(res, 400, { error: "Request body must be JSON." });
-          return;
-        }
-        const body = parsed.value as { scope?: string };
-        const scope = body.scope;
-        if (!scope || !isDiffScopeId(scope)) {
-          sendJson(res, 400, { error: "Unknown diff scope." });
-          return;
-        }
-        try {
-          const next = await rebuildLocalReview(snapshot.repo, scope);
-          if (next.empty) {
-            sendJson(res, 400, { error: "That scope has no changes." });
-            return;
-          }
-          snapshot = next;
-          const published = publicSettings(settings, codingAgent);
-          log(`PUT /api/diff  ${scope}  ${next.diff.files.length} file(s)`);
-          sendJson(res, 200, sessionPayload(next, published));
-        } catch (error) {
-          const message = error instanceof GitError ? error.message : "Could not load that diff.";
-          sendJson(res, 400, { error: message });
-        }
-        return;
-      }
-
-      if (req.method === "GET" && url.pathname === "/api/plan") {
-        res.writeHead(200, {
-          "content-type": "text/event-stream; charset=utf-8",
-          "cache-control": "no-cache, no-transform",
-          connection: "keep-alive",
-          "x-accel-buffering": "no",
-        });
-        res.flushHeaders();
-        res.socket?.setNoDelay(true);
-        // Comment frame so EventSource leaves CONNECTING before the first provider call.
-        res.write(":\n\n");
-        const abort = new AbortController();
-        let planFinished = false;
-        req.on("close", () => {
-          abort.abort();
-          if (!planFinished) log("plan  client closed");
-        });
-
-        if (!settings.apiKey) {
-          log("plan  no API key");
-          res.write(
-            `data: ${JSON.stringify({
-              type: "ERROR",
-              error: { message: "No API key configured.", code: "no_api_key" },
-            })}\n\n`,
-          );
-          planFinished = true;
-          res.end();
-          return;
-        }
-
-        log(
-          `GET /api/plan  ${settings.provider}/${settings.model}  ${snapshot.selectedScope}  ${snapshot.diff.files.length} file(s)`,
-        );
-
-        for await (const event of annotateReview({
-          diff: snapshot.diff,
-          context: snapshot.context,
-          settings,
-          signal: abort.signal,
-        })) {
-          if (abort.signal.aborted) return;
-          const line = describePlanEvent(event);
-          if (line) log(line);
-          res.write(`data: ${JSON.stringify(event)}\n\n`);
-        }
-        planFinished = true;
-        res.end();
-        return;
-      }
-
-      if (req.method !== "GET") {
-        sendJson(res, 405, { error: "Method not allowed." });
-        return;
-      }
-
-      const staticDir =
-        options.staticDir ?? path.join(path.dirname(fileURLToPath(import.meta.url)), "ui");
-      const requested = url.pathname === "/" ? "/index.html" : url.pathname;
-      const filePath = path.normalize(path.join(staticDir, requested));
-      if (!filePath.startsWith(path.normalize(staticDir))) {
-        sendJson(res, 404, { error: "Not found." });
-        return;
-      }
-
-      try {
-        const info = await stat(filePath);
-        if (!info.isFile()) throw new Error("not a file");
-        res.writeHead(200, { "content-type": contentTypeFor(filePath) });
-        createReadStream(filePath).pipe(res);
-      } catch {
-        const fallback = path.join(staticDir, "index.html");
-        try {
-          await stat(fallback);
-          res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-          createReadStream(fallback).pipe(res);
-        } catch {
-          log("UI not built. Run npm run build -w @guided-review/cli.");
-          sendJson(res, 404, { error: "UI not built. Run npm run build -w @guided-review/cli." });
-        }
-      }
+      snapshot = await rebuildLocalReview(snapshot.repo, snapshot.selectedScope);
     } catch (error) {
-      log(`server error  ${formatThrown(error)}`);
-      const message = error instanceof Error ? error.message : "Server error.";
-      if (!res.headersSent) sendJson(res, 500, { error: message });
-      else res.end();
+      const message = error instanceof Error ? error.message : String(error);
+      log(`GET /api/session  rebuild failed, serving last snapshot  ${message}`);
+    }
+    const published = publicSettings(settings, codingAgent);
+    log(
+      `GET /api/session  ${snapshot.diff.files.length} file(s)  ${snapshot.selectedScope}  ${published.provider}/${published.model}  key=${published.hasKey ? "yes" : "no"}${published.codingAgent ? `  agent=${published.codingAgent}` : ""}`,
+    );
+    sendJson(res, 200, sessionPayload(snapshot, published));
+  });
+
+  app.get("/api/diff-status", async (_req, res) => {
+    try {
+      const hash = await currentDiffHash(snapshot.repo, snapshot.selectedScope);
+      const served = hashDiff(snapshot.raw);
+      sendJson(res, 200, { hash, changed: hash !== served });
+    } catch (error) {
+      const message =
+        error instanceof GitError ? error.message : "Could not check the current diff.";
+      sendJson(res, 500, { error: message });
     }
   });
 
-  return server;
+  app.get("/api/settings", (_req, res) => {
+    sendJson(res, 200, publicSettings(settings, codingAgent));
+  });
+
+  app.put("/api/settings", async (req, res) => {
+    const parsed = readJsonBody(req);
+    if (!parsed.ok) {
+      sendJson(res, 400, { error: "Request body must be JSON." });
+      return;
+    }
+    const body = parseSettingsBody(parsed.value);
+    if (!body) {
+      sendJson(res, 400, { error: "Request body must be JSON." });
+      return;
+    }
+    const applied = await applySettingsBody(body);
+    if (!applied.ok) {
+      sendJson(res, 400, { error: applied.error });
+      return;
+    }
+    const published = applied.published;
+    log(
+      `PUT /api/settings  ${published.provider}/${published.model}  key=${published.hasKey ? "yes" : "no"}${published.codingAgent ? `  agent=${published.codingAgent}` : ""}`,
+    );
+    sendJson(res, 200, published);
+  });
+
+  app.post("/api/settings/test", async (req, res) => {
+    const parsed = readJsonBody(req);
+    if (!parsed.ok) {
+      sendJson(res, 400, { error: "Request body must be JSON." });
+      return;
+    }
+    const body = parseSettingsBody(parsed.value);
+    if (!body) {
+      sendJson(res, 400, { error: "Request body must be JSON." });
+      return;
+    }
+    const applied = await applySettingsBody(body);
+    if (!applied.ok) {
+      sendJson(res, 400, { error: applied.error });
+      return;
+    }
+    if (!settings.apiKey) {
+      sendJson(res, 200, { ok: false, error: "No API key configured." });
+      return;
+    }
+    try {
+      await testConnection(settings);
+      log(`POST /api/settings/test  ok  ${settings.provider}/${settings.model}`);
+      sendJson(res, 200, { ok: true });
+    } catch (error) {
+      const message = describeErrorMessage(error);
+      log(`POST /api/settings/test  fail  ${message}`);
+      sendJson(res, 200, { ok: false, error: message });
+    }
+  });
+
+  app.get("/api/agents", async (_req, res) => {
+    const detected = await detectAgents();
+    sendJson(res, 200, { agents: publicAgents(detected) });
+  });
+
+  app.put("/api/diff", async (req, res) => {
+    const parsed = readJsonBody(req);
+    if (!parsed.ok || !parsed.value || typeof parsed.value !== "object") {
+      sendJson(res, 400, { error: "Request body must be JSON." });
+      return;
+    }
+    const body = parsed.value as { scope?: string };
+    const scope = body.scope;
+    if (!scope || !isDiffScopeId(scope)) {
+      sendJson(res, 400, { error: "Unknown diff scope." });
+      return;
+    }
+    try {
+      const next = await rebuildLocalReview(snapshot.repo, scope);
+      if (next.empty) {
+        sendJson(res, 400, { error: "That scope has no changes." });
+        return;
+      }
+      snapshot = next;
+      const published = publicSettings(settings, codingAgent);
+      log(`PUT /api/diff  ${scope}  ${next.diff.files.length} file(s)`);
+      sendJson(res, 200, sessionPayload(next, published));
+    } catch (error) {
+      const message = error instanceof GitError ? error.message : "Could not load that diff.";
+      sendJson(res, 400, { error: message });
+    }
+  });
+
+  app.get("/api/plan", async (req, res) => {
+    res.status(200);
+    res.set({
+      "content-type": "text/event-stream; charset=utf-8",
+      "cache-control": "no-cache, no-transform",
+      connection: "keep-alive",
+      "x-accel-buffering": "no",
+    });
+    res.flushHeaders();
+    res.socket?.setNoDelay(true);
+    // Comment frame so EventSource leaves CONNECTING before the first provider call.
+    res.write(":\n\n");
+    const abort = new AbortController();
+    let planFinished = false;
+    req.on("close", () => {
+      abort.abort();
+      if (!planFinished) log("plan  client closed");
+    });
+
+    if (!settings.apiKey) {
+      log("plan  no API key");
+      res.write(
+        `data: ${JSON.stringify({
+          type: "ERROR",
+          error: { message: "No API key configured.", code: "no_api_key" },
+        })}\n\n`,
+      );
+      planFinished = true;
+      res.end();
+      return;
+    }
+
+    log(
+      `GET /api/plan  ${settings.provider}/${settings.model}  ${snapshot.selectedScope}  ${snapshot.diff.files.length} file(s)`,
+    );
+
+    for await (const event of annotateReview({
+      diff: snapshot.diff,
+      context: snapshot.context,
+      settings,
+      signal: abort.signal,
+    })) {
+      if (abort.signal.aborted) return;
+      const line = describePlanEvent(event);
+      if (line) log(line);
+      res.write(`data: ${JSON.stringify(event)}\n\n`);
+    }
+    planFinished = true;
+    res.end();
+  });
+
+  app.use(express.static(staticDir, { index: false, fallthrough: true }));
+
+  app.use((req, res) => {
+    if (req.method !== "GET") {
+      sendJson(res, 405, { error: "Method not allowed." });
+      return;
+    }
+    res.sendFile(path.join(staticDir, "index.html"), (err) => {
+      if (!err) return;
+      log("UI not built. Run npm run build -w @guided-review/cli.");
+      if (!res.headersSent) {
+        sendJson(res, 404, { error: "UI not built. Run npm run build -w @guided-review/cli." });
+      } else {
+        res.end();
+      }
+    });
+  });
+
+  app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    if (err instanceof SyntaxError) {
+      sendJson(res, 400, { error: "Request body must be JSON." });
+      return;
+    }
+    log(`server error  ${formatThrown(err)}`);
+    const message = err instanceof Error ? err.message : "Server error.";
+    if (!res.headersSent) sendJson(res, 500, { error: message });
+    else res.end();
+  });
+
+  return createHttpServer(app);
 }
 
 export function listen(server: ReturnType<typeof createReviewServer>, port = 0): Promise<number> {

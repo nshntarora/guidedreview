@@ -4,8 +4,7 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["node"],
     "paths": {
-      "@extension/*": ["../extension/src/*"],
-      "@cli/*": ["./src/*"]
+      "@extension/*": ["../extension/src/*"]
     }
   },
   "include": ["src/**/*.ts", "vite.config.ts", "vitest.config.ts"],
