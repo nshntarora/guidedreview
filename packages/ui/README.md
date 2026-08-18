@@ -6,7 +6,7 @@ Shared design tokens, brand assets, and presentational components for Guided Rev
 
 Add a module when **all** are true:
 
-- Used (or clearly about to be used) by ≥2 apps
+- A general presentational primitive (form control, layout chrome, status) — even before a second app uses it
 - No `chrome.*`, no extension messaging, no GitHub API
 - No dependency on extension product types
 - Styled with shared tokens (or fully prop-driven)
@@ -25,6 +25,10 @@ import {
   Textarea,
   Label,
   Select,
+  Toggle,
+  Card,
+  Callout,
+  HelpDetails,
 } from "@guided-review/ui";
 import type { SelectOption } from "@guided-review/ui";
 import "@guided-review/ui/theme.css";
@@ -57,6 +61,10 @@ Used by the marketing site, options page, welcome page, and review overlay.
 - **Button** — `variant`: `primary` | `secondary` | `destructive` | `ghost`; `size`: `sm` | `md` | `lg`. Use `buttonClassName()` on `<a>` / Next `Link` when you need a link that looks like a button.
 - **Input** / **Textarea** / **Label** — standard field primitives.
 - **Select** — accessible custom listbox with optional rich option content (`"use client"` for RSC hosts).
+- **Toggle** — WAI-ARIA switch.
+- **Card** — bordered section with title and optional description.
+- **Callout** — ok / error status strip.
+- **HelpDetails** — disclosure for secondary help copy.
 
 - **Source exports only** — no `build` emit step; apps transpile via Vite / Next `transpilePackages`.
 - **RSC-safe by default** — keep components free of hooks/browser APIs unless marked `"use client"` (Select is the exception).

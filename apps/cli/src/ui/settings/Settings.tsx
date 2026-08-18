@@ -6,13 +6,60 @@ import {
   modelsForProvider,
   type ProviderId,
 } from "@guided-review/core";
-import { Button, cn, Input, Label, Select, Spinner, type SelectOption } from "@guided-review/ui";
-import { agentIdForProvider } from "../../codingAgents/types";
-import { HelpDetails } from "./HelpDetails";
-import { SettingsCard } from "./SettingsCard";
-import { StatusCallout } from "./StatusCallout";
-import { Toggle } from "./Toggle";
-import { apiUrl, type ActionStatus, type PublicAgent, type PublicSettings } from "./types";
+import {
+  Button,
+  Callout,
+  Card,
+  cn,
+  HelpDetails,
+  Input,
+  Label,
+  Select,
+  Spinner,
+  Toggle,
+  type SelectOption,
+} from "@guided-review/ui";
+
+export interface PublicSettings {
+  provider: ProviderId;
+  model: string;
+  hasKey: boolean;
+  last4: string | null;
+  codingAgent: string | null;
+  configPath: string;
+}
+
+export interface PublicAgent {
+  id: string;
+  displayName: string;
+  provider: ProviderId;
+  installed: boolean;
+  usable: boolean;
+  reason: string | null;
+}
+
+type ActionStatus =
+  | { kind: "idle" }
+  | { kind: "working" }
+  | { kind: "ok"; message: string }
+  | { kind: "error"; message: string };
+
+function apiUrl(path: string, token: string): string {
+  const url = new URL(path, window.location.origin);
+  url.searchParams.set("token", token);
+  return url.toString();
+}
+
+function agentIdForProvider(provider: ProviderId): "claude-code" | "codex" | "grok" {
+  switch (provider) {
+    case "anthropic":
+      return "claude-code";
+    case "openai":
+      return "codex";
+    case "grok":
+      return "grok";
+  }
+}
 
 const CONFIGURE_PROVIDER_DOCS_URL = "https://guidedreview.dev/docs/configure-provider";
 
@@ -385,7 +432,7 @@ export function Settings({ token, onSaved, onDirtyChange }: SettingsProps) {
       </header>
 
       <div className="flex flex-col gap-4">
-        <SettingsCard
+        <Card
           title="AI Provider"
           titleId="ai-provider-heading"
           description={
@@ -494,9 +541,7 @@ export function Settings({ token, onSaved, onDirtyChange }: SettingsProps) {
               </Button>
             </div>
 
-            {statusMessage && (
-              <StatusCallout kind={statusMessage.kind} message={statusMessage.message} />
-            )}
+            {statusMessage && <Callout kind={statusMessage.kind} message={statusMessage.message} />}
 
             <div className="divide-y divide-border border-t border-border">
               <HelpDetails title="How it works">
@@ -540,7 +585,7 @@ export function Settings({ token, onSaved, onDirtyChange }: SettingsProps) {
               </HelpDetails>
             </div>
           </div>
-        </SettingsCard>
+        </Card>
       </div>
 
       <p className="mt-6 m-0 text-sm leading-relaxed text-muted">

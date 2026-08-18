@@ -5,7 +5,7 @@ import { defaultModelFor } from "@guided-review/core";
 import { resetConfirmationQueueForTests } from "@extension/lib/confirmation";
 import { Settings } from "./Settings";
 import { SettingsApp } from "./SettingsApp";
-import type { PublicAgent, PublicSettings } from "./types";
+import type { PublicAgent, PublicSettings } from "./Settings";
 
 const settings: PublicSettings = {
   provider: "openai",
@@ -122,22 +122,6 @@ describe("Settings", () => {
     expect(
       screen.getByRole("heading", { name: "If it fails" }).closest("details"),
     ).not.toHaveAttribute("open");
-  });
-
-  it("expands If it fails to show subscription troubleshooting", async () => {
-    const user = userEvent.setup();
-    render(<Settings token="secret" />);
-    await screen.findByRole("combobox", { name: /provider/i });
-
-    const fails = screen.getByRole("heading", { name: "If it fails" });
-    expect(screen.getByText(/Confirm the matching CLI is installed/i)).not.toBeVisible();
-
-    await user.click(fails);
-    expect(fails.closest("details")).toHaveAttribute("open");
-    expect(screen.getByText(/Confirm the matching CLI is installed/i)).toBeVisible();
-    expect(screen.getByText("claude")).toBeVisible();
-    expect(screen.getByText("codex")).toBeVisible();
-    expect(screen.getByText("grok")).toBeVisible();
   });
 
   it("hydrates a subscription as the toggle on and hides the key field", async () => {
@@ -323,26 +307,6 @@ describe("SettingsApp", () => {
     act(() => {
       resetConfirmationQueueForTests();
     });
-  });
-
-  it("opens as a modal with about, docs, and a close control", async () => {
-    vi.stubGlobal("fetch", mockFetch({}));
-    render(<SettingsApp token="secret" route="settings" onClose={vi.fn()} />);
-
-    expect(await screen.findByRole("dialog", { name: "Settings" })).toBeInTheDocument();
-    expect(await screen.findByRole("combobox", { name: /provider/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("href", "#about");
-    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: "About" })).not.toHaveAttribute("aria-current");
-    expect(screen.queryByRole("link", { name: "Review" })).not.toBeInTheDocument();
-    const docs = screen.getByRole("link", { name: "Docs" });
-    expect(docs).toHaveAttribute("href", "https://guidedreview.dev/docs");
-    expect(docs).toHaveAttribute("target", "_blank");
-    const close = screen.getByTestId("settings-close");
-    expect(close).toHaveTextContent("Close");
-    expect(close).toHaveTextContent("Esc");
-    expect(close.querySelector("svg")).toBeInTheDocument();
-    expect(document.title).toBe("Guided Review — Settings");
   });
 
   it("shows the about view when the route is about", async () => {

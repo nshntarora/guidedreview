@@ -1,23 +1,7 @@
 import type { ReactNode } from "react";
-import { cn } from "@guided-review/ui";
+import { cn } from "../cn";
 
-export interface SettingsCardProps {
-  title: string;
-  description?: ReactNode;
-  children: ReactNode;
-  className?: string;
-  /** Optional decorative icon shown before the title. */
-  icon?: ReactNode;
-  /** Optional id for the title heading (aria-labelledby). */
-  titleId?: string;
-  "data-testid"?: string;
-}
-
-/**
- * Bordered section panel for the options page — landing-card language
- * without WindowFrame traffic lights.
- */
-export function SettingsCard({
+export function Card({
   title,
   description,
   children,
@@ -25,7 +9,15 @@ export function SettingsCard({
   icon,
   titleId,
   "data-testid": dataTestId,
-}: SettingsCardProps) {
+}: {
+  title: string;
+  description?: ReactNode;
+  children: ReactNode;
+  className?: string;
+  icon?: ReactNode;
+  titleId?: string;
+  "data-testid"?: string;
+}) {
   return (
     <section
       className={cn(

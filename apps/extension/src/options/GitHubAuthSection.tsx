@@ -12,8 +12,7 @@ import {
 } from "@extension/lib/github/useGitHubDeviceAuth";
 import { clearGitHubAuthSession, getGitHubAuthStatus } from "@extension/lib/messaging";
 import { confirm, ConfirmationHost } from "@extension/lib/confirmation";
-import { Button, Spinner, cn } from "@guided-review/ui";
-import { SettingsCard } from "./SettingsCard";
+import { Button, Card, Spinner, cn } from "@guided-review/ui";
 
 type SessionState =
   | { kind: "loading" }
@@ -272,7 +271,7 @@ export function GitHubAuthSection() {
   const showError = flow.kind === "error" ? flow.message : disconnectError;
 
   return (
-    <SettingsCard
+    <Card
       title="GitHub Account"
       titleId="github-heading"
       icon={
@@ -320,6 +319,6 @@ export function GitHubAuthSection() {
       )}
 
       <ConfirmationHost />
-    </SettingsCard>
+    </Card>
   );
 }
