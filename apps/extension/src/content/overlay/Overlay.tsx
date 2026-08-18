@@ -11,7 +11,7 @@ import {
   type ReviewStatus,
 } from "./store";
 import { buildSelectableLines, resolveUnitFiles } from "./buildSelectableLines";
-import { getFocusableElements, restoreFocusAfterOverlay } from "./focusTrap";
+import { restoreFocusAfterOverlay } from "./focusTrap";
 import { useOverlayKeyboard, type ViewChordPending } from "./useOverlayKeyboard";
 import { useSubmitReviewFlow } from "./useSubmitReviewFlow";
 import { findUnitForFile, type DiffSearchResult, type SearchScrollTarget } from "./diffSearch";
@@ -273,16 +273,13 @@ export function Overlay({
     };
   }, [isOpen]);
 
-  // Modal focus: move into the overlay on open; restore to the start button on close.
+  // Focus the dialog, not the first control (the CLI scope picker would eat arrows).
   useEffect(() => {
     if (!isOpen) return;
 
     previousFocusRef.current = document.activeElement;
     const frame = requestAnimationFrame(() => {
-      const root = overlayRef.current;
-      if (!root) return;
-      const focusable = getFocusableElements(root);
-      (focusable[0] ?? root).focus();
+      overlayRef.current?.focus();
     });
 
     return () => {
