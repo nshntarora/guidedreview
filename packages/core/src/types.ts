@@ -187,4 +187,6 @@ export interface ReviewNote {
   body: string;
   /** Review unit id active when the note was saved, if any. */
   unitId?: string;
+  /** Source lines the note was left on (joined with newlines), if known. */
+  selectedCode?: string;
 }

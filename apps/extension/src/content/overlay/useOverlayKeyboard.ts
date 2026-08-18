@@ -108,11 +108,13 @@ interface UseOverlayKeyboardOptions {
   suspended?: boolean;
   overlayRef: RefObject<HTMLDivElement | null>;
   submitModalDialogRef: RefObject<HTMLDivElement | null>;
+  generatePromptDialogRef: RefObject<HTMLDivElement | null>;
   codeColRef: RefObject<HTMLElement | null>;
   viewChordRef: MutableRefObject<ViewChordPending>;
   selectableForUnit: SelectableLine[];
   currentUnitId: string | undefined;
   submitReviewOpen: boolean;
+  generatePromptOpen: boolean;
   connectGitHubOpen: boolean;
   /** Truthy while the post-submit success modal should own the keyboard. */
   submitSuccess: object | null;
@@ -120,11 +122,14 @@ interface UseOverlayKeyboardOptions {
   submitReviewActionRef: MutableRefObject<(() => void) | null>;
   /** Submit Review modal: choose-step ↑/↓/Enter handler. */
   submitReviewKeyRef: MutableRefObject<((e: KeyboardEvent) => boolean) | null>;
+  /** Generate Prompt modal: latest ⌘/Ctrl+Enter copy action. */
+  generatePromptCopyActionRef: MutableRefObject<(() => void) | null>;
   /** Connect GitHub modal: latest Connect / Try again / open verification URI. */
   connectGitHubActionRef: MutableRefObject<(() => void) | null>;
   exitAfterSubmit: () => void;
   requestOpenSubmitReview: () => void | Promise<void>;
   closeSubmitReviewModal: () => void;
+  closeGeneratePrompt: () => void;
   setConnectGitHubOpen: (open: boolean) => void;
   confirmationOpen: boolean;
   requestExit: () => void;
@@ -151,19 +156,23 @@ export function useOverlayKeyboard({
   suspended = false,
   overlayRef,
   submitModalDialogRef,
+  generatePromptDialogRef,
   codeColRef,
   viewChordRef,
   selectableForUnit,
   currentUnitId,
   submitReviewOpen,
+  generatePromptOpen,
   connectGitHubOpen,
   submitSuccess,
   submitReviewActionRef,
   submitReviewKeyRef,
+  generatePromptCopyActionRef,
   connectGitHubActionRef,
   exitAfterSubmit,
   requestOpenSubmitReview,
   closeSubmitReviewModal,
+  closeGeneratePrompt,
   setConnectGitHubOpen,
   confirmationOpen,
   requestExit,
@@ -181,6 +190,8 @@ export function useOverlayKeyboard({
   // requestExit while the modal is already visible.
   const submitReviewOpenRef = useRef(submitReviewOpen);
   submitReviewOpenRef.current = submitReviewOpen;
+  const generatePromptOpenRef = useRef(generatePromptOpen);
+  generatePromptOpenRef.current = generatePromptOpen;
   const connectGitHubOpenRef = useRef(connectGitHubOpen);
   connectGitHubOpenRef.current = connectGitHubOpen;
   const submitSuccessRef = useRef(submitSuccess);
@@ -189,6 +200,8 @@ export function useOverlayKeyboard({
   exitAfterSubmitRef.current = exitAfterSubmit;
   const closeSubmitReviewModalRef = useRef(closeSubmitReviewModal);
   closeSubmitReviewModalRef.current = closeSubmitReviewModal;
+  const closeGeneratePromptRef = useRef(closeGeneratePrompt);
+  closeGeneratePromptRef.current = closeGeneratePrompt;
   const setConnectGitHubOpenRef = useRef(setConnectGitHubOpen);
   setConnectGitHubOpenRef.current = setConnectGitHubOpen;
   const requestOpenSubmitReviewRef = useRef(requestOpenSubmitReview);
@@ -234,15 +247,17 @@ export function useOverlayKeyboard({
         ? confirmDialog
         : submitReviewOpenRef.current
           ? submitModalDialogRef.current
-          : overlayRef.current;
+          : generatePromptOpenRef.current
+            ? generatePromptDialogRef.current
+            : overlayRef.current;
       if (trapRoot) trapTabKey(event, trapRoot);
       return true;
     }
 
     /**
-     * Confirmation → success → connect-GitHub → submit-review modals, in
-     * that priority order. Each owns the key outright while open (even keys
-     * it doesn't act on), so any true here means the caller should return.
+     * Confirmation → success → connect-GitHub → generate-prompt → submit-review
+     * modals, in that priority order. Each owns the key outright while open
+     * (even keys it doesn't act on), so any true here means the caller should return.
      */
     function handleModalKeys(event: KeyboardEvent): boolean {
       // Confirmation dialog owns every key while open (highest priority modal).
@@ -275,6 +290,21 @@ export function useOverlayKeyboard({
         if (event.key === "Enter" && !event.metaKey && !event.ctrlKey && !event.altKey) {
           event.preventDefault();
           connectGitHubActionRef.current?.();
+        }
+        return true;
+      }
+
+      // Generate Prompt modal: Esc closes; ⌘/Ctrl+Enter copies the prompt.
+      if (generatePromptOpenRef.current) {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeGeneratePromptRef.current();
+          return true;
+        }
+        if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+          event.preventDefault();
+          generatePromptCopyActionRef.current?.();
+          return true;
         }
         return true;
       }
@@ -562,10 +592,12 @@ export function useOverlayKeyboard({
     confirmationOpen,
     overlayRef,
     submitModalDialogRef,
+    generatePromptDialogRef,
     codeColRef,
     viewChordRef,
     submitReviewActionRef,
     submitReviewKeyRef,
+    generatePromptCopyActionRef,
     connectGitHubActionRef,
     diffSearchKeyRef,
   ]);

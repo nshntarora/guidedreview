@@ -34,6 +34,8 @@ export interface SelectableLine {
   oldLine?: number;
   newLine?: number;
   type: "add" | "del" | "context";
+  /** Raw line text from the diff (no +/- prefix). */
+  content: string;
 }
 
 /** Inclusive range in the flat selectable-line list (anchor + cursor). */
@@ -54,6 +56,8 @@ export interface DraftComment {
   endLine: number;
   /** SelectableLine ids covering the range (for highlight + placement). */
   lineIds: string[];
+  /** Selected source lines joined with newlines (captured at save time). */
+  selectedCode: string;
   body: string;
   /** Review unit id active when the comment was saved, if any. */
   unitId?: string;

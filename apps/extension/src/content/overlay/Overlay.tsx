@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { SelectHandle } from "@guided-review/ui";
+import { formatAgentPrompt } from "@guided-review/core";
 import type { ReviewErrorInfo, ReviewPlan } from "@extension/lib/types";
 import {
   buildDisplayUnits,
@@ -23,6 +24,7 @@ import { FooterNav } from "./components/FooterNav";
 import { DiffSearch } from "./components/DiffSearch";
 import { ConnectGitHubModal } from "./components/ConnectGitHubModal";
 import { confirm, ConfirmationHost, useConfirmationOpen } from "@extension/lib/confirmation";
+import { GeneratePromptModal } from "./components/GeneratePromptModal";
 import { SubmitReviewModal } from "./components/SubmitReviewModal";
 import { ReviewSubmittedModal } from "./components/ReviewSubmittedModal";
 import { BUILD_PLAN_PRIMARY, buildPhaseDetail } from "./overlayCopy";
@@ -106,6 +108,8 @@ export function Overlay({
   const clearDraftComments = useReviewStore((s) => s.clearDraftComments);
   const overlayRef = useRef<HTMLDivElement>(null);
   const submitModalDialogRef = useRef<HTMLDivElement>(null);
+  const generatePromptDialogRef = useRef<HTMLDivElement>(null);
+  const generatePromptCopyActionRef = useRef<(() => void) | null>(null);
   const codeColRef = useRef<HTMLElement>(null);
   const contextPaneRef = useRef<HTMLDivElement>(null);
   /** Element focused before the overlay opened (for restore if start button gone). */
@@ -116,6 +120,8 @@ export function Overlay({
   const confirmationOpen = useConfirmationOpen();
   const titleId = useId();
 
+  const [generatePromptOpen, setGeneratePromptOpen] = useState(false);
+  const [generatedPrompt, setGeneratedPrompt] = useState("");
   const [diffSearchOpen, setDiffSearchOpen] = useState(false);
   /** Bumped on each ⌘F so DiffSearch re-focuses even when already open. */
   const [diffSearchFocusId, setDiffSearchFocusId] = useState(0);
@@ -149,6 +155,32 @@ export function Overlay({
 
   function clearSearchScrollTarget() {
     setSearchScrollTarget(null);
+  }
+
+  function openGeneratePrompt() {
+    if (draftComments.length === 0) return;
+    const prompt = formatAgentPrompt(
+      draftComments.map((draft) => ({
+        filePath: draft.filePath,
+        startLine: draft.startLine,
+        endLine: draft.endLine,
+        body: draft.body,
+        unitId: draft.unitId,
+        selectedCode: draft.selectedCode,
+      })),
+    );
+    if (!prompt) return;
+    setGeneratedPrompt(prompt);
+    setGeneratePromptOpen(true);
+  }
+
+  function closeGeneratePrompt() {
+    setGeneratePromptOpen(false);
+    requestAnimationFrame(() => {
+      overlayRef.current
+        ?.querySelector<HTMLElement>('[data-testid="submit-review-button"]')
+        ?.focus();
+    });
   }
 
   function handleExit() {
@@ -196,6 +228,14 @@ export function Overlay({
     handleExit,
     overlayRef,
   });
+
+  function handlePrimaryReviewAction() {
+    if (host.exportNotes) {
+      openGeneratePrompt();
+      return;
+    }
+    void requestOpenSubmitReview();
+  }
 
   useEffect(() => {
     if (status === "ready") void persistSession();
@@ -284,19 +324,23 @@ export function Overlay({
     suspended: inert,
     overlayRef,
     submitModalDialogRef,
+    generatePromptDialogRef,
     codeColRef,
     viewChordRef,
     selectableForUnit,
     currentUnitId,
     submitReviewOpen,
+    generatePromptOpen,
     connectGitHubOpen,
     submitSuccess,
     submitReviewActionRef,
     submitReviewKeyRef,
+    generatePromptCopyActionRef,
     connectGitHubActionRef,
     exitAfterSubmit,
-    requestOpenSubmitReview,
+    requestOpenSubmitReview: handlePrimaryReviewAction,
     closeSubmitReviewModal,
+    closeGeneratePrompt,
     setConnectGitHubOpen: closeConnectGitHubModal,
     confirmationOpen,
     requestExit,
@@ -359,13 +403,7 @@ export function Overlay({
         localDiff={localDiff}
         scopeSelectRef={scopeSelectRef}
         notesCount={draftComments.length}
-        onSubmitReview={() => {
-          if (host.exportNotes) {
-            void host.exportNotes(draftComments);
-            return;
-          }
-          void requestOpenSubmitReview();
-        }}
+        onSubmitReview={handlePrimaryReviewAction}
       />
 
       <div className="flex min-h-0 flex-1">
@@ -455,6 +493,14 @@ export function Overlay({
         onClose={closeConnectGitHubModal}
         onAuthenticated={openSubmitReviewModalAfterAuth}
         connectActionRef={connectGitHubActionRef}
+      />
+
+      <GeneratePromptModal
+        open={generatePromptOpen}
+        prompt={generatedPrompt}
+        onClose={closeGeneratePrompt}
+        copyActionRef={generatePromptCopyActionRef}
+        dialogRef={generatePromptDialogRef}
       />
 
       <SubmitReviewModal

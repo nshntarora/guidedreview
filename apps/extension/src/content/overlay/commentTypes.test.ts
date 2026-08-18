@@ -15,6 +15,7 @@ function line(
     side: "RIGHT",
     type: "add",
     newLine: partial.lineIndex + 1,
+    content: "",
     ...partial,
   };
 }

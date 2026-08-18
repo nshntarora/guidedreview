@@ -56,6 +56,10 @@ export interface ReviewHost {
   fileDiffUrl?(filePath: string, context: ReviewContext): Promise<string | null>;
   fileLineUrl?(filePath: string, line: number, context: ReviewContext): Promise<string | null>;
   submit?: ReviewHostSubmit;
+  /**
+   * When set (and `submit` is absent), the overlay primary action is Generate
+   * Prompt. The callback is a capability flag — Overlay formats and copies.
+   */
   exportNotes?: (drafts: DraftComment[]) => void | Promise<void>;
 }
 

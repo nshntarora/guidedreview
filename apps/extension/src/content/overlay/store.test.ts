@@ -72,6 +72,7 @@ function selectableFixture(count = 3) {
     side: "RIGHT" as const,
     newLine: i + 1,
     type: "add" as const,
+    content: `line ${i + 1}`,
   }));
 }
 
@@ -584,6 +585,7 @@ describe("useReviewStore", () => {
           side: "LEFT" as const,
           oldLine: 1,
           type: "del" as const,
+          content: "old a",
         },
         {
           id: "f#0:1:RIGHT",
@@ -593,6 +595,7 @@ describe("useReviewStore", () => {
           side: "RIGHT" as const,
           newLine: 1,
           type: "add" as const,
+          content: "new a",
         },
         {
           id: "f#0:2:LEFT",
@@ -602,6 +605,7 @@ describe("useReviewStore", () => {
           side: "LEFT" as const,
           oldLine: 2,
           type: "del" as const,
+          content: "old b",
         },
       ];
       useReviewStore.getState().enterCommentMode(lines);
@@ -633,6 +637,7 @@ describe("useReviewStore", () => {
         side: "RIGHT",
         startLine: 1,
         endLine: 2,
+        selectedCode: "line 1\nline 2",
         unitId: "u0",
       });
       expect(useReviewStore.getState().composerOpen).toBe(false);
@@ -684,6 +689,7 @@ describe("useReviewStore", () => {
           side: "LEFT" as const,
           oldLine: 1,
           type: "del" as const,
+          content: "old",
         },
         {
           id: "f#0:1:RIGHT",
@@ -693,6 +699,7 @@ describe("useReviewStore", () => {
           side: "RIGHT" as const,
           newLine: 1,
           type: "add" as const,
+          content: "new 1",
         },
         {
           id: "f#0:2:RIGHT",
@@ -702,6 +709,7 @@ describe("useReviewStore", () => {
           side: "RIGHT" as const,
           newLine: 2,
           type: "add" as const,
+          content: "new 2",
         },
       ];
       useReviewStore.getState().enterCommentMode(bothSides);

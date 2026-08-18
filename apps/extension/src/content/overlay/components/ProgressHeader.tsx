@@ -25,9 +25,9 @@ interface ProgressHeaderProps {
   onExit: () => void;
   /** When false, hide Exit (local CLI — the process owns the window). */
   allowExit?: boolean;
-  /** Opens the Submit Review modal or copies local notes. */
+  /** Opens the Submit Review modal or Generate Prompt (local). */
   onSubmitReview: () => void;
-  /** When set, the primary action is copy-notes (no GitHub submit). */
+  /** When set, the primary action is generate-prompt (no GitHub submit). */
   notesCount?: number;
   localDiff?: LocalDiffControls;
   scopeSelectRef?: Ref<SelectHandle | null>;
@@ -236,7 +236,7 @@ export function ProgressHeader({
             disabled={primaryDisabled}
             data-testid="submit-review-button"
           >
-            {primaryIsExport ? "Copy notes" : "Submit Review"}
+            {primaryIsExport ? "Generate Prompt" : "Submit Review"}
             <ModEnterChord />
           </button>
           {isLocal && (
