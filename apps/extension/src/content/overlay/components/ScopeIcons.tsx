@@ -9,12 +9,20 @@ import { isCommitScopeId, type LocalDiffScopeOption } from "../localReview";
  * added/removed lines. Dashed stroke means "not in the index."
  */
 
-const SURFACE = "fill-[var(--color-surface-raised)] stroke-[var(--color-border)]";
-const INSET = "fill-[var(--color-background)] stroke-[var(--color-border)]";
+/**
+ * These sit on `surface-raised` (the trigger) and `background` (the menu).
+ * Surface-ladder fills vanish there, so panels are a lifted mix of the
+ * muted surface plus a faint/strong stroke that actually reads at 20px.
+ */
+const SURFACE =
+  "fill-[color-mix(in_srgb,var(--color-foreground)_16%,var(--color-surface-muted))] stroke-[var(--color-faint)]";
+const INSET =
+  "fill-[color-mix(in_srgb,var(--color-foreground)_8%,var(--color-surface-muted))] stroke-[var(--color-faint)]";
 const ACCENT_WASH =
-  "fill-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] stroke-[var(--color-primary)]";
-const ADD_WASH = "fill-[color-mix(in_srgb,var(--color-success)_20%,transparent)]";
-const DEL_WASH = "fill-[color-mix(in_srgb,var(--color-danger)_16%,transparent)]";
+  "fill-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] stroke-[var(--color-primary)]";
+const ADD_WASH = "fill-[color-mix(in_srgb,var(--color-success)_32%,transparent)]";
+const DEL_WASH = "fill-[color-mix(in_srgb,var(--color-danger)_28%,transparent)]";
+const BAR = "fill-[var(--color-faint)]";
 
 type Kind = "branch" | "uncommitted" | "staged" | "unstaged" | "commit";
 
@@ -95,15 +103,7 @@ function BranchIcon(props: SVGProps<SVGSVGElement>) {
         className={SURFACE}
         strokeWidth="1.2"
       />
-      <rect
-        x="4.25"
-        y="9.1"
-        width="7.5"
-        height="1.8"
-        rx="0.9"
-        className="fill-[var(--color-muted)]"
-        opacity="0.45"
-      />
+      <rect x="4.25" y="9.1" width="7.5" height="1.8" rx="0.9" className={BAR} opacity="0.85" />
       <rect
         x="2.25"
         y="13.25"
@@ -113,15 +113,7 @@ function BranchIcon(props: SVGProps<SVGSVGElement>) {
         className={INSET}
         strokeWidth="1.2"
       />
-      <rect
-        x="4.25"
-        y="14.95"
-        width="6"
-        height="1.8"
-        rx="0.9"
-        className="fill-[var(--color-muted)]"
-        opacity="0.3"
-      />
+      <rect x="4.25" y="14.95" width="6" height="1.8" rx="0.9" className={BAR} opacity="0.65" />
     </svg>
   );
 }
@@ -150,15 +142,7 @@ function UncommittedIcon(props: SVGProps<SVGSVGElement>) {
         className="fill-[var(--color-success)]"
         opacity="0.85"
       />
-      <rect
-        x="4.15"
-        y="9.2"
-        width="10.5"
-        height="1.55"
-        rx="0.75"
-        className="fill-[var(--color-muted)]"
-        opacity="0.35"
-      />
+      <rect x="4.15" y="9.2" width="10.5" height="1.55" rx="0.75" className={BAR} opacity="0.8" />
       <rect x="3" y="12.5" width="14" height="4.1" rx="1.2" className={DEL_WASH} />
       <Minus x={4.15} y={14.55} />
       <rect
@@ -285,24 +269,8 @@ function CommitIcon(props: SVGProps<SVGSVGElement>) {
         className="fill-[var(--color-primary)]"
         opacity="0.9"
       />
-      <rect
-        x="3.5"
-        y="10.85"
-        width="12.4"
-        height="2"
-        rx="1"
-        className="fill-[var(--color-foreground)]"
-        opacity="0.55"
-      />
-      <rect
-        x="3.5"
-        y="14"
-        width="8.25"
-        height="1.55"
-        rx="0.75"
-        className="fill-[var(--color-muted)]"
-        opacity="0.35"
-      />
+      <rect x="3.5" y="10.85" width="12.4" height="2" rx="1" className={BAR} />
+      <rect x="3.5" y="14" width="8.25" height="1.55" rx="0.75" className={BAR} opacity="0.7" />
     </svg>
   );
 }
