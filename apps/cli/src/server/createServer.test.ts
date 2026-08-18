@@ -184,6 +184,68 @@ describe("createReviewServer", () => {
     );
   });
 
+  it("reports a changed working tree without swapping the snapshot until session reload", async () => {
+    const root = await mkdir(path.join(os.tmpdir(), `gr-hash-${Date.now()}`), { recursive: true });
+    const cwd = root!;
+    const git = (args: string[]) => execFileAsync("git", args, { cwd });
+    await git(["init", "-b", "main"]);
+    await git(["config", "user.email", "test@example.com"]);
+    await git(["config", "user.name", "Test"]);
+    await writeFile(path.join(cwd, "readme.md"), "hello\n");
+    await git(["add", "readme.md"]);
+    await git(["commit", "-m", "initial"]);
+    await git(["checkout", "-b", "feat"]);
+    await writeFile(path.join(cwd, "feat.ts"), "export const n = 1;\n");
+    await git(["add", "feat.ts"]);
+    await git(["commit", "-m", "add feat"]);
+
+    const live = await buildLocalReview({ cwd, scope: "branch" });
+    const server = createReviewServer({
+      snapshot: live,
+      settings: { provider: "anthropic", model: "claude-opus-4-8", apiKey: "" },
+      token: "secret",
+    });
+    const port = await listen(server);
+    const base = `http://127.0.0.1:${port}`;
+
+    const before = await fetch(`${base}/api/diff-status?token=secret`).then(
+      (r) => r.json() as Promise<{ changed: boolean; hash: string }>,
+    );
+    expect(before.changed).toBe(false);
+
+    await writeFile(path.join(cwd, "feat.ts"), "export const n = 2;\n");
+    await git(["add", "feat.ts"]);
+    await git(["commit", "-m", "edit feat"]);
+
+    const status = await fetch(`${base}/api/diff-status?token=secret`).then(
+      (r) => r.json() as Promise<{ changed: boolean; hash: string }>,
+    );
+    expect(status.changed).toBe(true);
+    expect(status.hash).not.toBe(before.hash);
+
+    const plan = await fetch(`${base}/api/plan?token=secret`).then((r) => r.text());
+    expect(plan).toContain("no_api_key");
+
+    const reloaded = await fetch(`${base}/api/session?token=secret`).then(
+      (r) => r.json() as Promise<ReviewSessionPayload>,
+    );
+    expect(reloaded.diffHash).toBe(status.hash);
+    expect(
+      reloaded.diff.files.some((file) =>
+        file.hunks.some((h) => h.lines.some((line) => line.content.includes("n = 2"))),
+      ),
+    ).toBe(true);
+
+    const after = await fetch(`${base}/api/diff-status?token=secret`).then(
+      (r) => r.json() as Promise<{ changed: boolean }>,
+    );
+    expect(after.changed).toBe(false);
+
+    await new Promise<void>((resolve, reject) =>
+      server.close((err) => (err ? reject(err) : resolve())),
+    );
+  });
+
   it("shuts down once under repeated signals without stacking close listeners", async () => {
     const server = createReviewServer({
       snapshot,
@@ -339,6 +401,221 @@ describe("createReviewServer", () => {
         body: "{",
       });
       expect(res.status).toBe(400);
+      await new Promise<void>((resolve, reject) =>
+        server.close((err) => (err ? reject(err) : resolve())),
+      );
+    });
+
+    it("switches to a detected coding agent and drops the stored key", async () => {
+      const dir = await withTempConfig();
+      await writeFile(
+        path.join(dir, "config.json"),
+        JSON.stringify({ provider: "openai", apiKey: "sk-old" }),
+        "utf8",
+      );
+      const server = createReviewServer({
+        snapshot,
+        settings: { provider: "openai", model: "gpt-4.1", apiKey: "sk-old" },
+        token: "secret",
+        detectAgents: async () => [
+          {
+            id: "codex",
+            displayName: "Codex",
+            provider: "openai",
+            auth: {
+              provider: "openai",
+              secret: "sk-agent-secret",
+              kind: "api_key",
+              usableForReview: true,
+              model: "gpt-5",
+            },
+          },
+        ],
+      });
+      const port = await listen(server);
+      const saved = await fetch(`http://127.0.0.1:${port}/api/settings?token=secret`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ codingAgent: "codex" }),
+      }).then(
+        (r) =>
+          r.json() as Promise<{
+            codingAgent: string | null;
+            last4: string | null;
+            hasKey: boolean;
+          }>,
+      );
+      expect(saved.codingAgent).toBe("codex");
+      expect(saved.hasKey).toBe(true);
+      expect(saved.last4).toBe("cret");
+
+      const file = JSON.parse(await readFile(configPath(), "utf8")) as {
+        apiKey?: string;
+        codingAgent?: string;
+      };
+      expect(file.codingAgent).toBe("codex");
+      expect(file.apiKey).toBeUndefined();
+
+      await new Promise<void>((resolve, reject) =>
+        server.close((err) => (err ? reject(err) : resolve())),
+      );
+    });
+
+    it("rejects an unknown coding agent", async () => {
+      const server = createReviewServer({
+        snapshot,
+        settings: { provider: "anthropic", model: "claude-opus-4-8", apiKey: "" },
+        token: "secret",
+        detectAgents: async () => [],
+      });
+      const port = await listen(server);
+      const res = await fetch(`http://127.0.0.1:${port}/api/settings?token=secret`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ codingAgent: "codex" }),
+      });
+      expect(res.status).toBe(400);
+      await new Promise<void>((resolve, reject) =>
+        server.close((err) => (err ? reject(err) : resolve())),
+      );
+    });
+  });
+
+  describe("GET /api/agents", () => {
+    it("returns detected agents without secrets", async () => {
+      const server = createReviewServer({
+        snapshot,
+        settings: { provider: "anthropic", model: "claude-opus-4-8", apiKey: "" },
+        token: "secret",
+        detectAgents: async () => [
+          {
+            id: "claude-code",
+            displayName: "Claude Code",
+            provider: "anthropic",
+            auth: {
+              provider: "anthropic",
+              secret: "sk-ant-oat01-live",
+              kind: "oauth",
+              usableForReview: true,
+            },
+          },
+        ],
+      });
+      const port = await listen(server);
+      const denied = await fetch(`http://127.0.0.1:${port}/api/agents`);
+      expect(denied.status).toBe(401);
+
+      const body = await fetch(`http://127.0.0.1:${port}/api/agents?token=secret`).then(
+        (r) =>
+          r.json() as Promise<{
+            agents: { id: string; displayName: string; usable: boolean }[];
+          }>,
+      );
+      expect(body.agents).toEqual([
+        {
+          id: "claude-code",
+          displayName: "Claude Code",
+          provider: "anthropic",
+          installed: true,
+          usable: true,
+          reason: null,
+        },
+        {
+          id: "codex",
+          displayName: "Codex",
+          provider: "openai",
+          installed: false,
+          usable: false,
+          reason: "Codex is not installed.",
+        },
+        {
+          id: "grok",
+          displayName: "Grok",
+          provider: "grok",
+          installed: false,
+          usable: false,
+          reason: "Grok is not installed.",
+        },
+      ]);
+      expect(JSON.stringify(body)).not.toContain("sk-ant");
+
+      await new Promise<void>((resolve, reject) =>
+        server.close((err) => (err ? reject(err) : resolve())),
+      );
+    });
+  });
+
+  describe("POST /api/settings/test", () => {
+    const prevConfigDir = process.env.GUIDED_REVIEW_CONFIG_DIR;
+
+    afterEach(() => {
+      if (prevConfigDir === undefined) delete process.env.GUIDED_REVIEW_CONFIG_DIR;
+      else process.env.GUIDED_REVIEW_CONFIG_DIR = prevConfigDir;
+    });
+
+    it("rejects a missing token", async () => {
+      const server = createReviewServer({
+        snapshot,
+        settings: { provider: "anthropic", model: "claude-opus-4-8", apiKey: "sk-x" },
+        token: "secret",
+        testConnection: async () => undefined,
+      });
+      const port = await listen(server);
+      const res = await fetch(`http://127.0.0.1:${port}/api/settings/test`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      expect(res.status).toBe(401);
+      await new Promise<void>((resolve, reject) =>
+        server.close((err) => (err ? reject(err) : resolve())),
+      );
+    });
+
+    it("returns ok when the probe succeeds", async () => {
+      const dir = await mkdir(path.join(os.tmpdir(), `gr-cfg-${Date.now()}`), { recursive: true });
+      process.env.GUIDED_REVIEW_CONFIG_DIR = dir!;
+      const calls: string[] = [];
+      const server = createReviewServer({
+        snapshot,
+        settings: { provider: "anthropic", model: "claude-opus-4-8", apiKey: "sk-old" },
+        token: "secret",
+        testConnection: async (next) => {
+          calls.push(next.apiKey);
+        },
+      });
+      const port = await listen(server);
+      const body = await fetch(`http://127.0.0.1:${port}/api/settings/test?token=secret`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ provider: "openai", model: "gpt-4.1", apiKey: "sk-new" }),
+      }).then((r) => r.json() as Promise<{ ok: boolean }>);
+      expect(body).toEqual({ ok: true });
+      expect(calls).toEqual(["sk-new"]);
+      await new Promise<void>((resolve, reject) =>
+        server.close((err) => (err ? reject(err) : resolve())),
+      );
+    });
+
+    it("returns a user-facing error when the probe fails", async () => {
+      const dir = await mkdir(path.join(os.tmpdir(), `gr-cfg-${Date.now()}`), { recursive: true });
+      process.env.GUIDED_REVIEW_CONFIG_DIR = dir!;
+      const server = createReviewServer({
+        snapshot,
+        settings: { provider: "anthropic", model: "claude-opus-4-8", apiKey: "sk-bad" },
+        token: "secret",
+        testConnection: async () => {
+          throw new Error("Invalid API key");
+        },
+      });
+      const port = await listen(server);
+      const res = await fetch(`http://127.0.0.1:${port}/api/settings/test?token=secret`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ ok: false, error: "Invalid API key" });
       await new Promise<void>((resolve, reject) =>
         server.close((err) => (err ? reject(err) : resolve())),
       );

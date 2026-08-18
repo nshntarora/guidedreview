@@ -9,5 +9,5 @@ export {
   settingsFromAuth,
   formatUnusable,
 } from "./registry";
-export { CODING_AGENT_IDS, isCodingAgentId } from "./types";
+export { CODING_AGENT_IDS, agentIdForProvider, isCodingAgentId } from "./types";
 export type { AgentAuth, AgentIo, CodingAgentAdapter, CodingAgentId, DetectedAgent } from "./types";

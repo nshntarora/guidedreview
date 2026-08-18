@@ -3,12 +3,16 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  applyDetectedAgent,
   applyProviderSettings,
   ConfigError,
+  publicAgents,
+  publicSettings,
   readConfigFile,
   resolveSettings,
   writeConfigFile,
 } from "./config";
+import type { DetectedAgent } from "./codingAgents";
 import { createMemoryIo } from "./codingAgents";
 
 const ENV_KEYS = [
@@ -168,5 +172,101 @@ describe("applyProviderSettings", () => {
     expect(next.settings.apiKey).toBe("sk-user");
     expect(next.codingAgent).toBeNull();
     expect(next.persist).toMatchObject({ apiKey: "sk-user", codingAgent: null });
+  });
+});
+
+describe("applyDetectedAgent", () => {
+  const agent: DetectedAgent = {
+    id: "codex",
+    displayName: "Codex",
+    provider: "openai",
+    auth: {
+      provider: "openai",
+      secret: "sk-agent-secret",
+      kind: "api_key",
+      usableForReview: true,
+      model: "gpt-5",
+    },
+  };
+
+  it("applies agent auth and persists the preference, not the secret", () => {
+    const next = applyDetectedAgent(agent);
+    expect(next.codingAgent).toBe("codex");
+    expect(next.settings.apiKey).toBe("sk-agent-secret");
+    expect(next.settings.provider).toBe("openai");
+    expect(next.persist).toEqual({
+      provider: "openai",
+      model: next.settings.model,
+      codingAgent: "codex",
+      apiKey: null,
+    });
+    expect(next.persist.apiKey).toBeNull();
+  });
+
+  it("rejects an agent with no usable key", () => {
+    expect(() =>
+      applyDetectedAgent({
+        ...agent,
+        auth: { ...agent.auth, usableForReview: false, reason: "Codex has no usable key." },
+      }),
+    ).toThrow(ConfigError);
+  });
+});
+
+describe("publicSettings / publicAgents", () => {
+  it("includes the config path and never exposes the secret", async () => {
+    const dir = await withTempConfig();
+    const published = publicSettings(
+      { provider: "openai", model: "gpt-4.1", apiKey: "sk-secretkey" },
+      "codex",
+    );
+    expect(published.hasKey).toBe(true);
+    expect(published.last4).toBe("tkey");
+    expect(published.codingAgent).toBe("codex");
+    expect(published.configPath).toBe(path.join(dir, "config.json"));
+    expect(JSON.stringify(published)).not.toContain("sk-secret-key");
+  });
+
+  it("lists detected agents without secrets", () => {
+    const listed = publicAgents([
+      {
+        id: "claude-code",
+        displayName: "Claude Code",
+        provider: "anthropic",
+        auth: {
+          provider: "anthropic",
+          secret: "sk-ant-oat01-live",
+          kind: "oauth",
+          usableForReview: true,
+        },
+      },
+    ]);
+    expect(listed).toEqual([
+      {
+        id: "claude-code",
+        displayName: "Claude Code",
+        provider: "anthropic",
+        installed: true,
+        usable: true,
+        reason: null,
+      },
+      {
+        id: "codex",
+        displayName: "Codex",
+        provider: "openai",
+        installed: false,
+        usable: false,
+        reason: "Codex is not installed.",
+      },
+      {
+        id: "grok",
+        displayName: "Grok",
+        provider: "grok",
+        installed: false,
+        usable: false,
+        reason: "Grok is not installed.",
+      },
+    ]);
+    expect(JSON.stringify(listed)).not.toContain("sk-ant");
   });
 });

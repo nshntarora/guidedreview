@@ -392,9 +392,17 @@ async function buildScopes(
   return scopes;
 }
 
+export function hashDiff(raw: string): string {
+  return createHash("sha256").update(raw).digest("hex");
+}
+
+export async function currentDiffHash(repo: LocalRepoState, scope: DiffScopeId): Promise<string> {
+  const untracked = repo.includeUntracked && !repo.staged ? await listUntracked(repo.repoRoot) : [];
+  return hashDiff(await rawDiffForScope(repo, scope, untracked));
+}
+
 function sessionKeyFor(repo: LocalRepoState, scope: DiffScopeId, raw: string): string {
-  const fingerprint = createHash("sha256").update(raw).digest("hex").slice(0, 12);
-  return `${path.basename(repo.repoRoot)}:${repo.baseRef}:${repo.headRef}:${scope}:${fingerprint}`;
+  return `${path.basename(repo.repoRoot)}:${repo.baseRef}:${repo.headRef}:${scope}:${hashDiff(raw).slice(0, 12)}`;
 }
 
 function contextFor(
