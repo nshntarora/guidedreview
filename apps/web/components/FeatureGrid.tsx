@@ -1,4 +1,5 @@
 import type { ComponentType, SVGProps } from "react";
+import { cn } from "@guided-review/ui";
 import { WindowFrame } from "./WindowFrame";
 import {
   ApprovedToolsIllustration,
@@ -94,9 +95,12 @@ function FeatureCard({ feature: f, wide = false }: { feature: Feature; wide?: bo
     <WindowFrame
       label={f.file}
       className="group flex h-full w-full flex-col transition-colors duration-300 hover:border-primary/60"
-      bodyClassName={`flex flex-1 flex-col gap-6 ${wide ? "md:flex-row md:items-center md:gap-10" : ""}`}
+      bodyClassName={cn(
+        "flex flex-1 flex-col gap-6",
+        wide && "md:flex-row md:items-center md:gap-10",
+      )}
     >
-      <div className={`flex flex-col ${wide ? "md:flex-1" : ""}`}>
+      <div className={cn("flex flex-col", wide && "md:flex-1")}>
         <h3 className="m-0 text-xl font-semibold tracking-tight sm:text-2xl">{f.title}</h3>
         <div className="mt-3 space-y-3 text-base leading-relaxed text-muted sm:text-lg">
           {f.body.map((paragraph) => (
@@ -111,9 +115,10 @@ function FeatureCard({ feature: f, wide = false }: { feature: Feature; wide?: bo
       </div>
 
       <div
-        className={`flex items-center justify-center rounded-lg bg-background/60 p-6 ${
-          wide ? "md:w-[min(46%,26rem)]" : "mt-auto"
-        }`}
+        className={cn(
+          "flex items-center justify-center rounded-lg bg-background/60 p-6",
+          wide ? "md:w-[min(46%,26rem)]" : "mt-auto",
+        )}
       >
         <f.Illustration className="h-auto w-full max-w-[360px]" />
       </div>

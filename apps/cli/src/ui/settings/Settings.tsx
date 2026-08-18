@@ -32,7 +32,7 @@ function ProviderIcon({ provider, size = 16, className }: ProviderIconProps) {
       height={size}
       draggable={false}
       aria-hidden="true"
-      className={`shrink-0 object-contain ${provider === "openai" ? "invert" : ""} ${className ?? ""}`}
+      className={cn("shrink-0 object-contain", provider === "openai" && "invert", className)}
       style={{ width: size, height: size }}
     />
   );
@@ -66,6 +66,78 @@ function OptionRow({ icon, label }: { icon: ProviderId; label: string }) {
       <ProviderIcon provider={icon} size={16} />
       <span className="truncate">{label}</span>
     </span>
+  );
+}
+
+function SubscriptionFields({ agent }: { agent: PublicAgent | undefined }) {
+  return (
+    <div className="flex flex-col gap-4" data-testid="subscription-help">
+      <p
+        role="note"
+        className="m-0 flex items-start gap-2.5 rounded-md border px-3 py-2 text-sm leading-relaxed text-foreground border-[color-mix(in_srgb,var(--color-warning)_45%,var(--color-border))] bg-[color-mix(in_srgb,var(--color-warning)_12%,var(--color-background))]"
+      >
+        <WarningIcon className="text-warning" />
+        <span>
+          This is unofficial and can break when the agent rotates a token, logs out, or stores a
+          session that the provider API will not accept (Codex ChatGPT logins do not work). A
+          console API key is the better option if you want the same review tomorrow.
+        </span>
+      </p>
+      {agent && (
+        <p
+          role="status"
+          data-testid="subscription-status"
+          className={cn(
+            "m-0 flex items-center gap-2.5 rounded-md border px-3 py-2.5 text-base font-semibold",
+            agent.usable
+              ? "border-[color-mix(in_srgb,var(--color-success)_35%,var(--color-border))] bg-[color-mix(in_srgb,var(--color-success)_10%,var(--color-surface-raised))] text-foreground"
+              : "border-[color-mix(in_srgb,var(--color-danger)_35%,var(--color-border))] bg-[color-mix(in_srgb,var(--color-danger)_10%,var(--color-surface-raised))] text-foreground",
+          )}
+        >
+          <ProviderIcon provider={agent.provider} size={20} />
+          <span>{agent.usable ? `${agent.displayName} is signed in.` : agent.reason}</span>
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ApiKeyField({
+  apiKey,
+  last4,
+  keyPlaceholder,
+  configPath,
+  busy,
+  onChange,
+}: {
+  apiKey: string;
+  last4: string | null;
+  keyPlaceholder: string;
+  configPath: string;
+  busy: boolean;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <Label htmlFor="apiKey">API Key</Label>
+      <Input
+        id="apiKey"
+        type="password"
+        autoComplete="off"
+        placeholder={last4 ? `Key ending in ···${last4}. Leave blank to keep it.` : keyPlaceholder}
+        value={apiKey}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={busy}
+        aria-describedby="apiKey-hint"
+      />
+      <p id="apiKey-hint" className="mt-1.5 m-0 text-sm text-muted">
+        Stored on this machine in{" "}
+        <code className="rounded bg-background/80 px-1 py-0.5 font-mono text-sm text-foreground">
+          {configPath}
+        </code>{" "}
+        — never sent to Guided Review. A saved key always wins over a subscription.
+      </p>
+    </div>
   );
 }
 
@@ -391,68 +463,20 @@ export function Settings({ token, onSaved, onDirtyChange }: SettingsProps) {
             </div>
 
             {useSubscription ? (
-              <div className="flex flex-col gap-4" data-testid="subscription-help">
-                <p
-                  role="note"
-                  className="m-0 flex items-start gap-2.5 rounded-md border px-3 py-2 text-sm leading-relaxed text-foreground border-[color-mix(in_srgb,#d4a72c_45%,var(--color-border))] bg-[color-mix(in_srgb,#d4a72c_12%,var(--color-background))]"
-                >
-                  <WarningIcon className="text-[#d4a72c]" />
-                  <span>
-                    This is unofficial and can break when the agent rotates a token, logs out, or
-                    stores a session that the provider API will not accept (Codex ChatGPT logins do
-                    not work). A console API key is the better option if you want the same review
-                    tomorrow.
-                  </span>
-                </p>
-                {subscriptionAgent && (
-                  <p
-                    role="status"
-                    data-testid="subscription-status"
-                    className={cn(
-                      "m-0 flex items-center gap-2.5 rounded-md border px-3 py-2.5 text-base font-semibold",
-                      subscriptionAgent.usable
-                        ? "border-[color-mix(in_srgb,var(--color-success)_35%,var(--color-border))] bg-[color-mix(in_srgb,var(--color-success)_10%,var(--color-surface-raised))] text-foreground"
-                        : "border-[color-mix(in_srgb,var(--color-danger)_35%,var(--color-border))] bg-[color-mix(in_srgb,var(--color-danger)_10%,var(--color-surface-raised))] text-foreground",
-                    )}
-                  >
-                    <ProviderIcon provider={subscriptionAgent.provider} size={20} />
-                    <span>
-                      {subscriptionAgent.usable
-                        ? `${subscriptionAgent.displayName} is signed in.`
-                        : subscriptionAgent.reason}
-                    </span>
-                  </p>
-                )}
-              </div>
+              <SubscriptionFields agent={subscriptionAgent} />
             ) : (
-              <div>
-                <Label htmlFor="apiKey">API Key</Label>
-                <Input
-                  id="apiKey"
-                  type="password"
-                  autoComplete="off"
-                  placeholder={
-                    last4 && !useSubscription
-                      ? `Key ending in ···${last4}. Leave blank to keep it.`
-                      : providerDef.keyPlaceholder
-                  }
-                  value={apiKey}
-                  onChange={(e) => {
-                    setApiKey(e.target.value);
-                    setSaveStatus({ kind: "idle" });
-                    setConnection({ kind: "idle" });
-                  }}
-                  disabled={busy}
-                  aria-describedby="apiKey-hint"
-                />
-                <p id="apiKey-hint" className="mt-1.5 m-0 text-sm text-muted">
-                  Stored on this machine in{" "}
-                  <code className="rounded bg-background/80 px-1 py-0.5 font-mono text-sm text-foreground">
-                    {configPath}
-                  </code>{" "}
-                  — never sent to Guided Review. A saved key always wins over a subscription.
-                </p>
-              </div>
+              <ApiKeyField
+                apiKey={apiKey}
+                last4={last4}
+                keyPlaceholder={providerDef.keyPlaceholder}
+                configPath={configPath}
+                busy={busy}
+                onChange={(value) => {
+                  setApiKey(value);
+                  setSaveStatus({ kind: "idle" });
+                  setConnection({ kind: "idle" });
+                }}
+              />
             )}
 
             <div className="flex flex-wrap items-center gap-2.5 pt-1">

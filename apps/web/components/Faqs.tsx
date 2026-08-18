@@ -138,7 +138,7 @@ export function Faqs() {
                     <svg
                       aria-hidden="true"
                       viewBox="0 0 24 24"
-                      className="h-5 w-5 flex-shrink-0 text-muted transition-transform duration-300 group-open:rotate-180"
+                      className="h-5 w-5 shrink-0 text-muted transition-transform duration-300 group-open:rotate-180"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
