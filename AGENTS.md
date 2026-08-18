@@ -24,7 +24,7 @@ Same-directory `./foo` is fine. Cross-folder imports should use the alias.
 
 ## Commands
 
-`npm run dev` · `dev:web` · `dev:cli` · `build` · `build:extension` · `build:cli` · `typecheck` · `test` · `test:e2e` · `lint` · `format`
+`npm run dev` · `dev:web` · `dev:cli` · `build` · `build:extension` · `build:cli` · `typecheck` · `test` · `test:e2e` · `test:e2e:web` · `test:e2e:cli` · `lint` · `format`
 
 After CLI edits: `npm test -w @guided-review/cli`, then `npm run build:cli && npm run review`. Never `npx guided-review` — that hits a different npm package.
 

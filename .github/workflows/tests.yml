@@ -29,6 +29,7 @@ jobs:
       extension: ${{ steps.filter.outputs.extension }}
       ui: ${{ steps.filter.outputs.ui }}
       web: ${{ steps.filter.outputs.web }}
+      cli: ${{ steps.filter.outputs.cli }}
       root: ${{ steps.filter.outputs.root }}
     steps:
       - uses: actions/checkout@v4
@@ -48,6 +49,14 @@ jobs:
               - '.github/workflows/**'
             web:
               - 'apps/web/**'
+              - 'packages/ui/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig.base.json'
+              - '.github/workflows/**'
+            cli:
+              - 'apps/cli/**'
+              - 'packages/core/**'
               - 'packages/ui/**'
               - 'package.json'
               - 'package-lock.json'
@@ -127,7 +136,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     # Path filters apply on both PRs and main — docs-only merges skip unit.
-    if: needs.changes.outputs.extension == 'true' || needs.changes.outputs.ui == 'true' || needs.changes.outputs.root == 'true'
+    if: needs.changes.outputs.extension == 'true' || needs.changes.outputs.ui == 'true' || needs.changes.outputs.cli == 'true' || needs.changes.outputs.root == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -246,4 +255,49 @@ jobs:
           path: |
             apps/web/playwright-report/
             apps/web/test-results/
+          retention-days: 7
+
+  e2e-cli:
+    name: End-to-end tests (CLI UI)
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.cli == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-cli-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium
+        working-directory: apps/cli
+
+      - name: Install Playwright OS dependencies
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install-deps chromium
+        working-directory: apps/cli
+
+      - name: Run CLI UI e2e tests
+        run: npm run test:e2e -w @guided-review/cli
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-cli
+          path: |
+            apps/cli/playwright-report/
+            apps/cli/test-results/
           retention-days: 7
