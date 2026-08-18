@@ -15,11 +15,12 @@
  *  1. Tab trap (confirmation → submit modal → overlay)
  *  2. Modals: confirmation → success → connect-GitHub → submit-review
  *  3. ⌘/Ctrl+F diff search (open or re-focus)
- *  4. Diff search keys while the palette is open
- *  5. Comment composer / any editable (Esc, ⌘Enter save)
- *  6. ⌘/Ctrl+Enter open Submit Review
- *  7. View chords (`v` then `u`/`s`)
- *  8. Comment mode keys, else navigate mode keys (`d` scope picker, ⌘/Ctrl+I structure)
+ *  4. ⌘/Ctrl+, local settings
+ *  5. Diff search keys while the palette is open
+ *  6. Comment composer / any editable (Esc, ⌘Enter save)
+ *  7. ⌘/Ctrl+Enter open Submit Review
+ *  8. View chords (`v` then `u`/`s`)
+ *  9. Comment mode keys, else navigate mode keys (`d` scope picker, ⌘/Ctrl+I structure)
  *
  * Do not redesign this as a generic keyboard framework. The ref pattern exists
  * only because capture ownership and React synthetic handlers cannot both win.
@@ -103,6 +104,8 @@ function editableTextValue(el: HTMLElement): string {
 
 interface UseOverlayKeyboardOptions {
   isOpen: boolean;
+  /** CLI settings (or similar) is on top — leave keys alone. */
+  suspended?: boolean;
   overlayRef: RefObject<HTMLDivElement | null>;
   submitModalDialogRef: RefObject<HTMLDivElement | null>;
   codeColRef: RefObject<HTMLElement | null>;
@@ -135,6 +138,8 @@ interface UseOverlayKeyboardOptions {
   openScopePicker?: () => void;
   /** Local: start Structure with AI when the CTA is still available. */
   structureReview?: () => void;
+  /** Local: open the settings view (⌘/Ctrl+,). */
+  openSettings?: () => void;
 }
 
 /**
@@ -143,6 +148,7 @@ interface UseOverlayKeyboardOptions {
  */
 export function useOverlayKeyboard({
   isOpen,
+  suspended = false,
   overlayRef,
   submitModalDialogRef,
   codeColRef,
@@ -167,6 +173,7 @@ export function useOverlayKeyboard({
   diffSearchKeyRef,
   openScopePicker,
   structureReview,
+  openSettings,
 }: UseOverlayKeyboardOptions): void {
   // Mirror modal flags into refs on every render so the capture listener never
   // sees a stale open state between React commit (modal paints) and this
@@ -198,9 +205,11 @@ export function useOverlayKeyboard({
   openScopePickerRef.current = openScopePicker;
   const structureReviewRef = useRef(structureReview);
   structureReviewRef.current = structureReview;
+  const openSettingsRef = useRef(openSettings);
+  openSettingsRef.current = openSettings;
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || suspended) return;
 
     const SCROLL_STEP = 120;
 
@@ -438,6 +447,12 @@ export function useOverlayKeyboard({
       );
     }
 
+    function isSettingsShortcut(event: KeyboardEvent): boolean {
+      return (
+        (event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key === ","
+      );
+    }
+
     // Capture on window so we run before GitHub's document-level shortcuts.
     // The overlay mounts in an open shadow root; with focus inside it,
     // document.activeElement is the host — GitHub thinks nothing is focused
@@ -477,6 +492,15 @@ export function useOverlayKeyboard({
         event.preventDefault();
         clearViewChord();
         openDiffSearchRef.current();
+        return;
+      }
+
+      // ⌘/Ctrl+,: local settings. Same priority as find so it works from the
+      // composer, comment mode, and the search palette.
+      if (isSettingsShortcut(event) && openSettingsRef.current) {
+        event.preventDefault();
+        clearViewChord();
+        openSettingsRef.current();
         return;
       }
 
@@ -529,6 +553,7 @@ export function useOverlayKeyboard({
     return () => window.removeEventListener("keydown", onKeyDown, true);
   }, [
     isOpen,
+    suspended,
     selectableForUnit,
     currentUnitId,
     // Modal open flags / callbacks are read from refs (updated each render) so

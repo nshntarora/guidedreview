@@ -38,6 +38,11 @@ interface OverlayProps {
   allowExit?: boolean;
   /** CLI-only: scope picker, commit cards, opt-in structure. */
   localDiff?: LocalDiffControls;
+  /**
+   * CLI settings modal is open on top. Overlay stays painted underneath but
+   * ignores pointer/keyboard so the modal can own Esc, Tab, and focus.
+   */
+  inert?: boolean;
 }
 
 /** Polite live-region text for build / error / ready status. */
@@ -72,7 +77,13 @@ function statusAnnouncementText(
   return "";
 }
 
-export function Overlay({ onRequestClose, onRetry, allowExit = true, localDiff }: OverlayProps) {
+export function Overlay({
+  onRequestClose,
+  onRetry,
+  allowExit = true,
+  localDiff,
+  inert = false,
+}: OverlayProps) {
   const host = useReviewHost();
   const isOpen = useReviewStore((s) => s.isOpen);
   const status = useReviewStore((s) => s.status);
@@ -270,6 +281,7 @@ export function Overlay({ onRequestClose, onRetry, allowExit = true, localDiff }
 
   useOverlayKeyboard({
     isOpen,
+    suspended: inert,
     overlayRef,
     submitModalDialogRef,
     codeColRef,
@@ -300,6 +312,7 @@ export function Overlay({ onRequestClose, onRetry, allowExit = true, localDiff }
       localDiff && !localDiff.structured && !localDiff.structuring
         ? localDiff.onStructureReview
         : undefined,
+    openSettings: host.kind === "local" ? () => host.connectProvider() : undefined,
   });
 
   const statusAnnouncement = statusAnnouncementText(
@@ -322,6 +335,7 @@ export function Overlay({ onRequestClose, onRetry, allowExit = true, localDiff }
       aria-modal="true"
       aria-labelledby={titleId}
       tabIndex={-1}
+      inert={inert || undefined}
       className="fixed inset-0 z-[2147483000] flex flex-col bg-surface font-sans text-base text-foreground antialiased outline-none [color-scheme:dark] [text-rendering:optimizeLegibility]"
       data-testid="guided-review-overlay"
     >
@@ -412,6 +426,7 @@ export function Overlay({ onRequestClose, onRetry, allowExit = true, localDiff }
                   localDiff && !localDiff.structured ? localDiff.onStructureReview : undefined
                 }
                 structured={localDiff?.structured}
+                structureWith={localDiff?.structureWith}
               />
             </div>
           </div>
@@ -462,7 +477,7 @@ export function Overlay({ onRequestClose, onRetry, allowExit = true, localDiff }
         onExit={exitAfterSubmit}
       />
 
-      <ConfirmationHost />
+      {!inert && <ConfirmationHost />}
     </div>
   );
 }

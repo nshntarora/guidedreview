@@ -242,6 +242,31 @@ describe("Overlay", () => {
     expect(screen.getAllByText("Change summary").length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText("#1")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^exit$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /settings/i })).toBeInTheDocument();
+  });
+
+  it("opens settings from the local header and hides the control on GitHub", () => {
+    const connectProvider = vi.fn();
+    setActiveReviewHost(
+      createMemoryReviewHost({
+        kind: "local",
+        exportNotes: vi.fn(),
+        submit: undefined,
+        connectProvider,
+      }),
+    );
+    seedReadyReview(0);
+    const { unmount } = render(<Overlay allowExit={false} />);
+    const settings = screen.getByTestId("open-settings");
+    expect(settings).toHaveAttribute("aria-keyshortcuts", "Meta+, Control+,");
+    fireEvent.click(settings);
+    expect(connectProvider).toHaveBeenCalledTimes(1);
+    unmount();
+
+    setActiveReviewHost(createGitHubReviewHost());
+    seedReadyReview(0);
+    render(<Overlay />);
+    expect(screen.queryByTestId("open-settings")).not.toBeInTheDocument();
   });
 
   it("does not exit a local review on Escape, but still leaves comment mode", () => {
@@ -268,6 +293,24 @@ describe("Overlay", () => {
     expect(useReviewStore.getState().isOpen).toBe(true);
   });
 
+  it("ignores overlay shortcuts while inert under the local settings modal", () => {
+    setActiveReviewHost(
+      createMemoryReviewHost({
+        kind: "local",
+        exportNotes: vi.fn(),
+        submit: undefined,
+      }),
+    );
+    seedReadyReview(1);
+    render(<Overlay allowExit={false} inert />);
+
+    expect(screen.getByTestId("guided-review-overlay")).toHaveAttribute("inert");
+    fireEvent.keyDown(window, { key: "c" });
+    expect(useReviewStore.getState().uiMode).toBe("navigate");
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(useReviewStore.getState().uiMode).toBe("navigate");
+  });
+
   it("shows the local scope picker, commit cards, and structure trigger", () => {
     renderLocalOverlay();
 
@@ -292,6 +335,17 @@ describe("Overlay", () => {
     expect(commitOption.querySelector(".text-diff-del")).toHaveTextContent("−0");
   });
 
+  it("shows a stale-diff banner and calls onRefresh", () => {
+    const onRefresh = vi.fn();
+    renderLocalOverlay({ stale: true, onRefresh });
+
+    expect(screen.getByTestId("stale-diff-banner")).toHaveTextContent(
+      "The diff on disk has changed.",
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^refresh$/i }));
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+  });
+
   describe("local review keyboard", () => {
     it("opens the scope picker on d and structures on ⌘/Ctrl+I", () => {
       const { onStructureReview } = renderLocalOverlay();
@@ -309,6 +363,25 @@ describe("Overlay", () => {
       expect(screen.getByRole("listbox")).toBeInTheDocument();
     });
 
+    it("opens settings on ⌘/Ctrl+,", () => {
+      const connectProvider = vi.fn();
+      setActiveReviewHost(
+        createMemoryReviewHost({
+          kind: "local",
+          exportNotes: vi.fn(),
+          submit: undefined,
+          connectProvider,
+        }),
+      );
+      seedReadyReview(0);
+      render(<Overlay allowExit={false} localDiff={localDiffFixture()} />);
+
+      fireEvent.keyDown(window, { key: ",", metaKey: true });
+      expect(connectProvider).toHaveBeenCalledTimes(1);
+      fireEvent.keyDown(window, { key: ",", ctrlKey: true });
+      expect(connectProvider).toHaveBeenCalledTimes(2);
+    });
+
     it("does not structure after the review is already structured", () => {
       const { onStructureReview } = renderLocalOverlay({ structured: true });
 
@@ -318,6 +391,8 @@ describe("Overlay", () => {
     });
 
     it("does not bind local shortcuts on a GitHub review", () => {
+      const connectProvider = vi.fn();
+      setActiveReviewHost(createMemoryReviewHost({ connectProvider }));
       seedReadyReview(0);
       render(<Overlay />);
 
@@ -325,6 +400,8 @@ describe("Overlay", () => {
       fireEvent.keyDown(window, { key: "d" });
       expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
       fireEvent.keyDown(window, { key: "i", metaKey: true });
+      fireEvent.keyDown(window, { key: ",", metaKey: true });
+      expect(connectProvider).not.toHaveBeenCalled();
       expect(useReviewStore.getState().isOpen).toBe(true);
     });
   });
