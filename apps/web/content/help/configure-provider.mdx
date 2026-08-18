@@ -29,12 +29,23 @@ We’ll keep adding more providers — [request one on the repo](https://github.
 
 ## Set your API key
 
+**Chrome extension**
+
 1. Open the extension **Options** page (after [install](/docs/install)).
 2. Choose a provider.
 3. Paste an API key from that provider’s console.
 4. Save.
 
 Keys are stored in `chrome.storage.local` and are only used from the **background service worker** when annotating a review or testing the connection. Content scripts never hold the key for outbound LLM calls.
+
+**Local CLI**
+
+1. Open **Settings** in the local walkthrough (header button, `⌘/Ctrl` + `,`, or **Connect AI Provider** if no key is set).
+2. Choose a provider and model.
+3. Paste an API key from that provider’s console, or turn on **Use my subscription** to reuse Claude Code / Codex / Grok already on this machine.
+4. Save. **Test connection** runs the same probe as the extension.
+
+A saved API key always wins. Subscription is unofficial (tokens expire, move, or look nothing like a console key) — prefer an API key if you want the same review tomorrow. Details and troubleshooting: [Review local changes](/docs/local-review#keys).
 
 ## Pick a model
 
@@ -52,7 +63,7 @@ If a stored model disappears from the catalog, Options falls back to that provid
 
 ## Test connection
 
-Use **Test connection** on the options page. That runs the same provider path as a lightweight health check and surfaces user-safe error messages if the key, model, or network path fails.
+Use **Test connection** on the extension options page or the local Settings page. That runs the same provider path as a lightweight health check and surfaces user-safe error messages if the key, model, or network path fails.
 
 If the test fails, step through [Troubleshooting → Provider and API key](/docs/troubleshooting#provider-and-api-key).
 
@@ -60,18 +71,20 @@ If the test fails, step through [Troubleshooting → Provider and API key](/docs
 
 - **Annotate** — one provider call per [diff chunk](/docs/how-it-works#chunking-large-prs). Small PRs usually cost one call; large ones cost one call per chunk.
 - **Not billed to the model** — stepping units, [searching](/docs/keyboard-shortcuts#diff-search), drafting comments, and [submitting to GitHub](/docs/submit-review).
-- **Test connection** — a cheap health-check request when you run it from Options.
+- **Test connection** — a cheap health-check request when you run it from Options or local Settings.
 
 Token usage and cost are entirely between you and your provider. Guided Review does not meter or resell LLM usage. Short version: [FAQ → Will this run up my API bill?](/docs/faq#will-this-run-up-my-api-bill).
 
 ## Where settings live
 
-| Setting                             | Storage                  | Used by                          |
-| ----------------------------------- | ------------------------ | -------------------------------- |
-| Provider, model, API key            | `chrome.storage.local`   | Background worker                |
-| Automatically open on Files changed | `chrome.storage.local`   | Content script (auto-open)       |
-| Diff view (unified / split)         | `chrome.storage.local`   | Overlay (default: split)         |
-| Active review session               | `chrome.storage.session` | Content overlay (session-scoped) |
+| Setting                             | Storage                                           | Used by                           |
+| ----------------------------------- | ------------------------------------------------- | --------------------------------- |
+| Provider, model, API key            | `chrome.storage.local`                            | Extension background worker       |
+| Provider, model, API key            | `~/.config/guided-review/config.json`             | Local CLI server                  |
+| Coding agent preference             | `config.json` (`codingAgent`)                     | Local CLI (secret stays in agent) |
+| Automatically open on Files changed | `chrome.storage.local`                            | Content script (auto-open)        |
+| Diff view (unified / split)         | `chrome.storage.local` / `localStorage` (CLI)     | Overlay (default: split)          |
+| Active review session               | `chrome.storage.session` / `sessionStorage` (CLI) | Overlay (session-scoped)          |
 
 Session resume behavior: [Your first review → Resume later](/docs/first-review#resume-later) and [Troubleshooting](/docs/troubleshooting#session-and-resume).
 

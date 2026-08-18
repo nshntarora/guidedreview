@@ -45,7 +45,7 @@ Base resolution, in order: `--base` → `origin/HEAD` → `main` → `master`.
 
 If every scope is empty: `Nothing to review against <base>.` and exit 0. Not a git repo: an error that says what failed.
 
-The walkthrough starts one unit per file. **Structure with AI** on the Change summary card is the opt-in LLM call. It groups files and adds context — it does not review for you. Press `d` to open the dropdown, or `⌘/Ctrl` + `I` to structure — same keys as [Keyboard shortcuts](/docs/keyboard-shortcuts#local-review).
+The walkthrough starts one unit per file. **Structure with AI** on the Change summary card is the opt-in LLM call. It groups files and adds context — it does not review for you. Press `d` to open the dropdown, `⌘/Ctrl` + `I` to structure, or `⌘/Ctrl` + `,` for Settings — same keys as [Keyboard shortcuts](/docs/keyboard-shortcuts#local-review).
 
 ## API keys
 
@@ -53,7 +53,9 @@ Same providers as the extension: Anthropic, OpenAI, Grok.
 
 Resolution, in order: `--provider` / `--model` / `--agent` and env (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `XAI_API_KEY` or `GROK_API_KEY`) → a key already saved in `~/.config/guided-review/config.json` → a coding agent already on this machine (Claude Code, Codex, or Grok). If more than one agent has a usable key, the CLI asks which to use each run (Enter keeps the last choice). The chosen agent is shown in the browser UI. It reads the agent's own store at review time and does not copy the secret into Guided Review config.
 
-No key still walks one unit per file. **Structure with AI** asks for a key. The browser UI can save one to that config file.
+No key still walks one unit per file. **Structure with AI** asks for a key.
+
+The local UI has a **Settings** page (header **Settings**, `⌘/Ctrl` + `,`, or **Connect AI Provider** when no key is set). Pick a provider and model, then either paste an API key or turn on **Use my subscription** to borrow Claude Code / Codex / Grok already on this machine. A saved API key always wins. Subscription reads the agent's store at review time and does not copy the secret into Guided Review config — it is unofficial and can break, so a console key is the better option. Save writes `~/.config/guided-review/config.json` (or `$XDG_CONFIG_HOME` / `GUIDED_REVIEW_CONFIG_DIR`). Flags and env still win for that run.
 
 ## Notes
 
