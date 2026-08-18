@@ -75,7 +75,8 @@ body::before {
     transition: border-color 0.15s ease;
   }
 
-  a:not(.inline-flex):hover {
+  a:not(.inline-flex):hover,
+  a[aria-current="page"]:not(.inline-flex) {
     border-bottom-color: currentColor;
   }
 }

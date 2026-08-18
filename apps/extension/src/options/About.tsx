@@ -1,5 +1,6 @@
 const SITE_URL = "https://guidedreview.dev";
 const DOCS_URL = `${SITE_URL}/docs`;
+const LOCAL_REVIEW_URL = `${DOCS_URL}/local-review`;
 const PRIVACY_POLICY_URL = `${SITE_URL}/privacy`;
 const TERMS_URL = `${SITE_URL}/terms`;
 const GITHUB_REPO_URL = "https://github.com/nshntarora/guidedreview";
@@ -16,8 +17,9 @@ const LINKS = [
 ] as const;
 
 /**
- * Minimal product overview — logomark, what it is, how a review works, privacy,
- * and outbound links. Linked from Settings via the options shell nav (`#about`).
+ * Minimal product overview — logomark, what it is, how a review works, the
+ * local CLI, privacy, and outbound links. Linked from Settings via the options
+ * shell nav (`#about`).
  */
 export function About() {
   const version = chrome.runtime.getManifest().version;
@@ -71,6 +73,24 @@ export function About() {
             the code.
           </li>
         </ol>
+      </section>
+
+      <section className="mt-12 text-left" aria-labelledby="about-cli">
+        <h2
+          id="about-cli"
+          className="m-0 font-brand text-lg font-bold tracking-tight text-foreground"
+        >
+          Local review
+        </h2>
+        <p className="mt-4 m-0 text-base leading-relaxed text-muted">
+          Same engine, off GitHub. The{" "}
+          <a href={LOCAL_REVIEW_URL} target="_blank" rel="noopener noreferrer" className={textLink}>
+            CLI
+          </a>{" "}
+          walks a local branch, commit, or working tree — file by file until you click{" "}
+          <strong className="font-semibold text-foreground">Structure with AI</strong>. Notes stay
+          in the session; there is no GitHub submit.
+        </p>
       </section>
 
       <section className="mt-12 text-left" aria-labelledby="about-privacy">
