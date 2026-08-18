@@ -2,7 +2,7 @@ import type { Ref } from "react";
 import type { ParsedDiff } from "@extension/lib/types";
 import type { ReviewContext } from "@guided-review/core";
 import { summarizeDiff } from "@guided-review/core";
-import { Kbd, Select, type SelectHandle } from "@guided-review/ui";
+import { Kbd, Select, type SelectHandle, type SelectOption } from "@guided-review/ui";
 import { useReviewHost } from "../host";
 import {
   isCommitScopeId,
@@ -74,6 +74,101 @@ function ScopeOption({ scope }: { scope: LocalDiffScopeOption }) {
   );
 }
 
+function FileChangeStats({
+  files,
+  additions,
+  deletions,
+}: {
+  files: number;
+  additions: number;
+  deletions: number;
+}) {
+  return (
+    <span>
+      {files} file{files === 1 ? "" : "s"} changed
+      <span className="ml-1 text-diff-add"> +{additions}</span>
+      <span className="ml-1 text-diff-del"> −{deletions}</span>
+    </span>
+  );
+}
+
+function LocalTitleCluster({
+  titleId,
+  title,
+  localDiff,
+  scopeSelectRef,
+  scopeOptions,
+  stats,
+}: {
+  titleId: string;
+  title: string;
+  localDiff?: LocalDiffControls;
+  scopeSelectRef?: Ref<SelectHandle | null>;
+  scopeOptions: SelectOption[];
+  stats: { files: number; additions: number; deletions: number } | null;
+}) {
+  return (
+    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5 text-sm text-muted">
+      <h1 id={titleId} className="gr-sr-only">
+        {title}
+      </h1>
+      {localDiff && scopeOptions.length > 0 && (
+        <Select
+          aria-label="Diff to review"
+          aria-keyshortcuts="d"
+          selectRef={scopeSelectRef}
+          className="w-auto min-w-[10rem] max-w-[16rem]"
+          menuClassName="min-w-[20rem] max-w-[24rem]"
+          value={localDiff.selectedScope}
+          options={scopeOptions}
+          disabled={localDiff.scopeBusy}
+          onChange={localDiff.onSelectScope}
+          trailing={<Kbd>d</Kbd>}
+        />
+      )}
+      {stats && <FileChangeStats {...stats} />}
+    </div>
+  );
+}
+
+function GitHubTitleCluster({
+  titleId,
+  title,
+  prContext,
+  showPrNumber,
+  stats,
+}: {
+  titleId: string;
+  title: string;
+  prContext: ReviewContext | null;
+  showPrNumber: boolean;
+  stats: { files: number; additions: number; deletions: number } | null;
+}) {
+  return (
+    <div className="flex min-w-0 flex-col gap-1">
+      <div className="flex min-w-0 items-baseline gap-2">
+        <h1 id={titleId} className="m-0 truncate text-lg font-semibold leading-snug">
+          {title}
+        </h1>
+        {showPrNumber && (
+          <span className="shrink-0 text-base text-muted">#{prContext!.number}</span>
+        )}
+      </div>
+      {prContext && (prContext.author || prContext.baseRef || prContext.headRef || stats) && (
+        <div className="flex flex-wrap items-center gap-2.5 text-sm text-muted">
+          {prContext.author && <span>@{prContext.author}</span>}
+          {(prContext.baseRef || prContext.headRef) && (
+            <span className="inline-block rounded-full border border-border bg-surface px-2.5 py-px font-mono text-xs text-foreground">
+              {prContext.baseRef || "?"} ← {prContext.headRef || "?"}
+            </span>
+          )}
+          {stats && <FileChangeStats {...stats} />}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ProgressHeader({
   prContext,
   diff,
@@ -115,61 +210,22 @@ export function ProgressHeader({
             aria-hidden="true"
           />
           {isLocal ? (
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5 text-sm text-muted">
-              <h1 id={titleId} className="gr-sr-only">
-                {title}
-              </h1>
-              {localDiff && scopeOptions.length > 0 && (
-                <Select
-                  aria-label="Diff to review"
-                  aria-keyshortcuts="d"
-                  selectRef={scopeSelectRef}
-                  className="w-auto min-w-[10rem] max-w-[16rem]"
-                  menuClassName="min-w-[20rem] max-w-[24rem]"
-                  value={localDiff.selectedScope}
-                  options={scopeOptions}
-                  disabled={localDiff.scopeBusy}
-                  onChange={localDiff.onSelectScope}
-                  trailing={<Kbd>d</Kbd>}
-                />
-              )}
-              {stats && (
-                <span>
-                  {stats.files} file{stats.files === 1 ? "" : "s"} changed
-                  <span className="ml-1 text-diff-add"> +{stats.additions}</span>
-                  <span className="ml-1 text-diff-del"> −{stats.deletions}</span>
-                </span>
-              )}
-            </div>
+            <LocalTitleCluster
+              titleId={titleId}
+              title={title}
+              localDiff={localDiff}
+              scopeSelectRef={scopeSelectRef}
+              scopeOptions={scopeOptions}
+              stats={stats}
+            />
           ) : (
-            <div className="flex min-w-0 flex-col gap-1">
-              <div className="flex min-w-0 items-baseline gap-2">
-                <h1 id={titleId} className="m-0 truncate text-lg font-semibold leading-snug">
-                  {title}
-                </h1>
-                {showPrNumber && (
-                  <span className="shrink-0 text-base text-muted">#{prContext!.number}</span>
-                )}
-              </div>
-              {prContext &&
-                (prContext.author || prContext.baseRef || prContext.headRef || stats) && (
-                  <div className="flex flex-wrap items-center gap-2.5 text-sm text-muted">
-                    {prContext.author && <span>@{prContext.author}</span>}
-                    {(prContext.baseRef || prContext.headRef) && (
-                      <span className="inline-block rounded-full border border-border bg-surface px-2.5 py-px font-mono text-xs text-foreground">
-                        {prContext.baseRef || "?"} ← {prContext.headRef || "?"}
-                      </span>
-                    )}
-                    {stats && (
-                      <span>
-                        {stats.files} file{stats.files === 1 ? "" : "s"} changed
-                        <span className="ml-1 text-diff-add"> +{stats.additions}</span>
-                        <span className="ml-1 text-diff-del"> −{stats.deletions}</span>
-                      </span>
-                    )}
-                  </div>
-                )}
-            </div>
+            <GitHubTitleCluster
+              titleId={titleId}
+              title={title}
+              prContext={prContext}
+              showPrNumber={showPrNumber}
+              stats={stats}
+            />
           )}
         </div>
         <div className="flex shrink-0 items-center gap-3">

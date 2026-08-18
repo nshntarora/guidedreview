@@ -1,6 +1,6 @@
 import type { FileChangeStatus, ParsedDiff } from "@extension/lib/types";
 import type { ReviewContext } from "@guided-review/core";
-import { summarizeDiff, type FileDiffSummary } from "@guided-review/core";
+import { summarizeDiff, type DiffSummary, type FileDiffSummary } from "@guided-review/core";
 import { cn } from "@guided-review/ui";
 import { missingMetadataHint } from "@extension/content/overlay/overlayCopy";
 import { summaryUnitTitle } from "@extension/content/overlay/store";
@@ -69,53 +69,96 @@ export function DescriptionPane({ prContext, diff, commits, uncommitted }: Descr
         <h2 className="mb-5 text-[1.375rem] font-semibold leading-snug tracking-[-0.01em] text-foreground">
           {summaryUnitTitle(host.kind)}
         </h2>
-        {showCommitCards ? (
-          <ol className="m-0 flex list-none flex-col gap-2.5 p-0" data-testid="commit-list">
-            {showUncommitted && uncommitted && <UncommittedCard scope={uncommitted} />}
-            {recentCommits.map((commit) => (
-              <CommitCard key={commit.sha} commit={commit} />
-            ))}
-          </ol>
-        ) : descriptionHtml ? (
-          <div
-            className="markdown-body text-[0.9375rem] leading-[1.7] break-words text-foreground"
-            dangerouslySetInnerHTML={{ __html: descriptionHtml }}
-          />
-        ) : description && host.kind !== "local" ? (
-          <div className="text-[0.9375rem] leading-[1.7] break-words whitespace-pre-wrap text-foreground">
-            {description}
-          </div>
-        ) : (
-          <p
-            className="m-0 text-[0.9375rem] leading-relaxed text-muted"
-            data-testid="description-pane-empty"
-          >
-            {missingMetadataHint(hasTitle, false, host.kind)}
-          </p>
-        )}
+        <SummaryCopy
+          showCommitCards={showCommitCards}
+          uncommitted={showUncommitted ? uncommitted : undefined}
+          recentCommits={recentCommits}
+          descriptionHtml={descriptionHtml}
+          description={description}
+          hasTitle={hasTitle}
+        />
       </div>
 
-      {summary && (
-        <section
-          className="w-[min(100%,360px)] shrink-0 max-w-[400px] border-l border-border pl-6"
-          aria-label="Diff summary"
-        >
-          <h3 className="mb-2.5 text-lg font-semibold text-foreground">Changes</h3>
-          <p className="mb-3.5 text-[0.9375rem] text-muted tabular-nums">
-            <span className="mr-2 font-semibold text-diff-add">+{summary.additions}</span>
-            <span className="mr-2 font-semibold text-diff-del">−{summary.deletions}</span>
-            <span>
-              · {summary.files} file{summary.files === 1 ? "" : "s"}
-            </span>
-          </p>
-          <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
-            {summary.fileSummaries.map((file) => (
-              <DiffSummaryFileRow key={fileKey(file)} file={file} />
-            ))}
-          </ul>
-        </section>
-      )}
+      {summary ? <ChangesSummary summary={summary} /> : null}
     </div>
+  );
+}
+
+function SummaryCopy({
+  showCommitCards,
+  uncommitted,
+  recentCommits,
+  descriptionHtml,
+  description,
+  hasTitle,
+}: {
+  showCommitCards: boolean;
+  uncommitted?: LocalDiffScopeOption;
+  recentCommits: LocalCommitCard[];
+  descriptionHtml: string;
+  description: string;
+  hasTitle: boolean;
+}) {
+  const host = useReviewHost();
+
+  if (showCommitCards) {
+    return (
+      <ol className="m-0 flex list-none flex-col gap-2.5 p-0" data-testid="commit-list">
+        {uncommitted ? <UncommittedCard scope={uncommitted} /> : null}
+        {recentCommits.map((commit) => (
+          <CommitCard key={commit.sha} commit={commit} />
+        ))}
+      </ol>
+    );
+  }
+
+  if (descriptionHtml) {
+    return (
+      <div
+        className="markdown-body text-[0.9375rem] leading-[1.7] break-words text-foreground"
+        dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+      />
+    );
+  }
+
+  if (description && host.kind !== "local") {
+    return (
+      <div className="text-[0.9375rem] leading-[1.7] break-words whitespace-pre-wrap text-foreground">
+        {description}
+      </div>
+    );
+  }
+
+  return (
+    <p
+      className="m-0 text-[0.9375rem] leading-relaxed text-muted"
+      data-testid="description-pane-empty"
+    >
+      {missingMetadataHint(hasTitle, false, host.kind)}
+    </p>
+  );
+}
+
+function ChangesSummary({ summary }: { summary: DiffSummary }) {
+  return (
+    <section
+      className="w-[min(100%,360px)] shrink-0 max-w-[400px] border-l border-border pl-6"
+      aria-label="Diff summary"
+    >
+      <h3 className="mb-2.5 text-lg font-semibold text-foreground">Changes</h3>
+      <p className="mb-3.5 text-[0.9375rem] text-muted tabular-nums">
+        <span className="mr-2 font-semibold text-diff-add">+{summary.additions}</span>
+        <span className="mr-2 font-semibold text-diff-del">−{summary.deletions}</span>
+        <span>
+          · {summary.files} file{summary.files === 1 ? "" : "s"}
+        </span>
+      </p>
+      <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
+        {summary.fileSummaries.map((file) => (
+          <DiffSummaryFileRow key={fileKey(file)} file={file} />
+        ))}
+      </ul>
+    </section>
   );
 }
 
