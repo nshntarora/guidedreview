@@ -21,6 +21,8 @@ describe("parseArgs", () => {
       "--no-untracked",
       "--provider",
       "grok",
+      "--agent",
+      "codex",
     ]);
     expect(args.cwd).toBe("/tmp/repo");
     expect(args.base).toBe("develop");
@@ -29,5 +31,6 @@ describe("parseArgs", () => {
     expect(args.staged).toBe(true);
     expect(args.includeUntracked).toBe(false);
     expect(args.provider).toBe("grok");
+    expect(args.agent).toBe("codex");
   });
 });
