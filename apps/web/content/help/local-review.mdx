@@ -28,7 +28,7 @@ Pass flags after `--`:
 npm run review -- --base main --no-open
 ```
 
-The CLI binds `127.0.0.1`, prints a tokenized URL, and opens it unless you pass `--no-open`. Ctrl+C stops the server.
+The CLI binds `127.0.0.1:7182` (ASCII G+R), keeps a short terminal banner (URL, diff, last pull), and opens the UI unless you pass `--no-open`. Only real events (structure, scope change, errors) go to the log below. Override with `--port`. `--port 0` picks any free port. Ctrl+C stops the server.
 
 ## What it compares
 
@@ -51,15 +51,21 @@ The walkthrough starts one unit per file. **Structure with AI** on the Change su
 
 Same providers as the extension: Anthropic, OpenAI, Grok.
 
-Resolution, in order: `--provider` / `--model` / `--agent` and env (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `XAI_API_KEY` or `GROK_API_KEY`) → a key already saved in `~/.config/guided-review/config.json` → a coding agent already on this machine (Claude Code, Codex, or Grok). If more than one agent has a usable key, the CLI asks which to use each run (Enter keeps the last choice). The chosen agent is shown in the browser UI. It reads the agent's own store at review time and does not copy the secret into Guided Review config.
+Resolution, in order:
+
+1. `--provider` / `--model` / `--agent` and env (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `XAI_API_KEY` or `GROK_API_KEY`)
+2. A key already saved in `~/.config/guided-review/config.json`
+3. A coding agent already on this machine (Claude Code, Codex, or Grok)
+
+If more than one agent has a usable key, the CLI asks which to use each run (Enter keeps the last choice). The chosen agent is shown in the browser UI. It reads the agent's own store at review time and does not copy the secret into Guided Review config.
 
 No key still walks one unit per file. **Structure with AI** asks for a key.
 
-The local UI has a **Settings** page (header **Settings**, `⌘/Ctrl` + `,`, or **Connect AI Provider** when no key is set). Pick a provider and model, then either paste an API key or turn on **Use my subscription** to borrow Claude Code / Codex / Grok already on this machine. A saved API key always wins. Subscription reads the agent's store at review time and does not copy the secret into Guided Review config — it is unofficial and can break, so a console key is the better option. Save writes `~/.config/guided-review/config.json` (or `$XDG_CONFIG_HOME` / `GUIDED_REVIEW_CONFIG_DIR`). Flags and env still win for that run.
+The local UI has **Settings** (header, `⌘/Ctrl` + `,`, or **Connect AI Provider** when no key is set). Paste an API key, or turn on **Use my subscription** to borrow Claude Code / Codex / Grok on this machine. A saved API key always wins. Subscription is unofficial and can break — a console key is the better option. Save writes `~/.config/guided-review/config.json` (or `$XDG_CONFIG_HOME` / `GUIDED_REVIEW_CONFIG_DIR`). Flags and env still win for that run.
 
 ## Notes
 
-Line comments stay in the session. There is no GitHub submit. **Copy notes** puts markdown on the clipboard.
+Line comments stay in the session. There is no GitHub submit. **Generate Prompt** builds a coding-agent prompt from those notes and copies it — Guided Review does not send it anywhere.
 
 ## Flags
 

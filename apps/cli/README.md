@@ -10,6 +10,6 @@ npm run review -- --base main --no-open
 
 Do not run `npx guided-review` — that name is taken on npm by another tool (Bun shebang). This package is `@guided-review/cli` and is workspace-only for now.
 
-The CLI binds `127.0.0.1` only. Every `/api/*` route requires the token printed in the URL. Keys live in `~/.config/guided-review/config.json`, provider env vars, or a coding agent already on the machine (Claude Code, Codex, Grok). No Guided Review backend.
+The CLI binds `127.0.0.1` only. The terminal keeps a short banner (URL, diff, last pull) and logs real events, not polling. Keys live in `~/.config/guided-review/config.json`, provider env vars, or a coding agent already on the machine (Claude Code, Codex, Grok). No Guided Review backend.
 
 See [Review local changes](https://guidedreview.dev/docs/local-review).
