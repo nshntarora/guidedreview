@@ -26,7 +26,8 @@ function okStreamResponse(body: ReadableStream<Uint8Array>): Response {
 
 const input: AnnotateReviewInput = {
   diff: { files: [] },
-  prContext: {
+  context: {
+    source: "github",
     owner: "acme",
     repo: "widgets",
     number: 1,

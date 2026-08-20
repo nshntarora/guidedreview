@@ -142,6 +142,7 @@ export function scrapePRContext(pr: PRIdentity): PRContext {
   const resolvedTitle = title ?? prTitleFromDocumentTitle(document.title) ?? "";
 
   return {
+    source: "github",
     owner: pr.owner,
     repo: pr.repo,
     number: pr.number,

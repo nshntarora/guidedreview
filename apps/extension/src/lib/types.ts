@@ -1,91 +1,48 @@
 /**
- * Shared types used across content script, background worker, and options page.
+ * Host types for the Chrome extension. Domain review types live in
+ * `@guided-review/core`; this file re-exports them and owns chrome messaging
+ * plus GitHub OAuth/submit shapes.
  */
 
-// ---- Diff model -----------------------------------------------------------
+import type { ParsedDiff, ProviderSettings, ReviewContext } from "@guided-review/core";
 
-export interface DiffLine {
-  type: "add" | "del" | "context";
-  content: string;
-  /** Line number in the old file (undefined for pure additions). */
-  oldLine?: number;
-  /** Line number in the new file (undefined for pure deletions). */
-  newLine?: number;
-}
+export type {
+  DiffLine,
+  DiffHunk,
+  FileChangeStatus,
+  DiffFile,
+  ParsedDiff,
+  ReviewContext,
+  FileRole,
+  UnitKind,
+  ReviewUnitFileRef,
+  ReviewUnit,
+  ReviewPlan,
+  ProviderSettings,
+  ReviewErrorInfo,
+  AnnotateStreamStatusPhase,
+  AnnotateReviewStreamEvent,
+} from "@guided-review/core";
 
-export interface DiffHunk {
-  /** Stable id: `${filePath}#${index}` */
-  id: string;
-  header: string;
-  oldStart: number;
-  oldLines: number;
-  newStart: number;
-  newLines: number;
-  lines: DiffLine[];
-}
+export {
+  FILE_ROLES,
+  DEFAULT_FILE_ROLE,
+  UNIT_KINDS,
+  DEFAULT_UNIT_KIND,
+  NO_API_KEY_ERROR_CODE,
+} from "@guided-review/core";
 
-export type FileChangeStatus = "added" | "removed" | "modified" | "renamed";
-
-export interface DiffFile {
-  path: string;
-  previousPath?: string;
-  status: FileChangeStatus;
-  hunks: DiffHunk[];
-  /** True when the diff for this file was elided (e.g. binary, too large). */
-  isBinaryOrElided: boolean;
-}
-
-export interface ParsedDiff {
-  files: DiffFile[];
-}
-
-// ---- PR context -------------------------------------------------------------
-
-export interface PRContext {
+/**
+ * GitHub PR identity + review context. `source` is always github for this host;
+ * omitted on older in-memory fixtures and coerced at the annotate boundary.
+ */
+export type PRContext = ReviewContext & {
   owner: string;
   repo: string;
   number: number;
   url: string;
-  title: string;
-  description: string;
-  descriptionHtml: string;
   author: string;
-  baseRef: string;
-  headRef: string;
-}
-
-// ---- Review plan (LLM structured output) ------------------------------------
-
-/**
- * The roles a changed file can play in a review unit, in review order.
- * Single source of truth: the `FileRole` union, the runtime validation set in
- * `review/reviewPlan.ts`, and the JSON Schema enum in `review/reviewSchema.ts`
- * are all derived from this array.
- */
-export const FILE_ROLES = [
-  "schema_or_model",
-  "core_logic",
-  "consumer_or_call_site",
-  "test",
-  "config_or_generated",
-] as const;
-
-export type FileRole = (typeof FILE_ROLES)[number];
-
-/** Role assigned when the model omits one or returns something unrecognized. */
-export const DEFAULT_FILE_ROLE: FileRole = "core_logic";
-
-/**
- * Whether a review unit is production code or tests. Tests are always a
- * separate unit (never mixed with production files). Single source of truth
- * for the JSON schema enum and runtime validation.
- */
-export const UNIT_KINDS = ["change", "tests"] as const;
-
-export type UnitKind = (typeof UNIT_KINDS)[number];
-
-/** Kind assigned when the model omits one or returns something unrecognized. */
-export const DEFAULT_UNIT_KIND: UnitKind = "change";
+};
 
 /**
  * Shown when a review that requires a summary is submitted without one. The
@@ -97,50 +54,6 @@ export const EMPTY_REVIEW_BODY_MESSAGE: Record<"COMMENT" | "REQUEST_CHANGES", st
   COMMENT: "Add a review comment before submitting.",
   REQUEST_CHANGES: "Add a summary explaining the requested changes before submitting.",
 };
-
-export interface ReviewUnitFileRef {
-  fileId: string;
-  /** Hunk ids within the file relevant to this unit; empty = whole file. */
-  hunkIds: string[];
-  role: FileRole;
-}
-
-export interface ReviewUnit {
-  id: string;
-  title: string;
-  /**
-   * When set, the overlay shows this instead of `title`. The no-AI
-   * one-unit-per-file plan sets this to a middle-truncated path so the UI
-   * renders the label as plain text (no path-aware truncation at render).
-   * AI units omit it and show `title`. Not model output (not in the LLM schema).
-   */
-  displayTitle?: string;
-  /**
-   * `change` = production (and optional config); `tests` = test files only.
-   * Never mixed — validation splits impure units.
-   */
-  kind: UnitKind;
-  /** Why the change was made (inferred). */
-  context: string;
-  files: ReviewUnitFileRef[];
-}
-
-export interface ReviewPlan {
-  /** Review units in the order the human should walk through them. */
-  units: ReviewUnit[];
-}
-
-// ---- Provider / settings -----------------------------------------------------
-// ProviderId lives in the catalog so the options UI and background clients
-// share one registry of providers/models.
-
-import type { ProviderId } from "./providers/catalog";
-
-export interface ProviderSettings {
-  provider: ProviderId;
-  model: string;
-  apiKey: string;
-}
 
 // ---- GitHub OAuth (device flow) ----------------------------------------------
 
@@ -172,37 +85,6 @@ export interface AnnotateReviewRequest {
   diff: ParsedDiff;
   prContext: PRContext;
 }
-
-/**
- * User-facing details for a failed review annotation (or related) step.
- * `message` is always present; HTTP status / provider codes are optional.
- */
-export interface ReviewErrorInfo {
-  message: string;
-  statusCode?: number;
-  /** Provider-specific code, e.g. `invalid_api_key` or `authentication_error`. */
-  code?: string;
-}
-
-/**
- * Error code for "no AI provider configured". Not a failure the user should see
- * as an error — the overlay turns it into the connect-a-provider prompt.
- */
-export const NO_API_KEY_ERROR_CODE = "no_api_key";
-
-/**
- * Progressive events on the `annotate-review` port from background → content.
- * Complete, validated units are pushed as they become available; DONE carries
- * the final merged plan; ERROR ends the stream with structured error details.
- * STATUS updates the overlay's build-phase subtext (waiting / first token).
- */
-export type AnnotateStreamStatusPhase = "waiting_for_tokens" | "tokens_streaming";
-
-export type AnnotateReviewStreamEvent =
-  | { type: "STATUS"; phase: AnnotateStreamStatusPhase }
-  | { type: "UNIT"; unit: ReviewUnit }
-  | { type: "DONE"; plan: ReviewPlan }
-  | { type: "ERROR"; error: ReviewErrorInfo };
 
 export interface TestConnectionRequest {
   type: "TEST_CONNECTION";

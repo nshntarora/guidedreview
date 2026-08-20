@@ -107,6 +107,42 @@ export default tseslint.config(
       ],
     },
   },
+  // packages/core must stay chrome-free, React-free, and host-free
+  {
+    files: ["packages/core/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "chrome",
+              message: "The review engine must not use Chrome APIs.",
+            },
+            {
+              name: "react",
+              message: "The review engine must not import React.",
+            },
+          ],
+          patterns: [
+            {
+              group: [
+                "**/apps/extension/**",
+                "@guided-review/extension",
+                "@extension",
+                "@extension/**",
+                "**/apps/web/**",
+                "@web",
+                "@web/**",
+                "**/apps/cli/**",
+              ],
+              message: "The review engine must not import a host app.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   // packages/ui must stay chrome-free and extension-free
   {
     files: ["packages/ui/**/*.{ts,tsx}"],

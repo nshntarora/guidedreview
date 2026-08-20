@@ -53,6 +53,7 @@ npm run dev:extension       # same
 | Dev server | `http://localhost:5173` (strict port)                                                               |
 | Load path  | **`apps/extension/dist`**                                                                           |
 | Shared UI  | `@guided-review/ui` (synced brand assets via `scripts/sync-ui-assets.mjs` on `predev` / `prebuild`) |
+| Engine     | `@guided-review/core` (parse, cluster, summarise, providers)                                        |
 
 ---
 
@@ -104,26 +105,26 @@ Providers are a thin layer over the same pipeline. Chunking, prompt building, JS
 
 ### What every provider must do
 
-Implement `ProviderClient` in `src/background/providers/types.ts`:
+Implement `ProviderClient` in `packages/core/src/providers/types.ts`:
 
-| Method                 | Behavior                                                                                                                                                                                                                                                                                                                  |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `annotateReviewStream` | Stream structured `ReviewPlan` JSON as `{ type: "text_delta"; text }` events, then `{ type: "done" }`. Prefer the provider’s **strict / schema-constrained** output mode with `REVIEW_PLAN_JSON_SCHEMA` (`src/lib/review/reviewSchema.ts`). Use `SYSTEM_PROMPT` + `buildUserPrompt` from `src/lib/review/buildPrompt.ts`. |
-| `testConnection`       | One cheap request that proves the API key (and model, if the API requires it) works. Throw `ProviderError` with a **user-safe** `message` on failure.                                                                                                                                                                     |
+| Method                 | Behavior                                                                                                                                                                                                                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `annotateReviewStream` | Stream structured `ReviewPlan` JSON as `{ type: "text_delta"; text }` events, then `{ type: "done" }`. Prefer the provider’s **strict / schema-constrained** output mode with `REVIEW_PLAN_JSON_SCHEMA`. Use `SYSTEM_PROMPT` + `buildUserPrompt` from `@guided-review/core`. |
+| `testConnection`       | One cheap request that proves the API key (and model, if the API requires it) works. Throw `ProviderError` with a **user-safe** `message` on failure.                                                                                                                        |
 
-Throw `ProviderError` for all provider-side failures. Shared HTTP/SSE helpers live in `src/background/providers/http.ts` and `sse.ts`.
+Throw `ProviderError` for all provider-side failures. Shared HTTP/SSE helpers live in `packages/core/src/providers/http.ts` and `sse.ts`.
 
 ### Checklist
 
-1. **Catalog** — `src/lib/providers/catalog.ts`
+1. **Catalog** — `packages/core/src/providers/catalog.ts`
    - Extend the `ProviderId` union.
    - Add a `PROVIDERS` row (`id`, `displayName`, `keyPlaceholder`, `iconSrc`, `defaultModelId`).
    - Add one or more `MODELS` rows for that provider (exact API model ids).
 
-2. **Background client** — `src/background/providers/`
+2. **Provider client** — `packages/core/src/providers/`
    - **OpenAI-compatible** (`/v1/chat/completions` + `response_format.json_schema`): reuse `createOpenAICompatibleProvider(baseUrl, displayName)` from `openaiCompatible.ts` (how OpenAI and Grok are wired).
    - **Anything else**: new module implementing `ProviderClient` (see `anthropic.ts` for a non-OpenAI shape).
-   - Register it in `getProviderClient` in `src/background/providers/index.ts`.
+   - Register it in `getProviderClient` in `packages/core/src/providers/index.ts`.
 
 3. **Host permission** — `manifest.config.ts`
    - Add the API origin to `host_permissions` (e.g. `https://api.example.com/*`). MV3 service workers need this to call the API.

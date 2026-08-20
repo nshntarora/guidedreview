@@ -1,10 +1,4 @@
-import type {
-  DiffFile,
-  DiffHunk,
-  DiffLine,
-  FileChangeStatus,
-  ParsedDiff,
-} from "@extension/lib/types";
+import type { DiffFile, DiffHunk, DiffLine, FileChangeStatus, ParsedDiff } from "../types";
 
 const FILE_HEADER_PREFIX = "diff --git ";
 const HUNK_HEADER_RE = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)$/;
@@ -128,6 +122,11 @@ function findClosingQuote(value: string): number {
  * recover file identity + hunks + line-level add/del/context — not arbitrary
  * diff algorithms.
  */
+/** Alias used by hosts. Same as `parseUnifiedDiff`. */
+export function parseDiff(raw: string): ParsedDiff {
+  return parseUnifiedDiff(raw);
+}
+
 export function parseUnifiedDiff(raw: string): ParsedDiff {
   const lines = raw.split("\n");
   const files: DiffFile[] = [];

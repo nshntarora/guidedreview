@@ -8,7 +8,7 @@ import type {
 } from "@extension/lib/types";
 import { NO_API_KEY_ERROR_CODE } from "@extension/lib/types";
 import type { PRIdentity } from "@extension/lib/github/diffFetch";
-import { buildFileReviewPlan } from "@extension/lib/review/reviewPlan";
+import { buildFileReviewPlan } from "@guided-review/core";
 import {
   displayLineNumber,
   linesInSelection,

@@ -12,12 +12,7 @@ import type {
   GitHubDevicePollResponse,
   GitHubDeviceStartResponse,
   OpenOptionsResponse,
-  ParsedDiff,
-  PRContext,
-  ProviderSettings,
   ReviewErrorInfo,
-  ReviewPlan,
-  ReviewUnit,
   SubmitReviewRequest,
   SubmitReviewResponse,
   TestConnectionRequest,
@@ -38,17 +33,9 @@ import {
 } from "@extension/lib/github/oauthConfig";
 import { fetchPRDiff, parsePRUrl } from "@extension/lib/github/diffFetch";
 import { submitPullRequestReview } from "@extension/lib/github/submitReview";
-import { chunkDiffByFile } from "@extension/lib/review/buildPrompt";
-import { StreamPlanParser } from "@extension/lib/review/streamPlanParser";
-import {
-  parseReviewUnit,
-  prefixChunkUnitId,
-  stripDuplicateHunks,
-} from "@extension/lib/review/reviewPlan";
+import { annotateReview, getProviderClient, ProviderError } from "@guided-review/core";
 import { getProviderSettings } from "@extension/lib/settings";
 import { grantSessionAccessToContentScripts } from "@extension/lib/storage";
-import { getProviderClient } from "./providers";
-import { ProviderError, type ProviderClient } from "./providers/types";
 
 const ANNOTATE_PORT_NAME = "annotate-review";
 
@@ -267,102 +254,14 @@ async function handleAnnotateReviewStream(
 
   if (signal.aborted) return;
 
-  const client = getProviderClient(settings.provider);
-  const chunks = chunkDiffByFile(request.diff).filter((chunk) => chunk.files.length > 0);
-  const allUnits: ReviewUnit[] = [];
-  /** First unit that claims a hunk id wins; later duplicates are stripped. */
-  const seenHunkIds = new Set<string>();
-  /** Emit waiting / first-token STATUS once across all chunks. */
-  const streamStatus = { postedWaiting: false, postedStreaming: false };
-
-  for (const [chunkIndex, chunk] of chunks.entries()) {
-    if (signal.aborted) return;
-
-    if (!streamStatus.postedWaiting) {
-      streamStatus.postedWaiting = true;
-      postEvent(port, { type: "STATUS", phase: "waiting_for_tokens" });
-    }
-
-    for await (const unit of streamChunkUnits(client, chunk, request.prContext, settings, {
-      chunkIndex,
-      seenHunkIds,
-      signal,
-      onFirstToken: () => {
-        if (streamStatus.postedStreaming) return;
-        streamStatus.postedStreaming = true;
-        postEvent(port, { type: "STATUS", phase: "tokens_streaming" });
-      },
-    })) {
-      if (signal.aborted) return;
-      allUnits.push(unit);
-      postEvent(port, { type: "UNIT", unit });
-    }
-  }
-
-  if (signal.aborted) return;
-
-  const plan: ReviewPlan = { units: allUnits };
-  postEvent(port, { type: "DONE", plan });
-}
-
-/**
- * Stream one diff chunk through the provider and yield the review units that
- * survive validation, already deduplicated and namespaced by chunk. Yields
- * nothing further once `signal` aborts.
- */
-async function* streamChunkUnits(
-  client: ProviderClient,
-  chunk: ParsedDiff,
-  prContext: PRContext,
-  settings: ProviderSettings,
-  {
-    chunkIndex,
-    seenHunkIds,
+  for await (const event of annotateReview({
+    diff: request.diff,
+    context: { ...request.prContext, source: request.prContext.source ?? "github" },
+    settings,
     signal,
-    onFirstToken,
-  }: {
-    chunkIndex: number;
-    seenHunkIds: Set<string>;
-    signal: AbortSignal;
-    onFirstToken?: () => void;
-  },
-): AsyncGenerator<ReviewUnit, void, unknown> {
-  const parser = new StreamPlanParser();
-  // Keyed by path because the schema defines `fileId` as "the file path exactly
-  // as it appears in the diff" (see REVIEW_PLAN_JSON_SCHEMA) — the same
-  // assumption `resolveUnitFiles` makes when rendering.
-  const knownFiles = new Map(chunk.files.map((file) => [file.path, file]));
-  let sawToken = false;
-
-  for await (const event of client.annotateReviewStream(
-    { diff: chunk, prContext, settings },
-    { signal },
-  )) {
+  })) {
     if (signal.aborted) return;
-
-    if (event.type === "text_delta" && !sawToken) {
-      sawToken = true;
-      onFirstToken?.();
-    }
-
-    const raw =
-      event.type === "text_delta"
-        ? parser.push(event.text)
-        : event.type === "done"
-          ? parser.finish()
-          : [];
-
-    for (const candidate of raw) {
-      // One raw object can yield two units — a mixed production/test unit is
-      // split into change-then-tests.
-      for (const cleaned of parseReviewUnit(candidate, knownFiles)) {
-        if (signal.aborted) return;
-        const deduped = stripDuplicateHunks(cleaned, knownFiles, seenHunkIds);
-        if (!deduped) continue;
-        // Namespace the id so units from different chunks can't collide.
-        yield { ...deduped, id: prefixChunkUnitId(chunkIndex, deduped.id) };
-      }
-    }
+    postEvent(port, event);
   }
 }
 

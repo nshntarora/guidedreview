@@ -1,6 +1,6 @@
-import type { ProviderSettings } from "@extension/lib/types";
-import { buildUserPrompt, SYSTEM_PROMPT } from "@extension/lib/review/buildPrompt";
-import { REVIEW_PLAN_JSON_SCHEMA } from "@extension/lib/review/reviewSchema";
+import type { ProviderSettings } from "../types";
+import { buildUserPrompt, SYSTEM_PROMPT } from "../review/buildPrompt";
+import { REVIEW_PLAN_JSON_SCHEMA } from "../review/reviewSchema";
 import { postProviderJson } from "./http";
 import { readSseJsonStream } from "./sse";
 import type { AnnotateReviewInput, AnnotateStreamEvent, ProviderClient } from "./types";
@@ -24,7 +24,7 @@ export function createOpenAICompatibleProvider(
 
   return {
     async *annotateReviewStream(
-      { diff, prContext, settings }: AnnotateReviewInput,
+      { diff, context, settings }: AnnotateReviewInput,
       options?: { signal?: AbortSignal },
     ): AsyncGenerator<AnnotateStreamEvent, void, unknown> {
       const response = await postProviderJson(
@@ -35,7 +35,7 @@ export function createOpenAICompatibleProvider(
           stream: true,
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: buildUserPrompt(diff, prContext) },
+            { role: "user", content: buildUserPrompt(diff, context) },
           ],
           response_format: {
             type: "json_schema",

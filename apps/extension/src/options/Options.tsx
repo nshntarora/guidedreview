@@ -6,7 +6,7 @@ import {
   modelsForProvider,
   PROVIDER_LIST,
   type ProviderId,
-} from "@extension/lib/providers/catalog";
+} from "@guided-review/core";
 import { getAutoOpenOnFilesTab, setAutoOpenOnFilesTab } from "@extension/lib/preferences";
 import { getProviderSettings, setProviderSettings } from "@extension/lib/settings";
 import { requestTestConnection } from "@extension/lib/messaging";

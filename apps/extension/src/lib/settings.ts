@@ -1,5 +1,5 @@
 import type { ProviderSettings } from "./types";
-import { defaultModelFor, normalizeProviderSettings } from "./providers/catalog";
+import { defaultModelFor, normalizeProviderSettings } from "@guided-review/core";
 import { readLocal, watchLocal, writeLocal } from "./storage";
 
 const STORAGE_KEY = "guidedReview.providerSettings";

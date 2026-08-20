@@ -1,6 +1,6 @@
-import type { ProviderSettings } from "@extension/lib/types";
-import { buildUserPrompt, SYSTEM_PROMPT } from "@extension/lib/review/buildPrompt";
-import { REVIEW_PLAN_JSON_SCHEMA } from "@extension/lib/review/reviewSchema";
+import type { ProviderSettings } from "../types";
+import { buildUserPrompt, SYSTEM_PROMPT } from "../review/buildPrompt";
+import { REVIEW_PLAN_JSON_SCHEMA } from "../review/reviewSchema";
 import { postProviderJson } from "./http";
 import { readSseJsonStream } from "./sse";
 import type { AnnotateReviewInput, AnnotateStreamEvent, ProviderClient } from "./types";
@@ -25,7 +25,7 @@ function headers(apiKey: string): Record<string, string> {
  */
 export const anthropicProvider: ProviderClient = {
   async *annotateReviewStream(
-    { diff, prContext, settings }: AnnotateReviewInput,
+    { diff, context, settings }: AnnotateReviewInput,
     options?: { signal?: AbortSignal },
   ): AsyncGenerator<AnnotateStreamEvent, void, unknown> {
     const response = await postProviderJson(
@@ -40,7 +40,7 @@ export const anthropicProvider: ProviderClient = {
           effort: "medium",
           format: { type: "json_schema", schema: REVIEW_PLAN_JSON_SCHEMA },
         },
-        messages: [{ role: "user", content: buildUserPrompt(diff, prContext) }],
+        messages: [{ role: "user", content: buildUserPrompt(diff, context) }],
       },
       "Claude",
       options?.signal,
