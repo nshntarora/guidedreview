@@ -6,6 +6,7 @@ import {
   BUILD_PLAN_PRIMARY,
   missingMetadataHint,
   PR_DESCRIPTION_HINT,
+  STRUCTURE_REVIEW_HINT,
 } from "@extension/content/overlay/overlayCopy";
 import { useReviewHost } from "../host";
 
@@ -24,11 +25,16 @@ interface ContextPanelProps {
   loadingDetail?: string | null;
   /** Retry the failed API / review build step. */
   onRetry?: () => void;
+  /** Local: start the opt-in annotation stream from the Change summary card. */
+  onStructureReview?: () => void;
+  /** Local: an AI plan is already in place for the current scope. */
+  structured?: boolean;
 }
 
 /**
  * Right-pane copy for the active unit. Branch precedence:
- * needsProvider (no AI context yet) → error → description unit → unit context.
+ * needsProvider (no AI context yet) → error → summary chrome (description or
+ * empty-context file units) → unit context.
  */
 export function ContextPanel({
   unit,
@@ -39,6 +45,8 @@ export function ContextPanel({
   loading,
   loadingDetail,
   onRetry,
+  onStructureReview,
+  structured = false,
 }: ContextPanelProps) {
   const host = useReviewHost();
   // Takes precedence over `error`: a missing key is a setup step, not a failure.
@@ -95,7 +103,10 @@ export function ContextPanel({
     );
   }
 
-  if (!unit) {
+  // Change summary (null unit) and file-mode units (empty context) share the
+  // same chrome: structure CTA when available, otherwise the summary hint,
+  // plus keyboard shortcuts. AI units always have real commentary.
+  if (!unit || !unit.context.trim()) {
     const hint =
       hasTitle && hasDescription && host.kind === "github"
         ? PR_DESCRIPTION_HINT
@@ -104,8 +115,15 @@ export function ContextPanel({
     return (
       <div className="rounded-none border-0 bg-transparent px-0 py-0.5 pb-1">
         <div className="text-lg leading-[1.7] text-foreground" data-testid="context-panel-body">
-          {hint}
+          {onStructureReview && !structured ? STRUCTURE_REVIEW_HINT : hint}
         </div>
+        {onStructureReview && !structured && !loading ? (
+          <div className="mt-4">
+            <Button size="sm" onClick={onStructureReview} data-testid="structure-review">
+              Structure with AI
+            </Button>
+          </div>
+        ) : null}
         {loading ? (
           <div
             className="mt-4 flex items-center gap-2.5 border-t border-border-strong pt-3"
@@ -127,7 +145,7 @@ export function ContextPanel({
             </div>
           </div>
         ) : (
-          <KeyboardShortcuts />
+          <KeyboardShortcuts allowExit={host.kind !== "local"} />
         )}
       </div>
     );

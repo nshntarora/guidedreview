@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { ParsedDiff, PRContext } from "@extension/lib/types";
 import { createGitHubReviewHost } from "@extension/content/githubHost";
-import { setActiveReviewHost } from "../host";
+import { createMemoryReviewHost, setActiveReviewHost } from "../host";
 import { DescriptionPane } from "./DescriptionPane";
 
 beforeEach(() => {
@@ -132,5 +132,89 @@ describe("DescriptionPane", () => {
   it("omits the summary when the diff has no files", () => {
     render(<DescriptionPane prContext={prContext()} diff={{ files: [] }} />);
     expect(screen.queryByLabelText(/diff summary/i)).not.toBeInTheDocument();
+  });
+
+  it("renders commit cards for a local review instead of the raw log", () => {
+    setActiveReviewHost(
+      createMemoryReviewHost({
+        kind: "local",
+        exportNotes: vi.fn(),
+        submit: undefined,
+      }),
+    );
+    render(
+      <DescriptionPane
+        prContext={prContext({
+          source: "local",
+          title: "feat",
+          description: "raw log should not show",
+          descriptionHtml: "",
+        })}
+        diff={diffFixture()}
+        commits={[
+          {
+            sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            shortSha: "aaaaaaa",
+            subject: "Add the overlay header",
+            body: "Why we did it.",
+            author: "Ada",
+            authoredAt: "2026-01-02T10:00:00Z",
+            stat: { files: 1, additions: 1915, deletions: 262 },
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByTestId("commit-list")).toBeInTheDocument();
+    expect(screen.getByText("Add the overlay header")).toBeInTheDocument();
+    expect(screen.getByText("aaaaaaa")).toBeInTheDocument();
+    expect(screen.getByText("+1915")).toHaveClass("text-diff-add");
+    expect(screen.getByText("−262")).toHaveClass("text-diff-del");
+    expect(screen.getByText("Why we did it.")).toBeInTheDocument();
+    expect(screen.queryByText("raw log should not show")).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/diff summary/i)).toBeInTheDocument();
+  });
+
+  it("shows an uncommitted card above commits and keeps only the last 5 commits", () => {
+    setActiveReviewHost(
+      createMemoryReviewHost({
+        kind: "local",
+        exportNotes: vi.fn(),
+        submit: undefined,
+      }),
+    );
+    const commits = Array.from({ length: 6 }, (_, i) => ({
+      sha: `${i}`.repeat(40),
+      shortSha: `${i}`.repeat(7),
+      subject: `Commit ${i}`,
+      body: "",
+      author: "Ada",
+      authoredAt: "2026-01-02T10:00:00Z",
+    }));
+    render(
+      <DescriptionPane
+        prContext={prContext({
+          source: "local",
+          title: "feat",
+          descriptionHtml: "",
+        })}
+        diff={diffFixture()}
+        commits={commits}
+        uncommitted={{
+          id: "uncommitted",
+          label: "Uncommitted changes",
+          description: "Staged and unstaged work versus HEAD.",
+          meta: "1 file · +2 −0",
+          stat: { files: 1, additions: 2, deletions: 0 },
+          empty: false,
+        }}
+      />,
+    );
+
+    expect(screen.getByTestId("uncommitted-card")).toHaveTextContent("Uncommitted changes");
+    expect(screen.getByTestId("uncommitted-card")).toHaveTextContent("1 file · +2 −0");
+    expect(screen.getAllByTestId("commit-card")).toHaveLength(5);
+    expect(screen.getByText("Commit 0")).toBeInTheDocument();
+    expect(screen.queryByText("Commit 5")).not.toBeInTheDocument();
   });
 });

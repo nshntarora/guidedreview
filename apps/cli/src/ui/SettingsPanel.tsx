@@ -6,6 +6,7 @@ import {
   type ProviderId,
 } from "@guided-review/core";
 import { Button, Input, Label, Select } from "@guided-review/ui";
+import { codingAgentLabel } from "./codingAgentLabel";
 
 interface SettingsPanelProps {
   token: string;
@@ -18,17 +19,26 @@ export function SettingsPanel({ token, onClose, onSaved }: SettingsPanelProps) {
   const [model, setModel] = useState(defaultModelFor("anthropic"));
   const [apiKey, setApiKey] = useState("");
   const [hasKey, setHasKey] = useState(false);
+  const [codingAgent, setCodingAgent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     void fetch(`/api/settings?token=${encodeURIComponent(token)}`)
       .then((res) => res.json())
-      .then((data: { provider: ProviderId; model: string; hasKey: boolean }) => {
-        setProvider(data.provider);
-        setModel(data.model);
-        setHasKey(data.hasKey);
-      })
+      .then(
+        (data: {
+          provider: ProviderId;
+          model: string;
+          hasKey: boolean;
+          codingAgent?: string | null;
+        }) => {
+          setProvider(data.provider);
+          setModel(data.model);
+          setHasKey(data.hasKey);
+          setCodingAgent(data.codingAgent ?? null);
+        },
+      )
       .catch(() => setError("Could not load settings."));
   }, [token]);
 
@@ -39,7 +49,7 @@ export function SettingsPanel({ token, onClose, onSaved }: SettingsPanelProps) {
       const res = await fetch(`/api/settings?token=${encodeURIComponent(token)}`, {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ provider, model, apiKey }),
+        body: JSON.stringify({ provider, model, ...(apiKey ? { apiKey } : {}) }),
       });
       if (!res.ok) throw new Error("Save failed.");
       onSaved();
@@ -57,9 +67,18 @@ export function SettingsPanel({ token, onClose, onSaved }: SettingsPanelProps) {
       <div className="w-full max-w-md rounded-lg border border-border bg-surface p-6 text-foreground">
         <h2 className="m-0 mb-4 text-lg font-semibold">AI provider</h2>
         <p className="m-0 mb-4 text-sm text-muted">
-          Keys stay on this machine in ~/.config/guided-review/config.json. Traffic goes to your
-          provider only.
+          {codingAgent
+            ? `Generating with ${codingAgentLabel(codingAgent)} on this machine. Paste a key to override. Traffic goes to your provider only.`
+            : "Keys stay on this machine in ~/.config/guided-review/config.json. Traffic goes to your provider only."}
         </p>
+        {codingAgent && (
+          <p
+            className="m-0 mb-4 rounded-md border border-border bg-surface-muted px-3 py-2 text-sm text-foreground"
+            data-testid="coding-agent-badge"
+          >
+            Coding agent: <span className="font-medium">{codingAgentLabel(codingAgent)}</span>
+          </p>
+        )}
         <div className="flex flex-col gap-3">
           <Label>
             Provider

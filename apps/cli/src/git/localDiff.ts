@@ -35,6 +35,8 @@ export interface DiffScopeOption {
   label: string;
   description: string;
   meta: string;
+  /** Extra shown ahead of file/+− counts (commit count, short SHA). */
+  metaPrefix?: string;
   stat: DiffStat;
   empty: boolean;
 }
@@ -61,7 +63,7 @@ export interface LocalReviewSnapshot {
 }
 
 const COMMIT_SCOPE_PREFIX = "commit:";
-/** Individual commit scopes and the Change summary list. */
+/** Individual commit scopes and the Change summary list. Keep in sync with overlay/localReview.ts. */
 export const MAX_RECENT_COMMITS = 5;
 
 export function isDiffScopeId(value: string): value is DiffScopeId {
@@ -116,27 +118,43 @@ async function resolveBase(repoRoot: string, requested?: string): Promise<string
   );
 }
 
-async function collectUntrackedDiffs(repoRoot: string): Promise<string> {
-  const listed = await runGit(["ls-files", "--others", "--exclude-standard", "-z"], repoRoot);
-  const files = listed.split("\0").filter(Boolean);
-  if (files.length === 0) return "";
-
-  const chunks: string[] = [];
-  for (const file of files) {
-    const patch = await runGit(
-      ["diff", "--no-color", "--no-index", "--", nullDevice(), file],
-      repoRoot,
-      { allowExitCodes: [1] },
-    );
-    if (patch.trim())
-      chunks.push(patch.replace(/^diff --git a\/.*$/m, `diff --git a/${file} b/${file}`));
+async function mapLimit<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  if (items.length === 0) return [];
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  async function worker(): Promise<void> {
+    while (next < items.length) {
+      const index = next;
+      next += 1;
+      results[index] = await fn(items[index]!);
+    }
   }
-  return chunks.join("");
+  const workers = Math.min(limit, items.length);
+  await Promise.all(Array.from({ length: workers }, () => worker()));
+  return results;
 }
 
 async function listUntracked(repoRoot: string): Promise<string[]> {
   const listed = await runGit(["ls-files", "--others", "--exclude-standard", "-z"], repoRoot);
   return listed.split("\0").filter(Boolean);
+}
+
+async function collectUntrackedDiffs(repoRoot: string, files: string[]): Promise<string> {
+  if (files.length === 0) return "";
+  const chunks = await mapLimit(files, 8, async (file) => {
+    const patch = await runGit(
+      ["diff", "--no-color", "--no-index", "--", nullDevice(), file],
+      repoRoot,
+      { allowExitCodes: [1] },
+    );
+    if (!patch.trim()) return "";
+    return patch.replace(/^diff --git a\/.*$/m, `diff --git a/${file} b/${file}`);
+  });
+  return chunks.filter(Boolean).join("");
 }
 
 export function parseShortstat(raw: string): DiffStat {
@@ -170,7 +188,6 @@ export function parseCommitLog(raw: string): LocalCommit[] {
 }
 
 export function formatScopeMeta(stat: DiffStat, extra?: string): string {
-  if (stat.files === 0 && !extra) return "No changes";
   if (stat.files === 0) return extra ? `${extra} · No changes` : "No changes";
   const fileLabel = `${stat.files} file${stat.files === 1 ? "" : "s"}`;
   const counts = `+${stat.additions} −${stat.deletions}`;
@@ -229,27 +246,28 @@ async function commitPatch(repoRoot: string, sha: string): Promise<string> {
   }
 }
 
-async function rawDiffForScope(repo: LocalRepoState, scope: DiffScopeId): Promise<string> {
-  const { repoRoot, mergeBase } = repo;
+/** Shared git args so the patch and the shortstat for a scope cannot drift. */
+function gitForScope(
+  repo: LocalRepoState,
+  scope: DiffScopeId,
+): { sha: string } | { range: string[]; includeUntracked: boolean } {
   const sha = commitShaFromScope(scope);
-  if (sha) return commitPatch(repoRoot, sha);
+  if (sha) return { sha };
+  if (scope === "branch") return { range: [repo.mergeBase, "HEAD"], includeUntracked: false };
+  if (scope === "unstaged") return { range: [], includeUntracked: false };
+  if (repo.staged) return { range: ["--cached", "HEAD"], includeUntracked: false };
+  return { range: ["HEAD"], includeUntracked: repo.includeUntracked };
+}
 
-  if (scope === "branch") {
-    return runGit(["diff", "--no-color", "--find-renames", mergeBase, "HEAD"], repoRoot);
-  }
-
-  if (scope === "unstaged") {
-    return runGit(["diff", "--no-color", "--find-renames"], repoRoot);
-  }
-
-  if (repo.staged) {
-    return runGit(["diff", "--no-color", "--find-renames", "--cached", "HEAD"], repoRoot);
-  }
-
-  let raw = await runGit(["diff", "--no-color", "--find-renames", "HEAD"], repoRoot);
-  if (repo.includeUntracked) {
-    raw += await collectUntrackedDiffs(repoRoot);
-  }
+async function rawDiffForScope(
+  repo: LocalRepoState,
+  scope: DiffScopeId,
+  untracked: string[],
+): Promise<string> {
+  const spec = gitForScope(repo, scope);
+  if ("sha" in spec) return commitPatch(repo.repoRoot, spec.sha);
+  let raw = await runGit(["diff", "--no-color", "--find-renames", ...spec.range], repo.repoRoot);
+  if (spec.includeUntracked) raw += await collectUntrackedDiffs(repo.repoRoot, untracked);
   return raw;
 }
 
@@ -258,23 +276,10 @@ async function statForScope(
   scope: DiffScopeId,
   untrackedCount: number,
 ): Promise<DiffStat> {
-  const sha = commitShaFromScope(scope);
-  if (sha) return commitShortstat(repo.repoRoot, sha);
-
-  if (scope === "branch") {
-    return shortstat(repo.repoRoot, [repo.mergeBase, "HEAD"]);
-  }
-
-  if (scope === "unstaged") {
-    return shortstat(repo.repoRoot, []);
-  }
-
-  if (repo.staged) {
-    return shortstat(repo.repoRoot, ["--cached", "HEAD"]);
-  }
-
-  const stat = await shortstat(repo.repoRoot, ["HEAD"]);
-  if (repo.includeUntracked && untrackedCount > 0) {
+  const spec = gitForScope(repo, scope);
+  if ("sha" in spec) return commitShortstat(repo.repoRoot, spec.sha);
+  const stat = await shortstat(repo.repoRoot, spec.range);
+  if (spec.includeUntracked && untrackedCount > 0) {
     return { ...stat, files: stat.files + untrackedCount };
   }
   return stat;
@@ -316,16 +321,27 @@ async function listCommits(repo: LocalRepoState): Promise<LocalCommit[]> {
 async function buildScopes(
   repo: LocalRepoState,
   commits: LocalCommit[],
+  untracked: string[],
 ): Promise<DiffScopeOption[]> {
-  const untracked = repo.includeUntracked && !repo.staged ? await listUntracked(repo.repoRoot) : [];
   const untrackedCount = untracked.length;
   const headLabel = repo.headRef === "HEAD" ? "this HEAD" : repo.headRef;
+  const recent = commits.slice(0, MAX_RECENT_COMMITS);
 
-  const branchStat = await statForScope(repo, "branch", untrackedCount);
-  const uncommittedStat = await statForScope(repo, "uncommitted", untrackedCount);
-  const unstagedStat = await statForScope(repo, "unstaged", untrackedCount);
+  const [workingTreeStats, commitCount, commitStats] = await Promise.all([
+    Promise.all([
+      statForScope(repo, "branch", untrackedCount),
+      statForScope(repo, "uncommitted", untrackedCount),
+      statForScope(repo, "unstaged", untrackedCount),
+    ]),
+    countCommitsAhead(repo),
+    Promise.all(
+      recent.map((commit) =>
+        statForScope(repo, `${COMMIT_SCOPE_PREFIX}${commit.sha}`, untrackedCount),
+      ),
+    ),
+  ]);
+  const [branchStat, uncommittedStat, unstagedStat] = workingTreeStats;
 
-  const commitCount = await countCommitsAhead(repo);
   const commitExtra = `${commitCount} commit${commitCount === 1 ? "" : "s"}`;
 
   const scopes: DiffScopeOption[] = [
@@ -334,6 +350,7 @@ async function buildScopes(
       label: `${headLabel} vs ${repo.baseRef}`,
       description: `Committed work on this branch since it diverged from ${repo.baseRef}.`,
       meta: formatScopeMeta(branchStat, commitExtra),
+      metaPrefix: commitExtra,
       stat: branchStat,
       empty: branchStat.files === 0,
     },
@@ -357,8 +374,8 @@ async function buildScopes(
     },
   ];
 
-  for (const commit of commits.slice(0, MAX_RECENT_COMMITS)) {
-    const stat = await statForScope(repo, `${COMMIT_SCOPE_PREFIX}${commit.sha}`, untrackedCount);
+  recent.forEach((commit, index) => {
+    const stat = commitStats[index]!;
     commit.stat = stat;
     const when = dateLabel(commit.authoredAt);
     scopes.push({
@@ -366,10 +383,11 @@ async function buildScopes(
       label: commit.subject,
       description: [commit.author, when].filter(Boolean).join(" · "),
       meta: formatScopeMeta(stat, commit.shortSha),
+      metaPrefix: commit.shortSha,
       stat,
       empty: stat.files === 0,
     });
-  }
+  });
 
   return scopes;
 }
@@ -416,36 +434,18 @@ export async function inspectLocalRepo(options: LocalDiffOptions): Promise<Local
   };
 }
 
-export async function rebuildLocalReview(
+async function snapshotFrom(
   repo: LocalRepoState,
-  scope: DiffScopeId,
+  requested?: DiffScopeId,
 ): Promise<LocalReviewSnapshot> {
+  const untracked = repo.includeUntracked && !repo.staged ? await listUntracked(repo.repoRoot) : [];
   const commits = await listCommits(repo);
-  const scopes = await buildScopes(repo, commits);
-  if (!scopes.some((option) => option.id === scope)) {
-    throw new GitError(`Unknown diff scope "${scope}".`);
+  const scopes = await buildScopes(repo, commits, untracked);
+  const selected = requested ?? pickDefaultScope(scopes, repo.staged);
+  if (requested && !scopes.some((option) => option.id === requested)) {
+    throw new GitError(`Unknown diff scope "${requested}".`);
   }
-  const raw = await rawDiffForScope(repo, scope);
-  const diff = parseDiff(raw);
-  return {
-    repo,
-    commits,
-    scopes,
-    selectedScope: scope,
-    context: contextFor(repo, commits, scope),
-    diff,
-    raw,
-    sessionKey: sessionKeyFor(repo, scope, raw),
-    empty: diff.files.length === 0,
-  };
-}
-
-export async function buildLocalReview(options: LocalDiffOptions): Promise<LocalReviewSnapshot> {
-  const repo = await inspectLocalRepo(options);
-  const commits = await listCommits(repo);
-  const scopes = await buildScopes(repo, commits);
-  const selected = options.scope ?? pickDefaultScope(scopes, repo.staged);
-  const raw = await rawDiffForScope(repo, selected);
+  const raw = await rawDiffForScope(repo, selected, untracked);
   const diff = parseDiff(raw);
   return {
     repo,
@@ -458,4 +458,15 @@ export async function buildLocalReview(options: LocalDiffOptions): Promise<Local
     sessionKey: sessionKeyFor(repo, selected, raw),
     empty: diff.files.length === 0,
   };
+}
+
+export function rebuildLocalReview(
+  repo: LocalRepoState,
+  scope: DiffScopeId,
+): Promise<LocalReviewSnapshot> {
+  return snapshotFrom(repo, scope);
+}
+
+export async function buildLocalReview(options: LocalDiffOptions): Promise<LocalReviewSnapshot> {
+  return snapshotFrom(await inspectLocalRepo(options), options.scope);
 }

@@ -54,6 +54,7 @@ function resetStore(): void {
     streamGeneration: 0,
     sessionKey: null,
     diffViewMode: DEFAULT_DIFF_VIEW_MODE,
+    planSource: null,
     uiMode: "navigate",
     selectableLines: [],
     lineSelection: null,
@@ -114,7 +115,7 @@ describe("useReviewStore", () => {
       buildPhase: "tokens_streaming",
       providerLabel: "OpenAI",
     });
-    useReviewStore.getState().startLoading(SESSION_KEY);
+    const generation = useReviewStore.getState().startLoading(SESSION_KEY);
     const state = useReviewStore.getState();
     expect(state.status).toBe("loading");
     expect(state.error).toBeNull();
@@ -124,6 +125,27 @@ describe("useReviewStore", () => {
     expect(state.sessionKey).toBe(SESSION_KEY);
     expect(state.buildPhase).toBe("extracting_diff");
     expect(state.providerLabel).toBeNull();
+    expect(generation).toBe(state.streamGeneration);
+    expect(generation).toBeGreaterThan(0);
+  });
+
+  it("bootReady installs a file plan without loading or persisting", async () => {
+    resetStore();
+    const generation = useReviewStore.getState().bootReady({
+      sessionKey: SESSION_KEY,
+      diff: diffFixture(),
+      plan: planFixture(2),
+    });
+    const state = useReviewStore.getState();
+    expect(state.status).toBe("ready");
+    expect(state.planSource).toBe("files");
+    expect(state.buildPhase).toBeNull();
+    expect(state.sessionKey).toBe(SESSION_KEY);
+    expect(state.plan?.units).toHaveLength(2);
+    expect(generation).toBe(state.streamGeneration);
+
+    await persistSession();
+    expect(await chrome.storage.session.get(STORAGE_KEY)).toEqual({});
   });
 
   it("setDiff stores the diff and advances buildPhase to processing", () => {
@@ -137,6 +159,23 @@ describe("useReviewStore", () => {
     expect(state.diff).toBe(diff);
     expect(state.plan).toBeNull();
     expect(state.buildPhase).toBe("processing_diff");
+  });
+
+  it("stream updates must use startLoading's return value, not a prior getState() snapshot", () => {
+    resetStore();
+    const snapshot = useReviewStore.getState();
+    const generation = snapshot.startLoading(SESSION_KEY);
+    expect(snapshot.streamGeneration).not.toBe(generation);
+
+    useReviewStore.getState().beginStreaming(generation);
+    const unit = planFixture(1).units[0];
+    useReviewStore.getState().appendUnit(unit, generation);
+    expect(useReviewStore.getState().plan?.units).toHaveLength(1);
+
+    useReviewStore
+      .getState()
+      .appendUnit({ ...unit, id: "stale-snapshot" }, snapshot.streamGeneration);
+    expect(useReviewStore.getState().plan?.units).toHaveLength(1);
   });
 
   it("beginStreaming and appendUnit grow the plan while streaming", () => {

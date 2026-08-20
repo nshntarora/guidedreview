@@ -11,6 +11,14 @@ export interface CliArgs {
   help: boolean;
 }
 
+function takeValue(flag: string, argv: string[], index: number): string {
+  const value = argv[index + 1];
+  if (value === undefined || value.startsWith("-")) {
+    throw new Error(`${flag} requires a value. Run guided-review --help.`);
+  }
+  return value;
+}
+
 export function parseArgs(argv: string[]): CliArgs {
   const args: CliArgs = {
     cwd: process.cwd(),
@@ -40,11 +48,13 @@ export function parseArgs(argv: string[]): CliArgs {
       continue;
     }
     if (token === "--base") {
-      args.base = argv[++i];
+      args.base = takeValue(token, argv, i);
+      i += 1;
       continue;
     }
     if (token === "--port") {
-      const raw = argv[++i];
+      const raw = takeValue(token, argv, i);
+      i += 1;
       const port = Number(raw);
       if (!Number.isInteger(port) || port < 0 || port > 65535) {
         throw new Error(`Invalid --port ${raw}. Use an integer 0–65535.`);
@@ -53,15 +63,18 @@ export function parseArgs(argv: string[]): CliArgs {
       continue;
     }
     if (token === "--provider") {
-      args.provider = argv[++i];
+      args.provider = takeValue(token, argv, i);
+      i += 1;
       continue;
     }
     if (token === "--model") {
-      args.model = argv[++i];
+      args.model = takeValue(token, argv, i);
+      i += 1;
       continue;
     }
     if (token === "--agent") {
-      args.agent = argv[++i];
+      args.agent = takeValue(token, argv, i);
+      i += 1;
       continue;
     }
     if (token.startsWith("-")) {
