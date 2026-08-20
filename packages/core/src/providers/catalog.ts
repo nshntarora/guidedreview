@@ -81,6 +81,8 @@ export const MODELS: readonly ModelDefinition[] = [
   { id: "o4-mini", displayName: "o4 Mini", provider: "openai" },
 
   // --- Grok (xAI) ---
+  { id: "grok-4.6", displayName: "Grok 4.6", provider: "grok" },
+  { id: "grok-4.5", displayName: "Grok 4.5", provider: "grok" },
   { id: "grok-4", displayName: "Grok 4", provider: "grok" },
   { id: "grok-3", displayName: "Grok 3", provider: "grok" },
   { id: "grok-3-mini", displayName: "Grok 3 Mini", provider: "grok" },
@@ -106,7 +108,15 @@ export function normalizeProviderSettings(stored: {
   provider?: string;
   model?: string;
   apiKey?: string;
-}): { provider: ProviderId; model: string; apiKey: string } {
+  authScheme?: "api-key" | "bearer";
+  extraHeaders?: Record<string, string>;
+}): {
+  provider: ProviderId;
+  model: string;
+  apiKey: string;
+  authScheme?: "api-key" | "bearer";
+  extraHeaders?: Record<string, string>;
+} {
   const provider =
     stored.provider && stored.provider in PROVIDERS ? (stored.provider as ProviderId) : "anthropic";
   // Keep the stored model only if it still exists for this provider.
@@ -115,5 +125,7 @@ export function normalizeProviderSettings(stored: {
     provider,
     model: model?.id ?? defaultModelFor(provider),
     apiKey: stored.apiKey ?? "",
+    ...(stored.authScheme ? { authScheme: stored.authScheme } : {}),
+    ...(stored.extraHeaders ? { extraHeaders: stored.extraHeaders } : {}),
   };
 }

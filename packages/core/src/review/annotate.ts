@@ -31,19 +31,18 @@ export async function* annotateReview(
   const { diff, context, settings, signal } = input;
 
   try {
+    // Emit before chunking or the first provider call so the host can leave
+    // "processing the diff" even when those steps take a while.
+    yield { type: "STATUS", phase: "waiting_for_tokens" };
+
     const client = getProviderClient(settings.provider);
     const chunks = chunkDiffByFile(diff).filter((chunk) => chunk.files.length > 0);
     const allUnits: ReviewUnit[] = [];
     const seenHunkIds = new Set<string>();
-    const streamStatus = { postedWaiting: false, postedStreaming: false };
+    const streamStatus = { postedWaiting: true, postedStreaming: false };
 
     for (const [chunkIndex, chunk] of chunks.entries()) {
       if (signal?.aborted) return;
-
-      if (!streamStatus.postedWaiting) {
-        streamStatus.postedWaiting = true;
-        yield { type: "STATUS", phase: "waiting_for_tokens" };
-      }
 
       for await (const event of streamChunkUnits(client, chunk, context, settings, {
         chunkIndex,
@@ -103,6 +102,14 @@ async function* streamChunkUnits(
     { signal },
   )) {
     if (signal?.aborted) return;
+
+    if (event.type === "heartbeat") {
+      if (!sawToken) {
+        sawToken = true;
+        yield { type: "token" };
+      }
+      continue;
+    }
 
     if (event.type === "text_delta" && !sawToken) {
       sawToken = true;
