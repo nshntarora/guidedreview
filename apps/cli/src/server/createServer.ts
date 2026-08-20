@@ -9,12 +9,29 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   annotateReview,
+  describeErrorMessage,
+  getProviderClient,
   type AnnotateReviewStreamEvent,
   type ProviderSettings,
 } from "@guided-review/core";
-import { applyProviderSettings, publicSettings, patchConfigFile } from "../config";
-import type { CodingAgentId } from "../codingAgents";
 import {
+  applyDetectedAgent,
+  applyProviderSettings,
+  publicAgents,
+  publicSettings,
+  patchConfigFile,
+  type PublicCliSettings,
+} from "../config";
+import {
+  createDefaultAgentIo,
+  detectAll,
+  isCodingAgentId,
+  type CodingAgentId,
+  type DetectedAgent,
+} from "../codingAgents";
+import {
+  currentDiffHash,
+  hashDiff,
   isDiffScopeId,
   rebuildLocalReview,
   type DiffScopeId,
@@ -58,6 +75,7 @@ export interface ReviewSessionPayload {
   context: LocalReviewSnapshot["context"];
   diff: LocalReviewSnapshot["diff"];
   sessionKey: string;
+  diffHash: string;
   settings: ReturnType<typeof publicSettings>;
   commits: LocalCommit[];
   scopes: DiffScopeOption[];
@@ -72,6 +90,15 @@ export interface CreateReviewServerOptions {
   staticDir?: string;
   onSettings?: (settings: ProviderSettings) => void;
   log?: ServerLog;
+  detectAgents?: () => Promise<DetectedAgent[]>;
+  testConnection?: (settings: ProviderSettings) => Promise<void>;
+}
+
+interface SettingsBody {
+  provider?: ProviderSettings["provider"];
+  model?: string;
+  apiKey?: string;
+  codingAgent?: CodingAgentId | null;
 }
 
 function sendJson(res: ServerResponse, status: number, body: unknown): void {
@@ -122,6 +149,7 @@ function sessionPayload(
     context: snapshot.context,
     diff: snapshot.diff,
     sessionKey: snapshot.sessionKey,
+    diffHash: hashDiff(snapshot.raw),
     settings,
     commits: snapshot.commits,
     scopes: snapshot.scopes,
@@ -129,11 +157,65 @@ function sessionPayload(
   };
 }
 
+function parseSettingsBody(value: unknown): SettingsBody | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Record<string, unknown>;
+  const body: SettingsBody = {};
+  if (typeof raw.provider === "string") {
+    body.provider = raw.provider as ProviderSettings["provider"];
+  }
+  if (typeof raw.model === "string") body.model = raw.model;
+  if (typeof raw.apiKey === "string") body.apiKey = raw.apiKey;
+  if (raw.codingAgent === null) body.codingAgent = null;
+  else if (typeof raw.codingAgent === "string") {
+    if (!isCodingAgentId(raw.codingAgent)) return null;
+    body.codingAgent = raw.codingAgent;
+  }
+  return body;
+}
+
 export function createReviewServer(options: CreateReviewServerOptions) {
   let settings = options.settings;
   let codingAgent = options.codingAgent ?? null;
   let snapshot = options.snapshot;
   const log = options.log ?? defaultLog;
+  const detectAgents = options.detectAgents ?? (() => detectAll(createDefaultAgentIo()));
+  const testConnection =
+    options.testConnection ??
+    ((next: ProviderSettings) => getProviderClient(next.provider).testConnection(next));
+
+  async function applySettingsBody(
+    body: SettingsBody,
+  ): Promise<{ ok: true; published: PublicCliSettings } | { ok: false; error: string }> {
+    const hasNewKey = typeof body.apiKey === "string" && body.apiKey.length > 0;
+    if (body.codingAgent && !hasNewKey) {
+      const detected = await detectAgents();
+      const agent = detected.find((item) => item.id === body.codingAgent);
+      if (!agent) return { ok: false, error: "That coding agent is not installed." };
+      try {
+        const applied = applyDetectedAgent(agent, body.model);
+        settings = applied.settings;
+        codingAgent = applied.codingAgent;
+        await patchConfigFile(applied.persist);
+      } catch (error) {
+        return {
+          ok: false,
+          error: error instanceof Error ? error.message : "Could not use that coding agent.",
+        };
+      }
+    } else {
+      const applied = applyProviderSettings(settings, codingAgent, body);
+      if (body.codingAgent === null && !hasNewKey) {
+        applied.codingAgent = null;
+        applied.persist.codingAgent = null;
+      }
+      settings = applied.settings;
+      codingAgent = applied.codingAgent;
+      await patchConfigFile(applied.persist);
+    }
+    options.onSettings?.(settings);
+    return { ok: true, published: publicSettings(settings, codingAgent) };
+  }
 
   function authorized(req: IncomingMessage, url: URL): boolean {
     const header = req.headers.authorization;
@@ -153,11 +235,30 @@ export function createReviewServer(options: CreateReviewServerOptions) {
       }
 
       if (req.method === "GET" && url.pathname === "/api/session") {
+        try {
+          snapshot = await rebuildLocalReview(snapshot.repo, snapshot.selectedScope);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          log(`GET /api/session  rebuild failed, serving last snapshot  ${message}`);
+        }
         const published = publicSettings(settings, codingAgent);
         log(
           `GET /api/session  ${snapshot.diff.files.length} file(s)  ${snapshot.selectedScope}  ${published.provider}/${published.model}  key=${published.hasKey ? "yes" : "no"}${published.codingAgent ? `  agent=${published.codingAgent}` : ""}`,
         );
         sendJson(res, 200, sessionPayload(snapshot, published));
+        return;
+      }
+
+      if (req.method === "GET" && url.pathname === "/api/diff-status") {
+        try {
+          const hash = await currentDiffHash(snapshot.repo, snapshot.selectedScope);
+          const served = hashDiff(snapshot.raw);
+          sendJson(res, 200, { hash, changed: hash !== served });
+        } catch (error) {
+          const message =
+            error instanceof GitError ? error.message : "Could not check the current diff.";
+          sendJson(res, 500, { error: message });
+        }
         return;
       }
 
@@ -168,21 +269,63 @@ export function createReviewServer(options: CreateReviewServerOptions) {
 
       if (req.method === "PUT" && url.pathname === "/api/settings") {
         const parsed = await readJsonBody(req);
-        if (!parsed.ok || !parsed.value || typeof parsed.value !== "object") {
+        if (!parsed.ok) {
           sendJson(res, 400, { error: "Request body must be JSON." });
           return;
         }
-        const body = parsed.value as Partial<ProviderSettings>;
-        const applied = applyProviderSettings(settings, codingAgent, body);
-        settings = applied.settings;
-        codingAgent = applied.codingAgent;
-        await patchConfigFile(applied.persist);
-        options.onSettings?.(settings);
-        const published = publicSettings(settings, codingAgent);
+        const body = parseSettingsBody(parsed.value);
+        if (!body) {
+          sendJson(res, 400, { error: "Request body must be JSON." });
+          return;
+        }
+        const applied = await applySettingsBody(body);
+        if (!applied.ok) {
+          sendJson(res, 400, { error: applied.error });
+          return;
+        }
+        const published = applied.published;
         log(
-          `PUT /api/settings  ${published.provider}/${published.model}  key=${published.hasKey ? "yes" : "no"}`,
+          `PUT /api/settings  ${published.provider}/${published.model}  key=${published.hasKey ? "yes" : "no"}${published.codingAgent ? `  agent=${published.codingAgent}` : ""}`,
         );
         sendJson(res, 200, published);
+        return;
+      }
+
+      if (req.method === "POST" && url.pathname === "/api/settings/test") {
+        const parsed = await readJsonBody(req);
+        if (!parsed.ok) {
+          sendJson(res, 400, { error: "Request body must be JSON." });
+          return;
+        }
+        const body = parseSettingsBody(parsed.value);
+        if (!body) {
+          sendJson(res, 400, { error: "Request body must be JSON." });
+          return;
+        }
+        const applied = await applySettingsBody(body);
+        if (!applied.ok) {
+          sendJson(res, 400, { error: applied.error });
+          return;
+        }
+        if (!settings.apiKey) {
+          sendJson(res, 200, { ok: false, error: "No API key configured." });
+          return;
+        }
+        try {
+          await testConnection(settings);
+          log(`POST /api/settings/test  ok  ${settings.provider}/${settings.model}`);
+          sendJson(res, 200, { ok: true });
+        } catch (error) {
+          const message = describeErrorMessage(error);
+          log(`POST /api/settings/test  fail  ${message}`);
+          sendJson(res, 200, { ok: false, error: message });
+        }
+        return;
+      }
+
+      if (req.method === "GET" && url.pathname === "/api/agents") {
+        const detected = await detectAgents();
+        sendJson(res, 200, { agents: publicAgents(detected) });
         return;
       }
 

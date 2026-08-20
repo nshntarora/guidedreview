@@ -51,6 +51,12 @@ const LOCAL_SHORTCUTS: readonly ShortcutRow[] = SHORTCUTS.map((row) =>
     : row,
 );
 
+const SETTINGS_SHORTCUT: ShortcutRow = {
+  keys: ["mod", ","],
+  join: "chord",
+  description: "Open settings",
+};
+
 const SCOPE_PICKER_SHORTCUT: ShortcutRow = {
   keys: ["d"],
   join: "none",
@@ -83,14 +89,17 @@ function ShortcutRowKeys({ row }: { row: ShortcutRow }) {
 
 export function KeyboardShortcuts({
   allowExit = true,
+  showSettings = false,
   showScopePicker = false,
   showStructureReview = false,
 }: {
   allowExit?: boolean;
+  showSettings?: boolean;
   showScopePicker?: boolean;
   showStructureReview?: boolean;
 }) {
   const rows = [
+    ...(showSettings ? [SETTINGS_SHORTCUT] : []),
     ...(showScopePicker ? [SCOPE_PICKER_SHORTCUT] : []),
     ...(showStructureReview ? [STRUCTURE_REVIEW_SHORTCUT] : []),
     ...(allowExit ? SHORTCUTS : LOCAL_SHORTCUTS),

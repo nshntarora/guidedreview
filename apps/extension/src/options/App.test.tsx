@@ -14,6 +14,8 @@ describe("App", () => {
 
     expect(await screen.findByRole("combobox", { name: /provider/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("href", "#about");
+    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "About" })).not.toHaveAttribute("aria-current");
     expect(screen.getByRole("link", { name: "Docs" })).toHaveAttribute(
       "href",
       "https://guidedreview.dev/docs",
@@ -26,7 +28,13 @@ describe("App", () => {
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "How it works" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Local review" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "CLI" })).toHaveAttribute(
+      "href",
+      "https://guidedreview.dev/docs/local-review",
+    );
     expect(screen.queryByRole("combobox", { name: /provider/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("aria-current", "page");
     expect(document.title).toBe("Guided Review — About");
   });
 

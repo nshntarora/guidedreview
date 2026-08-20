@@ -123,6 +123,32 @@ describe("ContextPanel structure trigger", () => {
     expect(onStructureReview).toHaveBeenCalledTimes(1);
   });
 
+  it("shows using <agent> with the logo under Structure with AI", () => {
+    setActiveReviewHost(
+      createMemoryReviewHost({
+        kind: "local",
+        exportNotes: vi.fn(),
+        submit: undefined,
+      }),
+    );
+    render(
+      <ContextPanel
+        unit={null}
+        hasTitle
+        hasDescription
+        onStructureReview={vi.fn()}
+        structureWith={{ provider: "grok", label: "Grok" }}
+      />,
+    );
+
+    const caption = screen.getByTestId("structure-review-provider");
+    expect(caption).toHaveTextContent("using Grok");
+    const logo = caption.querySelector("img");
+    expect(logo).toBeTruthy();
+    expect(logo).toHaveAttribute("src", "providers/grok.svg");
+    expect(logo).toHaveAttribute("aria-hidden", "true");
+  });
+
   it("hides the trigger after the review is structured", () => {
     setActiveReviewHost(
       createMemoryReviewHost({

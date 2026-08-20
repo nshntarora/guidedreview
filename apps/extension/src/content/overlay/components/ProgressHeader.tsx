@@ -13,7 +13,7 @@ import {
 } from "../localReview";
 import { DiffStatCounts } from "./DiffStatCounts";
 import { ScopeIcon } from "./ScopeIcons";
-import { ModEnterChord } from "./ShortcutKeys";
+import { ModEnterChord, ShortcutKeys } from "./ShortcutKeys";
 
 interface ProgressHeaderProps {
   prContext: ReviewContext | null;
@@ -183,6 +183,18 @@ export function ProgressHeader({
             {primaryIsExport ? "Copy notes" : "Submit Review"}
             <ModEnterChord />
           </button>
+          {isLocal && (
+            <button
+              type="button"
+              className={`${headerBtn} gap-2 border-border bg-surface text-foreground hover:bg-surface-muted`}
+              onClick={() => host.connectProvider()}
+              aria-keyshortcuts="Meta+, Control+,"
+              data-testid="open-settings"
+            >
+              Settings
+              <ShortcutKeys keys={["mod", ","]} join="chord" />
+            </button>
+          )}
           {allowExit && (
             <button
               type="button"
@@ -195,6 +207,22 @@ export function ProgressHeader({
           )}
         </div>
       </div>
+      {isLocal && localDiff?.stale && (
+        <div
+          role="status"
+          className="mt-1 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-surface-muted px-3 py-2 text-sm text-foreground"
+          data-testid="stale-diff-banner"
+        >
+          <span>The diff on disk has changed.</span>
+          <button
+            type="button"
+            className={`${headerBtn} border-border bg-surface text-foreground hover:bg-background`}
+            onClick={() => localDiff.onRefresh?.()}
+          >
+            Refresh
+          </button>
+        </div>
+      )}
     </header>
   );
 }

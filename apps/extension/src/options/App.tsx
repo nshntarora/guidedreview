@@ -36,8 +36,7 @@ function useHashRoute(): OptionsRoute {
   return route;
 }
 
-const NAV_ITEM_CLASS =
-  "rounded-md border-b-0 px-3 py-1.5 text-base font-medium no-underline transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+const NAV_LINK_CLASS = "text-foreground hover:text-primary";
 
 /**
  * Sticky brand header + Settings/About/Docs nav. Matches marketing/overlay page
@@ -65,7 +64,10 @@ export function OptionsShell({ route, children }: { route: OptionsRoute; childre
             className="block h-6 w-auto shrink-0 sm:h-7"
           />
 
-          <nav className="flex shrink-0 items-center gap-1" aria-label="Options">
+          <nav
+            className="flex shrink-0 items-center gap-2 text-base sm:gap-3 md:gap-5"
+            aria-label="Options"
+          >
             {ROUTES.map((item) => {
               const active = route === item.id;
               return (
@@ -73,26 +75,13 @@ export function OptionsShell({ route, children }: { route: OptionsRoute; childre
                   key={item.id}
                   href={`#${item.id}`}
                   aria-current={active ? "page" : undefined}
-                  className={cn(
-                    NAV_ITEM_CLASS,
-                    active
-                      ? "bg-surface-raised text-foreground"
-                      : "text-muted hover:bg-surface-raised/60 hover:text-foreground",
-                  )}
+                  className={cn(NAV_LINK_CLASS, active && "text-primary")}
                 >
                   {item.label}
                 </a>
               );
             })}
-            <a
-              href={DOCS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(
-                NAV_ITEM_CLASS,
-                "text-muted hover:bg-surface-raised/60 hover:text-foreground",
-              )}
-            >
+            <a href={DOCS_URL} target="_blank" rel="noopener noreferrer" className={NAV_LINK_CLASS}>
               Docs
             </a>
           </nav>

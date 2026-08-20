@@ -1,4 +1,5 @@
 import type { ReviewErrorInfo, ReviewUnit } from "@extension/lib/types";
+import { getProvider, type ProviderId } from "@guided-review/core";
 import { ConnectProviderPrompt } from "./ConnectProviderPrompt";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { Button, Spinner } from "@guided-review/ui";
@@ -30,6 +31,31 @@ interface ContextPanelProps {
   onStructureReview?: () => void;
   /** Local: an AI plan is already in place for the current scope. */
   structured?: boolean;
+  /** Local: selected coding agent / provider shown under Structure with AI. */
+  structureWith?: { provider: ProviderId; label: string };
+}
+
+/** Quiet attribution under the CTA. OpenAI's mark is inverted on the dark pane. */
+function StructureWithCaption({ provider, label }: { provider: ProviderId; label: string }) {
+  const host = useReviewHost();
+  const def = getProvider(provider);
+  return (
+    <p
+      className="mt-2 mb-0 flex items-center gap-1.5 text-sm text-muted"
+      data-testid="structure-review-provider"
+    >
+      <img
+        src={host.assetUrl(def.iconSrc)}
+        alt=""
+        width={14}
+        height={14}
+        draggable={false}
+        aria-hidden="true"
+        className={`size-3.5 shrink-0 object-contain ${provider === "openai" ? "invert" : ""}`}
+      />
+      using {label}
+    </p>
+  );
 }
 
 /**
@@ -48,6 +74,7 @@ export function ContextPanel({
   onRetry,
   onStructureReview,
   structured = false,
+  structureWith,
 }: ContextPanelProps) {
   const host = useReviewHost();
   // Takes precedence over `error`: a missing key is a setup step, not a failure.
@@ -129,6 +156,9 @@ export function ContextPanel({
               Structure with AI
               <ShortcutKeys keys={["mod", "I"]} join="chord" />
             </Button>
+            {structureWith ? (
+              <StructureWithCaption provider={structureWith.provider} label={structureWith.label} />
+            ) : null}
           </div>
         ) : null}
         {loading ? (
@@ -154,6 +184,7 @@ export function ContextPanel({
         ) : (
           <KeyboardShortcuts
             allowExit={host.kind !== "local"}
+            showSettings={host.kind === "local"}
             showScopePicker={host.kind === "local"}
             showStructureReview={Boolean(onStructureReview && !structured)}
           />

@@ -6,22 +6,43 @@ import { ReviewHostProvider } from "@extension/content/overlay/host";
 import { restoreSession, useReviewStore } from "@extension/content/overlay/store";
 import type { LocalDiffControls } from "@extension/content/overlay/localReview";
 import { createLocalReviewHost } from "./host";
-import { codingAgentLabel } from "./codingAgentLabel";
-import { SettingsPanel } from "./SettingsPanel";
+import { codingAgentLabel, structureWithLabel } from "./codingAgentLabel";
+import { SettingsApp } from "./settings/SettingsApp";
+import { parseAppHash, type AppRoute } from "./settings/route";
+import type { PublicSettings } from "./settings/types";
 
 function tokenFromLocation(): string {
   return new URLSearchParams(window.location.search).get("token") ?? "";
 }
 
+function useHashRoute(): AppRoute {
+  const [route, setRoute] = useState<AppRoute>(() =>
+    typeof window !== "undefined" ? parseAppHash(window.location.hash) : "review",
+  );
+
+  useEffect(() => {
+    const onHashChange = () => setRoute(parseAppHash(window.location.hash));
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  return route;
+}
+
 export function App() {
   const token = tokenFromLocation();
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const route = useHashRoute();
   const [bootError, setBootError] = useState<string | null>(null);
   const [commits, setCommits] = useState<ReviewSessionPayload["commits"]>([]);
   const [scopes, setScopes] = useState<ReviewSessionPayload["scopes"]>([]);
   const [selectedScope, setSelectedScope] = useState("");
   const [structured, setStructured] = useState(false);
   const [scopeBusy, setScopeBusy] = useState(false);
+  const [stale, setStale] = useState(false);
+  const [structureWith, setStructureWith] = useState<{
+    provider: ProviderId;
+    label: string;
+  } | null>(null);
   const cancelStreamRef = useRef<(() => void) | undefined>(undefined);
   const hasKeyRef = useRef(false);
   const providerIdRef = useRef<ProviderId>("anthropic");
@@ -31,10 +52,28 @@ export function App() {
     () =>
       createLocalReviewHost({
         token,
-        onConnectProvider: () => setSettingsOpen(true),
+        onConnectProvider: () => {
+          window.location.hash = "settings";
+        },
       }),
     [token],
   );
+
+  const applyPublishedSettings = useCallback((published: PublicSettings) => {
+    hasKeyRef.current = published.hasKey;
+    providerIdRef.current = published.provider;
+    codingAgentRef.current = published.codingAgent ?? null;
+    setStructureWith({
+      provider: published.provider,
+      label: structureWithLabel(published.codingAgent, published.provider),
+    });
+    if (published.hasKey) {
+      const agentLabel = codingAgentLabel(published.codingAgent);
+      useReviewStore
+        .getState()
+        .setProviderLabel(agentLabel ?? getProvider(published.provider).displayName);
+    }
+  }, []);
 
   const applyMeta = useCallback((session: ReviewSessionPayload) => {
     setCommits(session.commits);
@@ -111,15 +150,7 @@ export function App() {
       const session = (await res.json()) as ReviewSessionPayload;
       if (cancelled) return;
 
-      hasKeyRef.current = session.settings.hasKey;
-      providerIdRef.current = session.settings.provider;
-      codingAgentRef.current = session.settings.codingAgent ?? null;
-      if (session.settings.hasKey) {
-        const agentLabel = codingAgentLabel(codingAgentRef.current);
-        useReviewStore
-          .getState()
-          .setProviderLabel(agentLabel ?? getProvider(session.settings.provider).displayName);
-      }
+      applyPublishedSettings(session.settings);
 
       applyMeta(session);
       const restored = await restoreSession(session.sessionKey);
@@ -143,7 +174,7 @@ export function App() {
       cancelled = true;
       cancelStreamRef.current?.();
     };
-  }, [applyMeta, installFilePlan, token]);
+  }, [applyMeta, applyPublishedSettings, installFilePlan, token]);
 
   async function selectScope(scope: string) {
     if (!token || scope === selectedScope || scopeBusy) return;
@@ -163,6 +194,7 @@ export function App() {
         throw new Error(body.error ?? `Could not load that diff (${res.status}).`);
       }
       installFilePlan(body);
+      setStale(false);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Could not load that diff.";
       useReviewStore.getState().setError(message);
@@ -172,6 +204,36 @@ export function App() {
   }
 
   const status = useReviewStore((s) => s.status);
+  const structuring = status === "loading" || status === "streaming";
+
+  useEffect(() => {
+    if (!token || status !== "ready" || structuring || scopeBusy) return;
+
+    let cancelled = false;
+    let inFlight = false;
+
+    async function poll() {
+      if (inFlight) return;
+      inFlight = true;
+      try {
+        const res = await fetch(`/api/diff-status?token=${encodeURIComponent(token)}`);
+        const body = (await res.json().catch(() => ({}))) as { changed?: boolean };
+        if (!cancelled && res.ok && body.changed) setStale(true);
+      } catch {
+        // Next interval retries.
+      } finally {
+        inFlight = false;
+      }
+    }
+
+    void poll();
+    const id = window.setInterval(() => void poll(), 4000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [token, status, structuring, scopeBusy]);
+
   const localDiff: LocalDiffControls = {
     scopes,
     selectedScope,
@@ -180,12 +242,19 @@ export function App() {
       void selectScope(id);
     },
     onStructureReview: startStructure,
-    structuring: status === "loading" || status === "streaming",
+    structuring,
     structured,
     scopeBusy,
+    structureWith,
+    stale,
+    onRefresh: () => {
+      window.location.reload();
+    },
   };
 
-  if (bootError && !useReviewStore.getState().isOpen) {
+  const settingsOpen = route === "settings" || route === "about";
+
+  if (bootError && !useReviewStore.getState().isOpen && !settingsOpen) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-8 text-foreground">
         <p>{bootError}</p>
@@ -197,6 +266,7 @@ export function App() {
     <ReviewHostProvider host={host}>
       <Overlay
         allowExit={false}
+        inert={settingsOpen}
         localDiff={localDiff}
         onRetry={() => {
           const { diff, prContext } = useReviewStore.getState();
@@ -207,13 +277,13 @@ export function App() {
           startStructure();
         }}
       />
-      {settingsOpen && (
-        <SettingsPanel
+      {(route === "settings" || route === "about") && (
+        <SettingsApp
           token={token}
-          onClose={() => setSettingsOpen(false)}
-          onSaved={() => {
-            setSettingsOpen(false);
-            window.location.reload();
+          route={route}
+          onSaved={applyPublishedSettings}
+          onClose={() => {
+            window.location.hash = "review";
           }}
         />
       )}

@@ -8,6 +8,18 @@ export function isCodingAgentId(value: string | undefined): value is CodingAgent
   return CODING_AGENT_IDS.includes(value as CodingAgentId);
 }
 
+/** Coding agent whose store we read for a given provider. */
+export function agentIdForProvider(provider: ProviderId): CodingAgentId {
+  switch (provider) {
+    case "anthropic":
+      return "claude-code";
+    case "openai":
+      return "codex";
+    case "grok":
+      return "grok";
+  }
+}
+
 export interface AgentAuth {
   provider: ProviderId;
   model?: string;

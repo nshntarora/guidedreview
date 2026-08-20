@@ -8,6 +8,7 @@ import {
   type ProviderSettings,
 } from "@guided-review/core";
 import {
+  CODING_AGENTS,
   createDefaultAgentIo,
   detectAll,
   parseCodingAgentFlag,
@@ -32,9 +33,28 @@ export interface CliConfigFile {
   codingAgent?: CodingAgentId;
 }
 
-export type ConfigPatch = Omit<Partial<CliConfigFile>, "codingAgent"> & {
+export type ConfigPatch = Omit<Partial<CliConfigFile>, "codingAgent" | "apiKey"> & {
   codingAgent?: CodingAgentId | null;
+  apiKey?: string | null;
 };
+
+export interface PublicCliSettings {
+  provider: ProviderId;
+  model: string;
+  hasKey: boolean;
+  last4: string | null;
+  codingAgent: CodingAgentId | null;
+  configPath: string;
+}
+
+export interface PublicCodingAgent {
+  id: CodingAgentId;
+  displayName: string;
+  provider: ProviderId;
+  installed: boolean;
+  usable: boolean;
+  reason: string | null;
+}
 
 export interface ResolvedCliSettings {
   settings: ProviderSettings;
@@ -87,10 +107,12 @@ export async function writeConfigFile(next: CliConfigFile): Promise<void> {
 
 export async function patchConfigFile(partial: ConfigPatch): Promise<void> {
   const current = await readConfigFile();
-  const { codingAgent, ...rest } = partial;
+  const { codingAgent, apiKey, ...rest } = partial;
   const next: CliConfigFile = { ...current, ...rest };
   if (codingAgent === null) delete next.codingAgent;
   else if (codingAgent !== undefined) next.codingAgent = codingAgent;
+  if (apiKey === null) delete next.apiKey;
+  else if (apiKey !== undefined) next.apiKey = apiKey;
   await writeConfigFile(next);
 }
 
@@ -200,13 +222,7 @@ export async function resolveSettings(flags: {
 export function publicSettings(
   settings: ProviderSettings,
   codingAgent?: CodingAgentId | null,
-): {
-  provider: ProviderId;
-  model: string;
-  hasKey: boolean;
-  last4: string | null;
-  codingAgent: CodingAgentId | null;
-} {
+): PublicCliSettings {
   const key = settings.apiKey;
   return {
     provider: settings.provider,
@@ -214,5 +230,60 @@ export function publicSettings(
     hasKey: Boolean(key),
     last4: key ? key.slice(-4) : null,
     codingAgent: codingAgent ?? null,
+    configPath: configPath(),
+  };
+}
+
+export function publicAgents(detected: DetectedAgent[]): PublicCodingAgent[] {
+  return CODING_AGENTS.map((adapter) => {
+    const found = detected.find((agent) => agent.id === adapter.id);
+    if (!found) {
+      return {
+        id: adapter.id,
+        displayName: adapter.displayName,
+        provider: adapter.provider,
+        installed: false,
+        usable: false,
+        reason: `${adapter.displayName} is not installed.`,
+      };
+    }
+    return {
+      id: found.id,
+      displayName: found.displayName,
+      provider: found.provider,
+      installed: true,
+      usable: found.auth.usableForReview,
+      reason: found.auth.usableForReview
+        ? null
+        : (found.auth.reason ?? `${found.displayName} has no usable key.`),
+    };
+  });
+}
+
+/**
+ * Switch the in-memory provider to a detected coding agent. Persists the
+ * preference and provider/model — never the agent's secret.
+ */
+export function applyDetectedAgent(
+  agent: DetectedAgent,
+  modelOverride?: string,
+): {
+  settings: ProviderSettings;
+  codingAgent: CodingAgentId;
+  persist: ConfigPatch;
+} {
+  if (!agent.auth.usableForReview) {
+    throw new ConfigError(agent.auth.reason ?? `${agent.displayName} has no usable key.`);
+  }
+  const settings = settingsFromAuth(agent.auth, modelOverride);
+  return {
+    settings,
+    codingAgent: agent.id,
+    persist: {
+      provider: settings.provider,
+      model: settings.model,
+      codingAgent: agent.id,
+      apiKey: null,
+    },
   };
 }
