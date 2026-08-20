@@ -9,8 +9,7 @@ import {
   openVerificationUri,
   useGitHubDeviceAuth,
 } from "@extension/lib/github/useGitHubDeviceAuth";
-import { Button, Kbd, Spinner } from "@guided-review/ui";
-import { CloseButton, ModalShell } from "./ModalShell";
+import { Button, CloseButton, Kbd, ModalShell, Spinner } from "@guided-review/ui";
 
 export interface ConnectGitHubModalProps {
   open: boolean;

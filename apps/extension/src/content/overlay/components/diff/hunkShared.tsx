@@ -3,8 +3,7 @@
  * Used by UnifiedHunk and SplitHunk.
  */
 
-import { cn } from "@guided-review/ui";
-import { confirm } from "@extension/lib/confirmation";
+import { cn, confirm } from "@guided-review/ui";
 import { highlightToLines } from "@extension/lib/highlight";
 import type { DiffHunk } from "@extension/lib/types";
 import type { DraftComment } from "@extension/content/overlay/commentTypes";

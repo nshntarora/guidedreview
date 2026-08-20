@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
-import { Button, cn, Kbd } from "@guided-review/ui";
 import {
+  Button,
+  CloseIcon,
+  cn,
   ConfirmationHost,
   confirm,
   getConfirmationDialogElement,
   isConfirmationOpen,
-} from "@extension/lib/confirmation";
-import { CloseIcon } from "@extension/content/overlay/components/ModalShell";
+  Kbd,
+} from "@guided-review/ui";
 import { trapTabKey } from "@extension/content/overlay/focusTrap";
 import { About } from "./About";
 import { Settings, type PublicSettings } from "./Settings";

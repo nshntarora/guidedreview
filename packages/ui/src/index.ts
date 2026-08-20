@@ -20,3 +20,16 @@ export { Toggle } from "./components/Toggle";
 export { Card } from "./components/Card";
 export { Callout } from "./components/Callout";
 export { HelpDetails } from "./components/HelpDetails";
+
+export { ModalShell, CloseIcon, CloseButton } from "./components/ModalShell";
+export { ProviderIcon } from "./components/ProviderIcon";
+
+export {
+  confirm,
+  isConfirmationOpen,
+  useConfirmationOpen,
+  getConfirmationDialogElement,
+  resetConfirmationQueueForTests,
+  ConfirmationHost,
+} from "./components/confirmation";
+export type { ConfirmVariant, ConfirmOptions } from "./components/confirmation";

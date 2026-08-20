@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defaultModelFor } from "@guided-review/core";
-import { resetConfirmationQueueForTests } from "@extension/lib/confirmation";
+import { resetConfirmationQueueForTests } from "@guided-review/ui";
 import { Settings } from "./Settings";
 import { SettingsApp } from "./SettingsApp";
 import type { PublicAgent, PublicSettings } from "./Settings";

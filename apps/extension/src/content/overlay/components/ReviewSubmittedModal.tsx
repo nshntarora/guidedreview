@@ -1,7 +1,6 @@
 import { useEffect, useId, useRef } from "react";
 import type { ReviewEvent } from "@extension/content/overlay/commentTypes";
-import { Button, Kbd } from "@guided-review/ui";
-import { ModalShell } from "./ModalShell";
+import { Button, Kbd, ModalShell } from "@guided-review/ui";
 
 export interface ReviewSubmittedModalProps {
   open: boolean;

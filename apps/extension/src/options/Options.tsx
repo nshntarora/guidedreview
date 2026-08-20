@@ -15,50 +15,20 @@ import {
   Button,
   Callout,
   Card,
-  cn,
   Input,
   Label,
+  ProviderIcon,
   Select,
   Spinner,
   Toggle,
   type SelectOption,
 } from "@guided-review/ui";
 
-interface ProviderIconProps {
-  provider: ProviderId;
-  /** Pixel size (width & height). Defaults to 16. */
-  size?: number;
-  className?: string;
-}
-
-/**
- * Decorative provider logo. OpenAI's monochrome mark is inverted so it stays
- * visible on the dark-only options page.
- */
-function ProviderIcon({ provider, size = 16, className }: ProviderIconProps) {
+function providerIconSrc(provider: ProviderId): string {
   const def = getProvider(provider);
-  const src =
-    typeof chrome !== "undefined" && chrome.runtime?.getURL
-      ? chrome.runtime.getURL(def.iconSrc)
-      : `/${def.iconSrc}`;
-
-  return (
-    <img
-      src={src}
-      alt=""
-      width={size}
-      height={size}
-      draggable={false}
-      aria-hidden="true"
-      className={cn(
-        "shrink-0 object-contain",
-        // OpenAI asset is dark-on-transparent; invert for the dark surface.
-        provider === "openai" && "invert",
-        className,
-      )}
-      style={{ width: size, height: size }}
-    />
-  );
+  return typeof chrome !== "undefined" && chrome.runtime?.getURL
+    ? chrome.runtime.getURL(def.iconSrc)
+    : `/${def.iconSrc}`;
 }
 
 const CONFIGURE_PROVIDER_DOCS_URL = "https://guidedreview.dev/docs/configure-provider";
@@ -72,7 +42,7 @@ type ActionStatus =
 function OptionRow({ icon, label }: { icon: ProviderId; label: string }) {
   return (
     <span className="flex min-w-0 items-center gap-2">
-      <ProviderIcon provider={icon} size={16} />
+      <ProviderIcon src={providerIconSrc(icon)} invert={icon === "openai"} size={16} />
       <span className="truncate">{label}</span>
     </span>
   );

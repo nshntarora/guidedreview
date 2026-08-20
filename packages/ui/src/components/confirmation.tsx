@@ -1,3 +1,5 @@
+"use client";
+
 import {
   useCallback,
   useEffect,
@@ -7,8 +9,9 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { Button, Kbd } from "@guided-review/ui";
-import { ModalShell } from "@extension/content/overlay/components/ModalShell";
+import { Button } from "./Button";
+import { Kbd } from "./Kbd";
+import { ModalShell } from "./ModalShell";
 
 export type ConfirmVariant = "primary" | "destructive";
 
@@ -93,7 +96,8 @@ function dequeueHead(): void {
 }
 
 /**
- * Open a confirmation dialog. The host must be mounted (e.g. under Overlay).
+ * Open a confirmation dialog. The host must be mounted (Overlay, settings, or
+ * any React root that renders ConfirmationHost).
  * Handlers run when the user chooses OK or Cancel.
  */
 export function confirm(options: ConfirmOptions): void {
@@ -106,7 +110,7 @@ export function isConfirmationOpen(): boolean {
 }
 
 /**
- * Subscribe to open/closed state so Overlay can rebind keyboard / Tab trap.
+ * Subscribe to open/closed state so a host can rebind keyboard / Tab trap.
  * Uses useSyncExternalStore against the module queue.
  */
 export function useConfirmationOpen(): boolean {
@@ -197,7 +201,7 @@ function ConfirmationDialog({
     onCloseRef.current();
   }, []);
 
-  // Register the panel element for the overlay's Tab focus trap.
+  // Register the panel element for a Tab focus trap.
   useEffect(() => {
     const panel = dialogRef.current;
     dialogElement = panel;
@@ -208,8 +212,8 @@ function ConfirmationDialog({
   }, []);
 
   // Sole Enter/Esc handler for the dialog. Capture phase so it works both under
-  // the overlay (which stops propagation on every key) and on the options page,
-  // where there is no overlay keyboard at all.
+  // a host that stops propagation on every key and in a standalone settings
+  // page with no overlay keyboard.
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
       if (event.key === "Escape") {
@@ -287,7 +291,7 @@ function ConfirmationDialog({
 }
 
 /**
- * Mount once under the guided review overlay (or any React root that needs confirms).
+ * Mount once under any React root that needs confirms.
  * Renders the head of the confirmation queue.
  */
 export function ConfirmationHost() {

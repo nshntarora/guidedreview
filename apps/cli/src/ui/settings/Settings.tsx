@@ -14,6 +14,7 @@ import {
   HelpDetails,
   Input,
   Label,
+  ProviderIcon,
   Select,
   Spinner,
   Toggle,
@@ -57,26 +58,8 @@ function agentIdForProvider(provider: ProviderId): "claude-code" | "codex" | "gr
 
 const CONFIGURE_PROVIDER_DOCS_URL = "https://guidedreview.dev/docs/configure-provider";
 
-interface ProviderIconProps {
-  provider: ProviderId;
-  size?: number;
-  className?: string;
-}
-
-function ProviderIcon({ provider, size = 16, className }: ProviderIconProps) {
-  const def = getProvider(provider);
-  return (
-    <img
-      src={`/${def.iconSrc}`}
-      alt=""
-      width={size}
-      height={size}
-      draggable={false}
-      aria-hidden="true"
-      className={cn("shrink-0 object-contain", provider === "openai" && "invert", className)}
-      style={{ width: size, height: size }}
-    />
-  );
+function providerIconSrc(provider: ProviderId): string {
+  return `/${getProvider(provider).iconSrc}`;
 }
 
 function WarningIcon({ className }: { className?: string }) {
@@ -104,7 +87,7 @@ function WarningIcon({ className }: { className?: string }) {
 function OptionRow({ icon, label }: { icon: ProviderId; label: string }) {
   return (
     <span className="flex min-w-0 items-center gap-2">
-      <ProviderIcon provider={icon} size={16} />
+      <ProviderIcon src={providerIconSrc(icon)} invert={icon === "openai"} size={16} />
       <span className="truncate">{label}</span>
     </span>
   );
@@ -135,7 +118,11 @@ function SubscriptionFields({ agent }: { agent: PublicAgent | undefined }) {
               : "border-[color-mix(in_srgb,var(--color-danger)_35%,var(--color-border))] bg-[color-mix(in_srgb,var(--color-danger)_10%,var(--color-surface-raised))] text-foreground",
           )}
         >
-          <ProviderIcon provider={agent.provider} size={20} />
+          <ProviderIcon
+            src={providerIconSrc(agent.provider)}
+            invert={agent.provider === "openai"}
+            size={20}
+          />
           <span>{agent.usable ? `${agent.displayName} is signed in.` : agent.reason}</span>
         </p>
       )}

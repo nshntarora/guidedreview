@@ -29,8 +29,14 @@ import {
   Card,
   Callout,
   HelpDetails,
+  ModalShell,
+  CloseIcon,
+  CloseButton,
+  ProviderIcon,
+  confirm,
+  ConfirmationHost,
 } from "@guided-review/ui";
-import type { SelectOption } from "@guided-review/ui";
+import type { SelectOption, ConfirmOptions } from "@guided-review/ui";
 import "@guided-review/ui/theme.css";
 import iconUrl from "@guided-review/ui/assets/icon.png";
 ```
@@ -65,9 +71,12 @@ Used by the marketing site, options page, welcome page, and review overlay.
 - **Card** — bordered section with title and optional description.
 - **Callout** — ok / error status strip.
 - **HelpDetails** — disclosure for secondary help copy.
+- **ModalShell** / **CloseIcon** / **CloseButton** — scrim + panel and close-X used by dialogs.
+- **ProviderIcon** — decorative provider logo (`src` + optional invert for dark-on-transparent marks).
+- **confirm** / **ConfirmationHost** — queued confirmation dialog. Mount `ConfirmationHost` once in the React root that needs it.
 
 - **Source exports only** — no `build` emit step; apps transpile via Vite / Next `transpilePackages`.
-- **RSC-safe by default** — keep components free of hooks/browser APIs unless marked `"use client"` (Select is the exception).
+- **RSC-safe by default** — keep components free of hooks/browser APIs unless marked `"use client"` (Select and confirmation are the exceptions).
 
 ## Scripts
 

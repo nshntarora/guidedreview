@@ -202,6 +202,24 @@ export default tseslint.config(
       ],
     },
   },
+  // apps/cli may reuse the overlay product (Overlay, host, store) from the
+  // extension, but shared presentational React UI belongs in @guided-review/ui.
+  {
+    files: ["apps/cli/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@extension/content/overlay/components/**", "@extension/lib/confirmation"],
+              message: "Shared React UI belongs in @guided-review/ui, not the extension package.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   // apps/extension must not import the web app; prefer @extension/* over deep relatives
   {
     files: ["apps/extension/**/*.{ts,tsx}"],

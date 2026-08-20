@@ -1,7 +1,6 @@
 import { useEffect, useId, useRef, type MutableRefObject, type Ref } from "react";
-import { Button, Kbd } from "@guided-review/ui";
+import { Button, CloseButton, Kbd, ModalShell } from "@guided-review/ui";
 import { useCopyToClipboard } from "@extension/lib/useCopyToClipboard";
-import { CloseButton, ModalShell } from "./ModalShell";
 import { ModEnterChord } from "./ShortcutKeys";
 
 export interface GeneratePromptModalProps {

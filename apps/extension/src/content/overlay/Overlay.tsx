@@ -23,7 +23,7 @@ import { ContextPanel } from "./components/ContextPanel";
 import { FooterNav } from "./components/FooterNav";
 import { DiffSearch } from "./components/DiffSearch";
 import { ConnectGitHubModal } from "./components/ConnectGitHubModal";
-import { confirm, ConfirmationHost, useConfirmationOpen } from "@extension/lib/confirmation";
+import { confirm, ConfirmationHost, useConfirmationOpen } from "@guided-review/ui";
 import { GeneratePromptModal } from "./components/GeneratePromptModal";
 import { SubmitReviewModal } from "./components/SubmitReviewModal";
 import { ReviewSubmittedModal } from "./components/ReviewSubmittedModal";

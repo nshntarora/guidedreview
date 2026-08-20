@@ -26,7 +26,7 @@
  * only because capture ownership and React synthetic handlers cannot both win.
  */
 import { useEffect, useRef, type MutableRefObject, type RefObject } from "react";
-import { getConfirmationDialogElement, isConfirmationOpen } from "@extension/lib/confirmation";
+import { getConfirmationDialogElement, isConfirmationOpen } from "@guided-review/ui";
 import type { SelectableLine } from "./commentTypes";
 import type { DiffViewMode } from "./diffView";
 import { trapTabKey } from "./focusTrap";

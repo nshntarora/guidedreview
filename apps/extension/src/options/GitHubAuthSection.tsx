@@ -11,8 +11,7 @@ import {
   useGitHubDeviceAuth,
 } from "@extension/lib/github/useGitHubDeviceAuth";
 import { clearGitHubAuthSession, getGitHubAuthStatus } from "@extension/lib/messaging";
-import { confirm, ConfirmationHost } from "@extension/lib/confirmation";
-import { Button, Card, Spinner, cn } from "@guided-review/ui";
+import { Button, Card, cn, confirm, ConfirmationHost, Spinner } from "@guided-review/ui";
 
 type SessionState =
   | { kind: "loading" }

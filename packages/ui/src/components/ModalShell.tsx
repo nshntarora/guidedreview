@@ -1,5 +1,5 @@
 import type { MouseEvent, ReactNode, Ref } from "react";
-import { cn } from "@guided-review/ui";
+import { cn } from "../cn";
 
 interface ModalShellProps {
   /** `fixed` for dialogs that must sit above the overlay's own fixed root (confirmation); `absolute` otherwise. */
@@ -17,10 +17,8 @@ interface ModalShellProps {
 }
 
 /**
- * Scrim + centered panel shared by the overlay's dialogs (Submit Review,
- * Connect GitHub, Review Submitted, Confirmation). Header/body/footer stay
- * per-modal; this only owns the structural wrapper that was previously
- * duplicated across all four.
+ * Scrim + centered panel for dialogs. Header/body/footer stay per-modal;
+ * this only owns the structural wrapper.
  */
 export function ModalShell({
   position = "absolute",
@@ -84,7 +82,7 @@ export function CloseIcon({ size = 16 }: { size?: number }) {
   );
 }
 
-/** Shared close-X icon button used by the overlay's header-style dialogs. */
+/** Icon-only close-X button for dialog headers. */
 export function CloseButton({
   onClick,
   disabled,
