@@ -52,6 +52,15 @@ export const DOCS_PAGES: DocsPage[] = [
     load: () => import("@web/content/help/first-review.mdx"),
   },
   {
+    slug: "local-review",
+    section: "Getting Started",
+    title: "Review local changes",
+    description:
+      "Run Guided Review from your terminal against the main branch. The CLI serves the same walkthrough in the browser.",
+    blurb: "CLI for local git diffs vs main",
+    load: () => import("@web/content/help/local-review.mdx"),
+  },
+  {
     slug: "configure-provider",
     section: "Setup",
     title: "Configure AI provider",
