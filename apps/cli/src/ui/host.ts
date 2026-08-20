@@ -1,11 +1,5 @@
-import {
-  formatNotesMarkdown,
-  type AnnotateReviewStreamEvent,
-  type ParsedDiff,
-  type ReviewContext,
-} from "@guided-review/core";
+import type { AnnotateReviewStreamEvent, ParsedDiff, ReviewContext } from "@guided-review/core";
 import type { ReviewHost, StreamPlanHandlers } from "@extension/content/overlay/host";
-import type { DraftComment } from "@extension/content/overlay/commentTypes";
 import type { DiffViewMode } from "@extension/content/overlay/diffView";
 
 function api(path: string, token: string): string {
@@ -79,22 +73,7 @@ export function createLocalReviewHost(options: {
       const raw = localStorage.getItem("guidedReview.diffViewMode");
       return raw === "unified" || raw === "split" ? raw : "split";
     },
-    exportNotes: async (drafts: DraftComment[]) => {
-      const markdown = formatNotesMarkdown(
-        drafts.map((draft) => ({
-          filePath: draft.filePath,
-          startLine: draft.startLine,
-          endLine: draft.endLine,
-          body: draft.body,
-          unitId: draft.unitId,
-        })),
-      );
-      if (!markdown) return;
-      try {
-        await navigator.clipboard.writeText(markdown);
-      } catch {
-        window.prompt("Copy review notes", markdown);
-      }
-    },
+    // Capability flag only — Overlay owns Generate Prompt UI + clipboard.
+    exportNotes: () => {},
   };
 }

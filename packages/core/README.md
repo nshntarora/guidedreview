@@ -11,7 +11,7 @@ Hosts (Chrome extension, CLI) supply a `ParsedDiff` + `ReviewContext` and consum
 - Prompt, schema, stream parse, unit validation, fallback plan
 - `annotateReview` (chunk → provider → validate)
 - Provider catalog and HTTP clients
-- Notes markdown export
+- Notes markdown export and coding-agent prompt formatting
 
 No `chrome.*`, no React, no `git` subprocesses, no GitHub HTTP.
 
@@ -23,5 +23,6 @@ import {
   annotateReview,
   getProviderClient,
   formatNotesMarkdown,
+  formatAgentPrompt,
 } from "@guided-review/core";
 ```

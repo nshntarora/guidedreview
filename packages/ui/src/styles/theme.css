@@ -1,7 +1,7 @@
 /*
  * Shared Tailwind entry + design tokens.
- * App customizations/overrides live in SCSS; this file exists because
- * Tailwind v4's @import / @theme are CSS-first.
+ * App chrome (grain stacking, text-link hover, marketing type) stays in
+ * each app's CSS — this file is the palette every surface imports.
  *
  * Single dark palette for marketing, options, welcome, and review overlay.
  * Utilities: bg-background, text-foreground, border-border, bg-primary, …
@@ -34,6 +34,7 @@
 
   /* Status */
   --color-success: #3fb950;
+  --color-warning: #d4a72c;
   --color-danger: #ff7b72;
   --color-danger-muted: #3d0f0f;
 
@@ -87,6 +88,8 @@
 
 :root {
   color-scheme: dark;
+  /* Faint grain — apps attach ::before and their own z-index */
+  --gr-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* WCAG 2.3.3 — respect reduced-motion preference (overlay + options import this file) */

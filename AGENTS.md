@@ -45,6 +45,12 @@ Sessions: `chrome.storage.session`, key `owner/repo#number` (`buildSessionKey`).
 - **ui:** transpile via `transpilePackages`. Tokens `@guided-review/ui/theme.css`. Tailwind v4 that uses ui must `@source packages/ui/src/**/*.{ts,tsx}`.
 - **web:** docs MDX in `content/help/`, legal in `content/legal/`. Register every docs page in `config/docs.ts` (sidebar, routes, metadata, sitemap).
 
+## Tailwind
+
+- Tokens live in `@guided-review/ui/theme.css`. Use semantic utilities (`bg-background`, `text-muted`, `text-warning`) — not raw hex or one-off arbitrary colors.
+- Prefer utilities. Custom CSS only when Tailwind cannot own the markup (Shadow DOM reset, highlight.js, `.markdown-body`, MDX/legal prose, grain `::before`). Import the theme once; it already pulls in Tailwind.
+- Text links use the document chrome (`a:not(.inline-flex)` → accent + bottom border on hover). Button-looking anchors use `buttonClassName`. No `cva` / `@apply`. Do not reconstruct `Button` when it already matches.
+
 ## Voice
 
 Match `apps/web` landing copy — peer engineer, specific, dry.

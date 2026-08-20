@@ -1,6 +1,6 @@
-import { cn } from "@guided-review/ui";
+import { cn } from "../cn";
 
-export function StatusCallout({
+export function Callout({
   kind,
   message,
   className,

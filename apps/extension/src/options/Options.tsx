@@ -11,8 +11,18 @@ import { getAutoOpenOnFilesTab, setAutoOpenOnFilesTab } from "@extension/lib/pre
 import { getProviderSettings, setProviderSettings } from "@extension/lib/settings";
 import { requestTestConnection } from "@extension/lib/messaging";
 import { GitHubAuthSection } from "./GitHubAuthSection";
-import { SettingsCard } from "./SettingsCard";
-import { Button, cn, Input, Label, Select, Spinner, type SelectOption } from "@guided-review/ui";
+import {
+  Button,
+  Callout,
+  Card,
+  cn,
+  Input,
+  Label,
+  Select,
+  Spinner,
+  Toggle,
+  type SelectOption,
+} from "@guided-review/ui";
 
 interface ProviderIconProps {
   provider: ProviderId;
@@ -48,85 +58,6 @@ function ProviderIcon({ provider, size = 16, className }: ProviderIconProps) {
       )}
       style={{ width: size, height: size }}
     />
-  );
-}
-
-interface StatusCalloutProps {
-  kind: "ok" | "error";
-  message: string;
-  className?: string;
-}
-
-/** Compact save / connection status strip for the options form. */
-function StatusCallout({ kind, message, className }: StatusCalloutProps) {
-  const text = kind === "error" ? `Error: ${message}` : message;
-
-  return (
-    <p
-      role="status"
-      aria-live="polite"
-      className={cn(
-        "m-0 rounded-md border px-3 py-2 text-base",
-        kind === "ok" && "border-border bg-background/60 text-success",
-        kind === "error" &&
-          "border-[color-mix(in_srgb,var(--color-danger)_35%,var(--color-border))] bg-[color-mix(in_srgb,var(--color-danger)_10%,var(--color-surface-raised))] text-danger",
-        className,
-      )}
-    >
-      {text}
-    </p>
-  );
-}
-
-interface ToggleProps {
-  id: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  disabled?: boolean;
-  "aria-labelledby"?: string;
-  "aria-describedby"?: string;
-  className?: string;
-}
-
-/**
- * Accessible on/off switch for options preferences (WAI-ARIA switch pattern).
- * Options-local; promote to packages/ui if overlay needs the same control.
- */
-function Toggle({
-  id,
-  checked,
-  onChange,
-  disabled = false,
-  "aria-labelledby": ariaLabelledBy,
-  "aria-describedby": ariaDescribedBy,
-  className,
-}: ToggleProps) {
-  return (
-    <button
-      id={id}
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-labelledby={ariaLabelledBy}
-      aria-describedby={ariaDescribedBy}
-      disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={cn(
-        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border transition-colors",
-        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-        "disabled:cursor-not-allowed disabled:opacity-60",
-        checked ? "border-primary bg-primary" : "border-border bg-surface-raised",
-        className,
-      )}
-    >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "pointer-events-none absolute top-0.5 left-0.5 size-4 rounded-full shadow-sm transition-transform",
-          checked ? "translate-x-5 bg-primary-foreground" : "translate-x-0 bg-muted",
-        )}
-      />
-    </button>
   );
 }
 
@@ -252,7 +183,7 @@ export function Options() {
       <div className="flex flex-col gap-4">
         <GitHubAuthSection />
 
-        <SettingsCard
+        <Card
           title="AI Provider"
           titleId="ai-provider-heading"
           description={
@@ -334,13 +265,11 @@ export function Options() {
               </Button>
             </div>
 
-            {statusMessage && (
-              <StatusCallout kind={statusMessage.kind} message={statusMessage.message} />
-            )}
+            {statusMessage && <Callout kind={statusMessage.kind} message={statusMessage.message} />}
           </div>
-        </SettingsCard>
+        </Card>
 
-        <SettingsCard
+        <Card
           title="Review"
           titleId="review-heading"
           description="How Guided Review behaves when you open a pull request."
@@ -366,7 +295,7 @@ export function Options() {
               aria-describedby="autoOpenOnFilesTab-hint"
             />
           </div>
-        </SettingsCard>
+        </Card>
       </div>
 
       <p className="mt-6 m-0 text-sm leading-relaxed text-muted">

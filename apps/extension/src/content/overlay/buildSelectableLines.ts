@@ -23,6 +23,7 @@ function fromDiffLine(
     oldLine: line.oldLine,
     newLine: line.newLine,
     type: line.type,
+    content: line.content,
   };
 }
 

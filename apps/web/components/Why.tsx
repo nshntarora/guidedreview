@@ -66,7 +66,7 @@ export function Why() {
                   href={X_PROFILE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary underline-offset-4 transition-colors hover:underline"
+                  className="text-primary"
                 >
                   @nshntarora
                 </a>

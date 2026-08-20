@@ -9,8 +9,9 @@ import {
 import { CloseIcon } from "@extension/content/overlay/components/ModalShell";
 import { trapTabKey } from "@extension/content/overlay/focusTrap";
 import { About } from "./About";
-import { Settings } from "./Settings";
-import type { PublicSettings, SettingsRoute } from "./types";
+import { Settings, type PublicSettings } from "./Settings";
+
+export type SettingsRoute = "settings" | "about";
 
 const DOCS_URL = "https://guidedreview.dev/docs";
 

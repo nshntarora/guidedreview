@@ -8,8 +8,15 @@ import type { LocalDiffControls } from "@extension/content/overlay/localReview";
 import { createLocalReviewHost } from "./host";
 import { codingAgentLabel, structureWithLabel } from "./codingAgentLabel";
 import { SettingsApp } from "./settings/SettingsApp";
-import { parseAppHash, type AppRoute } from "./settings/route";
-import type { PublicSettings } from "./settings/types";
+import type { PublicSettings } from "./settings/Settings";
+
+type AppRoute = "review" | "settings" | "about";
+
+function parseAppHash(hash: string): AppRoute {
+  const path = hash.replace(/^#\/?/, "").toLowerCase();
+  if (path === "settings" || path === "about") return path;
+  return "review";
+}
 
 function tokenFromLocation(): string {
   return new URLSearchParams(window.location.search).get("token") ?? "";

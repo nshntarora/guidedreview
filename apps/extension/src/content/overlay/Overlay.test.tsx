@@ -226,7 +226,7 @@ describe("Overlay", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("uses Copy notes and Change summary for a local host", () => {
+  it("uses Generate Prompt and Change summary for a local host", () => {
     setActiveReviewHost(
       createMemoryReviewHost({
         kind: "local",
@@ -237,12 +237,127 @@ describe("Overlay", () => {
     seedReadyReview(0);
     render(<Overlay allowExit={false} />);
 
-    expect(screen.getByTestId("submit-review-button")).toHaveTextContent("Copy notes");
+    expect(screen.getByTestId("submit-review-button")).toHaveTextContent("Generate Prompt");
     expect(screen.getByTestId("submit-review-button")).toBeDisabled();
     expect(screen.getAllByText("Change summary").length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText("#1")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^exit$/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /settings/i })).toBeInTheDocument();
+  });
+
+  it("opens Generate Prompt with draft notes for a local host", async () => {
+    setActiveReviewHost(
+      createMemoryReviewHost({
+        kind: "local",
+        exportNotes: vi.fn(),
+        submit: undefined,
+      }),
+    );
+    seedReadyReview(0);
+    useReviewStore.setState({
+      draftComments: [
+        {
+          id: "d1",
+          filePath: "src/foo.ts",
+          side: "RIGHT",
+          startLine: 1,
+          endLine: 1,
+          lineIds: ["src/foo.ts#0:0:RIGHT"],
+          selectedCode: "const x = 1;",
+          body: "Prefer a named constant",
+        },
+      ],
+    });
+    render(<Overlay allowExit={false} />);
+
+    const button = screen.getByTestId("submit-review-button");
+    expect(button).toBeEnabled();
+    fireEvent.click(button);
+
+    expect(await screen.findByTestId("generate-prompt-modal")).toBeInTheDocument();
+    const prompt = screen.getByTestId("generate-prompt-text");
+    expect(prompt).toHaveTextContent("Review feedback to apply");
+    expect(prompt).toHaveTextContent("src/foo.ts");
+    expect(prompt).toHaveTextContent("const x = 1;");
+    expect(prompt).toHaveTextContent("Prefer a named constant");
+    expect(screen.getByTestId("generate-prompt-copy")).toBeInTheDocument();
+  });
+
+  it("closes Generate Prompt on Esc without exiting a local review", async () => {
+    setActiveReviewHost(
+      createMemoryReviewHost({
+        kind: "local",
+        exportNotes: vi.fn(),
+        submit: undefined,
+      }),
+    );
+    seedReadyReview(0);
+    useReviewStore.setState({
+      draftComments: [
+        {
+          id: "d1",
+          filePath: "src/foo.ts",
+          side: "RIGHT",
+          startLine: 1,
+          endLine: 1,
+          lineIds: ["src/foo.ts#0:0:RIGHT"],
+          selectedCode: "const x = 1;",
+          body: "Prefer a named constant",
+        },
+      ],
+    });
+    render(<Overlay allowExit={false} />);
+
+    fireEvent.click(screen.getByTestId("submit-review-button"));
+    expect(await screen.findByTestId("generate-prompt-modal")).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByTestId("generate-prompt-modal")).not.toBeInTheDocument();
+    expect(useReviewStore.getState().isOpen).toBe(true);
+    expect(screen.getByTestId("submit-review-button")).toBeInTheDocument();
+  });
+
+  it("copies the prompt with Ctrl+Enter while Generate Prompt is open", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+
+    setActiveReviewHost(
+      createMemoryReviewHost({
+        kind: "local",
+        exportNotes: vi.fn(),
+        submit: undefined,
+      }),
+    );
+    seedReadyReview(0);
+    useReviewStore.setState({
+      draftComments: [
+        {
+          id: "d1",
+          filePath: "src/foo.ts",
+          side: "RIGHT",
+          startLine: 1,
+          endLine: 1,
+          lineIds: ["src/foo.ts#0:0:RIGHT"],
+          selectedCode: "const x = 1;",
+          body: "Prefer a named constant",
+        },
+      ],
+    });
+    render(<Overlay allowExit={false} />);
+
+    fireEvent.click(screen.getByTestId("submit-review-button"));
+    expect(await screen.findByTestId("generate-prompt-modal")).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: "Enter", ctrlKey: true });
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledTimes(1);
+    });
+    expect(writeText.mock.calls[0]?.[0]).toContain("Prefer a named constant");
+    expect(writeText.mock.calls[0]?.[0]).toContain("src/foo.ts");
+    expect(screen.getByTestId("generate-prompt-modal")).toBeInTheDocument();
   });
 
   it("opens settings from the local header and hides the control on GitHub", () => {
@@ -1081,6 +1196,7 @@ describe("Overlay", () => {
             startLine: 1,
             endLine: 1,
             lineIds: ["src/foo.ts#0:0:RIGHT"],
+            selectedCode: "const x = 1;",
             body: "inline note",
           },
         ],
@@ -1129,6 +1245,7 @@ describe("Overlay", () => {
             startLine: 3,
             endLine: 7,
             lineIds: ["src/foo.ts#0:2:RIGHT"],
+            selectedCode: "line three\n...\nline seven",
             body: "spans lines",
           },
         ],

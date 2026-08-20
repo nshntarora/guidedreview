@@ -503,6 +503,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       startLine: Math.min(startNum, endNum),
       endLine: Math.max(startNum, endNum),
       lineIds: selected.map((l) => l.id),
+      selectedCode: selected.map((l) => l.content).join("\n"),
       body: trimmed,
       unitId,
     };
@@ -640,7 +641,10 @@ export async function restoreSession(sessionKey: string): Promise<boolean> {
     error: null,
     buildPhase: null,
     providerLabel: null,
-    draftComments: saved.draftComments ?? [],
+    draftComments: (saved.draftComments ?? []).map((draft) => ({
+      ...draft,
+      selectedCode: draft.selectedCode ?? "",
+    })),
     ...COMMENT_UI_RESET,
   });
   return true;

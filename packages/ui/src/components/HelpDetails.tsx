@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { cn } from "@guided-review/ui";
+import { cn } from "../cn";
 
 export function HelpDetails({
   title,

@@ -10,6 +10,7 @@ const draft: DraftComment = {
   startLine: 2,
   endLine: 4,
   lineIds: ["a", "b"],
+  selectedCode: "const a = 1;\nconst b = 2;",
   body: "Looks good",
 };
 

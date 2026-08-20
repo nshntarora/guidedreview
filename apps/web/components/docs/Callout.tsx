@@ -21,7 +21,7 @@ const config: Record<CalloutType, { className: string; titleDefault: string }> =
   },
   warning: {
     className:
-      "border-[color-mix(in_srgb,#d4a72c_45%,var(--color-border))] bg-[color-mix(in_srgb,#d4a72c_12%,var(--color-background))] text-foreground",
+      "border-[color-mix(in_srgb,var(--color-warning)_45%,var(--color-border))] bg-[color-mix(in_srgb,var(--color-warning)_12%,var(--color-background))] text-foreground",
     titleDefault: "Warning",
   },
   danger: {

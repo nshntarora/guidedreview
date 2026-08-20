@@ -67,3 +67,4 @@ export type {
 } from "./providers/types";
 
 export { formatNotesMarkdown } from "./notes/formatNotes";
+export { formatAgentPrompt } from "./notes/formatAgentPrompt";
