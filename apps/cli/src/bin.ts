@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { HELP, parseArgs } from "./args";
 import { resolveSettings } from "./config";
 import { GitError } from "./git/run";
-import { buildLocalDiff } from "./git/localDiff";
+import { buildLocalReview } from "./git/localDiff";
 import { createReviewServer, listen } from "./server/createServer";
 
 function openBrowser(url: string): void {
@@ -23,7 +23,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  const local = await buildLocalDiff({
+  const local = await buildLocalReview({
     cwd: path.resolve(args.cwd),
     base: args.base,
     staged: args.staged,
