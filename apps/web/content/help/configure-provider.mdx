@@ -38,7 +38,7 @@ We’ll keep adding more providers — [request one on the repo](https://github.
 
 Keys are stored in `chrome.storage.local` and are only used from the **background service worker** when annotating a review or testing the connection. Content scripts never hold the key for outbound LLM calls.
 
-{/*
+{/\*
 **Local CLI**
 
 1. Open **Settings** in the local walkthrough (header button, `⌘/Ctrl` + `,`, or **Connect AI Provider** if no key is set).
@@ -47,7 +47,7 @@ Keys are stored in `chrome.storage.local` and are only used from the **backgroun
 4. Save. **Test connection** runs the same probe as the extension.
 
 A saved API key always wins. Subscription is unofficial (tokens expire, move, or look nothing like a console key) — prefer an API key if you want the same review tomorrow. Details and troubleshooting: [Review local changes](/docs/local-review#api-keys).
-*/}
+\*/}
 
 ## Pick a model
 
@@ -79,19 +79,19 @@ Token usage and cost are entirely between you and your provider. Guided Review d
 
 ## Where settings live
 
-| Setting                             | Storage                  | Used by                       |
-| ----------------------------------- | ------------------------ | ----------------------------- |
-| Provider, model, API key            | `chrome.storage.local`   | Extension background worker   |
-| Automatically open on Files changed | `chrome.storage.local`   | Content script (auto-open)    |
-| Diff view (unified / split)         | `chrome.storage.local`   | Overlay (default: split)      |
-| Active review session               | `chrome.storage.session` | Overlay (session-scoped)      |
+| Setting                             | Storage                  | Used by                     |
+| ----------------------------------- | ------------------------ | --------------------------- |
+| Provider, model, API key            | `chrome.storage.local`   | Extension background worker |
+| Automatically open on Files changed | `chrome.storage.local`   | Content script (auto-open)  |
+| Diff view (unified / split)         | `chrome.storage.local`   | Overlay (default: split)    |
+| Active review session               | `chrome.storage.session` | Overlay (session-scoped)    |
 
-{/*
-| Provider, model, API key            | `~/.config/guided-review/config.json`             | Local CLI server                  |
-| Coding agent preference             | `config.json` (`codingAgent`)                     | Local CLI (secret stays in agent) |
-| Diff view (unified / split)         | `chrome.storage.local` / `localStorage` (CLI)     | Overlay (default: split)          |
-| Active review session               | `chrome.storage.session` / `sessionStorage` (CLI) | Overlay (session-scoped)          |
-*/}
+{/_
+| Provider, model, API key | `~/.config/guided-review/config.json` | Local CLI server |
+| Coding agent preference | `config.json` (`codingAgent`) | Local CLI (secret stays in agent) |
+| Diff view (unified / split) | `chrome.storage.local` / `localStorage` (CLI) | Overlay (default: split) |
+| Active review session | `chrome.storage.session` / `sessionStorage` (CLI) | Overlay (session-scoped) |
+_/}
 
 Session resume behavior: [Your first review → Resume later](/docs/first-review#resume-later) and [Troubleshooting](/docs/troubleshooting#session-and-resume).
 
