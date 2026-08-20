@@ -51,15 +51,16 @@ export const DOCS_PAGES: DocsPage[] = [
     blurb: "from a PR page to walking and searching units",
     load: () => import("@web/content/help/first-review.mdx"),
   },
-  {
-    slug: "local-review",
-    section: "Getting Started",
-    title: "Review local changes",
-    description:
-      "Run Guided Review from your terminal on a local branch, commit, or working tree. The CLI serves the same walkthrough in the browser.",
-    blurb: "CLI for local branch, commit, or working-tree diffs",
-    load: () => import("@web/content/help/local-review.mdx"),
-  },
+  // Website currently documents the Chrome extension only.
+  // {
+  //   slug: "local-review",
+  //   section: "Getting Started",
+  //   title: "Review local changes",
+  //   description:
+  //     "Run Guided Review from your terminal on a local branch, commit, or working tree. The CLI serves the same walkthrough in the browser.",
+  //   blurb: "CLI for local branch, commit, or working-tree diffs",
+  //   load: () => import("@web/content/help/local-review.mdx"),
+  // },
   {
     slug: "configure-provider",
     section: "Setup",
@@ -110,8 +111,8 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Product",
     title: "Keyboard shortcuts",
     description:
-      "Keyboard-first shortcuts for review navigation, diff search, unified/split view, comments, submitting a review, and local CLI review.",
-    blurb: "navigate, search, comment, submit, and local review",
+      "Keyboard-first shortcuts for review navigation, diff search, unified/split view, comments, and submitting a review.",
+    blurb: "navigate, search, comment, and submit",
     load: () => import("@web/content/help/keyboard-shortcuts.mdx"),
   },
   {
