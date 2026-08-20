@@ -4,6 +4,7 @@ export const toc = [
   { id: "diff-search", label: "Diff search", level: 2 },
   { id: "comment-mode", label: "Comment mode", level: 2 },
   { id: "submit-and-modals", label: "Submit and modals", level: 2 },
+  { id: "local-review", label: "Local review", level: 2 },
   { id: "marketing-site", label: "Marketing site", level: 2 },
 ];
 
@@ -76,6 +77,19 @@ Details and draft editing: [Leave line comments](/docs/leave-comments). Drafts s
 | `Enter` / `Esc`     | Dismiss the post-submit success dialog and exit                                                                         |
 
 Full submit flow: [Submit a review](/docs/submit-review). Auth gate: [Connect GitHub](/docs/connect-github). If submit fails: [Troubleshooting](/docs/troubleshooting#github-connect-and-submit).
+
+## Local review
+
+These apply only in the [CLI walkthrough](/docs/local-review), not on a GitHub PR.
+
+| Shortcut       | Action                                          |
+| -------------- | ----------------------------------------------- |
+| `d`            | Open the diff-to-review picker                  |
+| `⌘/Ctrl` + `I` | Structure with AI (until a plan has been built) |
+
+Once the picker is open, `↑` / `↓` move, `Enter` selects, and `Esc` closes. Type a letter to jump to a matching scope.
+
+`⌘/Ctrl` + `I` on the [marketing site](#marketing-site) still opens install. That chord structures a review only inside the local overlay.
 
 ## Marketing site
 
