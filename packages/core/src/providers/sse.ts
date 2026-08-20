@@ -50,7 +50,7 @@ export async function* readSseJsonStream(
         try {
           yield JSON.parse(data) as unknown;
         } catch {
-          // ignore
+          // Skip malformed SSE data lines rather than aborting the whole stream.
         }
       }
     }

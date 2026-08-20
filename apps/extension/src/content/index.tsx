@@ -22,9 +22,14 @@ setActiveReviewHost(reviewHost);
 const BUTTON_ID = "guided-review-start-btn";
 const BUTTON_STYLE_ID = "guided-review-start-btn-styles";
 const HOST_ID = "guided-review-overlay-host";
-/** Brand accent — keep in sync with `--color-primary` / `--color-primary-hover` in theme.css. */
+/**
+ * Start button is injected into GitHub's light DOM, not the overlay Shadow Root,
+ * so it cannot use theme.css tokens. Hex must stay in sync with `--color-primary`,
+ * `--color-primary-hover`, and `--color-primary-foreground`.
+ */
 const ACCENT = "#CAFF57";
 const ACCENT_HOVER = "#a8d448";
+const ACCENT_FOREGROUND = "#0D0806";
 
 let currentPR: PRIdentity | null = null;
 /** Active stream cancel handle so restart / close can abort the worker. */
@@ -177,7 +182,7 @@ function tryInjectButton(): void {
       "padding: 0 12px",
       "border-radius: 6px",
       // border + background come from ensureButtonStyles() so :hover can apply
-      "color: #0D0806",
+      `color: ${ACCENT_FOREGROUND}`,
       "font-size: 14px",
       "font-weight: 600",
       "cursor: pointer",
@@ -197,7 +202,7 @@ function tryInjectButton(): void {
       "width: 22px",
       "height: 11px",
       "flex-shrink: 0",
-      "background-color: #0D0806",
+      `background-color: ${ACCENT_FOREGROUND}`,
       `-webkit-mask: url("${markUrl}") center / contain no-repeat`,
       `mask: url("${markUrl}") center / contain no-repeat`,
     ].join(";"),

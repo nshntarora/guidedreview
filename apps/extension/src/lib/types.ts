@@ -181,7 +181,11 @@ export interface ReviewCommentInput {
   side: "LEFT" | "RIGHT";
   /** End line (file coordinates on `side`). */
   line: number;
-  /** Start line when multi-line; omit when single-line. */
+  /**
+   * Start line when the range spans more than one line. Omit on single-line
+   * comments — GitHub's create-review API 422s if `start_line`/`start_side`
+   * are sent when they equal `line`.
+   */
   startLine?: number;
   startSide?: "LEFT" | "RIGHT";
 }

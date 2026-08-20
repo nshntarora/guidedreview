@@ -23,7 +23,8 @@ Example (feature then tests):
 /**
  * Rendering is pure per file, and chunkDiffByFile measures every file before
  * buildUserPrompt renders the same files again — cache so a large diff is
- * only walked once.
+ * only walked once. Keyed on object identity: DiffFile must not be mutated
+ * after parse, or a later render silently serves stale prompt text.
  */
 const renderedFiles = new WeakMap<DiffFile, string>();
 

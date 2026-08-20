@@ -369,6 +369,8 @@ export function Overlay({
 
   const dialogTitle = prContext?.title?.trim() || "Guided Review";
 
+  // z-index: GitHub's sticky header and dialogs stack in the millions; sit above them.
+  // color-scheme: native scrollbars follow the overlay, not the light GitHub page.
   return (
     <div
       ref={overlayRef}

@@ -118,6 +118,9 @@ async function resolveBase(repoRoot: string, requested?: string): Promise<string
   );
 }
 
+/** Bound concurrent `git diff --no-index` child processes for untracked files. */
+const UNTRACKED_DIFF_CONCURRENCY = 8;
+
 async function mapLimit<T, R>(
   items: T[],
   limit: number,
@@ -145,13 +148,15 @@ async function listUntracked(repoRoot: string): Promise<string[]> {
 
 async function collectUntrackedDiffs(repoRoot: string, files: string[]): Promise<string> {
   if (files.length === 0) return "";
-  const chunks = await mapLimit(files, 8, async (file) => {
+  const chunks = await mapLimit(files, UNTRACKED_DIFF_CONCURRENCY, async (file) => {
     const patch = await runGit(
       ["diff", "--no-color", "--no-index", "--", nullDevice(), file],
       repoRoot,
       { allowExitCodes: [1] },
     );
     if (!patch.trim()) return "";
+    // --no-index headers use the null device as the old path; rewrite so
+    // parseDiff identity matches the working-tree file.
     return patch.replace(/^diff --git a\/.*$/m, `diff --git a/${file} b/${file}`);
   });
   return chunks.filter(Boolean).join("");
@@ -225,6 +230,7 @@ async function shortstat(repoRoot: string, args: string[]): Promise<DiffStat> {
   return parseShortstat(raw);
 }
 
+/** `sha^` fails on a root commit (no parent); `git show` is the parentless fallback. */
 async function commitShortstat(repoRoot: string, sha: string): Promise<DiffStat> {
   try {
     const raw = await runGit(["diff", "--shortstat", `${sha}^`, sha], repoRoot);

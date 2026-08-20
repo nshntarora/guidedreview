@@ -14,6 +14,7 @@ function mapDraftsToReviewComments(drafts: DraftComment[]): ReviewCommentInput[]
       side: draft.side,
       line: draft.endLine,
     };
+    // GitHub 422s if start_line/start_side are sent on a single-line comment.
     if (draft.startLine !== draft.endLine) {
       comment.startLine = draft.startLine;
       comment.startSide = draft.side;
@@ -152,16 +153,17 @@ export function useSubmitReviewFlow({
       return;
     }
 
-    const generation = ++submitGenerationRef.current;
-    setSubmittingReview(true);
-    setSubmitReviewError(null);
-
-    const comments = mapDraftsToReviewComments(draftComments);
     const submit = host.submit;
     if (!submit) {
       setSubmitReviewError("This host cannot submit a GitHub review.");
       return;
     }
+
+    const generation = ++submitGenerationRef.current;
+    setSubmittingReview(true);
+    setSubmitReviewError(null);
+
+    const comments = mapDraftsToReviewComments(draftComments);
 
     try {
       const result = await submit.submitReview(

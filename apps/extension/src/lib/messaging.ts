@@ -41,6 +41,15 @@ import type {
 
 const ANNOTATE_PORT_NAME = "annotate-review";
 
+/** Chrome throws if disconnect runs twice (DONE/ERROR raced with cancel). */
+function safeDisconnect(port: chrome.runtime.Port): void {
+  try {
+    port.disconnect();
+  } catch {
+    // Port already gone.
+  }
+}
+
 export interface StreamReviewPlanHandlers {
   onUnit: (unit: ReviewUnit) => void;
   onDone: (plan: ReviewPlan) => void;
@@ -81,19 +90,11 @@ export function streamReviewPlan(
         return;
       case "DONE":
         finish(() => handlers.onDone(message.plan));
-        try {
-          port.disconnect();
-        } catch {
-          // already disconnected
-        }
+        safeDisconnect(port);
         return;
       case "ERROR":
         finish(() => handlers.onError(message.error));
-        try {
-          port.disconnect();
-        } catch {
-          // already disconnected
-        }
+        safeDisconnect(port);
         return;
       default:
         return;
@@ -116,11 +117,7 @@ export function streamReviewPlan(
   return {
     cancel: () => {
       settled = true;
-      try {
-        port.disconnect();
-      } catch {
-        // already disconnected
-      }
+      safeDisconnect(port);
     },
   };
 }

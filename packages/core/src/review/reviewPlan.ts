@@ -61,6 +61,11 @@ function sortFileRefs(files: ReviewUnitFileRef[]): ReviewUnitFileRef[] {
   });
 }
 
+/**
+ * Id for the tests half of a mixed-unit split. The change half keeps `baseId`.
+ * If the model already ended that id in `-tests`, appending `-tests` again
+ * would collide, so the tests half becomes `${baseId}-files` instead.
+ */
 function testsUnitId(baseId: string): string {
   if (baseId.endsWith("-tests")) return `${baseId}-files`;
   return `${baseId}-tests`;

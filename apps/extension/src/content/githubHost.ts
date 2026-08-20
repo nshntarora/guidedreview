@@ -4,6 +4,7 @@
  */
 
 import type { ReviewContext } from "@guided-review/core";
+import type { PRContext } from "@extension/lib/types";
 import {
   getGitHubAuthStatus,
   openOptionsPage,
@@ -48,8 +49,11 @@ export function createGitHubReviewHost(): ReviewHost {
     restoreSession: async (key) => {
       return readSession(sessionStorageKey(key), (raw) => (raw ?? null) as unknown);
     },
-    streamPlan: (diff, context, handlers) =>
-      streamReviewPlan(diff, context as import("@extension/lib/types").PRContext, handlers),
+    streamPlan: (diff, context, handlers) => {
+      // Annotate messages require GitHub PR identity. This host only runs on a
+      // parsed PR page, where context is always PRContext.
+      return streamReviewPlan(diff, context as PRContext, handlers);
+    },
     connectProvider: () => {
       void openOptionsPage();
     },

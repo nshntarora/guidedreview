@@ -144,6 +144,7 @@ function toApiComment(comment: ReviewCommentInput): Record<string, unknown> {
     line: comment.line,
     side: comment.side,
   };
+  // GitHub 422s if start_line/start_side are sent when the range is one line.
   if (comment.startLine !== undefined && comment.startLine !== comment.line) {
     api.start_line = comment.startLine;
     api.start_side = comment.startSide ?? comment.side;

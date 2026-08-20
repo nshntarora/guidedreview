@@ -59,7 +59,7 @@ async function installed(io: AgentIo): Promise<boolean> {
 /**
  * Grok Build stores an OIDC access token in auth.json, not an `xai-` console
  * key. Our Grok client already sends `Authorization: Bearer`, so a live
- * session JWT is worth trying. Refresh stays in this file when we add it.
+ * session JWT is worth trying.
  */
 export const grokAdapter: CodingAgentAdapter = {
   id: "grok",

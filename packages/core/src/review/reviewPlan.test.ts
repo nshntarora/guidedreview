@@ -171,6 +171,23 @@ describe("parseReviewUnit", () => {
     expect(cleaned[1].files.map((f) => f.fileId)).toEqual(["src/foo.test.ts"]);
   });
 
+  it("avoids colliding with a mixed unit whose id already ends in -tests", () => {
+    const cleaned = parseReviewUnit(
+      unitWith(
+        [
+          { fileId: "src/foo.ts", hunkIds: ["src/foo.ts#0"], role: "core_logic" },
+          { fileId: "src/foo.test.ts", hunkIds: [], role: "test" },
+        ],
+        { id: "add-foo-tests", title: "Add foo", kind: "change" },
+      ),
+      diffFixture(),
+    );
+
+    expect(cleaned.map((u) => u.id)).toEqual(["add-foo-tests", "add-foo-tests-files"]);
+    expect(cleaned[0].kind).toBe("change");
+    expect(cleaned[1].kind).toBe("tests");
+  });
+
   it("sorts files within a unit by role then path", () => {
     const cleaned = parseReviewUnit(
       unitWith([

@@ -43,11 +43,6 @@ export function middleTruncate(text: string, maxLength: number, ellipsis = "…"
   }
 
   const prefix = text.slice(0, lastSlash);
-  if (prefix.length <= prefixBudget) {
-    // Prefix fits without truncation (only possible if basename grew somehow).
-    return prefix + "/" + basename;
-  }
-
   return middleTruncateChars(prefix, prefixBudget, ellipsis) + "/" + basename;
 }
 
