@@ -15,7 +15,6 @@ const UI_DIR = path.resolve(__dirname, "../dist/ui");
 
 export interface ReviewServer {
   baseURL: string;
-  token: string;
   repoDir: string;
 }
 
@@ -55,11 +54,9 @@ export const test = base.extend<{ reviewServer: ReviewServer }>({
 
     await createReviewRepo(repoDir);
     const snapshot = await buildLocalReview({ cwd: repoDir });
-    const token = randomBytes(16).toString("hex");
     const server = createReviewServer({
       snapshot,
       settings: { provider: "anthropic", model: "claude-opus-4-8", apiKey: "" },
-      token,
       staticDir: UI_DIR,
       detectAgents: async () => [],
       testConnection: async () => {},
@@ -68,7 +65,7 @@ export const test = base.extend<{ reviewServer: ReviewServer }>({
     const port = await listen(server);
     const baseURL = `http://127.0.0.1:${port}`;
 
-    await use({ baseURL, token, repoDir });
+    await use({ baseURL, repoDir });
 
     await new Promise<void>((resolve, reject) => {
       server.closeAllConnections();
@@ -85,7 +82,7 @@ export const expect = test.expect;
 
 export function reviewUrl(server: ReviewServer, hash = ""): string {
   const suffix = hash ? (hash.startsWith("#") ? hash : `#${hash}`) : "";
-  return `${server.baseURL}/?token=${server.token}${suffix}`;
+  return `${server.baseURL}/${suffix}`;
 }
 
 export async function commitInRepo(repoDir: string, file: string, contents: string): Promise<void> {

@@ -2,17 +2,8 @@ import type { AnnotateReviewStreamEvent, ParsedDiff, ReviewContext } from "@guid
 import type { ReviewHost, StreamPlanHandlers } from "@extension/content/overlay/host";
 import type { DiffViewMode } from "@extension/content/overlay/diffView";
 
-function api(path: string, token: string): string {
-  const url = new URL(path, window.location.origin);
-  url.searchParams.set("token", token);
-  return url.toString();
-}
-
-export function createLocalReviewHost(options: {
-  token: string;
-  onConnectProvider: () => void;
-}): ReviewHost {
-  const { token, onConnectProvider } = options;
+export function createLocalReviewHost(options: { onConnectProvider: () => void }): ReviewHost {
+  const { onConnectProvider } = options;
 
   return {
     kind: "local",
@@ -25,7 +16,7 @@ export function createLocalReviewHost(options: {
       return raw ? (JSON.parse(raw) as unknown) : null;
     },
     streamPlan: (_diff: ParsedDiff, _context: ReviewContext, handlers: StreamPlanHandlers) => {
-      const source = new EventSource(api("/api/plan", token));
+      const source = new EventSource("/api/plan");
       let settled = false;
       const finish = (fn: () => void) => {
         if (settled) return;

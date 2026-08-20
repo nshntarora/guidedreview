@@ -1,7 +1,7 @@
 import { commitInRepo, expect, reviewUrl, test } from "./fixtures";
 
 test.describe("CLI review overlay", () => {
-  test("boots a file-by-file review from the session token", async ({ page, reviewServer }) => {
+  test("boots a file-by-file review", async ({ page, reviewServer }) => {
     await page.goto(reviewUrl(reviewServer), { waitUntil: "domcontentloaded" });
 
     const units = page.getByRole("navigation", { name: "Review Units" });
@@ -13,15 +13,6 @@ test.describe("CLI review overlay", () => {
 
     await page.keyboard.press("ArrowDown");
     await expect(page.getByRole("listbox")).toHaveCount(0);
-  });
-
-  test("missing token shows the boot error", async ({ page, reviewServer }) => {
-    await page.goto(reviewServer.baseURL + "/", { waitUntil: "domcontentloaded" });
-
-    await expect(
-      page.getByText("Missing session token. Open the URL printed by the CLI."),
-    ).toBeVisible();
-    await expect(page.getByTestId("structure-review")).toHaveCount(0);
   });
 
   test("Structure with AI without a key opens settings", async ({ page, reviewServer }) => {

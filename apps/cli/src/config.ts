@@ -215,7 +215,6 @@ export async function resolveSettings(flags: {
       codingAgent: chosen.id,
     });
   }
-  log(`Using ${chosen.displayName} for summaries.`);
   return { settings: fromAgent, codingAgent: chosen.id };
 }
 

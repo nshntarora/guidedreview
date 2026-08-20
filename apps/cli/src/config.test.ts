@@ -83,17 +83,15 @@ describe("resolveSettings", () => {
         }),
       },
     });
-    const logs: string[] = [];
     const resolved = await resolveSettings({
       io,
       persist: true,
       isTTY: false,
-      log: (message) => logs.push(message),
+      log: () => undefined,
     });
     expect(resolved.codingAgent).toBe("claude-code");
     expect(resolved.settings.apiKey).toBe("sk-ant-oat01-live");
     expect(resolved.settings.authScheme).toBe("bearer");
-    expect(logs.join("\n")).toMatch(/Claude Code/);
 
     const saved = JSON.parse(await readFile(path.join(dir, "config.json"), "utf8")) as {
       codingAgent?: string;

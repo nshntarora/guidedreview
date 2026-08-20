@@ -101,7 +101,7 @@ describe("Settings", () => {
   });
 
   it("hydrates the form from the server", async () => {
-    render(<Settings token="secret" />);
+    render(<Settings />);
 
     expect(await screen.findByRole("combobox", { name: /provider/i })).toHaveTextContent("OpenAI");
     expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent("GPT-4.1");
@@ -131,7 +131,7 @@ describe("Settings", () => {
         settings: { ...settings, codingAgent: "codex", last4: "cret" },
       }),
     );
-    render(<Settings token="secret" />);
+    render(<Settings />);
 
     const toggle = await screen.findByRole("switch", { name: /use my subscription/i });
     expect(toggle).toHaveAttribute("aria-checked", "true");
@@ -141,7 +141,7 @@ describe("Settings", () => {
 
   it("resets the model to the provider default when the provider changes", async () => {
     const user = userEvent.setup();
-    render(<Settings token="secret" />);
+    render(<Settings />);
     await screen.findByRole("combobox", { name: /provider/i });
     await chooseOption(user, /provider/i, /Grok/);
     expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent("Grok 4");
@@ -160,7 +160,7 @@ describe("Settings", () => {
       }),
     });
     vi.stubGlobal("fetch", fetchMock);
-    render(<Settings token="secret" onSaved={onSaved} />);
+    render(<Settings onSaved={onSaved} />);
 
     await screen.findByRole("combobox", { name: /provider/i });
     await user.type(screen.getByLabelText(/api key/i), "sk-new-key");
@@ -191,7 +191,7 @@ describe("Settings", () => {
       }),
     });
     vi.stubGlobal("fetch", fetchMock);
-    render(<Settings token="secret" />);
+    render(<Settings />);
 
     await screen.findByRole("combobox", { name: /provider/i });
     await user.click(screen.getByRole("switch", { name: /use my subscription/i }));
@@ -218,7 +218,7 @@ describe("Settings", () => {
         putStatus: 500,
       }),
     );
-    render(<Settings token="secret" />);
+    render(<Settings />);
     await screen.findByRole("combobox", { name: /provider/i });
     await user.click(screen.getByRole("button", { name: "Save" }));
     expect(await screen.findByText("Error: Disk full")).toBeInTheDocument();
@@ -232,14 +232,14 @@ describe("Settings", () => {
         settings: { ...settings, hasKey: false, last4: null },
       }),
     );
-    render(<Settings token="secret" />);
+    render(<Settings />);
     await screen.findByRole("combobox", { name: /provider/i });
     expect(screen.getByRole("button", { name: /test connection/i })).toBeDisabled();
   });
 
   it("shows a success status when the connection test succeeds", async () => {
     const user = userEvent.setup();
-    render(<Settings token="secret" />);
+    render(<Settings />);
     await screen.findByRole("combobox", { name: /provider/i });
     await user.click(screen.getByRole("button", { name: /test connection/i }));
     await waitFor(() => expect(screen.getByText("Connection OK")).toBeInTheDocument());
@@ -253,7 +253,7 @@ describe("Settings", () => {
         test: { ok: false, error: "Invalid API key" },
       }),
     );
-    render(<Settings token="secret" />);
+    render(<Settings />);
     await screen.findByRole("combobox", { name: /provider/i });
     await user.click(screen.getByRole("button", { name: /test connection/i }));
     await waitFor(() => expect(screen.getByText("Error: Invalid API key")).toBeInTheDocument());
@@ -279,7 +279,7 @@ describe("Settings", () => {
         test: { ok: false, error: reason },
       }),
     );
-    render(<Settings token="secret" />);
+    render(<Settings />);
 
     expect(await screen.findByTestId("subscription-status")).toHaveTextContent(reason);
     await user.click(screen.getByRole("button", { name: /test connection/i }));
@@ -311,7 +311,7 @@ describe("SettingsApp", () => {
 
   it("shows the about view when the route is about", async () => {
     vi.stubGlobal("fetch", mockFetch({}));
-    render(<SettingsApp token="secret" route="about" onClose={vi.fn()} />);
+    render(<SettingsApp route="about" onClose={vi.fn()} />);
 
     expect(await screen.findByRole("heading", { name: "How it works" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Chrome extension" })).toBeInTheDocument();
@@ -329,14 +329,14 @@ describe("SettingsApp", () => {
     vi.stubGlobal("fetch", mockFetch({}));
     const user = userEvent.setup();
     const onClose = vi.fn();
-    const { rerender } = render(<SettingsApp token="secret" route="settings" onClose={onClose} />);
+    const { rerender } = render(<SettingsApp route="settings" onClose={onClose} />);
 
     await screen.findByRole("combobox", { name: /provider/i });
     await user.click(screen.getByTestId("settings-close"));
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId("confirmation-dialog")).not.toBeInTheDocument();
 
-    rerender(<SettingsApp token="secret" route="settings" onClose={onClose} />);
+    rerender(<SettingsApp route="settings" onClose={onClose} />);
     await user.keyboard("{Escape}");
     expect(onClose).toHaveBeenCalledTimes(2);
   });
@@ -345,14 +345,14 @@ describe("SettingsApp", () => {
     vi.stubGlobal("fetch", mockFetch({}));
     window.location.hash = "settings";
     const onClose = vi.fn();
-    const { rerender } = render(<SettingsApp token="secret" route="settings" onClose={onClose} />);
+    const { rerender } = render(<SettingsApp route="settings" onClose={onClose} />);
 
     await screen.findByRole("combobox", { name: /provider/i });
     fireEvent.keyDown(window, { key: ",", metaKey: true });
     expect(onClose).not.toHaveBeenCalled();
     expect(window.location.hash).toBe("#settings");
 
-    rerender(<SettingsApp token="secret" route="about" onClose={onClose} />);
+    rerender(<SettingsApp route="about" onClose={onClose} />);
     window.location.hash = "about";
     fireEvent.keyDown(window, { key: ",", metaKey: true });
     expect(onClose).not.toHaveBeenCalled();
@@ -363,7 +363,7 @@ describe("SettingsApp", () => {
     vi.stubGlobal("fetch", mockFetch({}));
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<SettingsApp token="secret" route="settings" onClose={onClose} />);
+    render(<SettingsApp route="settings" onClose={onClose} />);
 
     await screen.findByRole("combobox", { name: /provider/i });
     await user.type(screen.getByLabelText(/api key/i), "sk-new");

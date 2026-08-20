@@ -34,33 +34,25 @@ import {
   type LocalReviewSnapshot,
 } from "../git/localDiff";
 import { GitError } from "../git/run";
-
-export type ServerLog = (message: string) => void;
-
-function defaultLog(message: string): void {
-  process.stderr.write(`${new Date().toISOString().slice(11, 23)}  ${message}\n`);
-}
-
-function formatThrown(error: unknown): string {
-  if (error instanceof Error) return error.stack ?? error.message;
-  return String(error);
-}
+import type { CliStatus } from "../banner";
+import { createLogger, labeled } from "../log";
+import type { Logger } from "winston";
 
 function describePlanEvent(event: AnnotateReviewStreamEvent): string | null {
   switch (event.type) {
     case "STATUS":
-      return `plan  ${event.phase}`;
+      return event.phase;
     case "UNIT":
-      return `plan  unit ${event.unit.id} (${event.unit.files.length} file(s))`;
+      return `unit ${event.unit.id} (${event.unit.files.length} file(s))`;
     case "DONE":
-      return `plan  done ${event.plan.units.length} unit(s)`;
+      return `done ${event.plan.units.length} unit(s)`;
     case "ERROR": {
       const parts = [
         event.error.statusCode !== undefined ? String(event.error.statusCode) : null,
         event.error.code,
         event.error.message,
       ].filter((part): part is string => Boolean(part));
-      return `plan  error ${parts.join(" ")}`;
+      return parts.join(" ");
     }
   }
 }
@@ -80,9 +72,9 @@ export interface CreateReviewServerOptions {
   snapshot: LocalReviewSnapshot;
   settings: ProviderSettings;
   codingAgent?: CodingAgentId | null;
-  token: string;
   staticDir?: string;
-  log?: ServerLog;
+  logger?: Logger;
+  onStatus?: (patch: Partial<CliStatus>) => void;
   detectAgents?: () => Promise<DetectedAgent[]>;
   testConnection?: (settings: ProviderSettings) => Promise<void>;
 }
@@ -122,6 +114,22 @@ function sessionPayload(
   };
 }
 
+function sessionStatus(
+  snapshot: LocalReviewSnapshot,
+  published: ReturnType<typeof publicSettings>,
+): Partial<CliStatus> {
+  return {
+    files: snapshot.diff.files.length,
+    scope: snapshot.selectedScope,
+    headRef: snapshot.context.headRef,
+    baseRef: snapshot.context.baseRef,
+    provider: published.provider,
+    model: published.model,
+    agent: published.codingAgent ?? null,
+    hasKey: published.hasKey,
+  };
+}
+
 function parseSettingsBody(value: unknown): SettingsBody | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Record<string, unknown>;
@@ -143,7 +151,14 @@ export function createReviewServer(options: CreateReviewServerOptions) {
   let settings = options.settings;
   let codingAgent = options.codingAgent ?? null;
   let snapshot = options.snapshot;
-  const log = options.log ?? defaultLog;
+  const logger = options.logger ?? createLogger({ silent: true });
+  const onStatus = options.onStatus;
+  const httpLog = labeled(logger, "http");
+  const sessionLog = labeled(logger, "session");
+  const settingsLog = labeled(logger, "settings");
+  const diffLog = labeled(logger, "diff");
+  const planLog = labeled(logger, "plan");
+  const uiLog = labeled(logger, "ui");
   const detectAgents = options.detectAgents ?? (() => detectAll(createDefaultAgentIo()));
   const testConnection =
     options.testConnection ??
@@ -198,27 +213,29 @@ export function createReviewServer(options: CreateReviewServerOptions) {
       next();
       return;
     }
-    const header = req.headers.authorization;
-    const token = typeof req.query.token === "string" ? req.query.token : undefined;
-    if (header === `Bearer ${options.token}` || token === options.token) {
-      next();
-      return;
-    }
-    log(`${req.method} ${req.path}  401 unauthorized`);
-    sendJson(res, 401, { error: "Unauthorized. Open the URL printed by the CLI." });
+    const started = Date.now();
+    res.on("finish", () => {
+      const line = `${req.method} ${req.path} ${res.statusCode} ${Date.now() - started}ms`;
+      if (res.statusCode >= 400) httpLog.warn(line);
+      else httpLog.debug(line);
+    });
+    next();
   });
 
   app.get("/api/session", async (_req, res) => {
     try {
       snapshot = await rebuildLocalReview(snapshot.repo, snapshot.selectedScope);
+      const published = publicSettings(settings, codingAgent);
+      onStatus?.({
+        ...sessionStatus(snapshot, published),
+        lastPullAt: new Date(),
+        diffFresh: "up to date",
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      log(`GET /api/session  rebuild failed, serving last snapshot  ${message}`);
+      sessionLog.warn(`rebuild failed, serving last snapshot  ${message}`);
     }
     const published = publicSettings(settings, codingAgent);
-    log(
-      `GET /api/session  ${snapshot.diff.files.length} file(s)  ${snapshot.selectedScope}  ${published.provider}/${published.model}  key=${published.hasKey ? "yes" : "no"}${published.codingAgent ? `  agent=${published.codingAgent}` : ""}`,
-    );
     sendJson(res, 200, sessionPayload(snapshot, published));
   });
 
@@ -226,7 +243,9 @@ export function createReviewServer(options: CreateReviewServerOptions) {
     try {
       const hash = await currentDiffHash(snapshot.repo, snapshot.selectedScope);
       const served = hashDiff(snapshot.raw);
-      sendJson(res, 200, { hash, changed: hash !== served });
+      const changed = hash !== served;
+      onStatus?.({ diffFresh: changed ? "changed" : "up to date" });
+      sendJson(res, 200, { hash, changed });
     } catch (error) {
       const message =
         error instanceof GitError ? error.message : "Could not check the current diff.";
@@ -255,9 +274,15 @@ export function createReviewServer(options: CreateReviewServerOptions) {
       return;
     }
     const published = applied.published;
-    log(
-      `PUT /api/settings  ${published.provider}/${published.model}  key=${published.hasKey ? "yes" : "no"}${published.codingAgent ? `  agent=${published.codingAgent}` : ""}`,
+    settingsLog.info(
+      `${published.provider}/${published.model}  key=${published.hasKey ? "yes" : "no"}${published.codingAgent ? `  agent=${published.codingAgent}` : ""}`,
     );
+    onStatus?.({
+      provider: published.provider,
+      model: published.model,
+      agent: published.codingAgent ?? null,
+      hasKey: published.hasKey,
+    });
     sendJson(res, 200, published);
   });
 
@@ -283,11 +308,11 @@ export function createReviewServer(options: CreateReviewServerOptions) {
     }
     try {
       await testConnection(settings);
-      log(`POST /api/settings/test  ok  ${settings.provider}/${settings.model}`);
+      settingsLog.info(`test ok  ${settings.provider}/${settings.model}`);
       sendJson(res, 200, { ok: true });
     } catch (error) {
       const message = describeErrorMessage(error);
-      log(`POST /api/settings/test  fail  ${message}`);
+      settingsLog.warn(`test fail  ${message}`);
       sendJson(res, 200, { ok: false, error: message });
     }
   });
@@ -317,7 +342,12 @@ export function createReviewServer(options: CreateReviewServerOptions) {
       }
       snapshot = next;
       const published = publicSettings(settings, codingAgent);
-      log(`PUT /api/diff  ${scope}  ${next.diff.files.length} file(s)`);
+      diffLog.info(`${scope}  ${next.diff.files.length} file(s)`);
+      onStatus?.({
+        ...sessionStatus(next, published),
+        lastPullAt: new Date(),
+        diffFresh: "up to date",
+      });
       sendJson(res, 200, sessionPayload(next, published));
     } catch (error) {
       const message = error instanceof GitError ? error.message : "Could not load that diff.";
@@ -341,11 +371,11 @@ export function createReviewServer(options: CreateReviewServerOptions) {
     let planFinished = false;
     req.on("close", () => {
       abort.abort();
-      if (!planFinished) log("plan  client closed");
+      if (!planFinished) planLog.warn("client closed");
     });
 
     if (!settings.apiKey) {
-      log("plan  no API key");
+      planLog.warn("no API key");
       res.write(
         `data: ${JSON.stringify({
           type: "ERROR",
@@ -357,8 +387,8 @@ export function createReviewServer(options: CreateReviewServerOptions) {
       return;
     }
 
-    log(
-      `GET /api/plan  ${settings.provider}/${settings.model}  ${snapshot.selectedScope}  ${snapshot.diff.files.length} file(s)`,
+    planLog.info(
+      `${settings.provider}/${settings.model}  ${snapshot.selectedScope}  ${snapshot.diff.files.length} file(s)`,
     );
 
     for await (const event of annotateReview({
@@ -369,7 +399,10 @@ export function createReviewServer(options: CreateReviewServerOptions) {
     })) {
       if (abort.signal.aborted) return;
       const line = describePlanEvent(event);
-      if (line) log(line);
+      if (line) {
+        if (event.type === "ERROR") planLog.error(line);
+        else planLog.info(line);
+      }
       res.write(`data: ${JSON.stringify(event)}\n\n`);
     }
     planFinished = true;
@@ -385,7 +418,7 @@ export function createReviewServer(options: CreateReviewServerOptions) {
     }
     res.sendFile(path.join(staticDir, "index.html"), (err) => {
       if (!err) return;
-      log("UI not built. Run npm run build -w @guided-review/cli.");
+      uiLog.warn("UI not built. Run npm run build -w @guided-review/cli.");
       if (!res.headersSent) {
         sendJson(res, 404, { error: "UI not built. Run npm run build -w @guided-review/cli." });
       } else {
@@ -399,7 +432,7 @@ export function createReviewServer(options: CreateReviewServerOptions) {
       sendJson(res, 400, { error: "Request body must be JSON." });
       return;
     }
-    log(`server error  ${formatThrown(err)}`);
+    logger.error(err instanceof Error ? err : String(err));
     const message = err instanceof Error ? err.message : "Server error.";
     if (!res.headersSent) sendJson(res, 500, { error: message });
     else res.end();
