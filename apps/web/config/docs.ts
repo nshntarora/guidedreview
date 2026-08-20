@@ -56,8 +56,8 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Getting Started",
     title: "Review local changes",
     description:
-      "Run Guided Review from your terminal against the main branch. The CLI serves the same walkthrough in the browser.",
-    blurb: "CLI for local git diffs vs main",
+      "Run Guided Review from your terminal on a local branch, commit, or working tree. The CLI serves the same walkthrough in the browser.",
+    blurb: "CLI for local branch, commit, or working-tree diffs",
     load: () => import("@web/content/help/local-review.mdx"),
   },
   {

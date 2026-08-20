@@ -64,7 +64,7 @@ export function About() {
             <code className="rounded bg-surface-raised px-1 py-0.5 font-mono text-sm text-foreground">
               127.0.0.1
             </code>{" "}
-            and opens a tokenized URL.
+            and opens the printed URL.
           </li>
           <li>Walk the change file by file — no model call yet.</li>
           <li>

@@ -11,7 +11,7 @@ import {
   type ReviewStatus,
 } from "./store";
 import { buildSelectableLines, resolveUnitFiles } from "./buildSelectableLines";
-import { getFocusableElements, restoreFocusAfterOverlay } from "./focusTrap";
+import { restoreFocusAfterOverlay } from "./focusTrap";
 import { useOverlayKeyboard, type ViewChordPending } from "./useOverlayKeyboard";
 import { useSubmitReviewFlow } from "./useSubmitReviewFlow";
 import { findUnitForFile, type DiffSearchResult, type SearchScrollTarget } from "./diffSearch";
@@ -273,16 +273,13 @@ export function Overlay({
     };
   }, [isOpen]);
 
-  // Modal focus: move into the overlay on open; restore to the start button on close.
+  // Focus the dialog, not the first control (the CLI scope picker would eat arrows).
   useEffect(() => {
     if (!isOpen) return;
 
     previousFocusRef.current = document.activeElement;
     const frame = requestAnimationFrame(() => {
-      const root = overlayRef.current;
-      if (!root) return;
-      const focusable = getFocusableElements(root);
-      (focusable[0] ?? root).focus();
+      overlayRef.current?.focus();
     });
 
     return () => {
@@ -409,38 +406,42 @@ export function Overlay({
       <div className="flex min-h-0 flex-1">
         <main
           id="main-content"
-          className="min-w-0 flex-[1_1_68%] overflow-y-auto border-r border-border bg-surface px-8 py-6"
+          className="min-w-0 flex-[1_1_68%] overflow-y-auto border-r border-border bg-surface"
           ref={codeColRef}
           data-testid="code-col"
           tabIndex={-1}
         >
-          {isDescriptionUnit ? (
-            <DescriptionPane
-              prContext={prContext}
-              diff={diff}
-              commits={localDiff?.commits}
-              uncommitted={localDiff?.scopes.find(
-                (scope) => scope.id === "uncommitted" && !scope.empty,
-              )}
-            />
-          ) : (
-            <DiffPane
-              files={resolvedFiles}
-              unitTitle={
-                currentReviewUnit ? (currentReviewUnit.displayTitle ?? currentReviewUnit.title) : ""
-              }
-              unitTitleTooltip={currentReviewUnit?.title}
-              isTestsUnit={currentReviewUnit?.kind === "tests"}
-              unitId={currentReviewUnit?.id}
-              selectableForUnit={selectableForUnit}
-              searchScrollTarget={searchScrollTarget}
-              onSearchScrollTargetConsumed={clearSearchScrollTarget}
-            />
-          )}
+          <div className="px-8 py-6">
+            {isDescriptionUnit ? (
+              <DescriptionPane
+                prContext={prContext}
+                diff={diff}
+                commits={localDiff?.commits}
+                uncommitted={localDiff?.scopes.find(
+                  (scope) => scope.id === "uncommitted" && !scope.empty,
+                )}
+              />
+            ) : (
+              <DiffPane
+                files={resolvedFiles}
+                unitTitle={
+                  currentReviewUnit
+                    ? (currentReviewUnit.displayTitle ?? currentReviewUnit.title)
+                    : ""
+                }
+                unitTitleTooltip={currentReviewUnit?.title}
+                isTestsUnit={currentReviewUnit?.kind === "tests"}
+                unitId={currentReviewUnit?.id}
+                selectableForUnit={selectableForUnit}
+                searchScrollTarget={searchScrollTarget}
+                onSearchScrollTargetConsumed={clearSearchScrollTarget}
+              />
+            )}
+          </div>
         </main>
 
         <aside
-          className="flex max-w-[420px] min-w-[300px] flex-[1_1_32%] flex-col overflow-hidden bg-background py-6"
+          className="flex max-w-[420px] min-w-[300px] flex-[1_1_32%] flex-col overflow-hidden bg-background"
           aria-label="Review context and plan"
         >
           <div
@@ -448,7 +449,7 @@ export function Overlay({
             ref={contextPaneRef}
             data-testid="context-pane"
           >
-            <div className="px-5">
+            <div className="px-5 py-6">
               <ContextPanel
                 unit={currentReviewUnit}
                 hasTitle={Boolean(prContext?.title?.trim())}

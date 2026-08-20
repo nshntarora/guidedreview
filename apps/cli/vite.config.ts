@@ -9,7 +9,6 @@ export default defineConfig({
   resolve: {
     alias: {
       "@extension": path.resolve(__dirname, "../extension/src"),
-      "@cli": path.resolve(__dirname, "./src"),
     },
     dedupe: ["react", "react-dom"],
   },

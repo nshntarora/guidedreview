@@ -64,7 +64,7 @@ export interface LocalReviewSnapshot {
 
 const COMMIT_SCOPE_PREFIX = "commit:";
 /** Individual commit scopes and the Change summary list. Keep in sync with overlay/localReview.ts. */
-export const MAX_RECENT_COMMITS = 5;
+const MAX_RECENT_COMMITS = 5;
 
 export function isDiffScopeId(value: string): value is DiffScopeId {
   return (
@@ -75,7 +75,7 @@ export function isDiffScopeId(value: string): value is DiffScopeId {
   );
 }
 
-export function commitShaFromScope(id: DiffScopeId): string | null {
+function commitShaFromScope(id: DiffScopeId): string | null {
   return id.startsWith(COMMIT_SCOPE_PREFIX) ? id.slice(COMMIT_SCOPE_PREFIX.length) : null;
 }
 
@@ -419,7 +419,7 @@ function contextFor(
   };
 }
 
-export async function inspectLocalRepo(options: LocalDiffOptions): Promise<LocalRepoState> {
+async function inspectLocalRepo(options: LocalDiffOptions): Promise<LocalRepoState> {
   let repoRoot: string;
   try {
     repoRoot = (await runGit(["rev-parse", "--show-toplevel"], options.cwd)).trim();

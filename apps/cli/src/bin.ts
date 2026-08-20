@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import { randomBytes } from "node:crypto";
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -7,6 +6,8 @@ import { HELP, parseArgs } from "./args";
 import { resolveSettings } from "./config";
 import { GitError } from "./git/run";
 import { buildLocalReview, reviewHasChanges } from "./git/localDiff";
+import { createCliDisplay } from "./display";
+import { createLogger, labeled } from "./log";
 import { createReviewServer, createServerShutdown, listen } from "./server/createServer";
 
 function openBrowser(url: string): void {
@@ -41,39 +42,58 @@ async function main(): Promise<void> {
     agent: args.agent,
   });
 
-  const token = randomBytes(16).toString("hex");
+  const display = createCliDisplay(process.stderr);
+  const logger = createLogger();
+  const cli = labeled(logger, "cli");
   const staticDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "ui");
+  const { settings, codingAgent } = resolved;
   const server = createReviewServer({
     snapshot: local,
-    settings: resolved.settings,
-    codingAgent: resolved.codingAgent,
-    token,
+    settings,
+    codingAgent,
     staticDir,
+    logger,
+    onStatus: (patch) => display.setStatus(patch),
   });
 
-  const port = await listen(server, args.port ?? 0);
-  const url = `http://127.0.0.1:${port}/?token=${token}`;
-
-  process.stdout.write(
-    `Reviewing ${local.diff.files.length} file(s) on ${local.context.headRef} vs ${local.context.baseRef}.\n`,
-  );
-  process.stdout.write(`${url}\n`);
-  process.stdout.write("Ctrl+C to stop.\n");
-  const { settings, codingAgent } = resolved;
-  process.stderr.write(
-    `${settings.provider}/${settings.model}${codingAgent ? ` via ${codingAgent}` : ""}${settings.apiKey ? "" : "  no key"}\n`,
-  );
+  let port: number;
+  try {
+    port = await listen(server, args.port);
+  } catch (error) {
+    display.close();
+    throw error;
+  }
+  const url = `http://127.0.0.1:${port}/`;
+  display.setStatus({
+    url,
+    files: local.diff.files.length,
+    scope: local.selectedScope,
+    headRef: local.context.headRef,
+    baseRef: local.context.baseRef,
+    provider: settings.provider,
+    model: settings.model,
+    agent: codingAgent ?? null,
+    hasKey: Boolean(settings.apiKey),
+    lastPullAt: new Date(),
+    diffFresh: "up to date",
+  });
 
   if (args.open) openBrowser(url);
 
   const shutdown = createServerShutdown(server);
-  process.on("SIGINT", shutdown);
-  process.on("SIGTERM", shutdown);
+  const onStop = () => {
+    cli.info("shutting down");
+    display.close();
+    shutdown();
+  };
+  process.on("SIGINT", onStop);
+  process.on("SIGTERM", onStop);
 }
 
 main().catch((error: unknown) => {
+  const logger = createLogger();
   const message =
     error instanceof GitError || error instanceof Error ? error.message : "guided-review failed.";
-  process.stderr.write(`${message}\n`);
+  labeled(logger, "cli").error(message);
   process.exit(1);
 });

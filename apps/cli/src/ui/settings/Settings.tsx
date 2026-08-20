@@ -44,12 +44,6 @@ type ActionStatus =
   | { kind: "ok"; message: string }
   | { kind: "error"; message: string };
 
-function apiUrl(path: string, token: string): string {
-  const url = new URL(path, window.location.origin);
-  url.searchParams.set("token", token);
-  return url.toString();
-}
-
 function agentIdForProvider(provider: ProviderId): "claude-code" | "codex" | "grok" {
   switch (provider) {
     case "anthropic":
@@ -203,7 +197,6 @@ interface SettingsSnapshot {
 }
 
 interface SettingsProps {
-  token: string;
   onSaved?: (settings: PublicSettings) => void;
   onDirtyChange?: (dirty: boolean) => void;
 }
@@ -216,7 +209,7 @@ function snapshotFromPublished(data: PublicSettings): SettingsSnapshot {
   };
 }
 
-export function Settings({ token, onSaved, onDirtyChange }: SettingsProps) {
+export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
   const [provider, setProvider] = useState<ProviderId>("anthropic");
   const [model, setModel] = useState(defaultModelFor("anthropic"));
   const [apiKey, setApiKey] = useState("");
@@ -235,8 +228,8 @@ export function Settings({ token, onSaved, onDirtyChange }: SettingsProps) {
     async function load() {
       try {
         const [settingsRes, agentsRes] = await Promise.all([
-          fetch(apiUrl("/api/settings", token)),
-          fetch(apiUrl("/api/agents", token)),
+          fetch("/api/settings"),
+          fetch("/api/agents"),
         ]);
         if (!settingsRes.ok) throw new Error("Could not load settings.");
         const data = (await settingsRes.json()) as PublicSettings;
@@ -264,7 +257,7 @@ export function Settings({ token, onSaved, onDirtyChange }: SettingsProps) {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, []);
 
   const busy = saveStatus.kind === "working" || connection.kind === "working";
   const providerDef = getProvider(provider);
@@ -327,7 +320,7 @@ export function Settings({ token, onSaved, onDirtyChange }: SettingsProps) {
   });
 
   const persist = async (): Promise<PublicSettings> => {
-    const res = await fetch(apiUrl("/api/settings", token), {
+    const res = await fetch("/api/settings", {
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload()),
@@ -354,7 +347,7 @@ export function Settings({ token, onSaved, onDirtyChange }: SettingsProps) {
     setConnection({ kind: "working" });
     setSaveStatus({ kind: "idle" });
     try {
-      const res = await fetch(apiUrl("/api/settings/test", token), {
+      const res = await fetch("/api/settings/test", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(payload()),
@@ -366,7 +359,7 @@ export function Settings({ token, onSaved, onDirtyChange }: SettingsProps) {
       if (!res.ok) throw new Error(data.error ?? "Connection test failed unexpectedly.");
       if (data.ok) {
         setConnection({ kind: "ok", message: "Connection OK" });
-        const published = await fetch(apiUrl("/api/settings", token)).then(
+        const published = await fetch("/api/settings").then(
           (r) => r.json() as Promise<PublicSettings>,
         );
         applyPublished(published);

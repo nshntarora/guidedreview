@@ -18,10 +18,6 @@ function parseAppHash(hash: string): AppRoute {
   return "review";
 }
 
-function tokenFromLocation(): string {
-  return new URLSearchParams(window.location.search).get("token") ?? "";
-}
-
 function useHashRoute(): AppRoute {
   const [route, setRoute] = useState<AppRoute>(() =>
     typeof window !== "undefined" ? parseAppHash(window.location.hash) : "review",
@@ -37,7 +33,6 @@ function useHashRoute(): AppRoute {
 }
 
 export function App() {
-  const token = tokenFromLocation();
   const route = useHashRoute();
   const [bootError, setBootError] = useState<string | null>(null);
   const [commits, setCommits] = useState<ReviewSessionPayload["commits"]>([]);
@@ -58,12 +53,11 @@ export function App() {
   const host = useMemo(
     () =>
       createLocalReviewHost({
-        token,
         onConnectProvider: () => {
           window.location.hash = "settings";
         },
       }),
-    [token],
+    [],
   );
 
   const applyPublishedSettings = useCallback((published: PublicSettings) => {
@@ -141,15 +135,10 @@ export function App() {
   }, [host]);
 
   useEffect(() => {
-    if (!token) {
-      setBootError("Missing session token. Open the URL printed by the CLI.");
-      return;
-    }
-
     let cancelled = false;
 
     async function boot() {
-      const res = await fetch(`/api/session?token=${encodeURIComponent(token)}`);
+      const res = await fetch("/api/session");
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? `Could not load the review (${res.status}).`);
@@ -181,15 +170,15 @@ export function App() {
       cancelled = true;
       cancelStreamRef.current?.();
     };
-  }, [applyMeta, applyPublishedSettings, installFilePlan, token]);
+  }, [applyMeta, applyPublishedSettings, installFilePlan]);
 
   async function selectScope(scope: string) {
-    if (!token || scope === selectedScope || scopeBusy) return;
+    if (scope === selectedScope || scopeBusy) return;
     setScopeBusy(true);
     cancelStreamRef.current?.();
     cancelStreamRef.current = undefined;
     try {
-      const res = await fetch(`/api/diff?token=${encodeURIComponent(token)}`, {
+      const res = await fetch("/api/diff", {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ scope }),
@@ -214,7 +203,7 @@ export function App() {
   const structuring = status === "loading" || status === "streaming";
 
   useEffect(() => {
-    if (!token || status !== "ready" || structuring || scopeBusy) return;
+    if (status !== "ready" || structuring || scopeBusy) return;
 
     let cancelled = false;
     let inFlight = false;
@@ -223,7 +212,7 @@ export function App() {
       if (inFlight) return;
       inFlight = true;
       try {
-        const res = await fetch(`/api/diff-status?token=${encodeURIComponent(token)}`);
+        const res = await fetch("/api/diff-status");
         const body = (await res.json().catch(() => ({}))) as { changed?: boolean };
         if (!cancelled && res.ok && body.changed) setStale(true);
       } catch {
@@ -239,7 +228,7 @@ export function App() {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [token, status, structuring, scopeBusy]);
+  }, [status, structuring, scopeBusy]);
 
   const localDiff: LocalDiffControls = {
     scopes,
@@ -286,7 +275,6 @@ export function App() {
       />
       {(route === "settings" || route === "about") && (
         <SettingsApp
-          token={token}
           route={route}
           onSaved={applyPublishedSettings}
           onClose={() => {

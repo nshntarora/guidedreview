@@ -160,12 +160,10 @@ function SettingsShell({
 }
 
 export function SettingsApp({
-  token,
   route,
   onSaved,
   onClose,
 }: {
-  token: string;
   route: SettingsRoute;
   onSaved?: (settings: PublicSettings) => void;
   onClose: () => void;
@@ -204,7 +202,7 @@ export function SettingsApp({
   return (
     <SettingsShell route={route} onClose={requestClose}>
       <div hidden={route !== "settings"}>
-        <Settings token={token} onSaved={onSaved} onDirtyChange={setDirty} />
+        <Settings onSaved={onSaved} onDirtyChange={setDirty} />
       </div>
       {route === "about" ? <About /> : null}
     </SettingsShell>

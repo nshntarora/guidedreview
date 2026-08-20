@@ -7,6 +7,7 @@ describe("parseArgs", () => {
     expect(args.open).toBe(true);
     expect(args.includeUntracked).toBe(true);
     expect(args.staged).toBe(false);
+    expect(args.port).toBe(7182);
   });
 
   it("parses flags", () => {

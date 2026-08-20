@@ -27,6 +27,8 @@
     "test:e2e:install": "npm run test:e2e:install -w @guided-review/extension",
     "test:e2e:web": "npm run test:e2e -w @guided-review/web",
     "test:e2e:web:ui": "npm run test:e2e:ui -w @guided-review/web",
+    "test:e2e:cli": "npm run test:e2e -w @guided-review/cli",
+    "test:e2e:cli:ui": "npm run test:e2e:ui -w @guided-review/cli",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

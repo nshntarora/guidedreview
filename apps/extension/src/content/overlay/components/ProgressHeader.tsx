@@ -36,6 +36,46 @@ interface ProgressHeaderProps {
 const headerBtn =
   "inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-3 py-1.5 text-base font-medium";
 
+function RefreshIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 16 16"
+      width={16}
+      height={16}
+      className={["shrink-0", className].filter(Boolean).join(" ")}
+      fill="none"
+    >
+      <path
+        d="M2.5 8a5.5 5.5 0 0 1 9.7-3.5"
+        stroke="currentColor"
+        strokeWidth="1.35"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12.2 2.2v2.8h-2.8"
+        stroke="currentColor"
+        strokeWidth="1.35"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M13.5 8a5.5 5.5 0 0 1-9.7 3.5"
+        stroke="currentColor"
+        strokeWidth="1.35"
+        strokeLinecap="round"
+      />
+      <path
+        d="M3.8 13.8v-2.8h2.8"
+        stroke="currentColor"
+        strokeWidth="1.35"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function ScopeMeta({ scope }: { scope: LocalDiffScopeOption }) {
   const stat = scope.stat;
   if (!stat || stat.files === 0) {
@@ -266,13 +306,16 @@ export function ProgressHeader({
       {isLocal && localDiff?.stale && (
         <div
           role="status"
-          className="mt-1 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-surface-muted px-3 py-2 text-sm text-foreground"
+          className="mt-1 flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-surface-raised px-3 py-2"
           data-testid="stale-diff-banner"
         >
-          <span>The diff on disk has changed.</span>
+          <p className="m-0 flex min-w-0 items-center gap-2.5 text-sm leading-snug text-foreground">
+            <RefreshIcon className="text-muted" />
+            <span>The diff on disk has changed. Refresh the page to get the latest changes.</span>
+          </p>
           <button
             type="button"
-            className={`${headerBtn} border-border bg-surface text-foreground hover:bg-background`}
+            className={`${headerBtn} shrink-0 border-border bg-surface text-foreground hover:bg-background`}
             onClick={() => localDiff.onRefresh?.()}
           >
             Refresh

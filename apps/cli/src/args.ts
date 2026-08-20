@@ -1,7 +1,10 @@
+/** ASCII 'G' (71) + 'R' (82). `--port 0` still means “any free port”. */
+export const DEFAULT_PORT = 7182;
+
 export interface CliArgs {
   cwd: string;
   base?: string;
-  port?: number;
+  port: number;
   open: boolean;
   staged: boolean;
   includeUntracked: boolean;
@@ -22,6 +25,7 @@ function takeValue(flag: string, argv: string[], index: number): string {
 export function parseArgs(argv: string[]): CliArgs {
   const args: CliArgs = {
     cwd: process.cwd(),
+    port: DEFAULT_PORT,
     open: true,
     staged: false,
     includeUntracked: true,
@@ -89,13 +93,13 @@ export function parseArgs(argv: string[]): CliArgs {
 
 export const HELP = `Usage: npm run review -- [dir] [options]
 
-Review local changes against the main branch. Opens a browser UI.
+Review a local branch, commit, or working tree. Opens a browser UI.
 (Workspace CLI: @guided-review/cli. Not the npm package named guided-review.)
 
   --base <ref>       Base branch (default: origin/HEAD, then main, then master)
-  --port <n>         Listen port (default: first free port)
+  --port <n>         Listen port (default: ${DEFAULT_PORT})
   --no-open          Print the URL without opening a browser
-  --staged           Only staged changes vs the merge-base
+  --staged           Start on staged (index vs HEAD) changes
   --no-untracked     Skip untracked files
   --provider <id>    anthropic | openai | grok
   --model <id>       Provider model id
