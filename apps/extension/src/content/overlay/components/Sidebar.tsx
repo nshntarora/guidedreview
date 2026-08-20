@@ -32,10 +32,10 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
 
   return (
     <nav
-      className="mt-6 min-h-0 flex-[1_1_50%] overflow-y-auto border-t border-border-strong pt-4"
+      className="min-h-0 flex-[1_1_50%] overflow-y-auto border-t border-border-strong"
       aria-label="Review Units"
     >
-      <div className="px-5">
+      <div className="px-5 pt-4 pb-6">
         <div className="px-2 pb-1 pt-2.5 text-xs tracking-[0.04em] text-muted uppercase">
           Review Units
         </div>
