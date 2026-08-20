@@ -14,6 +14,7 @@ describe("displayUnits", () => {
     expect(buildDisplayUnits(null)).toEqual([
       { kind: "pr_description", id: "__pr_description", title: "PR Description" },
     ]);
+    expect(buildDisplayUnits(null, "local")[0].title).toBe("Change summary");
   });
 
   it("appends plan units after the description", () => {

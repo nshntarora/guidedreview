@@ -28,7 +28,23 @@ export function buildPhaseDetail(phase: BuildPhase, providerLabel: string | null
  * Shared by the left description pane and the right context panel so wording
  * stays consistent.
  */
-export function missingMetadataHint(hasTitle: boolean, hasDescription: boolean): string {
+export function missingMetadataHint(
+  hasTitle: boolean,
+  hasDescription: boolean,
+  kind: "github" | "local" = "github",
+): string {
+  if (kind === "local") {
+    if (!hasTitle && !hasDescription) {
+      return "No branch summary. Intent will be inferred from the diff.";
+    }
+    if (!hasDescription) {
+      return "No commit log. Intent will be inferred from the branch name and diff.";
+    }
+    if (!hasTitle) {
+      return "No branch name. Intent will be inferred from the commit log and diff.";
+    }
+    return "Commit log and dirty-tree notes. Start here, then step through the planned units.";
+  }
   if (!hasTitle && !hasDescription) {
     return "No PR title or description. Intent will be inferred from the diff.";
   }

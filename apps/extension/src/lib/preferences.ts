@@ -42,9 +42,10 @@ export function onAutoOpenOnFilesTabChanged(listener: (enabled: boolean) => void
 
 // ---- Diff view mode (unified | split) --------------------------------------
 
-export type DiffViewMode = "unified" | "split";
+export type { DiffViewMode } from "@extension/content/overlay/diffView";
+export { DEFAULT_DIFF_VIEW_MODE } from "@extension/content/overlay/diffView";
 
-export const DEFAULT_DIFF_VIEW_MODE: DiffViewMode = "split";
+import { DEFAULT_DIFF_VIEW_MODE, type DiffViewMode } from "@extension/content/overlay/diffView";
 
 const DIFF_VIEW_MODE_KEY = "guidedReview.diffViewMode";
 

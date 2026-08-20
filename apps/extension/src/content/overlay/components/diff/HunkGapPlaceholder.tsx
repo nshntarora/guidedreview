@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { cn } from "@guided-review/ui";
-import { buildFileLineUrl } from "@extension/lib/github/prUrls";
+import { useReviewHost } from "@extension/content/overlay/host";
 import { useReviewStore } from "@extension/content/overlay/store";
 
 interface HunkGapPlaceholderProps {
@@ -14,25 +14,23 @@ interface HunkGapPlaceholderProps {
  * Opens the file on GitHub at `afterLine` (new tab).
  */
 export function HunkGapPlaceholder({ filePath, afterLine }: HunkGapPlaceholderProps) {
+  const host = useReviewHost();
   const prContext = useReviewStore((s) => s.prContext);
   const [href, setHref] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!prContext) {
+    if (!prContext || !host.fileLineUrl) {
       setHref(null);
       return;
     }
     let cancelled = false;
-    void buildFileLineUrl(
-      { owner: prContext.owner, repo: prContext.repo, number: prContext.number },
-      { filePath, line: afterLine, headRef: prContext.headRef },
-    ).then((url) => {
+    void host.fileLineUrl(filePath, afterLine, prContext).then((url) => {
       if (!cancelled) setHref(url);
     });
     return () => {
       cancelled = true;
     };
-  }, [prContext, filePath, afterLine]);
+  }, [host, prContext, filePath, afterLine]);
 
   const label = `View Collapsed Lines (line ${afterLine})`;
   const className = cn(

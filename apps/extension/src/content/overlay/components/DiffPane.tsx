@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@guided-review/ui";
 
-import { buildPRFileDiffUrl } from "@extension/lib/github/prUrls";
 import { languageForPath } from "@extension/lib/highlight";
+import { useReviewHost } from "@extension/content/overlay/host";
 import {
   displayLineNumber,
   linesInSelection,
@@ -14,7 +14,7 @@ import type { SearchScrollTarget } from "@extension/content/overlay/diffSearch";
 import { withHunkGaps } from "@extension/content/overlay/hunkGaps";
 import { hydrateDiffViewMode, useReviewStore } from "@extension/content/overlay/store";
 import type { ResolvedUnitFile } from "@extension/content/overlay/buildSelectableLines";
-import type { DiffViewMode } from "@extension/lib/preferences";
+import type { DiffViewMode } from "@extension/content/overlay/diffView";
 import type { ComposerRange } from "./diff/hunkShared";
 import { AddCommentButton, CommentModeChip, DiffViewToggle } from "./diff/DiffToolbar";
 import { HunkGapPlaceholder } from "./diff/HunkGapPlaceholder";
@@ -53,25 +53,23 @@ interface DiffPaneProps {
 
 /** Empty body for binary/LFS/elided files; optional deep link to GitHub Files tab. */
 function BinaryElidedEmptyState({ filePath }: { filePath: string }) {
+  const host = useReviewHost();
   const prContext = useReviewStore((s) => s.prContext);
   const [githubUrl, setGithubUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!prContext) {
+    if (!prContext || !host.fileDiffUrl) {
       setGithubUrl(null);
       return;
     }
     let cancelled = false;
-    void buildPRFileDiffUrl(
-      { owner: prContext.owner, repo: prContext.repo, number: prContext.number },
-      filePath,
-    ).then((url) => {
+    void host.fileDiffUrl(filePath, prContext).then((url) => {
       if (!cancelled) setGithubUrl(url);
     });
     return () => {
       cancelled = true;
     };
-  }, [prContext, filePath]);
+  }, [host, prContext, filePath]);
 
   return (
     <div

@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import type { ReviewPlan } from "@extension/lib/types";
 import { cn } from "@guided-review/ui";
 import { buildDisplayUnits } from "@extension/content/overlay/store";
+import { useReviewHost } from "../host";
 import { TestsUnitIcon } from "./TestsUnitIcon";
 
 const SKELETON_COUNT = 4;
@@ -15,7 +16,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }: SidebarProps) {
-  const displayUnits = buildDisplayUnits(plan);
+  const host = useReviewHost();
+  const displayUnits = buildDisplayUnits(plan, host.kind);
   const activeItemRef = useRef<HTMLButtonElement>(null);
 
   // Keep the active unit visible when navigating via keyboard (←/→) or footer

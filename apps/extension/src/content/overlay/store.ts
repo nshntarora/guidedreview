@@ -1,11 +1,6 @@
 import { create } from "zustand";
-import type {
-  ParsedDiff,
-  PRContext,
-  ReviewErrorInfo,
-  ReviewPlan,
-  ReviewUnit,
-} from "@extension/lib/types";
+import type { ParsedDiff, ReviewErrorInfo, ReviewPlan, ReviewUnit } from "@extension/lib/types";
+import type { ReviewContext } from "@guided-review/core";
 import { NO_API_KEY_ERROR_CODE } from "@extension/lib/types";
 import type { PRIdentity } from "@extension/lib/github/diffFetch";
 import { buildFileReviewPlan } from "@guided-review/core";
@@ -17,13 +12,8 @@ import {
   type SelectableLine,
   type UiMode,
 } from "./commentTypes";
-import { readSession, writeSession } from "@extension/lib/storage";
-import {
-  DEFAULT_DIFF_VIEW_MODE,
-  getStoredDiffViewMode,
-  setStoredDiffViewMode,
-  type DiffViewMode,
-} from "@extension/lib/preferences";
+import { DEFAULT_DIFF_VIEW_MODE, type DiffViewMode } from "./diffView";
+import { getActiveReviewHost } from "./host";
 
 export type ReviewStatus = "idle" | "loading" | "streaming" | "ready" | "error";
 
@@ -40,17 +30,24 @@ export type BuildPhase =
 
 export type { DiffViewMode };
 
-/** Display list unit: synthetic PR description first, then plan units. */
+/** Display list unit: synthetic change summary first, then plan units. */
 export type DisplayUnit =
-  | { kind: "pr_description"; id: "__pr_description"; title: "PR Description" }
+  | { kind: "pr_description"; id: "__pr_description"; title: string }
   | { kind: "review"; id: string; title: string; unit: ReviewUnit; planIndex: number };
 
+export function summaryUnitTitle(kind: "github" | "local" = "github"): string {
+  return kind === "local" ? "Change summary" : "PR Description";
+}
+
 /** Ordered units shown in the overlay (description is UI-only, not model output). */
-export function buildDisplayUnits(plan: ReviewPlan | null): DisplayUnit[] {
+export function buildDisplayUnits(
+  plan: ReviewPlan | null,
+  hostKind: "github" | "local" = "github",
+): DisplayUnit[] {
   const description: DisplayUnit = {
     kind: "pr_description",
     id: "__pr_description",
-    title: "PR Description",
+    title: summaryUnitTitle(hostKind),
   };
   if (!plan) return [description];
   return [
@@ -73,7 +70,7 @@ export function displayUnitCount(plan: ReviewPlan | null): number {
 interface PersistedSession {
   diff: ParsedDiff;
   plan: ReviewPlan;
-  prContext: PRContext | null;
+  prContext: ReviewContext | null;
   /** Index into the display unit list (0 = PR description, then plan units). */
   currentUnitIndex: number;
   /** Local draft comments (session-scoped; not posted to GitHub). */
@@ -103,7 +100,7 @@ interface ReviewState {
   providerLabel: string | null;
   diff: ParsedDiff | null;
   plan: ReviewPlan | null;
-  prContext: PRContext | null;
+  prContext: ReviewContext | null;
   /** Index into the display unit list (0 = PR description, then plan units). */
   currentUnitIndex: number;
   /**
@@ -130,7 +127,7 @@ interface ReviewState {
   open: () => void;
   close: () => void;
   startLoading: (sessionKey: string) => void;
-  setPRContext: (prContext: PRContext) => void;
+  setPRContext: (prContext: ReviewContext) => void;
   setDiff: (diff: ParsedDiff) => void;
   setBuildPhase: (phase: BuildPhase, generation?: number) => void;
   setProviderLabel: (label: string | null) => void;
@@ -176,10 +173,6 @@ interface ReviewState {
  */
 export function buildSessionKey(pr: PRIdentity): string {
   return `${pr.owner}/${pr.repo}#${pr.number}`;
-}
-
-function storageKey(sessionKey: string): string {
-  return `guidedReview.session.${sessionKey}`;
 }
 
 function newDraftId(): string {
@@ -358,7 +351,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
     diffViewModeHydrateEpoch += 1;
     diffViewModeHydrated = true;
     set({ diffViewMode: mode });
-    void setStoredDiffViewMode(mode);
+    void getActiveReviewHost()?.persistDiffViewMode?.(mode);
   },
 
   enterCommentMode: (lines) => {
@@ -518,7 +511,7 @@ export async function hydrateDiffViewMode(): Promise<void> {
   const epoch = diffViewModeHydrateEpoch;
   diffViewModeHydrateInFlight = (async () => {
     try {
-      const mode = await getStoredDiffViewMode();
+      const mode = (await getActiveReviewHost()?.readDiffViewMode?.()) ?? DEFAULT_DIFF_VIEW_MODE;
       if (epoch !== diffViewModeHydrateEpoch) return;
       useReviewStore.setState({ diffViewMode: mode });
       diffViewModeHydrated = true;
@@ -559,6 +552,9 @@ export async function persistSession(): Promise<void> {
   // resumed in place of the AI plan once a provider is configured.
   if (needsProvider) return;
 
+  const host = getActiveReviewHost();
+  if (!host) return;
+
   const payload: PersistedSession = {
     diff,
     plan,
@@ -567,7 +563,7 @@ export async function persistSession(): Promise<void> {
     draftComments,
   };
   try {
-    await writeSession(storageKey(sessionKey), payload);
+    await host.persistSession(sessionKey, payload);
   } catch (error) {
     console.warn("Guided Review: failed to persist session", error);
   }
@@ -579,9 +575,12 @@ export async function persistSession(): Promise<void> {
  * to starting a fresh review in either case.
  */
 export async function restoreSession(sessionKey: string): Promise<boolean> {
+  const host = getActiveReviewHost();
+  if (!host) return false;
+
   let saved: PersistedSession | undefined;
   try {
-    saved = await readSession(storageKey(sessionKey), (raw) => raw as PersistedSession | undefined);
+    saved = (await host.restoreSession(sessionKey)) as PersistedSession | undefined;
   } catch (error) {
     console.warn("Guided Review: failed to restore session", error);
     return false;

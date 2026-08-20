@@ -1,6 +1,12 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createGitHubReviewHost } from "@extension/content/githubHost";
+import { setActiveReviewHost } from "../host";
 import { ContextPanel } from "./ContextPanel";
+
+beforeEach(() => {
+  setActiveReviewHost(createGitHubReviewHost());
+});
 
 describe("ContextPanel error state", () => {
   it("renders status code, error code, message, and retry", () => {
