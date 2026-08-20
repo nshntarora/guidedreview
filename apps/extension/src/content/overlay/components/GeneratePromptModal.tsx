@@ -76,7 +76,7 @@ export function GeneratePromptModal({
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
         <p className="m-0 mb-3 text-base text-muted">
-          Copy this into your coding agent to apply the feedback from your notes.
+          Paste this into your coding agent. Built from your notes — nothing is sent for you.
         </p>
         <pre
           className="m-0 whitespace-pre-wrap break-words rounded-md border border-border bg-surface px-3 py-3 font-mono text-sm leading-relaxed text-foreground"
