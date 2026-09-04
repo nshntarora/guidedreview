@@ -1,15 +1,40 @@
 {
   "name": "@guided-review/cli",
-  "private": true,
   "version": "0.1.0",
+  "description": "Walk a local git branch, commit, or working tree in the browser. AI structures the review; you decide.",
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
-    "guided-review": "./dist/bin.js"
+    "guidedreview": "./dist/bin.js"
   },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nshntarora/guidedreview.git",
+    "directory": "apps/cli"
+  },
+  "homepage": "https://guidedreview.dev/docs/local-review",
+  "bugs": {
+    "url": "https://github.com/nshntarora/guidedreview/issues"
+  },
+  "keywords": [
+    "code-review",
+    "git",
+    "cli",
+    "diff"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.json --noEmit && vite build && node scripts/bundle-server.mjs",
+    "prepublishOnly": "npm run build",
     "start": "node dist/bin.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
@@ -19,17 +44,10 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:install": "playwright install --with-deps chromium"
   },
-  "dependencies": {
+  "devDependencies": {
     "@fontsource/victor-mono": "^5.3.0",
     "@guided-review/core": "workspace:*",
     "@guided-review/ui": "workspace:*",
-    "express": "^5.1.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "winston": "^3.19.0",
-    "zustand": "^5.0.14"
-  },
-  "devDependencies": {
     "@playwright/test": "^1.62.0",
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.0",
@@ -41,10 +59,15 @@
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.0.5",
     "esbuild": "^0.28.1",
+    "express": "^5.1.0",
     "jsdom": "^30.0.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "vite": "^8.1.5",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "winston": "^3.19.0",
+    "zustand": "^5.0.14"
   }
 }

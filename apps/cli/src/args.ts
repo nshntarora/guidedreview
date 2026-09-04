@@ -17,7 +17,7 @@ export interface CliArgs {
 function takeValue(flag: string, argv: string[], index: number): string {
   const value = argv[index + 1];
   if (value === undefined || value.startsWith("-")) {
-    throw new Error(`${flag} requires a value. Run guided-review --help.`);
+    throw new Error(`${flag} requires a value. Run guidedreview --help.`);
   }
   return value;
 }
@@ -82,7 +82,7 @@ export function parseArgs(argv: string[]): CliArgs {
       continue;
     }
     if (token.startsWith("-")) {
-      throw new Error(`Unknown flag ${token}. Run guided-review --help.`);
+      throw new Error(`Unknown flag ${token}. Run guidedreview --help.`);
     }
     positional.push(token);
   }
@@ -91,10 +91,9 @@ export function parseArgs(argv: string[]): CliArgs {
   return args;
 }
 
-export const HELP = `Usage: pnpm review -- [dir] [options]
+export const HELP = `Usage: guidedreview [dir] [options]
 
 Review a local branch, commit, or working tree. Opens a browser UI.
-(Workspace CLI: @guided-review/cli. Not the npm package named guided-review.)
 
   --base <ref>       Base branch (default: origin/HEAD, then main, then master)
   --port <n>         Listen port (default: ${DEFAULT_PORT})
