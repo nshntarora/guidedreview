@@ -160,13 +160,16 @@ function DiffFileCard({
   return (
     <div
       className={cn(
-        "mb-7 overflow-hidden rounded-lg border border-border bg-surface-raised",
+        "mb-7 rounded-lg border border-border bg-surface-raised",
         fileSearchHit && "ring-2 ring-primary ring-offset-2 ring-offset-surface",
       )}
       data-file-path={file.path}
       data-testid={fileSearchHit ? "diff-file-search-highlight" : undefined}
     >
-      <div className="flex min-w-0 items-baseline gap-2.5 border-b border-border bg-background px-3 py-2 font-mono text-sm">
+      <div
+        className="sticky top-0 z-10 flex min-w-0 items-baseline gap-2.5 rounded-t-lg border-b border-border bg-background px-3 py-2 font-mono text-sm"
+        data-testid="diff-file-header"
+      >
         <MiddleEllipsisText text={pathLabel} maxWidth="100%" className="min-w-0 flex-1" />
         {!language && !file.isBinaryOrElided && (
           <span className="shrink-0 font-normal text-muted italic">
@@ -174,43 +177,49 @@ function DiffFileCard({
           </span>
         )}
       </div>
-      {file.isBinaryOrElided ? (
-        <BinaryElidedEmptyState filePath={file.path} />
-      ) : (
-        withHunkGaps(hunks).map((item) => {
-          if (item.kind === "gap") {
-            return (
-              <HunkGapPlaceholder key={item.key} filePath={file.path} afterLine={item.afterLine} />
+      <div className="overflow-hidden rounded-b-lg">
+        {file.isBinaryOrElided ? (
+          <BinaryElidedEmptyState filePath={file.path} />
+        ) : (
+          withHunkGaps(hunks).map((item) => {
+            if (item.kind === "gap") {
+              return (
+                <HunkGapPlaceholder
+                  key={item.key}
+                  filePath={file.path}
+                  afterLine={item.afterLine}
+                />
+              );
+            }
+            const { hunk } = item;
+            return diffViewMode === "split" ? (
+              <SplitHunk
+                hunk={hunk}
+                language={language}
+                key={hunk.id}
+                selectedIds={selectedIds}
+                focusId={effectiveFocusId}
+                draftsByEndLineId={draftsByEndLineId}
+                composerPlacementId={composerPlacementId}
+                composerRange={composerRange}
+                unitId={unitId}
+              />
+            ) : (
+              <UnifiedHunk
+                hunk={hunk}
+                language={language}
+                key={hunk.id}
+                selectedIds={selectedIds}
+                focusId={effectiveFocusId}
+                draftsByEndLineId={draftsByEndLineId}
+                composerPlacementId={composerPlacementId}
+                composerRange={composerRange}
+                unitId={unitId}
+              />
             );
-          }
-          const { hunk } = item;
-          return diffViewMode === "split" ? (
-            <SplitHunk
-              hunk={hunk}
-              language={language}
-              key={hunk.id}
-              selectedIds={selectedIds}
-              focusId={effectiveFocusId}
-              draftsByEndLineId={draftsByEndLineId}
-              composerPlacementId={composerPlacementId}
-              composerRange={composerRange}
-              unitId={unitId}
-            />
-          ) : (
-            <UnifiedHunk
-              hunk={hunk}
-              language={language}
-              key={hunk.id}
-              selectedIds={selectedIds}
-              focusId={effectiveFocusId}
-              draftsByEndLineId={draftsByEndLineId}
-              composerPlacementId={composerPlacementId}
-              composerRange={composerRange}
-              unitId={unitId}
-            />
-          );
-        })
-      )}
+          })
+        )}
+      </div>
     </div>
   );
 }
