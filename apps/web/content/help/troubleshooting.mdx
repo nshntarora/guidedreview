@@ -79,10 +79,10 @@ Draft comments are part of the same session until you [submit](/docs/submit-revi
 
 If you develop from source:
 
-1. Run `npm run build:extension` from the monorepo root after code changes.
+1. Run `pnpm build:extension` from the monorepo root after code changes.
 2. In `chrome://extensions`, hit **Reload** on the Guided Review card.
 3. Refresh the GitHub PR tab.
 
-Chrome loads **`apps/extension/dist`**, not a root-level `dist/`. A stale folder means you keep seeing old behavior even with `npm run dev` running. Full install steps: [Install → Load unpacked](/docs/install#load-unpacked-development).
+Chrome loads **`apps/extension/dist`**, not a root-level `dist/`. A stale folder means you keep seeing old behavior even with `pnpm dev` running. Full install steps: [Install → Load unpacked](/docs/install#load-unpacked-development).
 
 > **Still stuck?** Open an issue on [GitHub](https://github.com/nshntarora/guidedreview) with the exact error text (redact keys and private URLs). Concept questions: [FAQ](/docs/faq).

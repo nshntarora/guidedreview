@@ -28,15 +28,15 @@ For local builds and contributors:
 2. From the monorepo root, install and build the extension:
 
 ```bash
-npm install
-npm run build:extension
+pnpm install
+pnpm build:extension
 ```
 
 3. Open `chrome://extensions`, enable **Developer mode**, and click **Load unpacked**.
 4. Select **`apps/extension/dist`** — never a root-level `dist/` if one exists from an older layout.
-5. After code changes, run `npm run build:extension` again, then hit **Reload** on the extension card and refresh the GitHub PR tab.
+5. After code changes, run `pnpm build:extension` again, then hit **Reload** on the extension card and refresh the GitHub PR tab.
 
-> **Dev HMR.** `npm run dev` / `npm run dev:extension` serves Vite HMR on port **5173**, but Chrome still loads the built files under `apps/extension/dist`. Rebuild (or rely on the dev pipeline that writes there) and reload the extension when behavior looks stale. More on stale builds: [Troubleshooting](/docs/troubleshooting#load-unpacked-stale-build).
+> **Dev HMR.** `pnpm dev` / `pnpm dev:extension` serves Vite HMR on port **5173**, but Chrome still loads the built files under `apps/extension/dist`. Rebuild (or rely on the dev pipeline that writes there) and reload the extension when behavior looks stale. More on stale builds: [Troubleshooting](/docs/troubleshooting#load-unpacked-stale-build).
 
 ## After install
 

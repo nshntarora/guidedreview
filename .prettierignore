@@ -2,7 +2,7 @@ dist
 **/dist/**
 node_modules
 coverage
-package-lock.json
+pnpm-lock.yaml
 test-results
 playwright-report
 blob-report

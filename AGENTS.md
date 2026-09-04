@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Chrome MV3 extension: GitHub PR diff → user's LLM → ordered **review units** in a Shadow DOM overlay. npm workspaces, Node ≥ 22.
+Chrome MV3 extension: GitHub PR diff → user's LLM → ordered **review units** in a Shadow DOM overlay. pnpm workspaces, Node ≥ 22.
 
 | Path             | What                                                                         |
 | ---------------- | ---------------------------------------------------------------------------- |
@@ -24,9 +24,9 @@ Same-directory `./foo` is fine. Cross-folder imports should use the alias.
 
 ## Commands
 
-`npm run dev` · `dev:web` · `dev:cli` · `build` · `build:extension` · `build:cli` · `typecheck` · `test` · `test:e2e` · `test:e2e:web` · `test:e2e:cli` · `lint` · `format`
+`pnpm dev` · `dev:web` · `dev:cli` · `build` · `build:extension` · `build:cli` · `typecheck` · `test` · `test:e2e` · `test:e2e:web` · `test:e2e:cli` · `lint` · `format`
 
-After CLI edits: `npm test -w @guided-review/cli`, then `npm run build:cli && npm run review`. Never `npx guided-review` — that hits a different npm package.
+After CLI edits: `pnpm --filter @guided-review/cli test`, then `pnpm build:cli && pnpm review`. Never `npx guided-review` — that hits a different npm package.
 
 After extension edits: `build:extension`, reload in `chrome://extensions`, refresh the PR tab. Tests live next to source (`*.test.*`); e2e under each app's `e2e/`.
 

@@ -28,9 +28,9 @@ Docs are authored as MDX under `content/help/`. Register each page (slug, title,
 From the **monorepo root**:
 
 ```bash
-npm run dev:web             # http://localhost:3000
-npm run build:web           # next build → apps/web/out
-npm run start:web           # production Next server on :3000
+pnpm dev:web             # http://localhost:3000
+pnpm build:web           # next build → apps/web/out
+pnpm start:web           # production Next server on :3000
 ```
 
 Extension HMR uses port **5173**; this app uses **3000**.
@@ -47,9 +47,9 @@ Playwright specs under `e2e/` exercise the **static export** (`out/`), not `next
 
 ```bash
 # from monorepo root
-npm run test:e2e:web                 # build + serve out/ + run specs
-npm run test:e2e:web:ui              # Playwright UI mode
-npm run test:e2e:install -w @guided-review/web   # install Chromium (once)
+pnpm test:e2e:web                                    # build + serve out/ + run specs
+pnpm test:e2e:web:ui                                 # Playwright UI mode
+pnpm --filter @guided-review/web test:e2e:install    # install Chromium (once)
 ```
 
 Specs use port **4173** for the static server so they do not clash with `dev:web`.
@@ -93,7 +93,7 @@ Every CTA event includes at least `{ location, method, href, … }`. Known locat
 
 ## Hosting (Cloudflare Pages)
 
-The site is a pure static export. `npm run build` writes to `apps/web/out/`, which Wrangler uploads with `wrangler pages deploy`. Production lives on `*.pages.dev` (and any custom domain on the Pages project).
+The site is a pure static export. `pnpm build` writes to `apps/web/out/`, which Wrangler uploads with `wrangler pages deploy`. Production lives on `*.pages.dev` (and any custom domain on the Pages project).
 
 ### CI deploy
 
@@ -127,31 +127,31 @@ Attach `guidedreview.dev` as a custom domain on that Pages project in the Cloudf
 
 ```bash
 # from monorepo root
-npm run deploy -w @guided-review/web
+pnpm --filter @guided-review/web deploy
 
 # or static preview without Cloudflare
-npm run build:web
-npx serve apps/web/out
+pnpm build:web
+pnpm --filter @guided-review/web exec serve out
 ```
 
 ---
 
 ## Scripts
 
-| Command (root)            | What it does           |
-| ------------------------- | ---------------------- |
-| `npm run dev:web`         | Next.js dev on :3000   |
-| `npm run build:web`       | Static export → `out/` |
-| `npm run start:web`       | Production Next server |
-| `npm run test:e2e:web`    | Build + Playwright e2e |
-| `npm run test:e2e:web:ui` | Playwright UI mode     |
+| Command (root)         | What it does           |
+| ---------------------- | ---------------------- |
+| `pnpm dev:web`         | Next.js dev on :3000   |
+| `pnpm build:web`       | Static export → `out/` |
+| `pnpm start:web`       | Production Next server |
+| `pnpm test:e2e:web`    | Build + Playwright e2e |
+| `pnpm test:e2e:web:ui` | Playwright UI mode     |
 
 Workspace-local:
 
 ```bash
-npm run deploy -w @guided-review/web
-npm run preview:cf -w @guided-review/web
-npm run typecheck -w @guided-review/web
+pnpm --filter @guided-review/web deploy
+pnpm --filter @guided-review/web preview:cf
+pnpm --filter @guided-review/web typecheck
 ```
 
 ---

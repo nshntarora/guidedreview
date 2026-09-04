@@ -5,7 +5,7 @@ const BASE_URL = `http://127.0.0.1:${PORT}`;
 
 /**
  * Website e2e against the static export in `out/` (mirrors Cloudflare Pages).
- * Run `npm run build` first (`pretest:e2e` does this automatically).
+ * Run `pnpm run build` first (`pretest:e2e` does this automatically).
  */
 export default defineConfig({
   testDir: "./e2e",
@@ -28,7 +28,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npx serve out -l ${PORT} --no-clipboard`,
+    command: `pnpm exec serve out -l ${PORT} --no-clipboard`,
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

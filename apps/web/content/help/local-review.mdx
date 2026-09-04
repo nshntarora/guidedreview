@@ -19,15 +19,15 @@ The Chrome extension still reviews GitHub pull requests. The CLI reviews a local
 From this repo (the CLI is not on npm — `npx guided-review` is a different package):
 
 ```bash
-npm install
-npm run build:cli
-npm run review
+pnpm install
+pnpm build:cli
+pnpm review
 ```
 
 Pass flags after `--`:
 
 ```bash
-npm run review -- --base main --no-open
+pnpm review -- --base main --no-open
 ```
 
 The CLI binds `127.0.0.1:7182` (ASCII G+R), keeps a short terminal banner (URL, diff, last pull), and opens the UI unless you pass `--no-open`. Only real events (structure, scope change, errors) go to the log below. Override with `--port`. `--port 0` picks any free port. Ctrl+C stops the server.
@@ -72,5 +72,5 @@ Line comments stay in the session. There is no GitHub submit. **Generate Prompt*
 ## Flags
 
 ```
-npm run review -- [dir] --base main --port 8787 --no-open --staged --no-untracked --agent claude-code
+pnpm review -- [dir] --base main --port 8787 --no-open --staged --no-untracked --agent claude-code
 ```

@@ -13,8 +13,8 @@ Parent monorepo: [../../README.md](../../README.md)
 From the **monorepo root**:
 
 ```bash
-npm install
-npm run build:extension
+pnpm install
+pnpm build:extension
 ```
 
 ### Load unpacked in Chrome
@@ -30,10 +30,10 @@ npm run build:extension
 
 ### After code changes
 
-Chrome serves whatever is currently in `dist/`. A running `npm run dev` does not replace a reload of the unpacked extension.
+Chrome serves whatever is currently in `dist/`. A running `pnpm dev` does not replace a reload of the unpacked extension.
 
 ```bash
-npm run build:extension    # or rely on dev writing to dist
+pnpm build:extension    # or rely on dev writing to dist
 ```
 
 Then **Reload** the extension card in `chrome://extensions` and refresh the GitHub PR tab.
@@ -44,8 +44,8 @@ Then **Reload** the extension card in `chrome://extensions` and refresh the GitH
 
 ```bash
 # from monorepo root
-npm run dev                 # Vite HMR for the extension (port 5173)
-npm run dev:extension       # same
+pnpm dev                 # Vite HMR for the extension (port 5173)
+pnpm dev:extension       # same
 ```
 
 |            |                                                                                                     |
@@ -68,7 +68,7 @@ Submitting a review from the overlay (approve / comment / request changes via th
 ```bash
 cp .env.example .env
 # set VITE_GITHUB_CLIENT_ID=<your public client id>
-npm run build:extension
+pnpm build:extension
 ```
 
 The Vite build loads env from the **repo root** and inlines `VITE_GITHUB_CLIENT_ID` at build time. Rebuild after changing it. Only the public client ID is needed — no client secret for device flow.
@@ -134,7 +134,7 @@ Throw `ProviderError` for all provider-side failures. Shared HTTP/SSE helpers li
 5. **Verify**
    - Options page: provider + models appear; **Test connection** succeeds with a real key.
    - Start Guided Review on a PR: units stream and match real file/hunk ids (validation drops hallucinations either way).
-   - `npm run typecheck` and `npm test` from the monorepo root.
+   - `pnpm typecheck` and `pnpm test` from the monorepo root.
 
 ### Out of scope for a typical provider PR
 
@@ -155,25 +155,25 @@ If the provider already exists, add a row to `MODELS` in `catalog.ts` (and updat
 
 From monorepo root (preferred):
 
-| Command                         | What it does                          |
-| ------------------------------- | ------------------------------------- |
-| `npm run dev` / `dev:extension` | Vite + crx HMR                        |
-| `npm run build:extension`       | `tsc -b` + Vite build + zip → `dist/` |
-| `npm test`                      | Vitest unit tests (extension + UI)    |
-| `npm run test:watch`            | Extension unit tests, watch           |
-| `npm run test:coverage`         | Extension coverage                    |
-| `npm run test:e2e`              | Playwright e2e (builds first)         |
-| `npm run test:e2e:ui`           | Playwright UI mode                    |
-| `npm run test:e2e:install`      | Install Chromium for e2e              |
-| `npm run typecheck`             | Typecheck (all workspaces)            |
+| Command                      | What it does                          |
+| ---------------------------- | ------------------------------------- |
+| `pnpm dev` / `dev:extension` | Vite + crx HMR                        |
+| `pnpm build:extension`       | `tsc -b` + Vite build + zip → `dist/` |
+| `pnpm test`                  | Vitest unit tests (extension + UI)    |
+| `pnpm test:watch`            | Extension unit tests, watch           |
+| `pnpm test:coverage`         | Extension coverage                    |
+| `pnpm test:e2e`              | Playwright e2e (builds first)         |
+| `pnpm test:e2e:ui`           | Playwright UI mode                    |
+| `pnpm test:e2e:install`      | Install Chromium for e2e              |
+| `pnpm typecheck`             | Typecheck (all workspaces)            |
 
 Workspace-local (same package):
 
 ```bash
-npm run build -w @guided-review/extension
-npm run test -w @guided-review/extension
-npm run test:e2e -w @guided-review/extension
-npm run gen-icons -w @guided-review/extension   # regenerate PNG icons (Python)
+pnpm --filter @guided-review/extension build
+pnpm --filter @guided-review/extension test
+pnpm --filter @guided-review/extension test:e2e
+pnpm --filter @guided-review/extension gen-icons   # regenerate PNG icons (Python)
 ```
 
 ### Tests

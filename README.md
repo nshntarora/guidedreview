@@ -43,7 +43,7 @@ Guided Review uses AI only where it helps: clustering related hunks into a walka
 ### Prerequisites
 
 - **Node.js** ≥ 22
-- **npm** (workspaces)
+- **pnpm** ≥ 11 (workspaces)
 - **Chrome**
 
 ### Running
@@ -53,13 +53,13 @@ Once you have the project cloned:
 1. Install dependencies from the monorepo root:
 
 ```bash
-npm install
+pnpm install
 ```
 
 2. Build the extension:
 
 ```bash
-npm run build:extension
+pnpm build:extension
 ```
 
 3. Load it in Chrome:
@@ -76,15 +76,15 @@ That's it. You can start reviewing.
 For day-to-day work with HMR:
 
 ```bash
-npm run dev                 # extension Vite / crx on port 5173
+pnpm dev                 # extension Vite / crx on port 5173
 ```
 
-After code changes, rebuild if needed (`npm run build:extension`), **Reload** the extension card in `chrome://extensions`, and refresh the PR tab. Chrome serves whatever is currently in `dist/` — a running dev server alone does not replace that reload.
+After code changes, rebuild if needed (`pnpm build:extension`), **Reload** the extension card in `chrome://extensions`, and refresh the PR tab. Chrome serves whatever is currently in `dist/` — a running dev server alone does not replace that reload.
 
 Marketing site (optional):
 
 ```bash
-npm run dev:web             # http://localhost:3000
+pnpm dev:web             # http://localhost:3000
 ```
 
 More detail: [apps/extension/README.md](apps/extension/README.md) · [apps/web/README.md](apps/web/README.md).
@@ -92,9 +92,9 @@ More detail: [apps/extension/README.md](apps/extension/README.md) · [apps/web/R
 ### Building
 
 ```bash
-npm run build:extension     # typecheck + Vite → apps/extension/dist (+ zip)
-npm run build               # extension, then marketing site
-npm run build:web           # Next.js static export → apps/web/out
+pnpm build:extension     # typecheck + Vite → apps/extension/dist (+ zip)
+pnpm build               # extension, then marketing site
+pnpm build:web           # Next.js static export → apps/web/out
 ```
 
 ### Testing
@@ -102,13 +102,13 @@ npm run build:web           # Next.js static export → apps/web/out
 From the monorepo root:
 
 ```bash
-npm test                    # unit tests (extension + UI)
-npm run test:e2e:install    # Chromium for extension e2e (once)
-npm run test:e2e            # extension Playwright e2e (builds first)
-npm run test:e2e:web        # marketing site e2e (builds first)
+pnpm test                    # unit tests (extension + UI)
+pnpm test:e2e:install        # Chromium for extension e2e (once)
+pnpm test:e2e                # extension Playwright e2e (builds first)
+pnpm test:e2e:web            # marketing site e2e (builds first)
 ```
 
-Also available: `npm run typecheck`, `npm run lint`, `npm run format`. Workspace-scoped runs use `npm run <script> -w @guided-review/<package>`.
+Also available: `pnpm typecheck`, `pnpm lint`, `pnpm format`. Workspace-scoped runs use `pnpm --filter @guided-review/<package> <script>`.
 
 ## Usage
 
@@ -128,12 +128,12 @@ Docs for the happy path: [Your first review](https://guidedreview.dev/docs/first
 
 ```bash
 cp .env.example .env        # set VITE_GITHUB_CLIENT_ID
-npm run build:extension
+pnpm build:extension
 ```
 
 Full setup: [apps/extension/README.md — GitHub OAuth](apps/extension/README.md#github-oauth).
 
-**Monorepo** — npm workspaces:
+**Monorepo** — pnpm workspaces:
 
 | Path                               | What                                           |
 | ---------------------------------- | ---------------------------------------------- |

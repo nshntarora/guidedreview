@@ -14,7 +14,7 @@ interface ExtensionFixtures {
  * Standard Playwright pattern for testing a Chrome MV3 extension: extensions can only be
  * loaded into a *persistent* context (not the regular `browser.newContext()` API), and the
  * extension's id is only known once its service worker has registered. Requires `dist/` to
- * exist — run `npm run build` first (wired up as `pretest:e2e`).
+ * exist — run `pnpm run build` first (wired up as `pretest:e2e`).
  */
 export const test = base.extend<ExtensionFixtures>({
   // eslint-disable-next-line no-empty-pattern

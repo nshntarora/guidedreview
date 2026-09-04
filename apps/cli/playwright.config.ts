@@ -3,7 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 /**
  * CLI UI e2e against the built walkthrough in `dist/ui`, served by
  * `createReviewServer` from each spec fixture (see e2e/fixtures.ts).
- * Run `npm run build` first (`pretest:e2e` does this automatically).
+ * Run `pnpm run build` first (`pretest:e2e` does this automatically).
  */
 export default defineConfig({
   testDir: "./e2e",

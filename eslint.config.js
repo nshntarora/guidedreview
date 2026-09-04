@@ -15,7 +15,7 @@ export default tseslint.config(
       "**/playwright-report/**",
       "**/blob-report/**",
       "**/*.tsbuildinfo",
-      "package-lock.json",
+      "pnpm-lock.yaml",
     ],
   },
   eslint.configs.recommended,

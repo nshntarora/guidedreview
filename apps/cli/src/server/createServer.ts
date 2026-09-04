@@ -418,9 +418,9 @@ export function createReviewServer(options: CreateReviewServerOptions) {
     }
     res.sendFile(path.join(staticDir, "index.html"), (err) => {
       if (!err) return;
-      uiLog.warn("UI not built. Run npm run build -w @guided-review/cli.");
+      uiLog.warn("UI not built. Run pnpm build:cli.");
       if (!res.headersSent) {
-        sendJson(res, 404, { error: "UI not built. Run npm run build -w @guided-review/cli." });
+        sendJson(res, 404, { error: "UI not built. Run pnpm build:cli." });
       } else {
         res.end();
       }

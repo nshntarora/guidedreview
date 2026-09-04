@@ -91,7 +91,7 @@ export function parseArgs(argv: string[]): CliArgs {
   return args;
 }
 
-export const HELP = `Usage: npm run review -- [dir] [options]
+export const HELP = `Usage: pnpm review -- [dir] [options]
 
 Review a local branch, commit, or working tree. Opens a browser UI.
 (Workspace CLI: @guided-review/cli. Not the npm package named guided-review.)

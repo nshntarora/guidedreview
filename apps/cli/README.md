@@ -3,9 +3,9 @@
 Local Guided Review: opens a localhost walkthrough of the current branch versus its base, or of uncommitted / unstaged work, or of a single commit. File-by-file until you click **Structure with AI**.
 
 ```bash
-npm run build:cli
-npm run review
-npm run review -- --base main --no-open
+pnpm build:cli
+pnpm review
+pnpm review -- --base main --no-open
 ```
 
 Do not run `npx guided-review` — that name is taken on npm by another tool (Bun shebang). This package is `@guided-review/cli` and is workspace-only for now.

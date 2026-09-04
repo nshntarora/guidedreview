@@ -41,7 +41,8 @@ jobs:
               - 'apps/extension/**'
               - 'packages/ui/**'
               - 'package.json'
-              - 'package-lock.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
               - 'tsconfig.base.json'
               - '.github/workflows/**'
             ui:
@@ -51,7 +52,8 @@ jobs:
               - 'apps/web/**'
               - 'packages/ui/**'
               - 'package.json'
-              - 'package-lock.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
               - 'tsconfig.base.json'
               - '.github/workflows/**'
             cli:
@@ -59,7 +61,8 @@ jobs:
               - 'packages/core/**'
               - 'packages/ui/**'
               - 'package.json'
-              - 'package-lock.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
               - 'tsconfig.base.json'
               - '.github/workflows/**'
             root:
@@ -69,7 +72,8 @@ jobs:
               - 'lint-staged.config.js'
               - '.github/workflows/**'
               - 'package.json'
-              - 'package-lock.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
 
   lint:
     name: Lint and typecheck
@@ -85,22 +89,24 @@ jobs:
           ref: ${{ github.head_ref || github.ref_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       # Apply what tools can fix; continue so unfixable ESLint errors still
       # allow Prettier to run and partial fixes to be committed.
       - name: Apply ESLint autofixes
         continue-on-error: true
-        run: npm run lint:fix
+        run: pnpm lint:fix
 
       - name: Apply Prettier
-        run: npm run format
+        run: pnpm format
 
       # GITHUB_TOKEN cannot push to fork heads; fail clearly if a commit is needed.
       - name: Fail fork PRs that need autofix commit
@@ -109,7 +115,7 @@ jobs:
           github.event.pull_request.head.repo.full_name != github.repository
         run: |
           if [ -n "$(git status --porcelain)" ]; then
-            echo "::error::Lint/format issues are auto-fixable, but this is a fork PR so CI cannot push. Run: npm run lint:fix && npm run format"
+            echo "::error::Lint/format issues are auto-fixable, but this is a fork PR so CI cannot push. Run: pnpm lint:fix && pnpm format"
             exit 1
           fi
 
@@ -123,13 +129,13 @@ jobs:
 
       # Hard gates: fail on remaining (non-auto-fixable) issues after any commit.
       - name: Lint
-        run: npm run lint
+        run: pnpm lint
 
       - name: Format check
-        run: npm run format:check
+        run: pnpm format:check
 
       - name: Typecheck
-        run: npm run typecheck
+        run: pnpm typecheck
 
   unit:
     name: Unit tests
@@ -140,16 +146,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Run unit tests
-        run: npm test
+        run: pnpm test
 
   e2e:
     name: End-to-end tests
@@ -159,13 +167,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       # Separate key from e2e-web: extension and web pin different @playwright/test
       # versions (and browser revisions). Sharing one key races and can restore a
@@ -175,22 +185,22 @@ jobs:
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-extension-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-extension-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
 
       # Always install browsers (no-op / seconds when the cache already has the
       # revision). Skipping install on cache-hit fails when the cache is partial
       # or was written by another Playwright version.
       - name: Install Playwright Chromium
-        run: npx playwright install chromium
+        run: pnpm exec playwright install chromium
         working-directory: apps/extension
 
       - name: Install Playwright OS dependencies
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install-deps chromium
+        run: pnpm exec playwright install-deps chromium
         working-directory: apps/extension
 
       - name: Run e2e tests
-        run: npm run test:e2e -w @guided-review/extension
+        run: pnpm --filter @guided-review/extension test:e2e
 
       - name: Upload Playwright report
         if: failure()
@@ -210,28 +220,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-web-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-web-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Install Playwright Chromium
-        run: npx playwright install chromium
+        run: pnpm exec playwright install chromium
         working-directory: apps/web
 
       - name: Install Playwright OS dependencies
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install-deps chromium
+        run: pnpm exec playwright install-deps chromium
         working-directory: apps/web
 
       - name: Cache Next.js build
@@ -240,12 +252,12 @@ jobs:
           path: apps/web/.next/cache
           # Avoid huge globs (slow/fail under hashFiles); lockfile + package configs are enough
           # for invalidation, with restore-keys covering partial hits.
-          key: next-${{ runner.os }}-${{ hashFiles('package-lock.json', 'apps/web/package.json', 'apps/web/next.config.ts', 'packages/ui/package.json') }}
+          key: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'apps/web/package.json', 'apps/web/next.config.ts', 'packages/ui/package.json') }}
           restore-keys: |
             next-${{ runner.os }}-
 
       - name: Run website e2e tests
-        run: npm run test:e2e -w @guided-review/web
+        run: pnpm --filter @guided-review/web test:e2e
 
       - name: Upload Playwright report
         if: failure()
@@ -265,32 +277,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-cli-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-cli-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Install Playwright Chromium
-        run: npx playwright install chromium
+        run: pnpm exec playwright install chromium
         working-directory: apps/cli
 
       - name: Install Playwright OS dependencies
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install-deps chromium
+        run: pnpm exec playwright install-deps chromium
         working-directory: apps/cli
 
       - name: Run CLI UI e2e tests
-        run: npm run test:e2e -w @guided-review/cli
+        run: pnpm --filter @guided-review/cli test:e2e
 
       - name: Upload Playwright report
         if: failure()

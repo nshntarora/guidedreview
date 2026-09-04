@@ -8,15 +8,15 @@
     "build": "next build",
     "start": "next start --port 3000",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "pretest:e2e": "npm run build",
+    "pretest:e2e": "pnpm run build",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:install": "playwright install --with-deps chromium",
-    "deploy": "npm run build && wrangler pages deploy out --project-name=guidedreview",
-    "preview:cf": "npm run build && wrangler pages deploy out --project-name=guidedreview --branch=preview"
+    "deploy": "pnpm run build && wrangler pages deploy out --project-name=guidedreview",
+    "preview:cf": "pnpm run build && wrangler pages deploy out --project-name=guidedreview --branch=preview"
   },
   "dependencies": {
-    "@guided-review/ui": "*",
+    "@guided-review/ui": "workspace:*",
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
     "@next/mdx": "^16.2.12",

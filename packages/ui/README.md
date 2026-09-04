@@ -81,6 +81,6 @@ Used by the marketing site, options page, welcome page, and review overlay.
 ## Scripts
 
 ```bash
-npm run typecheck -w @guided-review/ui
-npm test -w @guided-review/ui
+pnpm --filter @guided-review/ui typecheck
+pnpm --filter @guided-review/ui test
 ```
