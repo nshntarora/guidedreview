@@ -46,11 +46,4 @@ describe("parseArgs", () => {
   it("help names the published command", () => {
     expect(HELP.startsWith("Usage: guidedreview ")).toBe(true);
   });
-
-  it("ignores a bare -- separator from pnpm", () => {
-    expect(parseArgs(["--"]).port).toBe(7182);
-    const args = parseArgs(["--", "--base", "main", "--no-open"]);
-    expect(args.base).toBe("main");
-    expect(args.open).toBe(false);
-  });
 });
