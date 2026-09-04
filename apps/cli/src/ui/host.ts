@@ -64,6 +64,10 @@ export function createLocalReviewHost(options: { onConnectProvider: () => void }
       const raw = localStorage.getItem("guidedReview.diffViewMode");
       return raw === "unified" || raw === "split" ? raw : "split";
     },
+    filePreviewUrl: async ({ path, side }) => {
+      const params = new URLSearchParams({ path, side });
+      return `/api/file?${params.toString()}`;
+    },
     // Capability flag only — Overlay owns Generate Prompt UI + clipboard.
     exportNotes: () => {},
   };

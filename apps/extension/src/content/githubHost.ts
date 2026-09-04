@@ -13,10 +13,12 @@ import {
 } from "@extension/lib/messaging";
 import { getStoredDiffViewMode, setStoredDiffViewMode } from "@extension/lib/preferences";
 import { readSession, writeSession } from "@extension/lib/storage";
+import { requestFilePreview } from "@extension/lib/messaging";
 import {
   buildFileLineUrl,
   buildPRFileDiffUrl,
   navigateToPrConversation,
+  pullHeadRef,
 } from "@extension/lib/github/prUrls";
 import type { ReviewHost } from "./overlay/host";
 
@@ -68,6 +70,19 @@ export function createGitHubReviewHost(): ReviewHost {
       const pr = githubIdentity(context);
       if (!pr) return null;
       return buildFileLineUrl(pr, { filePath, line, headRef: context.headRef });
+    },
+    filePreviewUrl: async ({ path, previousPath, side, context }) => {
+      const pr = githubIdentity(context);
+      if (!pr) return null;
+      const filePath = side === "old" ? (previousPath ?? path) : path;
+      const ref = side === "new" ? pullHeadRef(pr.number) : context.baseRef.trim();
+      if (!ref) return null;
+      try {
+        const result = await requestFilePreview(pr, filePath, ref);
+        return result?.ok ? result.dataUrl : null;
+      } catch {
+        return null;
+      }
     },
     submit: {
       getAuthStatus: getGitHubAuthStatus,

@@ -2,10 +2,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildFileLineUrl,
   buildPRFileDiffUrl,
+  buildRawFileUrl,
   isIgnoredPrPath,
   isPrFilesChangedPath,
+  isSafeGitHubPath,
+  isSafeGitHubRef,
   navigateToPrConversation,
   prConversationUrl,
+  pullHeadRef,
 } from "./prUrls";
 
 describe("prConversationUrl", () => {
@@ -128,6 +132,33 @@ describe("buildFileLineUrl", () => {
     expect(url).toBe(
       "https://github.com/acme/widgets/pull/42/files#diff-bfe9874d239014961b1ae4e89875a6155667db834a410aaaa2ebe3cf89820556R9",
     );
+  });
+});
+
+describe("buildRawFileUrl", () => {
+  it("encodes ref and path segments", () => {
+    expect(
+      buildRawFileUrl({ owner: "acme", repo: "widgets" }, "feat/x", "assets/my icon.png"),
+    ).toBe("https://github.com/acme/widgets/raw/feat/x/assets/my%20icon.png");
+  });
+
+  it("builds the pull head ref used for fork-safe new-side previews", () => {
+    expect(pullHeadRef(42)).toBe("refs/pull/42/head");
+    expect(buildRawFileUrl({ owner: "acme", repo: "widgets" }, pullHeadRef(42), "icon.svg")).toBe(
+      "https://github.com/acme/widgets/raw/refs/pull/42/head/icon.svg",
+    );
+  });
+});
+
+describe("isSafeGitHubPath / isSafeGitHubRef", () => {
+  it("rejects traversal and accepts normal repo paths and refs", () => {
+    expect(isSafeGitHubPath("assets/logo.png")).toBe(true);
+    expect(isSafeGitHubPath("../etc/passwd")).toBe(false);
+    expect(isSafeGitHubPath("/abs")).toBe(false);
+    expect(isSafeGitHubRef("main")).toBe(true);
+    expect(isSafeGitHubRef("refs/pull/12/head")).toBe(true);
+    expect(isSafeGitHubRef("feat/foo")).toBe(true);
+    expect(isSafeGitHubRef("foo/../../bar")).toBe(false);
   });
 });
 

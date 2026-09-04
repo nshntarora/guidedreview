@@ -1,5 +1,5 @@
 import type { DiffLine } from "@extension/lib/types";
-import { type ResolvedUnitFile } from "@guided-review/core";
+import { isImagePath, type ResolvedUnitFile } from "@guided-review/core";
 import { buildSplitRows } from "./buildSplitRows";
 import type { DiffViewMode } from "./diffView";
 import { lineIdFor, sideForLine, type DiffSide, type SelectableLine } from "./commentTypes";
@@ -36,7 +36,7 @@ function fromDiffLine(
 function buildUnified(files: ResolvedUnitFile[]): SelectableLine[] {
   const out: SelectableLine[] = [];
   for (const { file, hunks } of files) {
-    if (file.isBinaryOrElided) continue;
+    if (file.isBinaryOrElided || isImagePath(file.path)) continue;
     for (const hunk of hunks) {
       hunk.lines.forEach((line, lineIndex) => {
         const side = sideForLine(line.type);
@@ -55,7 +55,7 @@ function buildUnified(files: ResolvedUnitFile[]): SelectableLine[] {
 function buildSplit(files: ResolvedUnitFile[]): SelectableLine[] {
   const out: SelectableLine[] = [];
   for (const { file, hunks } of files) {
-    if (file.isBinaryOrElided) continue;
+    if (file.isBinaryOrElided || isImagePath(file.path)) continue;
     for (const hunk of hunks) {
       const rows = buildSplitRows(hunk.lines);
       for (const row of rows) {

@@ -28,6 +28,7 @@ export {
 export { parseDiff, parseUnifiedDiff } from "./diff/parse";
 export { summarizeDiff } from "./diff/summary";
 export type { DiffSummary, FileDiffSummary } from "./diff/summary";
+export { isImagePath, imageMimeType } from "./diff/image";
 
 export { middleTruncate } from "./middleTruncate";
 

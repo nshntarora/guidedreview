@@ -17,7 +17,9 @@ export default defineManifest({
   permissions: ["storage", "activeTab"],
   host_permissions: [
     "https://github.com/*",
+    // `.diff` redirects here; image previews follow github.com/raw → raw.githubusercontent.com.
     "https://patch-diff.githubusercontent.com/*",
+    "https://raw.githubusercontent.com/*",
     "https://api.github.com/*",
     "https://api.anthropic.com/*",
     "https://api.openai.com/*",

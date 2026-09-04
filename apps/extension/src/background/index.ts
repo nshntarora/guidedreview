@@ -5,6 +5,8 @@ import type {
   FetchDiffError,
   FetchDiffRequest,
   FetchDiffResponse,
+  FetchFilePreviewRequest,
+  FetchFilePreviewResponse,
   GitHubAuthClearResponse,
   GitHubAuthGetResponse,
   GitHubAuthState,
@@ -18,7 +20,7 @@ import type {
   TestConnectionRequest,
   TestConnectionResponse,
 } from "@extension/lib/types";
-import { NO_API_KEY_ERROR_CODE } from "@extension/lib/types";
+import { MessageType, NO_API_KEY_ERROR_CODE } from "@extension/lib/types";
 import { clearGitHubAuth, getGitHubAuth, setGitHubAuth } from "@extension/lib/github/authStorage";
 import {
   fetchGitHubUser,
@@ -32,6 +34,7 @@ import {
   isGitHubOAuthConfigured,
 } from "@extension/lib/github/oauthConfig";
 import { fetchPRDiff, parsePRUrl } from "@extension/lib/github/diffFetch";
+import { fetchRawFilePreview } from "@extension/lib/github/rawFile";
 import { submitPullRequestReview } from "@extension/lib/github/submitReview";
 import { annotateReview, getProviderClient, ProviderError } from "@guided-review/core";
 import { getProviderSettings } from "@extension/lib/settings";
@@ -113,7 +116,7 @@ function respondAsync<T>(
 chrome.runtime.onMessage.addListener((message: BackgroundRequest, sender, sendResponse) => {
   if (!isOwnSender(sender)) return false;
 
-  if (message.type === "TEST_CONNECTION") {
+  if (message.type === MessageType.TEST_CONNECTION) {
     return respondAsync<TestConnectionResponse>(
       handleTestConnection(message),
       sendResponse,
@@ -124,7 +127,7 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, sender, sendRe
     );
   }
 
-  if (message.type === "OPEN_OPTIONS") {
+  if (message.type === MessageType.OPEN_OPTIONS) {
     // The only synchronous handler — `openOptionsPage` has no async work to wait on.
     try {
       chrome.runtime.openOptionsPage();
@@ -136,7 +139,7 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, sender, sendRe
     return false;
   }
 
-  if (message.type === "FETCH_DIFF") {
+  if (message.type === MessageType.FETCH_DIFF) {
     if (!senderMatchesPR(sender, message.pr)) {
       sendResponse({ ok: false, error: WRONG_TAB_ERROR } satisfies FetchDiffError);
       return true;
@@ -148,7 +151,19 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, sender, sendRe
     );
   }
 
-  if (message.type === "GITHUB_DEVICE_START") {
+  if (message.type === MessageType.FETCH_FILE_PREVIEW) {
+    if (!senderMatchesPR(sender, message.pr)) {
+      sendResponse({ ok: false, error: WRONG_TAB_ERROR } satisfies FetchFilePreviewResponse);
+      return true;
+    }
+    return respondAsync<FetchFilePreviewResponse>(
+      handleFetchFilePreview(message),
+      sendResponse,
+      (e) => ({ ok: false, error: describeErrorMessage(e) }),
+    );
+  }
+
+  if (message.type === MessageType.GITHUB_DEVICE_START) {
     return respondAsync<GitHubDeviceStartResponse>(
       handleGitHubDeviceStart(),
       sendResponse,
@@ -156,7 +171,7 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, sender, sendRe
     );
   }
 
-  if (message.type === "GITHUB_DEVICE_POLL") {
+  if (message.type === MessageType.GITHUB_DEVICE_POLL) {
     return respondAsync<GitHubDevicePollResponse>(
       handleGitHubDevicePoll(message),
       sendResponse,
@@ -164,7 +179,7 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, sender, sendRe
     );
   }
 
-  if (message.type === "GITHUB_AUTH_GET") {
+  if (message.type === MessageType.GITHUB_AUTH_GET) {
     // A storage failure isn't worth surfacing to the options page: report it as
     // signed-out, which is the state the user can act on.
     return respondAsync<GitHubAuthGetResponse>(handleGitHubAuthGet(), sendResponse, (e) => {
@@ -173,7 +188,7 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, sender, sendRe
     });
   }
 
-  if (message.type === "GITHUB_AUTH_CLEAR") {
+  if (message.type === MessageType.GITHUB_AUTH_CLEAR) {
     // Same reasoning: the caller's intent was to end up disconnected either way.
     return respondAsync<GitHubAuthClearResponse>(handleGitHubAuthClear(), sendResponse, (e) => {
       console.error("GITHUB_AUTH_CLEAR failed:", e);
@@ -181,7 +196,7 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, sender, sendRe
     });
   }
 
-  if (message.type === "SUBMIT_REVIEW") {
+  if (message.type === MessageType.SUBMIT_REVIEW) {
     if (!senderMatchesPR(sender, message.pr)) {
       sendResponse({
         ok: false,
@@ -220,7 +235,7 @@ chrome.runtime.onConnect.addListener((port) => {
   });
 
   port.onMessage.addListener((message: AnnotateReviewRequest) => {
-    if (message?.type !== "ANNOTATE_REVIEW") return;
+    if (message?.type !== MessageType.ANNOTATE_REVIEW) return;
     if (started) return;
     started = true;
 
@@ -290,6 +305,18 @@ async function handleTestConnection(
 async function handleFetchDiff(request: FetchDiffRequest): Promise<FetchDiffResponse> {
   const diff = await fetchPRDiff(request.pr);
   return { ok: true, diff };
+}
+
+async function handleFetchFilePreview(
+  request: FetchFilePreviewRequest,
+): Promise<FetchFilePreviewResponse> {
+  const dataUrl = await fetchRawFilePreview({
+    owner: request.pr.owner,
+    repo: request.pr.repo,
+    ref: request.ref,
+    path: request.path,
+  });
+  return { ok: true, dataUrl };
 }
 
 async function handleGitHubDeviceStart(): Promise<GitHubDeviceStartResponse> {

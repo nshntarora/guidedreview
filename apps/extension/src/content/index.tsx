@@ -6,7 +6,7 @@ import { fetchConversationDescription, scrapePRContext } from "@extension/lib/gi
 import { requestPRDiff } from "@extension/lib/messaging";
 import { getProvider } from "@guided-review/core";
 import { getProviderSettings, onProviderSettingsChanged } from "@extension/lib/settings";
-import type { ContentRequest, ParsedDiff } from "@extension/lib/types";
+import { MessageType, type ContentRequest, type ParsedDiff } from "@extension/lib/types";
 import type { ReviewContext } from "@guided-review/core";
 import { ensureFallbackHost, FALLBACK_HOST_ID, findButtonAnchor } from "./buttonAnchor";
 import { createGitHubReviewHost } from "./githubHost";
@@ -69,7 +69,7 @@ function init(): void {
   // The toolbar icon opens the action popup (`src/popup/`); when the active tab
   // is a PR page it sends START_GUIDED_REVIEW here instead of rendering.
   chrome.runtime.onMessage.addListener((message: ContentRequest) => {
-    if (message?.type === "START_GUIDED_REVIEW") {
+    if (message?.type === MessageType.START_GUIDED_REVIEW) {
       void onStartReview();
     }
   });

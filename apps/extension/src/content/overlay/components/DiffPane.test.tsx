@@ -5,7 +5,7 @@ import type { DiffFile, DiffHunk, PRContext } from "@extension/lib/types";
 import { buildSelectableLines } from "@extension/content/overlay/buildSelectableLines";
 import { DEFAULT_DIFF_VIEW_MODE } from "@extension/content/overlay/diffView";
 import { createGitHubReviewHost } from "@extension/content/githubHost";
-import { setActiveReviewHost } from "../host";
+import { createMemoryReviewHost, setActiveReviewHost } from "../host";
 import {
   resetDiffViewModeHydrationForTests,
   useReviewStore,
@@ -217,7 +217,7 @@ describe("DiffPane", () => {
 
   it("still shows binary/elided placeholder regardless of view mode", async () => {
     const file = fileFixture({
-      path: "logo.png",
+      path: "vendor/data.bin",
       isBinaryOrElided: true,
       hunks: [],
     });
@@ -236,7 +236,7 @@ describe("DiffPane", () => {
   });
 
   it("links binary/elided files to the GitHub Files changed deep link", async () => {
-    const filePath = "assets/logo.png";
+    const filePath = "vendor/data.bin";
     const expectedHref = await buildPRFileDiffUrl(
       { owner: "acme", repo: "widgets", number: 42 },
       filePath,
@@ -257,6 +257,57 @@ describe("DiffPane", () => {
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
     expect(link).toHaveTextContent("View File Diff on GitHub");
+  });
+
+  it("renders an added SVG as an image without the source hunks", () => {
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4"><rect width="4" height="4" fill="red"/></svg>';
+    const file = fileFixture({
+      path: "icon.svg",
+      status: "added",
+      hunks: [
+        hunkFixture({
+          id: "icon.svg#0",
+          header: "@@ -0,0 +1,1 @@",
+          oldStart: 0,
+          oldLines: 0,
+          newStart: 1,
+          newLines: 1,
+          lines: [{ type: "add", content: svg, newLine: 1 }],
+        }),
+      ],
+    });
+    renderPane([{ file, hunks: file.hunks }]);
+
+    const preview = screen.getByTestId("image-diff-new");
+    expect(preview).toBeInTheDocument();
+    const img = preview.querySelector("img");
+    expect(img).toHaveAttribute("src", expect.stringMatching(/^data:image\/svg\+xml/));
+    expect(img).toHaveAttribute("alt", "icon.svg");
+    expect(screen.queryByTestId("diff-view-split")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("diff-view-unified")).not.toBeInTheDocument();
+  });
+
+  it("renders a binary PNG from the host preview URL", async () => {
+    const pixel =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+    setActiveReviewHost(
+      createMemoryReviewHost({
+        filePreviewUrl: async ({ side }) => (side === "new" ? pixel : null),
+      }),
+    );
+    useReviewStore.setState({ prContext: prContextFixture() });
+    const file = fileFixture({
+      path: "logo.png",
+      status: "added",
+      isBinaryOrElided: true,
+      hunks: [],
+    });
+    renderPane([{ file, hunks: [] }]);
+
+    const img = await screen.findByRole("img", { name: "logo.png" });
+    expect(img).toHaveAttribute("src", pixel);
+    expect(screen.queryByTestId("binary-elided-empty")).not.toBeInTheDocument();
   });
 
   it("persists the view mode to chrome.storage.local", async () => {

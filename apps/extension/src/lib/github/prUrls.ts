@@ -90,3 +90,45 @@ export async function buildFileLineUrl(
   }
   return buildPRFileDiffUrl(pr, opts.filePath, opts.line);
 }
+
+/** Encode a git path or ref keeping `/` as a separator. */
+function encodeGitHubSegments(value: string): string {
+  return value
+    .split("/")
+    .map((seg) => encodeURIComponent(seg))
+    .join("/");
+}
+
+/**
+ * `github.com/.../raw/{ref}/{path}` follows (with the user's cookies) to
+ * raw.githubusercontent.com, including a token query on private repos.
+ */
+export function buildRawFileUrl(
+  pr: { owner: string; repo: string },
+  ref: string,
+  filePath: string,
+): string {
+  return `https://github.com/${pr.owner}/${pr.repo}/raw/${encodeGitHubSegments(ref)}/${encodeGitHubSegments(filePath)}`;
+}
+
+/** PR head as it exists on the base repo — works for fork PRs, unlike `headRef`. */
+export function pullHeadRef(number: number): string {
+  return `refs/pull/${number}/head`;
+}
+
+const MAX_PATH = 4096;
+const MAX_REF = 512;
+
+/** Relative repo path with no `.` / `..` segments. */
+export function isSafeGitHubPath(path: string): boolean {
+  if (!path || path.length > MAX_PATH) return false;
+  if (path.startsWith("/") || path.includes("\\") || path.includes("\0")) return false;
+  return path.split("/").every((part) => part.length > 0 && part !== "." && part !== "..");
+}
+
+/** Branch, tag, SHA, or `refs/pull/N/head`. */
+export function isSafeGitHubRef(ref: string): boolean {
+  if (!ref || ref.length > MAX_REF) return false;
+  if (ref.includes("\0") || ref.includes("\\") || ref.includes("..")) return false;
+  return /^[A-Za-z0-9._/-]+$/.test(ref);
+}

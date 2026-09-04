@@ -34,6 +34,7 @@ import {
   type LocalCommit,
   type LocalReviewSnapshot,
 } from "../git/localDiff";
+import { isFilePreviewSide, readReviewImage } from "../git/fileBlob";
 import { GitError } from "../git/run";
 import type { CliStatus } from "../banner";
 import { createLogger, labeled } from "../log";
@@ -129,6 +130,12 @@ function sessionStatus(
     agent: published.codingAgent ?? null,
     hasKey: published.hasKey,
   };
+}
+
+function queryString(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value) && typeof value[0] === "string") return value[0];
+  return "";
 }
 
 function parseSettingsBody(value: unknown): SettingsBody | null {
@@ -321,6 +328,33 @@ export function createReviewServer(options: CreateReviewServerOptions) {
   app.get("/api/agents", async (_req, res) => {
     const detected = await detectAgents();
     sendJson(res, 200, { agents: publicAgents(detected) });
+  });
+
+  app.get("/api/file", async (req, res) => {
+    const filePath = queryString(req.query.path);
+    const side = queryString(req.query.side);
+    if (!filePath || !side || !isFilePreviewSide(side)) {
+      sendJson(res, 400, { error: "path and side=old|new are required." });
+      return;
+    }
+    try {
+      const blob = await readReviewImage(snapshot, filePath, side);
+      if (!blob) {
+        sendJson(res, 404, { error: "No preview for that file." });
+        return;
+      }
+      res.status(200);
+      res.set({
+        "content-type": blob.mime,
+        "content-length": String(blob.bytes.byteLength),
+        "cache-control": "no-store",
+        "x-content-type-options": "nosniff",
+      });
+      res.end(blob.bytes);
+    } catch (error) {
+      const message = error instanceof GitError ? error.message : "Could not read that file.";
+      sendJson(res, 400, { error: message });
+    }
   });
 
   app.put("/api/diff", async (req, res) => {
