@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { createServer as createHttpServer } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -416,11 +417,19 @@ export function createReviewServer(options: CreateReviewServerOptions) {
       sendJson(res, 405, { error: "Method not allowed." });
       return;
     }
-    res.sendFile(path.join(staticDir, "index.html"), (err) => {
+    // Pass `root` so `send` only checks the relative path for dotfiles.
+    // Absolute sendFile paths fail under install prefixes like ~/.nvm or ~/.npm.
+    res.sendFile("index.html", { root: staticDir }, (err) => {
       if (!err) return;
-      uiLog.warn("UI not built. Run pnpm build:cli.");
+      const missing = !existsSync(path.join(staticDir, "index.html"));
+      const message = missing
+        ? "UI assets missing from this install. Reinstall @guided-review/cli."
+        : "Failed to serve UI.";
+      uiLog.warn(
+        missing ? message : `${message} ${err instanceof Error ? err.message : String(err)}`,
+      );
       if (!res.headersSent) {
-        sendJson(res, 404, { error: "UI not built. Run pnpm build:cli." });
+        sendJson(res, missing ? 404 : 500, { error: message });
       } else {
         res.end();
       }
