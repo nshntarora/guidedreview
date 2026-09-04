@@ -622,4 +622,28 @@ describe("createReviewServer", () => {
       );
     });
   });
+
+  it("serves index.html when staticDir sits under a dot-segment path", async () => {
+    // Mimics global installs under ~/.nvm or ~/.npm — absolute sendFile without
+    // `root` treats those segments as dotfiles and 404s.
+    const root = await mkdir(path.join(os.tmpdir(), `gr-ui-${Date.now()}`, ".fakenvm", "ui"), {
+      recursive: true,
+    });
+    const staticDir = root!;
+    await writeFile(path.join(staticDir, "index.html"), "<!doctype html><title>ok</title>\n");
+
+    const server = createReviewServer({
+      snapshot,
+      settings: { provider: "anthropic", model: "claude-opus-4-8", apiKey: "" },
+      staticDir,
+    });
+    const port = await listen(server);
+    const res = await fetch(`http://127.0.0.1:${port}/`);
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("<title>ok</title>");
+
+    await new Promise<void>((resolve, reject) =>
+      server.close((err) => (err ? reject(err) : resolve())),
+    );
+  });
 });

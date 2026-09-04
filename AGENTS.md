@@ -26,7 +26,7 @@ Same-directory `./foo` is fine. Cross-folder imports should use the alias.
 
 `pnpm dev` · `dev:web` · `dev:cli` · `build` · `build:extension` · `build:cli` · `typecheck` · `test` · `test:e2e` · `test:e2e:web` · `test:e2e:cli` · `lint` · `format`
 
-After CLI edits: `pnpm --filter @guided-review/cli test`, then `pnpm build:cli && pnpm review`. Never `npx guided-review` — that hits a different npm package.
+After CLI edits: `pnpm --filter @guided-review/cli test`, then `pnpm build:cli && pnpm review`. Published npm package is `@guided-review/cli` (`npx @guided-review/cli`). `npx guided-review` is a different tool.
 
 After extension edits: `build:extension`, reload in `chrome://extensions`, refresh the PR tab. Tests live next to source (`*.test.*`); e2e under each app's `e2e/`.
 

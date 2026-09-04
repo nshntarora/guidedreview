@@ -93,7 +93,7 @@ async function main(): Promise<void> {
 main().catch((error: unknown) => {
   const logger = createLogger();
   const message =
-    error instanceof GitError || error instanceof Error ? error.message : "guided-review failed.";
+    error instanceof GitError || error instanceof Error ? error.message : "guidedreview failed.";
   labeled(logger, "cli").error(message);
   process.exit(1);
 });
