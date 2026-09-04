@@ -185,7 +185,7 @@ importers:
         specifier: ^6.0.5
         version: 6.1.1(vite@8.2.2(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(yaml@2.9.0))
       '@vitest/coverage-v8':
-        specifier: ^4.1.10
+        specifier: ^4.1.11
         version: 4.1.11(vitest@4.1.11)
       jsdom:
         specifier: ^30.0.0
