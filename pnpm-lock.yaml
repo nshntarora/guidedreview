@@ -21,7 +21,7 @@ importers:
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.9.1(jiti@2.7.0)(supports-color@10.2.2))
       eslint:
-        specifier: ^10.8.1
+        specifier: ^10.9.0
         version: 10.9.1(jiti@2.7.0)(supports-color@10.2.2)
       eslint-config-prettier:
         specifier: ^10.1.8
