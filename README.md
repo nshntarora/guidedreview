@@ -93,7 +93,7 @@ More detail: [apps/extension/README.md](apps/extension/README.md) · [apps/web/R
 
 ```bash
 pnpm build:extension     # typecheck + Vite → apps/extension/dist (+ zip)
-pnpm build               # extension, then marketing site
+pnpm build               # every workspace package with a build script (extension, site, CLI)
 pnpm build:web           # Next.js static export → apps/web/out
 ```
 
