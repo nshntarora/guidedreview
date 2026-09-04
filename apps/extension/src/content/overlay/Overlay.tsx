@@ -408,7 +408,7 @@ export function Overlay({
       <div className="flex min-h-0 flex-1">
         <main
           id="main-content"
-          className="min-w-0 flex-[1_1_68%] overflow-y-auto border-r border-border bg-surface"
+          className="min-w-0 flex-[1_1_68%] overflow-y-auto scroll-pt-10 border-r border-border bg-surface"
           ref={codeColRef}
           data-testid="code-col"
           tabIndex={-1}

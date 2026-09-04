@@ -26,6 +26,28 @@ const CANNED_DIFF = [
   "",
 ].join("\n");
 
+/** Tall enough that the code column must scroll on a desktop viewport. */
+function longAddedFileDiff(filePath: string, addCount: number): string {
+  const body = Array.from({ length: addCount }, (_, i) => {
+    if (i === 0) return "+const LINE_000_TOP = 0;";
+    if (i === addCount - 1) return "+const LINE_LAST = 1;";
+    return `+const line_${i} = ${i};`;
+  });
+  return [
+    `diff --git a/${filePath} b/${filePath}`,
+    "new file mode 100644",
+    "index 0000000..89abcde",
+    "--- /dev/null",
+    `+++ b/${filePath}`,
+    `@@ -0,0 +1,${addCount} @@`,
+    ...body,
+    "",
+  ].join("\n");
+}
+
+const LONG_FILE_PATH = "src/long.ts";
+const LONG_FILE_DIFF = longAddedFileDiff(LONG_FILE_PATH, 100);
+
 const CANNED_PLAN: ReviewPlan = {
   units: [
     {
@@ -95,7 +117,7 @@ async function seedGitHubAuth(context: BrowserContext, extensionId: string): Pro
 /** Stub the PR HTML, raw `.diff`, and (optionally) a successful Anthropic plan stream. */
 async function stubPrPageAndDiff(
   context: BrowserContext,
-  options: { plan?: ReviewPlan | null; pageUrls?: string[] } = {},
+  options: { plan?: ReviewPlan | null; pageUrls?: string[]; diff?: string } = {},
 ): Promise<void> {
   const pageUrls = options.pageUrls ?? [PR_URL];
   for (const url of pageUrls) {
@@ -104,7 +126,11 @@ async function stubPrPageAndDiff(
     );
   }
   await context.route(`${PR_URL}.diff`, (route) =>
-    route.fulfill({ status: 200, contentType: "text/plain", body: CANNED_DIFF }),
+    route.fulfill({
+      status: 200,
+      contentType: "text/plain",
+      body: options.diff ?? CANNED_DIFF,
+    }),
   );
   if (options.plan !== null) {
     const plan = options.plan ?? CANNED_PLAN;
@@ -489,5 +515,48 @@ test.describe("Guided review overlay", () => {
     });
     await expect(page.getByTestId("diff-search")).toBeVisible();
     await expect(page.getByTestId("diff-search-input")).toBeVisible();
+  });
+
+  test("file path header stays pinned while scrolling a long diff", async ({ context }) => {
+    await stubPrPageAndDiff(context, { plan: null, diff: LONG_FILE_DIFF });
+
+    const page = await context.newPage();
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto(PR_URL);
+    await page.getByRole("button", { name: "Start Guided Review" }).click();
+
+    await expect(page.getByText("PR Description").first()).toBeVisible();
+    await page.getByRole("button", { name: /next/i }).click();
+
+    const codeCol = page.getByTestId("code-col");
+    const header = page.getByTestId("diff-file-header");
+    await expect(header).toBeVisible();
+    await expect(header).toContainText(LONG_FILE_PATH);
+    await expect(page.getByText("LINE_000_TOP")).toBeVisible();
+
+    const didScroll = await codeCol.evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+      return el.scrollTop > 0;
+    });
+    expect(didScroll).toBe(true);
+
+    await expect(header).toContainText(LONG_FILE_PATH);
+    await expect
+      .poll(async () => {
+        const [headerTop, colTop] = await Promise.all([
+          header.evaluate((el) => el.getBoundingClientRect().top),
+          codeCol.evaluate((el) => el.getBoundingClientRect().top),
+        ]);
+        return Math.abs(headerTop - colTop);
+      })
+      .toBeLessThan(2);
+
+    const markerBottom = await page
+      .getByText("LINE_000_TOP")
+      .evaluate((el) => el.getBoundingClientRect().bottom);
+    const headerTop = await header.evaluate((el) => el.getBoundingClientRect().top);
+    expect(markerBottom).toBeLessThan(headerTop);
+
+    await expect(page.getByText("LINE_LAST")).toBeVisible();
   });
 });
