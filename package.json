@@ -9,7 +9,7 @@
     "dev:extension": "pnpm --filter @guided-review/extension dev",
     "dev:web": "pnpm --filter @guided-review/web dev",
     "dev:cli": "pnpm --filter @guided-review/cli dev",
-    "build": "pnpm run build:extension && pnpm run build:web",
+    "build": "pnpm --filter \"./apps/**\" --filter \"./packages/**\" --if-present build",
     "build:cli": "pnpm --filter @guided-review/cli build",
     "review": "pnpm --filter @guided-review/cli start --",
     "build:extension": "pnpm --filter @guided-review/extension build",

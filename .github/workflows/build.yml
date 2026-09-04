@@ -1,0 +1,50 @@
+# Production builds for every workspace package that defines a `build` script.
+# Runs alongside Tests so a passing unit suite cannot hide a broken Next/Vite/zip build.
+
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HUSKY: "0"
+  NEXT_TELEMETRY_DISABLED: "1"
+  CI: "true"
+
+jobs:
+  build:
+    name: Build packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: apps/web/.next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'apps/web/package.json', 'apps/web/next.config.ts', 'packages/ui/package.json') }}
+          restore-keys: |
+            next-${{ runner.os }}-
+
+      - name: Build packages
+        run: pnpm --filter "./apps/**" --filter "./packages/**" --if-present build
