@@ -108,20 +108,25 @@ jobs:
       - name: Apply Prettier
         run: pnpm format
 
-      # GITHUB_TOKEN cannot push to fork heads; fail clearly if a commit is needed.
-      - name: Fail fork PRs that need autofix commit
+      # Cannot push: fork PR heads, or the protected default branch (required
+      # status checks reject GITHUB_TOKEN pushes to main). Fail instead of
+      # letting a dirty tree make the later format:check pass.
+      - name: Fail when autofixes cannot be pushed
         if: >
-          github.event_name == 'pull_request' &&
+          github.event_name != 'pull_request' ||
           github.event.pull_request.head.repo.full_name != github.repository
         run: |
           if [ -n "$(git status --porcelain)" ]; then
-            echo "::error::Lint/format issues are auto-fixable, but this is a fork PR so CI cannot push. Run: pnpm lint:fix && pnpm format"
+            echo "::error::Lint/format issues are auto-fixable, but CI cannot push a commit to this ref (protected default branch, or a fork PR). Run: pnpm lint:fix && pnpm format"
+            git --no-pager diff --stat
             exit 1
           fi
 
+      # Same-repo PRs only. Pushing a bot commit to main is rejected by
+      # required status checks (GH013).
       - name: Commit autofixes
         if: >
-          github.event_name == 'push' ||
+          github.event_name == 'pull_request' &&
           github.event.pull_request.head.repo.full_name == github.repository
         uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d # v7
         with:
