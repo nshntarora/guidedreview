@@ -7,12 +7,26 @@ import type { DiffScopeId, LocalReviewSnapshot } from "./localDiff";
 
 export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
-export type FilePreviewSide = "old" | "new";
+/** Which side of a file change to load for an image preview. */
+export const FILE_PREVIEW_SIDES = ["old", "new"] as const;
+export type FilePreviewSide = (typeof FILE_PREVIEW_SIDES)[number];
 
+export function isFilePreviewSide(value: string): value is FilePreviewSide {
+  return (FILE_PREVIEW_SIDES as readonly string[]).includes(value);
+}
+
+/**
+ * Pull the commit SHA out of a `commit:<sha>` scope id.
+ * Other scopes (`branch`, `unstaged`, …) are not commit-pinned, so return null.
+ */
 function commitShaFromScope(id: DiffScopeId): string | null {
   return id.startsWith("commit:") ? id.slice("commit:".length) : null;
 }
 
+/**
+ * Resolve `filePath` under `repoRoot` and reject path-traversal / absolute /
+ * NUL-laden inputs. Callers must not read arbitrary paths off the API.
+ */
 function resolveWorktreePath(repoRoot: string, filePath: string): string | null {
   if (!filePath || filePath.startsWith("/") || filePath.includes("\0")) return null;
   const root = path.resolve(repoRoot);
@@ -21,6 +35,10 @@ function resolveWorktreePath(repoRoot: string, filePath: string): string | null 
   return resolved;
 }
 
+/**
+ * `git show <spec>` → bytes, or null when the object is missing.
+ * Non-git failures still propagate so callers can surface them.
+ */
 async function gitShow(repoRoot: string, spec: string): Promise<Buffer | null> {
   try {
     return await runGitBuffer(["show", spec], repoRoot);
@@ -30,6 +48,10 @@ async function gitShow(repoRoot: string, spec: string): Promise<Buffer | null> {
   }
 }
 
+/**
+ * Read a file from the live worktree (unstaged / uncommitted new side).
+ * Caps at MAX_IMAGE_BYTES so a huge binary can't blow the preview endpoint.
+ */
 async function readWorktree(repoRoot: string, filePath: string): Promise<Buffer | null> {
   const resolved = resolveWorktreePath(repoRoot, filePath);
   if (!resolved) return null;
@@ -63,6 +85,10 @@ export async function readReviewImage(
   return { bytes, mime };
 }
 
+/**
+ * Pre-image for `file` under the snapshot's selected scope.
+ * Added files have no old blob; renames read via `previousPath`.
+ */
 async function readOld(snapshot: LocalReviewSnapshot, file: DiffFile): Promise<Buffer | null> {
   if (file.status === "added") return null;
   const blobPath = file.previousPath ?? file.path;
@@ -74,6 +100,10 @@ async function readOld(snapshot: LocalReviewSnapshot, file: DiffFile): Promise<B
   return gitShow(repo.repoRoot, `HEAD:${blobPath}`);
 }
 
+/**
+ * Post-image for `file` under the snapshot's selected scope.
+ * Removed files have no new blob; unstaged/uncommitted may read the worktree.
+ */
 async function readNew(snapshot: LocalReviewSnapshot, file: DiffFile): Promise<Buffer | null> {
   if (file.status === "removed") return null;
   const blobPath = file.path;

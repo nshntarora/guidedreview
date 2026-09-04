@@ -79,15 +79,33 @@ export type GitHubPublicAuthState = Omit<GitHubAuthState, "accessToken" | "token
 
 // ---- Messaging protocol (content <-> background) -----------------------------
 
+/**
+ * Wire `type` strings for chrome.runtime messages. Interfaces below use these
+ * so producers and the background switch stay on one source of truth.
+ */
+export const MessageType = {
+  ANNOTATE_REVIEW: "ANNOTATE_REVIEW",
+  TEST_CONNECTION: "TEST_CONNECTION",
+  OPEN_OPTIONS: "OPEN_OPTIONS",
+  FETCH_DIFF: "FETCH_DIFF",
+  FETCH_FILE_PREVIEW: "FETCH_FILE_PREVIEW",
+  GITHUB_DEVICE_START: "GITHUB_DEVICE_START",
+  GITHUB_DEVICE_POLL: "GITHUB_DEVICE_POLL",
+  GITHUB_AUTH_GET: "GITHUB_AUTH_GET",
+  GITHUB_AUTH_CLEAR: "GITHUB_AUTH_CLEAR",
+  SUBMIT_REVIEW: "SUBMIT_REVIEW",
+  START_GUIDED_REVIEW: "START_GUIDED_REVIEW",
+} as const;
+
 /** First message on the `annotate-review` port from content → background. */
 export interface AnnotateReviewRequest {
-  type: "ANNOTATE_REVIEW";
+  type: typeof MessageType.ANNOTATE_REVIEW;
   diff: ParsedDiff;
   prContext: PRContext;
 }
 
 export interface TestConnectionRequest {
-  type: "TEST_CONNECTION";
+  type: typeof MessageType.TEST_CONNECTION;
   settings: ProviderSettings;
 }
 
@@ -101,7 +119,7 @@ export interface TestConnectionResponse {
  * the overlay asks the background worker to open Settings on its behalf.
  */
 export interface OpenOptionsRequest {
-  type: "OPEN_OPTIONS";
+  type: typeof MessageType.OPEN_OPTIONS;
 }
 
 export interface OpenOptionsResponse {
@@ -109,7 +127,7 @@ export interface OpenOptionsResponse {
 }
 
 export interface FetchDiffRequest {
-  type: "FETCH_DIFF";
+  type: typeof MessageType.FETCH_DIFF;
   pr: { owner: string; repo: string; number: number };
 }
 
@@ -124,7 +142,7 @@ export interface FetchDiffError {
 }
 
 export interface FetchFilePreviewRequest {
-  type: "FETCH_FILE_PREVIEW";
+  type: typeof MessageType.FETCH_FILE_PREVIEW;
   pr: { owner: string; repo: string; number: number };
   path: string;
   ref: string;
@@ -135,7 +153,7 @@ export type FetchFilePreviewResponse = { ok: true; dataUrl: string } | { ok: fal
 // ---- GitHub device OAuth messaging ------------------------------------------
 
 export interface GitHubDeviceStartRequest {
-  type: "GITHUB_DEVICE_START";
+  type: typeof MessageType.GITHUB_DEVICE_START;
 }
 
 export type GitHubDeviceStartResponse =
@@ -150,7 +168,7 @@ export type GitHubDeviceStartResponse =
   | { ok: false; error: string };
 
 export interface GitHubDevicePollRequest {
-  type: "GITHUB_DEVICE_POLL";
+  type: typeof MessageType.GITHUB_DEVICE_POLL;
   deviceCode: string;
 }
 
@@ -162,7 +180,7 @@ export type GitHubDevicePollResponse =
   | { ok: false; status: "expired" | "denied" | "error"; error: string };
 
 export interface GitHubAuthGetRequest {
-  type: "GITHUB_AUTH_GET";
+  type: typeof MessageType.GITHUB_AUTH_GET;
 }
 
 export interface GitHubAuthGetResponse {
@@ -171,7 +189,7 @@ export interface GitHubAuthGetResponse {
 }
 
 export interface GitHubAuthClearRequest {
-  type: "GITHUB_AUTH_CLEAR";
+  type: typeof MessageType.GITHUB_AUTH_CLEAR;
 }
 
 export interface GitHubAuthClearResponse {
@@ -200,7 +218,7 @@ export interface ReviewCommentInput {
 }
 
 export interface SubmitReviewRequest {
-  type: "SUBMIT_REVIEW";
+  type: typeof MessageType.SUBMIT_REVIEW;
   pr: { owner: string; repo: string; number: number };
   body: string;
   event: ReviewEvent;
@@ -233,7 +251,7 @@ export type BackgroundRequest =
  * start (or resume) the guided review for the current PR.
  */
 export interface StartGuidedReviewMessage {
-  type: "START_GUIDED_REVIEW";
+  type: typeof MessageType.START_GUIDED_REVIEW;
 }
 
 export type ContentRequest = StartGuidedReviewMessage;

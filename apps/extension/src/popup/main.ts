@@ -1,6 +1,6 @@
 import { parsePRUrl } from "@extension/lib/github/diffFetch";
 import { isIgnoredPrPath } from "@extension/lib/github/prUrls";
-import type { StartGuidedReviewMessage } from "@extension/lib/types";
+import { MessageType, type StartGuidedReviewMessage } from "@extension/lib/types";
 import "./popup.css";
 
 const NOT_ON_PR = "Open a GitHub pull request page to start a review.";
@@ -47,7 +47,7 @@ async function init(): Promise<void> {
       return;
     }
 
-    const message: StartGuidedReviewMessage = { type: "START_GUIDED_REVIEW" };
+    const message: StartGuidedReviewMessage = { type: MessageType.START_GUIDED_REVIEW };
     try {
       await chrome.tabs.sendMessage(tabId, message);
       window.close();

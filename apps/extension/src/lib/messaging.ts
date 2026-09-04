@@ -9,36 +9,37 @@
  * (`lib/github/submitReview.ts`, `ProviderClient.testConnection`).
  */
 
-import type {
-  AnnotateReviewRequest,
-  AnnotateReviewStreamEvent,
-  TestConnectionRequest,
-  TestConnectionResponse,
-  FetchDiffRequest,
-  FetchDiffResponse,
-  FetchDiffError,
-  FetchFilePreviewRequest,
-  FetchFilePreviewResponse,
-  GitHubAuthClearRequest,
-  GitHubAuthClearResponse,
-  GitHubAuthGetRequest,
-  GitHubAuthGetResponse,
-  GitHubDevicePollRequest,
-  GitHubDevicePollResponse,
-  GitHubDeviceStartRequest,
-  GitHubDeviceStartResponse,
-  OpenOptionsRequest,
-  OpenOptionsResponse,
-  ParsedDiff,
-  PRContext,
-  ProviderSettings,
-  ReviewCommentInput,
-  ReviewErrorInfo,
-  ReviewEvent,
-  ReviewPlan,
-  ReviewUnit,
-  SubmitReviewRequest,
-  SubmitReviewResponse,
+import {
+  MessageType,
+  type AnnotateReviewRequest,
+  type AnnotateReviewStreamEvent,
+  type TestConnectionRequest,
+  type TestConnectionResponse,
+  type FetchDiffRequest,
+  type FetchDiffResponse,
+  type FetchDiffError,
+  type FetchFilePreviewRequest,
+  type FetchFilePreviewResponse,
+  type GitHubAuthClearRequest,
+  type GitHubAuthClearResponse,
+  type GitHubAuthGetRequest,
+  type GitHubAuthGetResponse,
+  type GitHubDevicePollRequest,
+  type GitHubDevicePollResponse,
+  type GitHubDeviceStartRequest,
+  type GitHubDeviceStartResponse,
+  type OpenOptionsRequest,
+  type OpenOptionsResponse,
+  type ParsedDiff,
+  type PRContext,
+  type ProviderSettings,
+  type ReviewCommentInput,
+  type ReviewErrorInfo,
+  type ReviewEvent,
+  type ReviewPlan,
+  type ReviewUnit,
+  type SubmitReviewRequest,
+  type SubmitReviewResponse,
 } from "./types";
 
 const ANNOTATE_PORT_NAME = "annotate-review";
@@ -113,7 +114,7 @@ export function streamReviewPlan(
     });
   });
 
-  const request: AnnotateReviewRequest = { type: "ANNOTATE_REVIEW", diff, prContext };
+  const request: AnnotateReviewRequest = { type: MessageType.ANNOTATE_REVIEW, diff, prContext };
   port.postMessage(request);
 
   return {
@@ -128,7 +129,7 @@ export function streamReviewPlan(
 export async function requestTestConnection(
   settings: ProviderSettings,
 ): Promise<TestConnectionResponse> {
-  const request: TestConnectionRequest = { type: "TEST_CONNECTION", settings };
+  const request: TestConnectionRequest = { type: MessageType.TEST_CONNECTION, settings };
   return chrome.runtime.sendMessage(request);
 }
 
@@ -138,7 +139,7 @@ export async function requestTestConnection(
  * does it for them.
  */
 export async function openOptionsPage(): Promise<OpenOptionsResponse> {
-  const request: OpenOptionsRequest = { type: "OPEN_OPTIONS" };
+  const request: OpenOptionsRequest = { type: MessageType.OPEN_OPTIONS };
   return chrome.runtime.sendMessage(request);
 }
 
@@ -151,7 +152,7 @@ export async function openOptionsPage(): Promise<OpenOptionsResponse> {
 export async function requestPRDiff(
   pr: FetchDiffRequest["pr"],
 ): Promise<FetchDiffResponse | FetchDiffError> {
-  const request: FetchDiffRequest = { type: "FETCH_DIFF", pr };
+  const request: FetchDiffRequest = { type: MessageType.FETCH_DIFF, pr };
   return chrome.runtime.sendMessage(request);
 }
 
@@ -164,31 +165,36 @@ export async function requestFilePreview(
   path: string,
   ref: string,
 ): Promise<FetchFilePreviewResponse> {
-  const request: FetchFilePreviewRequest = { type: "FETCH_FILE_PREVIEW", pr, path, ref };
+  const request: FetchFilePreviewRequest = {
+    type: MessageType.FETCH_FILE_PREVIEW,
+    pr,
+    path,
+    ref,
+  };
   return chrome.runtime.sendMessage(request);
 }
 
 /** Options: begin GitHub device OAuth (returns user_code for the user to enter). */
 export async function startGitHubDeviceAuth(): Promise<GitHubDeviceStartResponse> {
-  const request: GitHubDeviceStartRequest = { type: "GITHUB_DEVICE_START" };
+  const request: GitHubDeviceStartRequest = { type: MessageType.GITHUB_DEVICE_START };
   return chrome.runtime.sendMessage(request);
 }
 
 /** Options: one poll tick while waiting for the user to authorize. */
 export async function pollGitHubDeviceAuth(deviceCode: string): Promise<GitHubDevicePollResponse> {
-  const request: GitHubDevicePollRequest = { type: "GITHUB_DEVICE_POLL", deviceCode };
+  const request: GitHubDevicePollRequest = { type: MessageType.GITHUB_DEVICE_POLL, deviceCode };
   return chrome.runtime.sendMessage(request);
 }
 
 /** Options: load the stored GitHub session (or null). */
 export async function getGitHubAuthStatus(): Promise<GitHubAuthGetResponse> {
-  const request: GitHubAuthGetRequest = { type: "GITHUB_AUTH_GET" };
+  const request: GitHubAuthGetRequest = { type: MessageType.GITHUB_AUTH_GET };
   return chrome.runtime.sendMessage(request);
 }
 
 /** Options: disconnect and forget the stored GitHub token. */
 export async function clearGitHubAuthSession(): Promise<GitHubAuthClearResponse> {
-  const request: GitHubAuthClearRequest = { type: "GITHUB_AUTH_CLEAR" };
+  const request: GitHubAuthClearRequest = { type: MessageType.GITHUB_AUTH_CLEAR };
   return chrome.runtime.sendMessage(request);
 }
 
@@ -203,7 +209,7 @@ export async function requestSubmitReview(
   comments: ReviewCommentInput[],
 ): Promise<SubmitReviewResponse> {
   const request: SubmitReviewRequest = {
-    type: "SUBMIT_REVIEW",
+    type: MessageType.SUBMIT_REVIEW,
     pr,
     body,
     event,

@@ -34,7 +34,7 @@ import {
   type LocalCommit,
   type LocalReviewSnapshot,
 } from "../git/localDiff";
-import { readReviewImage, type FilePreviewSide } from "../git/fileBlob";
+import { isFilePreviewSide, readReviewImage } from "../git/fileBlob";
 import { GitError } from "../git/run";
 import type { CliStatus } from "../banner";
 import { createLogger, labeled } from "../log";
@@ -333,12 +333,12 @@ export function createReviewServer(options: CreateReviewServerOptions) {
   app.get("/api/file", async (req, res) => {
     const filePath = queryString(req.query.path);
     const side = queryString(req.query.side);
-    if (!filePath || (side !== "old" && side !== "new")) {
+    if (!filePath || !side || !isFilePreviewSide(side)) {
       sendJson(res, 400, { error: "path and side=old|new are required." });
       return;
     }
     try {
-      const blob = await readReviewImage(snapshot, filePath, side as FilePreviewSide);
+      const blob = await readReviewImage(snapshot, filePath, side);
       if (!blob) {
         sendJson(res, 404, { error: "No preview for that file." });
         return;
