@@ -81,6 +81,10 @@ export function parseArgs(argv: string[]): CliArgs {
       i += 1;
       continue;
     }
+    // pnpm leaves a trailing `--` when `pnpm review` has no extra args.
+    if (token === "--") {
+      continue;
+    }
     if (token.startsWith("-")) {
       throw new Error(`Unknown flag ${token}. Run guided-review --help.`);
     }

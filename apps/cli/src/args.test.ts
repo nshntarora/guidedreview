@@ -41,4 +41,11 @@ describe("parseArgs", () => {
     expect(() => parseArgs(["--provider"])).toThrow(/--provider requires a value/);
     expect(() => parseArgs(["--port"])).toThrow(/--port requires a value/);
   });
+
+  it("ignores a bare -- separator from pnpm", () => {
+    expect(parseArgs(["--"]).port).toBe(7182);
+    const args = parseArgs(["--", "--base", "main", "--no-open"]);
+    expect(args.base).toBe("main");
+    expect(args.open).toBe(false);
+  });
 });
