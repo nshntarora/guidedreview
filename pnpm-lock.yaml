@@ -218,7 +218,7 @@ importers:
         specifier: ^3.1.1
         version: 3.1.1(@types/react@19.2.18)(react@19.2.8)
       '@next/mdx':
-        specifier: ^16.2.12
+        specifier: ^16.3.2
         version: 16.3.4(@mdx-js/loader@3.1.1(supports-color@10.2.2))(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@19.2.8))
       next:
         specifier: ^16.3.1
