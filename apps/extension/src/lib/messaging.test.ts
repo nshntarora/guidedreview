@@ -6,6 +6,7 @@ import {
   requestSubmitReview,
   pollGitHubDeviceAuth,
   requestPRDiff,
+  requestFilePreview,
   startGitHubDeviceAuth,
   streamReviewPlan,
   requestTestConnection,
@@ -23,6 +24,25 @@ describe("messaging", () => {
     expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({
       type: "FETCH_DIFF",
       pr: { owner: "acme", repo: "widgets", number: 1 },
+    });
+    expect(result).toEqual(response);
+  });
+
+  it("requestFilePreview sends a typed FETCH_FILE_PREVIEW message", async () => {
+    const response = { ok: true, dataUrl: "data:image/png;base64,xx" };
+    vi.mocked(chrome.runtime.sendMessage).mockResolvedValueOnce(response);
+
+    const result = await requestFilePreview(
+      { owner: "acme", repo: "widgets", number: 1 },
+      "logo.png",
+      "refs/pull/1/head",
+    );
+
+    expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({
+      type: "FETCH_FILE_PREVIEW",
+      pr: { owner: "acme", repo: "widgets", number: 1 },
+      path: "logo.png",
+      ref: "refs/pull/1/head",
     });
     expect(result).toEqual(response);
   });

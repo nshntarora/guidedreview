@@ -40,6 +40,15 @@ export interface ReviewHostSubmit {
   afterSubmit?(context: ReviewContext): void;
 }
 
+export type FilePreviewSide = "old" | "new";
+
+export interface FilePreviewRequest {
+  path: string;
+  previousPath?: string;
+  side: FilePreviewSide;
+  context: ReviewContext;
+}
+
 export interface ReviewHost {
   kind: "github" | "local";
   assetUrl(path: string): string;
@@ -55,6 +64,11 @@ export interface ReviewHost {
   readDiffViewMode?(): Promise<DiffViewMode>;
   fileDiffUrl?(filePath: string, context: ReviewContext): Promise<string | null>;
   fileLineUrl?(filePath: string, line: number, context: ReviewContext): Promise<string | null>;
+  /**
+   * URL the overlay can put in `<img src>` for one side of an image file.
+   * GitHub returns a `data:` URL (CSP + private repos); the CLI returns `/api/file`.
+   */
+  filePreviewUrl?(request: FilePreviewRequest): Promise<string | null>;
   submit?: ReviewHostSubmit;
   /**
    * When set (and `submit` is absent), the overlay primary action is Generate

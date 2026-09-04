@@ -17,6 +17,8 @@ import type {
   FetchDiffRequest,
   FetchDiffResponse,
   FetchDiffError,
+  FetchFilePreviewRequest,
+  FetchFilePreviewResponse,
   GitHubAuthClearRequest,
   GitHubAuthClearResponse,
   GitHubAuthGetRequest,
@@ -150,6 +152,19 @@ export async function requestPRDiff(
   pr: FetchDiffRequest["pr"],
 ): Promise<FetchDiffResponse | FetchDiffError> {
   const request: FetchDiffRequest = { type: "FETCH_DIFF", pr };
+  return chrome.runtime.sendMessage(request);
+}
+
+/**
+ * Fetch one side of an image file as a `data:` URL. Goes through the worker
+ * for the same CORS/redirect reason as `requestPRDiff`.
+ */
+export async function requestFilePreview(
+  pr: FetchFilePreviewRequest["pr"],
+  path: string,
+  ref: string,
+): Promise<FetchFilePreviewResponse> {
+  const request: FetchFilePreviewRequest = { type: "FETCH_FILE_PREVIEW", pr, path, ref };
   return chrome.runtime.sendMessage(request);
 }
 

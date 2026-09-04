@@ -123,6 +123,15 @@ export interface FetchDiffError {
   error: string;
 }
 
+export interface FetchFilePreviewRequest {
+  type: "FETCH_FILE_PREVIEW";
+  pr: { owner: string; repo: string; number: number };
+  path: string;
+  ref: string;
+}
+
+export type FetchFilePreviewResponse = { ok: true; dataUrl: string } | { ok: false; error: string };
+
 // ---- GitHub device OAuth messaging ------------------------------------------
 
 export interface GitHubDeviceStartRequest {
@@ -210,6 +219,7 @@ export type BackgroundRequest =
   | TestConnectionRequest
   | OpenOptionsRequest
   | FetchDiffRequest
+  | FetchFilePreviewRequest
   | GitHubDeviceStartRequest
   | GitHubDevicePollRequest
   | GitHubAuthGetRequest

@@ -125,6 +125,15 @@ describe("sender checks", () => {
     expect(response).toEqual({ ok: false, error: expect.stringContaining("did not come from") });
   });
 
+  it("rejects FETCH_FILE_PREVIEW from a tab that is not on a PR at all", async () => {
+    const response = await sendToBackground(
+      { type: "FETCH_FILE_PREVIEW", pr, path: "logo.png", ref: "main" },
+      tabSender("https://github.com/acme/widgets/issues/4"),
+    );
+
+    expect(response).toEqual({ ok: false, error: expect.stringContaining("did not come from") });
+  });
+
   it("allows SUBMIT_REVIEW from the matching PR tab", async () => {
     // Signed out, so it stops at the auth check — past the sender gate, which
     // is what this asserts.

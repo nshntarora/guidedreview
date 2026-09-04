@@ -5,6 +5,8 @@ import type {
   FetchDiffError,
   FetchDiffRequest,
   FetchDiffResponse,
+  FetchFilePreviewRequest,
+  FetchFilePreviewResponse,
   GitHubAuthClearResponse,
   GitHubAuthGetResponse,
   GitHubAuthState,
@@ -32,6 +34,7 @@ import {
   isGitHubOAuthConfigured,
 } from "@extension/lib/github/oauthConfig";
 import { fetchPRDiff, parsePRUrl } from "@extension/lib/github/diffFetch";
+import { fetchRawFilePreview } from "@extension/lib/github/rawFile";
 import { submitPullRequestReview } from "@extension/lib/github/submitReview";
 import { annotateReview, getProviderClient, ProviderError } from "@guided-review/core";
 import { getProviderSettings } from "@extension/lib/settings";
@@ -143,6 +146,18 @@ chrome.runtime.onMessage.addListener((message: BackgroundRequest, sender, sendRe
     }
     return respondAsync<FetchDiffResponse | FetchDiffError>(
       handleFetchDiff(message),
+      sendResponse,
+      (e) => ({ ok: false, error: describeErrorMessage(e) }),
+    );
+  }
+
+  if (message.type === "FETCH_FILE_PREVIEW") {
+    if (!senderMatchesPR(sender, message.pr)) {
+      sendResponse({ ok: false, error: WRONG_TAB_ERROR } satisfies FetchFilePreviewResponse);
+      return true;
+    }
+    return respondAsync<FetchFilePreviewResponse>(
+      handleFetchFilePreview(message),
       sendResponse,
       (e) => ({ ok: false, error: describeErrorMessage(e) }),
     );
@@ -290,6 +305,18 @@ async function handleTestConnection(
 async function handleFetchDiff(request: FetchDiffRequest): Promise<FetchDiffResponse> {
   const diff = await fetchPRDiff(request.pr);
   return { ok: true, diff };
+}
+
+async function handleFetchFilePreview(
+  request: FetchFilePreviewRequest,
+): Promise<FetchFilePreviewResponse> {
+  const dataUrl = await fetchRawFilePreview({
+    owner: request.pr.owner,
+    repo: request.pr.repo,
+    ref: request.ref,
+    path: request.path,
+  });
+  return { ok: true, dataUrl };
 }
 
 async function handleGitHubDeviceStart(): Promise<GitHubDeviceStartResponse> {

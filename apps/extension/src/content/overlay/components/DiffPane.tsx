@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@guided-review/ui";
 
+import { isImagePath } from "@guided-review/core";
 import { languageForPath } from "@extension/lib/highlight";
-import { useReviewHost } from "@extension/content/overlay/host";
 import {
   displayLineNumber,
   linesInSelection,
@@ -17,7 +17,9 @@ import type { ResolvedUnitFile } from "@extension/content/overlay/buildSelectabl
 import type { DiffViewMode } from "@extension/content/overlay/diffView";
 import type { ComposerRange } from "./diff/hunkShared";
 import { AddCommentButton, CommentModeChip, DiffViewToggle } from "./diff/DiffToolbar";
+import { BinaryElidedEmptyState } from "./diff/BinaryElidedEmptyState";
 import { HunkGapPlaceholder } from "./diff/HunkGapPlaceholder";
+import { ImageDiff } from "./diff/ImageDiff";
 import { SplitHunk } from "./diff/SplitHunk";
 import { UnifiedHunk } from "./diff/UnifiedHunk";
 import { deriveSelection } from "./diff/deriveSelection";
@@ -49,49 +51,6 @@ interface DiffPaneProps {
   /** One-shot scroll/highlight target after picking a diff search result. */
   searchScrollTarget?: SearchScrollTarget | null;
   onSearchScrollTargetConsumed?: () => void;
-}
-
-/** Empty body for binary/LFS/elided files; optional deep link to GitHub Files tab. */
-function BinaryElidedEmptyState({ filePath }: { filePath: string }) {
-  const host = useReviewHost();
-  const prContext = useReviewStore((s) => s.prContext);
-  const [githubUrl, setGithubUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!prContext || !host.fileDiffUrl) {
-      setGithubUrl(null);
-      return;
-    }
-    let cancelled = false;
-    void host.fileDiffUrl(filePath, prContext).then((url) => {
-      if (!cancelled) setGithubUrl(url);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [host, prContext, filePath]);
-
-  return (
-    <div
-      className="flex min-h-[8rem] flex-col items-center justify-center gap-3 px-4 py-12 text-center"
-      data-testid="binary-elided-empty"
-    >
-      <span className="font-mono text-base leading-relaxed text-muted">
-        (binary or elided — no textual diff available)
-      </span>
-      {githubUrl && (
-        <a
-          href={githubUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-base font-medium text-primary underline-offset-2 hover:underline"
-          data-testid="binary-elided-github-link"
-        >
-          View File Diff on GitHub
-        </a>
-      )}
-    </div>
-  );
 }
 
 /**
@@ -147,6 +106,8 @@ function DiffFileCard({
   const { file, hunks } = resolved;
   const language = languageForPath(file.path);
   const extension = file.path.includes(".") ? file.path.split(".").pop() : undefined;
+  const imageFile = isImagePath(file.path);
+  const showHunks = !file.isBinaryOrElided && hunks.length > 0;
   const pathLabel = file.previousPath ? `${file.previousPath} → ${file.path}` : file.path;
   const fileSearchHit =
     searchHighlight != null && searchHighlight.filePath === file.path && !searchHighlight.lineId;
@@ -168,49 +129,58 @@ function DiffFileCard({
     >
       <div className="flex min-w-0 items-baseline gap-2.5 border-b border-border bg-background px-3 py-2 font-mono text-sm">
         <MiddleEllipsisText text={pathLabel} maxWidth="100%" className="min-w-0 flex-1" />
-        {!language && !file.isBinaryOrElided && (
+        {!language && !file.isBinaryOrElided && !imageFile && (
           <span className="shrink-0 font-normal text-muted italic">
             {extension ? `no syntax highlighting for .${extension}` : "no syntax highlighting"}
           </span>
         )}
       </div>
-      {file.isBinaryOrElided ? (
-        <BinaryElidedEmptyState filePath={file.path} />
-      ) : (
-        withHunkGaps(hunks).map((item) => {
-          if (item.kind === "gap") {
-            return (
-              <HunkGapPlaceholder key={item.key} filePath={file.path} afterLine={item.afterLine} />
-            );
-          }
-          const { hunk } = item;
-          return diffViewMode === "split" ? (
-            <SplitHunk
-              hunk={hunk}
-              language={language}
-              key={hunk.id}
-              selectedIds={selectedIds}
-              focusId={effectiveFocusId}
-              draftsByEndLineId={draftsByEndLineId}
-              composerPlacementId={composerPlacementId}
-              composerRange={composerRange}
-              unitId={unitId}
-            />
-          ) : (
-            <UnifiedHunk
-              hunk={hunk}
-              language={language}
-              key={hunk.id}
-              selectedIds={selectedIds}
-              focusId={effectiveFocusId}
-              draftsByEndLineId={draftsByEndLineId}
-              composerPlacementId={composerPlacementId}
-              composerRange={composerRange}
-              unitId={unitId}
-            />
-          );
-        })
+      {imageFile && (
+        <ImageDiff
+          file={file}
+          viewMode={diffViewMode}
+          className={showHunks ? "border-b border-border" : undefined}
+        />
       )}
+      {file.isBinaryOrElided
+        ? !imageFile && <BinaryElidedEmptyState filePath={file.path} />
+        : withHunkGaps(hunks).map((item) => {
+            if (item.kind === "gap") {
+              return (
+                <HunkGapPlaceholder
+                  key={item.key}
+                  filePath={file.path}
+                  afterLine={item.afterLine}
+                />
+              );
+            }
+            const { hunk } = item;
+            return diffViewMode === "split" ? (
+              <SplitHunk
+                hunk={hunk}
+                language={language}
+                key={hunk.id}
+                selectedIds={selectedIds}
+                focusId={effectiveFocusId}
+                draftsByEndLineId={draftsByEndLineId}
+                composerPlacementId={composerPlacementId}
+                composerRange={composerRange}
+                unitId={unitId}
+              />
+            ) : (
+              <UnifiedHunk
+                hunk={hunk}
+                language={language}
+                key={hunk.id}
+                selectedIds={selectedIds}
+                focusId={effectiveFocusId}
+                draftsByEndLineId={draftsByEndLineId}
+                composerPlacementId={composerPlacementId}
+                composerRange={composerRange}
+                unitId={unitId}
+              />
+            );
+          })}
     </div>
   );
 }

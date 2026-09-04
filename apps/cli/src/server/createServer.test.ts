@@ -140,6 +140,51 @@ describe("createReviewServer", () => {
     );
   });
 
+  it("serves image blobs from the current diff and rejects other paths", async () => {
+    const root = await mkdir(path.join(os.tmpdir(), `gr-img-srv-${Date.now()}`), {
+      recursive: true,
+    });
+    const cwd = root!;
+    const git = (args: string[]) => execFileAsync("git", args, { cwd });
+    const png = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    );
+    await git(["init", "-b", "main"]);
+    await git(["config", "user.email", "test@example.com"]);
+    await git(["config", "user.name", "Test"]);
+    await writeFile(path.join(cwd, "readme.md"), "hello\n");
+    await git(["add", "readme.md"]);
+    await git(["commit", "-m", "initial"]);
+    await git(["checkout", "-b", "feat"]);
+    await writeFile(path.join(cwd, "logo.png"), png);
+    await git(["add", "logo.png"]);
+    await git(["commit", "-m", "add logo"]);
+
+    const live = await buildLocalReview({ cwd, scope: "branch" });
+    const server = createReviewServer({
+      snapshot: live,
+      settings: { provider: "anthropic", model: "claude-opus-4-8", apiKey: "" },
+    });
+    const port = await listen(server);
+    const base = `http://127.0.0.1:${port}`;
+
+    const ok = await fetch(`${base}/api/file?path=logo.png&side=new`);
+    expect(ok.status).toBe(200);
+    expect(ok.headers.get("content-type")).toBe("image/png");
+    expect(Buffer.from(await ok.arrayBuffer()).equals(png)).toBe(true);
+
+    const missing = await fetch(`${base}/api/file?path=readme.md&side=new`);
+    expect(missing.status).toBe(404);
+
+    const oldAdded = await fetch(`${base}/api/file?path=logo.png&side=old`);
+    expect(oldAdded.status).toBe(404);
+
+    await new Promise<void>((resolve, reject) =>
+      server.close((err) => (err ? reject(err) : resolve())),
+    );
+  });
+
   it("rejects an unknown scope and swaps the session on a real repo", async () => {
     const root = await mkdir(path.join(os.tmpdir(), `gr-srv-${Date.now()}`), { recursive: true });
     const cwd = root!;
