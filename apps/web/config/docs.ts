@@ -51,16 +51,15 @@ export const DOCS_PAGES: DocsPage[] = [
     blurb: "from a PR page to walking and searching units",
     load: () => import("@web/content/help/first-review.mdx"),
   },
-  // Website currently documents the Chrome extension only.
-  // {
-  //   slug: "local-review",
-  //   section: "Getting Started",
-  //   title: "Review local changes",
-  //   description:
-  //     "Run Guided Review from your terminal on a local branch, commit, or working tree. The CLI serves the same walkthrough in the browser.",
-  //   blurb: "CLI for local branch, commit, or working-tree diffs",
-  //   load: () => import("@web/content/help/local-review.mdx"),
-  // },
+  {
+    slug: "local-review",
+    section: "Getting Started",
+    title: "Review local changes",
+    description:
+      "Run Guided Review from your terminal on a local branch, commit, or working tree. The CLI serves the same walkthrough in the browser.",
+    blurb: "CLI for local branch, commit, or working-tree diffs",
+    load: () => import("@web/content/help/local-review.mdx"),
+  },
   {
     slug: "configure-provider",
     section: "Setup",

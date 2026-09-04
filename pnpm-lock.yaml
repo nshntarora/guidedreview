@@ -46,7 +46,7 @@ importers:
         version: 8.69.0(eslint@10.9.1(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
 
   apps/cli:
-    dependencies:
+    devDependencies:
       '@fontsource/victor-mono':
         specifier: ^5.3.0
         version: 5.3.0
@@ -56,22 +56,6 @@ importers:
       '@guided-review/ui':
         specifier: workspace:*
         version: link:../../packages/ui
-      express:
-        specifier: ^5.1.0
-        version: 5.2.1(supports-color@10.2.2)
-      react:
-        specifier: ^19.2.8
-        version: 19.2.8
-      react-dom:
-        specifier: ^19.2.8
-        version: 19.2.8(react@19.2.8)
-      winston:
-        specifier: ^3.19.0
-        version: 3.19.0
-      zustand:
-        specifier: ^5.0.14
-        version: 5.0.15(@types/react@19.2.18)(react@19.2.8)
-    devDependencies:
       '@playwright/test':
         specifier: ^1.62.0
         version: 1.62.1
@@ -105,9 +89,18 @@ importers:
       esbuild:
         specifier: ^0.28.1
         version: 0.28.2
+      express:
+        specifier: ^5.1.0
+        version: 5.2.1(supports-color@10.2.2)
       jsdom:
         specifier: ^30.0.0
         version: 30.0.1
+      react:
+        specifier: ^19.2.8
+        version: 19.2.8
+      react-dom:
+        specifier: ^19.2.8
+        version: 19.2.8(react@19.2.8)
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
@@ -120,6 +113,12 @@ importers:
       vitest:
         specifier: ^4.1.10
         version: 4.1.11(@types/node@26.4.1)(@vitest/coverage-v8@4.1.11)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.103.1)(yaml@2.9.0))
+      winston:
+        specifier: ^3.19.0
+        version: 3.19.0
+      zustand:
+        specifier: ^5.0.14
+        version: 5.0.15(@types/react@19.2.18)(react@19.2.8)
 
   apps/extension:
     dependencies:

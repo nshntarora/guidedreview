@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseArgs } from "./args";
+import { HELP, parseArgs } from "./args";
 
 describe("parseArgs", () => {
   it("defaults to cwd, open, and untracked", () => {
@@ -40,5 +40,10 @@ describe("parseArgs", () => {
     expect(() => parseArgs(["--base", "--port", "0"])).toThrow(/--base requires a value/);
     expect(() => parseArgs(["--provider"])).toThrow(/--provider requires a value/);
     expect(() => parseArgs(["--port"])).toThrow(/--port requires a value/);
+    expect(() => parseArgs(["--nope"])).toThrow(/guidedreview --help/);
+  });
+
+  it("help names the published command", () => {
+    expect(HELP.startsWith("Usage: guidedreview ")).toBe(true);
   });
 });
