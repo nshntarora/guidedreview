@@ -259,7 +259,7 @@ describe("DiffPane", () => {
     expect(link).toHaveTextContent("View File Diff on GitHub");
   });
 
-  it("renders an added SVG as an image and keeps the source hunks", () => {
+  it("renders an added SVG as an image without the source hunks", () => {
     const svg =
       '<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4"><rect width="4" height="4" fill="red"/></svg>';
     const file = fileFixture({
@@ -283,11 +283,9 @@ describe("DiffPane", () => {
     expect(preview).toBeInTheDocument();
     const img = preview.querySelector("img");
     expect(img).toHaveAttribute("src", expect.stringMatching(/^data:image\/svg\+xml/));
-    expect(img).toHaveAttribute("alt", "icon.svg (added)");
-    expect(screen.getByTestId("diff-view-split")).toBeInTheDocument();
-    expect(
-      screen.getAllByText((_, el) => el?.textContent?.includes('fill="red"') ?? false).length,
-    ).toBeGreaterThan(0);
+    expect(img).toHaveAttribute("alt", "icon.svg");
+    expect(screen.queryByTestId("diff-view-split")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("diff-view-unified")).not.toBeInTheDocument();
   });
 
   it("renders a binary PNG from the host preview URL", async () => {
@@ -307,7 +305,7 @@ describe("DiffPane", () => {
     });
     renderPane([{ file, hunks: [] }]);
 
-    const img = await screen.findByRole("img", { name: "logo.png (added)" });
+    const img = await screen.findByRole("img", { name: "logo.png" });
     expect(img).toHaveAttribute("src", pixel);
     expect(screen.queryByTestId("binary-elided-empty")).not.toBeInTheDocument();
   });

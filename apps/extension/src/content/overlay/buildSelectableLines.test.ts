@@ -47,6 +47,26 @@ describe("buildSelectableLines", () => {
     expect(buildSelectableLines(files, "unified")).toEqual([]);
   });
 
+  it("skips image files that still have text hunks (e.g. SVG)", () => {
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4"><rect width="4" height="4" fill="red"/></svg>';
+    const files = resolved([
+      fileFixture({
+        path: "icon.svg",
+        status: "added",
+        isBinaryOrElided: false,
+        hunks: [
+          hunkFixture({
+            id: "icon.svg#0",
+            lines: [{ type: "add", content: svg, newLine: 1 }],
+          }),
+        ],
+      }),
+    ]);
+    expect(buildSelectableLines(files, "unified")).toEqual([]);
+    expect(buildSelectableLines(files, "split")).toEqual([]);
+  });
+
   it("unified: one row per line with del→LEFT and add/context→RIGHT", () => {
     const lines = buildSelectableLines(resolved(), "unified");
     expect(lines).toHaveLength(5);

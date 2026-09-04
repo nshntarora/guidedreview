@@ -16,51 +16,34 @@ const CHECKER =
 
 type Side = "old" | "new";
 
-function sideLabel(file: DiffFile, side: Side): string {
-  if (file.status === "added") return "Added";
-  if (file.status === "removed") return "Deleted";
-  return side === "old" ? "Before" : "After";
-}
-
 function ImageFrame({
   src,
   filePath,
-  label,
   tone,
   onError,
 }: {
   src: string;
   filePath: string;
-  label: string;
   tone: "add" | "del";
   onError: () => void;
 }) {
   const name = filePath.split("/").pop() ?? filePath;
   return (
-    <figure
+    <div
       className={cn(
-        "flex min-w-0 flex-1 flex-col",
+        "flex min-w-0 flex-1 items-center justify-center p-4",
         tone === "add" ? "bg-diff-add-bg" : "bg-diff-del-bg",
+        CHECKER,
       )}
       data-testid={tone === "add" ? "image-diff-new" : "image-diff-old"}
     >
-      <figcaption
-        className={cn(
-          "px-3 py-1.5 font-mono text-sm",
-          tone === "add" ? "text-diff-add" : "text-diff-del",
-        )}
-      >
-        {label}
-      </figcaption>
-      <div className={cn("flex items-center justify-center p-4", CHECKER)}>
-        <img
-          src={src}
-          alt={`${name} (${label.toLowerCase()})`}
-          className="max-h-[28rem] max-w-full object-contain"
-          onError={onError}
-        />
-      </div>
-    </figure>
+      <img
+        src={src}
+        alt={name}
+        className="max-h-[28rem] max-w-full object-contain"
+        onError={onError}
+      />
+    </div>
   );
 }
 
@@ -164,7 +147,6 @@ export function ImageDiff({ file, viewMode, className }: ImageDiffProps) {
         <ImageFrame
           src={oldSrc}
           filePath={file.previousPath ?? file.path}
-          label={sideLabel(file, "old")}
           tone="del"
           onError={() => {
             if (oldHostSrc && reconstructed.oldSrc) setOldHostSrc(null);
@@ -176,7 +158,6 @@ export function ImageDiff({ file, viewMode, className }: ImageDiffProps) {
         <ImageFrame
           src={newSrc}
           filePath={file.path}
-          label={sideLabel(file, "new")}
           tone="add"
           onError={() => {
             if (newHostSrc && reconstructed.newSrc) setNewHostSrc(null);

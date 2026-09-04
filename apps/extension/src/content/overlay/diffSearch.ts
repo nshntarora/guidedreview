@@ -3,6 +3,7 @@
  * highlight matches, and map hits back to display units.
  */
 import Fuse, { type IFuseOptions } from "fuse.js";
+import { isImagePath } from "@guided-review/core";
 import type { DiffLine, ParsedDiff, ReviewPlan } from "@extension/lib/types";
 import type { DiffSide } from "./commentTypes";
 import { buildDisplayUnits } from "./store";
@@ -96,7 +97,8 @@ export function buildDiffSearchIndex(diff: ParsedDiff): DiffSearchDoc[] {
       previousPath: file.previousPath,
     });
 
-    if (file.isBinaryOrElided) continue;
+    // Image files (incl. SVG) show a rendered preview only — no line source in the overlay.
+    if (file.isBinaryOrElided || isImagePath(file.path)) continue;
 
     for (const hunk of file.hunks) {
       hunk.lines.forEach((line, lineIndex) => {

@@ -107,7 +107,6 @@ function DiffFileCard({
   const language = languageForPath(file.path);
   const extension = file.path.includes(".") ? file.path.split(".").pop() : undefined;
   const imageFile = isImagePath(file.path);
-  const showHunks = !file.isBinaryOrElided && hunks.length > 0;
   const pathLabel = file.previousPath ? `${file.previousPath} → ${file.path}` : file.path;
   const fileSearchHit =
     searchHighlight != null && searchHighlight.filePath === file.path && !searchHighlight.lineId;
@@ -139,52 +138,49 @@ function DiffFileCard({
         )}
       </div>
       <div className="overflow-hidden rounded-b-lg">
-        {imageFile && (
-          <ImageDiff
-            file={file}
-            viewMode={diffViewMode}
-            className={showHunks ? "border-b border-border" : undefined}
-          />
-        )}
-        {file.isBinaryOrElided
-          ? !imageFile && <BinaryElidedEmptyState filePath={file.path} />
-          : withHunkGaps(hunks).map((item) => {
-              if (item.kind === "gap") {
-                return (
-                  <HunkGapPlaceholder
-                    key={item.key}
-                    filePath={file.path}
-                    afterLine={item.afterLine}
-                  />
-                );
-              }
-              const { hunk } = item;
-              return diffViewMode === "split" ? (
-                <SplitHunk
-                  hunk={hunk}
-                  language={language}
-                  key={hunk.id}
-                  selectedIds={selectedIds}
-                  focusId={effectiveFocusId}
-                  draftsByEndLineId={draftsByEndLineId}
-                  composerPlacementId={composerPlacementId}
-                  composerRange={composerRange}
-                  unitId={unitId}
-                />
-              ) : (
-                <UnifiedHunk
-                  hunk={hunk}
-                  language={language}
-                  key={hunk.id}
-                  selectedIds={selectedIds}
-                  focusId={effectiveFocusId}
-                  draftsByEndLineId={draftsByEndLineId}
-                  composerPlacementId={composerPlacementId}
-                  composerRange={composerRange}
-                  unitId={unitId}
+        {imageFile ? (
+          <ImageDiff file={file} viewMode={diffViewMode} />
+        ) : file.isBinaryOrElided ? (
+          <BinaryElidedEmptyState filePath={file.path} />
+        ) : (
+          withHunkGaps(hunks).map((item) => {
+            if (item.kind === "gap") {
+              return (
+                <HunkGapPlaceholder
+                  key={item.key}
+                  filePath={file.path}
+                  afterLine={item.afterLine}
                 />
               );
-            })}
+            }
+            const { hunk } = item;
+            return diffViewMode === "split" ? (
+              <SplitHunk
+                hunk={hunk}
+                language={language}
+                key={hunk.id}
+                selectedIds={selectedIds}
+                focusId={effectiveFocusId}
+                draftsByEndLineId={draftsByEndLineId}
+                composerPlacementId={composerPlacementId}
+                composerRange={composerRange}
+                unitId={unitId}
+              />
+            ) : (
+              <UnifiedHunk
+                hunk={hunk}
+                language={language}
+                key={hunk.id}
+                selectedIds={selectedIds}
+                focusId={effectiveFocusId}
+                draftsByEndLineId={draftsByEndLineId}
+                composerPlacementId={composerPlacementId}
+                composerRange={composerRange}
+                unitId={unitId}
+              />
+            );
+          })
+        )}
       </div>
     </div>
   );
