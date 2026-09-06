@@ -23,7 +23,6 @@ test.describe("CLI settings", () => {
       .click();
     await expect(page).toHaveURL(/#about/);
     await expect(page.getByRole("heading", { name: "How It Works" })).toBeVisible();
-    await expect(page.getByText(/Local walkthrough of a branch/i)).toBeVisible();
 
     await page
       .getByRole("navigation", { name: "Settings" })

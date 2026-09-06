@@ -263,7 +263,9 @@ jobs:
 
       - name: Run website e2e tests
         env:
-          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          # Canonical URLs are asserted by the static-export suite. This public,
+          # non-secret value must also be available to pull-request workflows.
+          NEXT_PUBLIC_SITE_URL: https://guidedreview.dev
         run: pnpm --filter @guided-review/web test:e2e
 
       - name: Upload Playwright report

@@ -1,4 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
+import { loadEnvConfig } from "@next/env";
+
+// Playwright runs in a separate Node process from `next build`, so load the
+// website's local environment here as well. CI-provided variables still win.
+loadEnvConfig(process.cwd());
 
 const PORT = 4173;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
