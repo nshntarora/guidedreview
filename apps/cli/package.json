@@ -1,6 +1,6 @@
 {
   "name": "@guided-review/cli",
-  "version": "0.1.1",
+  "version": "0.3.0",
   "description": "Walk a local git branch, commit, or working tree in the browser. AI structures the review; you decide.",
   "license": "Apache-2.0",
   "type": "module",
