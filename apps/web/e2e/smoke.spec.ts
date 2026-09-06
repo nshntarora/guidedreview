@@ -39,9 +39,9 @@ test("unknown path is not a soft-200 of the homepage", async ({ request }) => {
   // Never accept a successful HTML document that looks like the homepage.
   if (status < 400) {
     const body = await response.text();
-    expect(body, "404 soft-200 must not be homepage").not.toMatch(
-      /A better way for humans to review AI generated code/i,
-    );
+    // Landmark ids from the landing page — independent of marketing copy.
+    expect(body, "404 soft-200 must not be homepage").not.toMatch(/id=["']install["']/);
+    expect(body, "404 soft-200 must not be homepage").not.toMatch(/id=["']get-started["']/);
     // Prefer failing if the server pretends the page exists with 200
     expect(status, `unexpected success for ${path}`).toBeGreaterThanOrEqual(400);
   } else {

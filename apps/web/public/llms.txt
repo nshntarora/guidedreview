@@ -1,6 +1,6 @@
 # Guided Review
 
-> A better way for humans to review AI-generated code. Chrome extension for GitHub PRs and CLI for local git diffs — clusters changes into ordered review units with short summaries. Free, open source, bring your own LLM key.
+> Review AI-generated code before you sign your name to it. Turn your commits into a structured review that helps you catch AI-code issues before your teammates do. Chrome extension for GitHub PRs and CLI for local git diffs. Free, open source, bring your own LLM key.
 
 Guided Review is a Chrome extension for github.com pull requests and a local CLI (`npx @guided-review/cli`) for branch, commit, or working-tree diffs. AI structures the walkthrough; humans still decide. It never auto-approves PRs, never “reviews for you,” and has no product backend: traffic goes only to your AI provider (and GitHub for the extension).
 
@@ -66,7 +66,7 @@ Cost: one annotate call per diff chunk when a provider is configured (CLI: only 
 
 **GitHub PRs**
 
-1. Install the extension (Chrome Web Store or load unpacked from source)
+1. Install the extension from the Chrome Web Store
 2. Open options and configure an AI provider + API key
 3. Open any github.com pull request and click **Start Guided Review**
 4. Step through units; optionally draft line comments and submit
@@ -84,9 +84,13 @@ Cost: one annotate call per diff chunk when a provider is configured (CLI: only 
 ### Getting started
 
 - [Introduction](https://guidedreview.dev/docs): What Guided Review is (extension + CLI) and how it turns a diff into an ordered walkthrough
-- [Install Guided Review](https://guidedreview.dev/docs/install): Chrome Web Store, load unpacked, or CLI via npx
-- [Your first review](https://guidedreview.dev/docs/first-review): From a PR page to walking units, search, and comments
-- [Review local changes](https://guidedreview.dev/docs/local-review): CLI scopes, flags, Settings, Generate Prompt
+- [Why](https://guidedreview.dev/docs/why): Why reading code matters more when AI writes it
+- [Install](https://guidedreview.dev/docs/install): CLI or Chrome extension — same engine, pick a host
+
+### Apps
+
+- [Chrome Extension](https://guidedreview.dev/docs/chrome-extension): Install from the Web Store, then Start Guided Review on a PR
+- [CLI](https://guidedreview.dev/docs/cli): `npx @guided-review/cli` — scopes, flags, Settings, Generate Prompt
 
 ### Setup
 
@@ -95,8 +99,12 @@ Cost: one annotate call per diff chunk when a provider is configured (CLI: only 
 
 ### Product
 
+- [Your first review](https://guidedreview.dev/docs/first-review): From a PR page to walking units, search, and comments
+- [Reading the overlay](https://guidedreview.dev/docs/reading-the-overlay): Sidebar, context panel, Change summary vs PR Description, header actions
 - [How a review plan works](https://guidedreview.dev/docs/how-it-works): Units, chunking, no-AI fallback, and what the model may invent
+- [Images & binary files](https://guidedreview.dev/docs/images-and-binaries): Image previews, binary/elided empty state, comments and search
 - [Leave line comments](https://guidedreview.dev/docs/leave-comments): Multi-line drafts while you walk the plan
+- [Generate Prompt](https://guidedreview.dev/docs/generate-prompt): Clipboard coding-agent prompt from local CLI notes
 - [Submit a review](https://guidedreview.dev/docs/submit-review): Comment / Approve / Request Changes from the extension
 - [Keyboard shortcuts](https://guidedreview.dev/docs/keyboard-shortcuts): Navigation, diff search, view mode, comments, submit, CLI extras
 
@@ -104,7 +112,7 @@ Cost: one annotate call per diff chunk when a provider is configured (CLI: only 
 
 - [Troubleshooting](https://guidedreview.dev/docs/troubleshooting): Missing button, provider errors, plan failures, CLI issues, GitHub auth
 - [FAQ](https://guidedreview.dev/docs/faq): Free, cost, tracking, extension vs CLI, what the AI does and does not do
-- [Privacy & data](https://guidedreview.dev/docs/privacy-and-data): What leaves the machine (GitHub + your provider only) and what stays local
+- [Privacy & data](https://guidedreview.dev/docs/privacy-and-data): What leaves the machine, what stays local, and how to clear keys / disconnect
 
 ---
 

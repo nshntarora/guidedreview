@@ -6,7 +6,6 @@ export const toc = [
   { id: "private-repos-and-sso", label: "Private repos and SSO", level: 2 },
   { id: "session-and-resume", label: "Session and resume", level: 2 },
   { id: "cli", label: "CLI", level: 2 },
-  { id: "load-unpacked-stale-build", label: "Load unpacked / stale build", level: 2 },
 ];
 
 # Troubleshooting
@@ -19,13 +18,12 @@ Concept overviews: [How a review plan works](/docs/how-it-works) · [FAQ](/docs/
 
 ## No Start Guided Review button
 
-1. Confirm the tab is a **pull request** URL on `github.com` (Conversation, Files changed, or Commits) — same as [Your first review](/docs/first-review#open-a-pull-request). Hosts other than github.com are not supported by the extension ([FAQ](/docs/faq#does-it-work-outside-github-com)); use the [CLI](/docs/local-review) for local git instead.
+1. Confirm the tab is a **pull request** URL on `github.com` (Conversation, Files changed, or Commits) — same as [Your first review](/docs/first-review#open-a-pull-request). Hosts other than github.com are not supported by the extension ([FAQ](/docs/faq#does-it-work-outside-github-com)); use the [CLI](/docs/cli) for local git instead.
 2. Avoid PR **sub-pages that aren’t review surfaces** — for example conflict resolution (`…/pull/N/conflicts`). The extension intentionally does not inject there; open Conversation, Files changed, or Commits instead. The toolbar popup says so when the active tab is one of those paths.
 3. Reload the page. SPA navigations from the PR list should still inject the button; a full reload clears stuck DOM.
-4. Check the extension is enabled and allowed on GitHub in `chrome://extensions`.
-5. If you loaded unpacked, confirm you selected **`apps/extension/dist`**, then **Reload** the extension and refresh the tab ([Install](/docs/install#load-unpacked-development)).
+4. Check the extension is enabled and allowed on GitHub in `chrome://extensions`. Reload the extension from that page, then refresh the PR tab.
 
-If the on-page button is missing but the PR URL is valid, try the **toolbar icon** while that tab is active ([Install → After install](/docs/install#after-install)).
+If the on-page button is missing but the PR URL is valid, try the **toolbar icon** while that tab is active ([Chrome Extension → After install](/docs/chrome-extension#after-install)).
 
 ## Provider and API key
 
@@ -41,7 +39,7 @@ Extension keys live in `chrome.storage.local`. CLI keys live in env, flags, or `
 ## Plan generation fails
 
 - **Mid-stream error** — Check the overlay or CLI message. Common causes: rate limits, insufficient quota, model unavailable, or a network blip. Wait and retry, or [switch model/provider](/docs/configure-provider).
-- **Empty or thin plan** — Very large or mostly binary diffs produce less useful structure. [Chunking](/docs/how-it-works#chunking-large-prs) still runs by file; binary/elided files won’t get textual units.
+- **Empty or thin plan** — Very large or mostly binary diffs produce less useful structure. [Chunking](/docs/how-it-works#chunking-large-diffs) still runs by file; [binary/elided files](/docs/images-and-binaries) won’t get textual units.
 - **Lost connection to the worker** (extension) — Reload the extension and the PR tab, then start again ([first review](/docs/first-review#start-guided-review)).
 - **Structure with AI does nothing** (CLI) — Confirm a key is available ([Configure AI provider → CLI](/docs/configure-provider#cli)), then retry. Check the terminal log below the banner for the error.
 
@@ -82,27 +80,15 @@ Draft comments (extension) and notes (CLI) are part of that session until you su
 
 ## CLI
 
-| Symptom                                  | What to try                                                                                                                         |
-| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `npx guided-review` does the wrong thing | Use the scoped package: `npx @guided-review/cli`. The hyphenated unscoped name is a different tool                                  |
-| Port already in use                      | Pass `--port` (or `--port 0` for any free port), or stop the other process on `7182`                                                |
-| `Nothing to review against <base>.`      | Empty scopes — commit, stage, or pass `--base` / pick another scope in the UI ([local review](/docs/local-review#what-it-compares)) |
-| Not a git repository                     | Run from inside a git repo, or pass a repo path as the first argument                                                               |
-| Browser doesn’t open                     | Open the URL printed in the banner, or drop `--no-open`                                                                             |
-| Structure / Settings can’t find a key    | [Configure AI provider → CLI](/docs/configure-provider#cli); check env vars and `~/.config/guided-review/config.json`               |
+| Symptom                                  | What to try                                                                                                           |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `npx guided-review` does the wrong thing | Use the scoped package: `npx @guided-review/cli`. The hyphenated unscoped name is a different tool                    |
+| Port already in use                      | Pass `--port` (or `--port 0` for any free port), or stop the other process on `7182`                                  |
+| `Nothing to review against <base>.`      | Empty scopes — commit, stage, or pass `--base` / pick another scope in the UI ([CLI](/docs/cli#what-it-compares))     |
+| Not a git repository                     | Run from inside a git repo, or pass a repo path as the first argument                                                 |
+| Browser doesn’t open                     | Open the URL printed in the banner, or drop `--no-open`                                                               |
+| Structure / Settings can’t find a key    | [Configure AI provider → CLI](/docs/configure-provider#cli); check env vars and `~/.config/guided-review/config.json` |
 
-Full local workflow: [Review local changes](/docs/local-review).
-
-## Load unpacked / stale build
-
-If you develop from source:
-
-1. Run `pnpm build:extension` from the monorepo root after code changes.
-2. In `chrome://extensions`, hit **Reload** on the Guided Review card.
-3. Refresh the GitHub PR tab.
-
-Chrome loads **`apps/extension/dist`**, not a root-level `dist/`. A stale folder means you keep seeing old behavior even with `pnpm dev` running. Full install steps: [Install → Load unpacked](/docs/install#load-unpacked-development).
-
-For CLI source builds: `pnpm build:cli` then `pnpm review` (flags after `--`).
+Full local workflow: [CLI](/docs/cli).
 
 > **Still stuck?** Open an issue on [GitHub](https://github.com/nshntarora/guidedreview) with the exact error text (redact keys and private URLs). Concept questions: [FAQ](/docs/faq).

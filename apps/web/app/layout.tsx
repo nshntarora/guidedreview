@@ -11,6 +11,7 @@ import { LineGutter } from "@web/components/LineGutter";
 import { SiteShortcuts } from "@web/components/SiteShortcuts";
 import { GITHUB_REPO_URL } from "@web/lib/links";
 import { DEFAULT_DESCRIPTION, openGraphSite, SITE_NAME, SITE_URL } from "@web/lib/site";
+import { SITE_SHORTCUTS } from "@web/lib/shortcuts";
 import "./globals.css";
 
 const victorMono = Victor_Mono({
@@ -96,6 +97,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 aria-label="Primary"
               >
                 <Link
+                  href={SITE_SHORTCUTS.installCli.href}
+                  className="hidden text-foreground hover:text-primary md:inline"
+                >
+                  {SITE_SHORTCUTS.installCli.label}
+                </Link>
+                <Link
+                  href={SITE_SHORTCUTS.installChrome.href}
+                  className="hidden text-foreground hover:text-primary md:inline"
+                >
+                  {SITE_SHORTCUTS.installChrome.label}
+                </Link>
+                <Link
                   href="/#features"
                   className="hidden text-foreground hover:text-primary md:inline"
                 >
@@ -104,7 +117,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Link href="/docs" className="hidden text-foreground hover:text-primary md:inline">
                   Docs
                 </Link>
-                <Link href="/#faqs" className="hidden text-foreground hover:text-primary md:inline">
+                <Link
+                  href="/docs/faq"
+                  className="hidden text-foreground hover:text-primary md:inline"
+                >
                   FAQ
                 </Link>
                 <StarOnGitHubButton size="sm" compact location="header" />

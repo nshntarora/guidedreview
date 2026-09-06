@@ -18,6 +18,8 @@ function goToInstallSection() {
     el.scrollIntoView({ behavior: "smooth" });
     if (window.location.hash !== "#install") {
       history.pushState(null, "", "#install");
+      // pushState does not fire hashchange; Install tabs listen for it.
+      window.dispatchEvent(new Event("hashchange"));
     }
     return;
   }

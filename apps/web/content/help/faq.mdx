@@ -22,8 +22,8 @@ Short answers to the questions people ask before and after install. Longer how-t
 
 Guided Review parses a real unified diff, optionally calls **[your AI provider](/docs/configure-provider)** for ordered **review units** (or walks **file by file** if no key is set), and shows them in a keyboard-first overlay mapped back to the real hunks.
 
-- **GitHub PRs:** [Install the Chrome extension](/docs/install#chrome-extension), open a PR, click **Start Guided Review** — [Your first review](/docs/first-review). Optionally [comment](/docs/leave-comments) and [submit](/docs/submit-review).
-- **Local git:** run `npx @guided-review/cli`, pick a scope, optionally **Structure with AI** — [Review local changes](/docs/local-review).
+- **GitHub PRs:** [Install the Chrome extension](/docs/chrome-extension), open a PR, click **Start Guided Review** — [Your first review](/docs/first-review). Optionally [comment](/docs/leave-comments) and [submit](/docs/submit-review).
+- **Local git:** run `npx @guided-review/cli`, pick a scope, optionally **Structure with AI** — [CLI](/docs/cli).
 
 Pipeline detail: [How a review plan works](/docs/how-it-works). Keyboard-first path: [Keyboard shortcuts](/docs/keyboard-shortcuts).
 
@@ -31,10 +31,10 @@ Pipeline detail: [How a review plan works](/docs/how-it-works). Keyboard-first p
 
 | Need                                       | Use                                                    |
 | ------------------------------------------ | ------------------------------------------------------ |
-| Review a PR already on `github.com`        | [Chrome extension](/docs/install#chrome-extension)     |
-| Review before opening a PR / no PR yet     | [CLI](/docs/local-review)                              |
+| Review a PR already on `github.com`        | [Chrome extension](/docs/chrome-extension)             |
+| Review before opening a PR / no PR yet     | [CLI](/docs/cli)                                       |
 | Submit Comment / Approve / Request Changes | Extension (+ [GitHub connected](/docs/connect-github)) |
-| Turn line notes into a coding-agent prompt | CLI **Generate Prompt**                                |
+| Turn line notes into a coding-agent prompt | CLI [Generate Prompt](/docs/generate-prompt)           |
 
 Same clustering engine either way. You can use both on the same change over time (local pass, then PR pass).
 
@@ -48,7 +48,7 @@ Forever is a long time. It’s free while it can be maintained for free. If dema
 
 ## Will this run up my API bill?
 
-Annotating with a provider configured makes **one call per diff chunk** — small diffs are usually a single call; large ones are [split by file](/docs/how-it-works#chunking-large-prs) (~60k characters per chunk), so cost scales with diff size and [model](/docs/configure-provider#pick-a-model). A small change on a cheap model is fractions of a cent; a huge monorepo diff on a frontier model is not.
+Annotating with a provider configured makes **one call per diff chunk** — small diffs are usually a single call; large ones are [split by file](/docs/how-it-works#chunking-large-diffs) (~60k characters per chunk), so cost scales with diff size and [model](/docs/configure-provider#pick-a-model). A small change on a cheap model is fractions of a cent; a huge monorepo diff on a frontier model is not.
 
 On the **CLI**, that call only runs when you click **Structure with AI**. On the **extension**, it runs when you start a review with a key configured.
 
@@ -70,7 +70,7 @@ We’ll keep adding more providers — [request one on the repo](https://github.
 
 ## Do I need GitHub auth?
 
-Not to generate a plan or walk units ([Your first review](/docs/first-review), [local review](/docs/local-review)). Yes, if you want to [submit a review](/docs/submit-review) (line comments and overall decision) from the **extension**. [Drafting comments](/docs/leave-comments) works offline of GitHub auth. The CLI never uses GitHub OAuth. Scopes, SSO, and disconnect: [Connect GitHub](/docs/connect-github).
+Not to generate a plan or walk units ([Your first review](/docs/first-review), [CLI](/docs/cli)). Yes, if you want to [submit a review](/docs/submit-review) (line comments and overall decision) from the **extension**. [Drafting comments](/docs/leave-comments) works offline of GitHub auth. The CLI never uses GitHub OAuth. Scopes, SSO, and disconnect: [Connect GitHub](/docs/connect-github).
 
 ## Does it work outside github.com?
 
@@ -78,6 +78,6 @@ The **extension** content script targets **`https://github.com/*` only** — pub
 
 ## Where is the code?
 
-[github.com/nshntarora/guidedreview](https://github.com/nshntarora/guidedreview) (Apache-2.0). Issues and PRs welcome when something’s wrong or unclear. Load-from-source: [Install → Load unpacked](/docs/install#load-unpacked-development). npm package: `@guided-review/cli`.
+[github.com/nshntarora/guidedreview](https://github.com/nshntarora/guidedreview) (Apache-2.0). Issues and PRs welcome when something’s wrong or unclear. Install the [Chrome extension](/docs/chrome-extension) from the Web Store, or the CLI via `npx @guided-review/cli`.
 
-> **More setup help.** [Install](/docs/install) · [First review](/docs/first-review) · [Local review](/docs/local-review) · [Troubleshooting](/docs/troubleshooting) · [Privacy & data](/docs/privacy-and-data)
+> **More setup help.** [Chrome Extension](/docs/chrome-extension) · [First review](/docs/first-review) · [CLI](/docs/cli) · [Troubleshooting](/docs/troubleshooting) · [Privacy & data](/docs/privacy-and-data)

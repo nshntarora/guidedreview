@@ -1,74 +1,50 @@
 import { CHROME_WEB_STORE_URL } from "@web/lib/links";
 
 export const toc = [
-  { id: "chrome-extension", label: "Chrome extension", level: 2 },
-  { id: "chrome-web-store", label: "Chrome Web Store", level: 3 },
-  { id: "load-unpacked-development", label: "Load unpacked (development)", level: 3 },
-  { id: "after-install", label: "After install", level: 3 },
-  { id: "cli", label: "CLI", level: 2 },
+  { id: "pick-a-host", label: "Pick a host", level: 2 },
+  { id: "detailed-docs", label: "Detailed docs", level: 2 },
+  { id: "after-you-install", label: "After you install", level: 2 },
 ];
 
-# Install Guided Review
+# Install
 
-Two ways in: the **Chrome extension** for GitHub pull requests, and the **CLI** for local branch, commit, or working-tree diffs. Same review engine; pick the host that matches the change you’re reviewing. For the “why,” see [Why](/docs/why); for the product map, see the [Introduction](/docs).
+Guided Review is one review engine with two hosts. Install the surface that matches the change you’re reviewing — or both; they share providers, units, and keyboard habits.
+
+| Host                 | Use it when…                                      |
+| -------------------- | ------------------------------------------------- |
+| **CLI**              | You’re on a local branch, commit, or working tree |
+| **Chrome extension** | The change is already a PR on `github.com`        |
+
+Same clustering pipeline either way. The extension can [submit to GitHub](/docs/submit-review); the CLI keeps notes local and offers [Generate Prompt](/docs/generate-prompt). Motivation: [Why](/docs/why). Product map: [Introduction](/docs).
 
 <TocCard toc={toc} />
 
-## Chrome extension
+## Pick a host
 
-Guided Review runs as a Chrome Manifest V3 extension on `github.com` pull requests.
-
-### Chrome Web Store
-
-1. Open the <a href={CHROME_WEB_STORE_URL}>Guided Review listing</a> on the Chrome Web Store.
-2. Click **Add to Chrome** and confirm.
-3. Pin the extension from the puzzle-piece menu so the toolbar icon stays visible — unpinned extensions are easy to forget.
-
-> **Site shortcuts.** On [guidedreview.dev](https://guidedreview.dev), `⌘/Ctrl` + `E` opens the Chrome Web Store listing; `⌘/Ctrl` + `I` jumps to the Install section — see [Keyboard shortcuts](/docs/keyboard-shortcuts#marketing-site).
-
-### Load unpacked (development)
-
-For local builds and contributors:
-
-1. Clone the [repository](https://github.com/nshntarora/guidedreview).
-2. From the monorepo root, install and build the extension:
-
-```bash
-pnpm install
-pnpm build:extension
-```
-
-3. Open `chrome://extensions`, enable **Developer mode**, and click **Load unpacked**.
-4. Select **`apps/extension/dist`** — never a root-level `dist/` if one exists from an older layout.
-5. After code changes, run `pnpm build:extension` again, then hit **Reload** on the extension card and refresh the GitHub PR tab.
-
-> **Dev HMR.** `pnpm dev` / `pnpm dev:extension` serves Vite HMR on port **5173**, but Chrome still loads the built files under `apps/extension/dist`. Rebuild (or rely on the dev pipeline that writes there) and reload the extension when behavior looks stale. More on stale builds: [Troubleshooting](/docs/troubleshooting#load-unpacked-stale-build).
-
-### After install
-
-Chrome opens a short **welcome** page on first install (pin → connect provider → open a PR). You can also:
-
-1. Open the extension **Options** page (right-click the toolbar icon → Options, or open it from `chrome://extensions`).
-2. [Configure an AI provider](/docs/configure-provider) and save your API key (optional for a [file-by-file walk](/docs/how-it-works#without-a-provider); required for clustering and summaries).
-3. Optionally [connect GitHub](/docs/connect-github) if you want to [submit reviews](/docs/submit-review) from Guided Review.
-4. Open a PR and follow [Your first review](/docs/first-review).
-
-**Ways to start a review** once you’re on a PR tab:
-
-- Click **Start Guided Review** on the page.
-- Click the **toolbar icon** — on a PR it starts (or resumes) the review; off a PR it tells you to open one.
-- Enable **Automatically open on Files changed** in Options if you want that tab to open Guided Review for you.
-
-Keys and tokens stay on your machine — details in [Privacy & data](/docs/privacy-and-data). If the **Start Guided Review** button never appears, see [Troubleshooting](/docs/troubleshooting#no-start-guided-review-button).
-
-## CLI
-
-For local git work — before you open a PR, or when there isn’t one:
+**CLI** — Node.js 22+, then:
 
 ```bash
 npx @guided-review/cli
 ```
 
-Requires **Node.js 22+**. The published package is `@guided-review/cli`; the binary is `guidedreview`. `npx guided-review` (unscoped, hyphen) is a different tool.
+The published package is `@guided-review/cli`. The binary is `guidedreview`. `npx guided-review` (unscoped, hyphen) is a different tool. The CLI binds localhost, opens the browser UI, and walks file-by-file until you hit **Structure with AI**.
 
-The CLI starts a localhost server, opens the browser UI, and walks the same kind of review units as the extension. Diff scopes, flags, Settings, and **Generate Prompt** are covered in [Review local changes](/docs/local-review). Provider setup for the CLI (env, config file, or a coding agent already on the machine): [Configure AI provider](/docs/configure-provider#cli).
+**Chrome extension** — Install from the <a href={CHROME_WEB_STORE_URL}>Chrome Web Store</a>. On a PR, click **Start Guided Review** (or the toolbar icon). Pin the extension so the icon stays visible.
+
+A provider key is optional for a [file-by-file walk](/docs/how-it-works#without-a-provider); required for AI clustering and summaries — [Configure AI provider](/docs/configure-provider).
+
+## Detailed docs
+
+Full install steps, Options, flags, and day-two workflows live on the app pages:
+
+<InstallAppCards />
+
+## After you install
+
+1. [Configure an AI provider](/docs/configure-provider) (extension Options or CLI Settings / env).
+2. Extension path: [Your first review](/docs/first-review). CLI path: [CLI → Walk the plan](/docs/cli#walk-the-plan).
+3. Optionally [connect GitHub](/docs/connect-github) if you’ll [submit from the extension](/docs/submit-review).
+
+Stuck on a missing button, provider error, or port conflict: [Troubleshooting](/docs/troubleshooting).
+
+**Next.** [Chrome Extension](/docs/chrome-extension) · [CLI](/docs/cli) · [Configure AI provider](/docs/configure-provider) · [Your first review](/docs/first-review)

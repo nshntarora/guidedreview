@@ -8,11 +8,11 @@ export const SITE_NAME = "Guided Review";
 
 /** Default document description (root layout + pages that do not override). */
 export const DEFAULT_DESCRIPTION =
-  "A better way for humans to review AI generated code. Clustered changes, summaries, keyboard-first — free, open source, bring your own LLM key.";
+  "Review AI-generated code before you sign your name to it. Structured review units for GitHub PRs and local diffs — free, open source, bring your own LLM key.";
 
 /** Homepage-specific description (≤160 chars for SERP snippets). */
 export const HOME_DESCRIPTION =
-  "Clustered review units for GitHub PRs and local diffs — summaries, keyboard-first. Free, open source, BYO LLM key.";
+  "Turn your commits into a structured review that helps you catch AI-code issues before your teammates do. Free, open source, BYO LLM key.";
 
 /** Shared Open Graph fields — page-level `openGraph` can replace the root object, so re-spread these. */
 export const openGraphSite = {

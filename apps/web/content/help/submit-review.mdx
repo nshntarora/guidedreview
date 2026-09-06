@@ -8,7 +8,7 @@ export const toc = [
 
 # Submit a review
 
-Post [drafted line comments](/docs/leave-comments) and an overall decision to the pull request through the GitHub API — without leaving Guided Review. This is a **Chrome extension** feature; the [CLI](/docs/local-review) keeps notes local and offers **Generate Prompt** instead.
+Post [drafted line comments](/docs/leave-comments) and an overall decision to the pull request through the GitHub API — without leaving Guided Review. This is a **Chrome extension** feature; the [CLI](/docs/cli) keeps notes local and offers [Generate Prompt](/docs/generate-prompt) instead.
 
 This path requires [GitHub connected](/docs/connect-github). Generating and walking a plan does **not** — see [Your first review](/docs/first-review) and the [FAQ](/docs/faq#do-i-need-github-auth).
 
@@ -45,7 +45,7 @@ Use `↑` / `↓` to highlight a type and `Enter` to continue, or click.
 
 1. Optionally write a top-level review summary (required for Request Changes).
 2. Press `⌘/Ctrl` + `Enter` or click submit.
-3. The extension posts the review and all current drafts as line comments via your stored token. What leaves the browser: [Privacy & data](/docs/privacy-and-data#what-the-extension-sends).
+3. The extension posts the review and all current drafts as line comments via your stored token. What leaves the browser: [Privacy & data](/docs/privacy-and-data#what-leaves-your-machine).
 
 Errors from GitHub (permissions, expired token, stale line anchors, SSO) surface in the modal with a short next step — see [Troubleshooting → GitHub connect and submit](/docs/troubleshooting#github-connect-and-submit) and [Private repos and SSO](/docs/troubleshooting#private-repos-and-sso).
 

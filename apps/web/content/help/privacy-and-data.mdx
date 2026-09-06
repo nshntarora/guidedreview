@@ -1,6 +1,7 @@
 export const toc = [
   { id: "what-leaves-your-machine", label: "What leaves your machine", level: 2 },
   { id: "what-stays-local", label: "What stays local", level: 2 },
+  { id: "clear-data-and-disconnect", label: "Clear data and disconnect", level: 2 },
   { id: "website-analytics", label: "Website analytics", level: 2 },
   { id: "full-policy", label: "Full policy", level: 2 },
 ];
@@ -21,7 +22,7 @@ Guided Review is designed so the product does not phone home. Diff content goes 
 
 **Extension:** The background service worker is the only context that holds the API key and performs cross-origin LLM requests. Line-comment drafts are **not** sent until you explicitly [submit](/docs/submit-review).
 
-**CLI:** The local server binds `127.0.0.1` only. LLM calls go from that process to your provider (or read a coding agent’s local key store). [Generate Prompt](/docs/local-review#notes) copies text to your clipboard — Guided Review does not upload it. There is no GitHub OAuth or submit path in the CLI.
+**CLI:** The local server binds `127.0.0.1` only. LLM calls go from that process to your provider (or read a coding agent’s local key store). [Generate Prompt](/docs/generate-prompt) copies text to your clipboard — Guided Review does not upload it. There is no GitHub OAuth or submit path in the CLI.
 
 ## What stays local
 
@@ -40,6 +41,30 @@ Closing the browser session clears session storage; local settings remain until 
 - Active review session and line notes in memory for the running server — gone when you Ctrl+C
 - Coding-agent keys stay in that agent’s own store when you use **Use my subscription**; Guided Review does not copy them into its config file
 
+## Clear data and disconnect
+
+**Chrome extension**
+
+| Goal                          | How                                                                                                |
+| ----------------------------- | -------------------------------------------------------------------------------------------------- |
+| Remove the API key            | Options → AI Provider → clear the key field → **Save**                                             |
+| Disconnect GitHub             | Options → GitHub → **Disconnect** / sign-out — [Connect GitHub](/docs/connect-github#disconnect)   |
+| Drop the active plan / drafts | Close the browser session (session storage clears), or start a fresh review after the session ends |
+| Uninstall                     | Remove the extension in `chrome://extensions`. That deletes extension storage for this profile     |
+
+Revoking the OAuth grant on GitHub’s side (Settings → Applications) also invalidates submit until you [connect again](/docs/connect-github).
+
+**CLI**
+
+| Goal                      | How                                                                                                              |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Clear a saved API key     | Settings → clear the key and save, or delete `apiKey` from the [config file](/docs/cli#config-file)              |
+| Stop using a coding agent | Turn off **Use my subscription** in Settings, or remove `codingAgent` from the config file                       |
+| End the session / notes   | Ctrl+C the CLI process — in-memory session and notes are gone                                                    |
+| Wipe saved prefs          | Delete `~/.config/guided-review/config.json` (or the path under `$XDG_CONFIG_HOME` / `GUIDED_REVIEW_CONFIG_DIR`) |
+
+Guided Review never held a cloud copy of these secrets to delete on a server — clearing local storage / the config file is the full wipe for product data.
+
 ## Website analytics
 
 The **marketing site** uses an analytics service for page views and a few CTA clicks (install / star). That data is handled by our analytics provider, [PostHog](https://posthog.com). Analytics runs on the website only — not through the extension or CLI. Neither product embeds analytics or tracks review activity. Detail: [Cookies](/cookies) · [Privacy Policy](/privacy).
@@ -49,3 +74,5 @@ The **marketing site** uses an analytics service for page views and a few CTA cl
 Legal detail lives in the [Privacy Policy](/privacy), [Terms](/terms), and [Cookies](/cookies) pages. If something here conflicts with those documents, the legal pages win.
 
 > **Questions?** Email [support@guidedreview.dev](mailto:support@guidedreview.dev). Product questions: [FAQ](/docs/faq). Setup problems: [Troubleshooting](/docs/troubleshooting).
+
+**Next.** [FAQ](/docs/faq) · [Configure AI provider](/docs/configure-provider) · [Connect GitHub](/docs/connect-github) · [CLI → Config file](/docs/cli#config-file)

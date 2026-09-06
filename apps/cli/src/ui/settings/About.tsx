@@ -2,7 +2,7 @@ import pkg from "../../../package.json";
 
 const SITE_URL = "https://guidedreview.dev";
 const DOCS_URL = `${SITE_URL}/docs`;
-const LOCAL_REVIEW_URL = `${DOCS_URL}/local-review`;
+const LOCAL_REVIEW_URL = `${DOCS_URL}/cli`;
 const CHROME_WEB_STORE_URL =
   "https://chromewebstore.google.com/detail/pdnnimoajmnjpccboemeomoeomancodd";
 const PRIVACY_POLICY_URL = `${SITE_URL}/privacy`;

@@ -3,13 +3,14 @@ export const toc = [
   { id: "what-it-compares", label: "What it compares", level: 2 },
   { id: "walk-the-plan", label: "Walk the plan", level: 2 },
   { id: "api-keys", label: "API keys", level: 2 },
+  { id: "config-file", label: "Config file", level: 2 },
   { id: "notes", label: "Notes", level: 2 },
   { id: "flags", label: "Flags", level: 2 },
 ];
 
-# Review local changes
+# CLI
 
-The [Chrome extension](/docs/install#chrome-extension) reviews GitHub pull requests. The **CLI** reviews a local branch, a commit, or your working tree with the same engine and walkthrough — before you open a PR, or when there isn’t one. It does not start an AI plan until you ask.
+The [Chrome extension](/docs/chrome-extension) reviews GitHub pull requests. The **CLI** reviews a local branch, a commit, or your working tree with the same engine and walkthrough — before you open a PR, or when there isn’t one. It does not start an AI plan until you ask. Choosing between hosts: [Install](/docs/install).
 
 <TocCard toc={toc} />
 
@@ -30,8 +31,6 @@ npx @guided-review/cli --base main --no-open
 The published package is `@guided-review/cli`. The binary is `guidedreview`. `npx guided-review` (unscoped, hyphen) is a different package. From this repo: `pnpm build:cli` then `pnpm review` (flags after `--`).
 
 The CLI binds `127.0.0.1:7182` (ASCII G+R), keeps a short terminal banner (URL, diff, last pull), and opens the UI unless you pass `--no-open`. Only real events (structure, scope change, errors) go to the log below. Override with `--port`. `--port 0` picks any free port. Ctrl+C stops the server.
-
-Install overview (extension + CLI): [Install Guided Review](/docs/install).
 
 ## What it compares
 
@@ -70,11 +69,38 @@ If more than one agent has a usable key, the CLI asks which to use each run (Ent
 
 No key still walks one unit per file. **Structure with AI** asks for a key.
 
-The local UI has **Settings** (header, `⌘/Ctrl` + `,`, or **Connect AI Provider** when no key is set). Paste an API key, or turn on **Use my subscription** to borrow Claude Code / Codex / Grok on this machine. A saved API key always wins. Subscription is unofficial and can break — a console key is the better option. Save writes `~/.config/guided-review/config.json` (or `$XDG_CONFIG_HOME` / `GUIDED_REVIEW_CONFIG_DIR`). Flags and env still win for that run.
+The local UI has **Settings** (header, `⌘/Ctrl` + `,`, or **Connect AI Provider** when no key is set). Paste an API key, or turn on **Use my subscription** to borrow Claude Code / Codex / Grok on this machine. A saved API key always wins. Subscription is unofficial and can break — a console key is the better option. Save writes the [config file](#config-file) below. Flags and env still win for that run.
+
+## Config file
+
+Saved prefs live at `~/.config/guided-review/config.json`, or:
+
+- `$XDG_CONFIG_HOME/guided-review/config.json` when `XDG_CONFIG_HOME` is set
+- `$GUIDED_REVIEW_CONFIG_DIR/config.json` when that env var is set (wins over XDG / home)
+
+Example shape (all fields optional — only what you saved appears):
+
+```json
+{
+  "provider": "anthropic",
+  "model": "claude-opus-4-8",
+  "apiKey": "sk-ant-…",
+  "codingAgent": "claude-code"
+}
+```
+
+| Field         | Meaning                                                               |
+| ------------- | --------------------------------------------------------------------- |
+| `provider`    | `anthropic` \| `openai` \| `grok`                                     |
+| `model`       | Provider model id (any id your account can call)                      |
+| `apiKey`      | Console API key for that provider                                     |
+| `codingAgent` | `claude-code` \| `codex` \| `grok` when using **Use my subscription** |
+
+Prefer editing through **Settings** in the UI. If you hand-edit the file, restart the CLI (or re-open Settings and save) so the running server picks up the change. Flags and env still override the file for that run. Clearing a key: remove `apiKey` from the file, or clear it in Settings — [Privacy & data → Clear data](/docs/privacy-and-data#clear-data-and-disconnect).
 
 ## Notes
 
-Line comments stay in the session. There is no GitHub submit from the CLI. **Generate Prompt** builds a coding-agent prompt from those notes and copies it — Guided Review does not send it anywhere. On a GitHub PR, use the extension to [draft and submit](/docs/leave-comments) instead.
+Line comments stay in the session. There is no GitHub submit from the CLI. **Generate Prompt** builds a coding-agent prompt from those notes and copies it — Guided Review does not send it anywhere. Full walkthrough: [Generate Prompt](/docs/generate-prompt). On a GitHub PR, use the extension to [draft and submit](/docs/leave-comments) instead.
 
 ## Flags
 
@@ -95,4 +121,4 @@ guidedreview [dir] --base main --port 8787 --no-open --staged --no-untracked --a
 
 Problems starting the server or structuring a plan: [Troubleshooting → CLI](/docs/troubleshooting#cli).
 
-**Next.** [Configure AI provider](/docs/configure-provider) · [How a review plan works](/docs/how-it-works) · [Keyboard shortcuts](/docs/keyboard-shortcuts#local-review)
+**Next.** [Chrome Extension](/docs/chrome-extension) · [Configure AI provider](/docs/configure-provider) · [Generate Prompt](/docs/generate-prompt) · [Reading the overlay](/docs/reading-the-overlay) · [Keyboard shortcuts](/docs/keyboard-shortcuts#local-review)

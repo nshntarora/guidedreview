@@ -16,7 +16,7 @@ npx @guided-review/cli
 
 Requires Node.js 22+. The binary is `guidedreview`. `npx guided-review` (unscoped, hyphen) is a different package.
 
-Site and docs: [guidedreview.dev](https://guidedreview.dev) · [Review local changes](https://guidedreview.dev/docs/local-review). For GitHub pull requests, use the [Chrome extension](https://chromewebstore.google.com/detail/pdnnimoajmnjpccboemeomoeomancodd).
+Site and docs: [guidedreview.dev](https://guidedreview.dev) · [CLI](https://guidedreview.dev/docs/cli). For GitHub pull requests, use the [Chrome extension](https://chromewebstore.google.com/detail/pdnnimoajmnjpccboemeomoeomancodd).
 
 - [Why?](#why)
 - [Quick start](#quick-start)
@@ -71,7 +71,7 @@ The walkthrough starts one unit per file. **Structure with AI** on the Change su
 | `--model <id>`    | Provider model id                       |
 | `--agent <id>`    | `claude-code` \| `codex` \| `grok`      |
 
-Full flag detail and keyboard shortcuts: [Review local changes](https://guidedreview.dev/docs/local-review) · [Keyboard shortcuts](https://guidedreview.dev/docs/keyboard-shortcuts#local-review).
+Full flag detail and keyboard shortcuts: [CLI](https://guidedreview.dev/docs/cli) · [Keyboard shortcuts](https://guidedreview.dev/docs/keyboard-shortcuts#local-review).
 
 ## Configuration
 

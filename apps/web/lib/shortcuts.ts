@@ -1,4 +1,4 @@
-import { CHROME_WEB_STORE_URL, GITHUB_REPO_URL } from "./links";
+import { CHROME_WEB_STORE_URL, GITHUB_REPO_URL, INSTALL_SECTION_HREF } from "./links";
 
 /**
  * Site CTA shortcuts. Keyboard-bound entries require the primary modifier
@@ -7,7 +7,7 @@ import { CHROME_WEB_STORE_URL, GITHUB_REPO_URL } from "./links";
 export const SITE_SHORTCUTS = {
   install: {
     key: "i",
-    href: "/#install",
+    href: INSTALL_SECTION_HREF,
     label: "Install",
   },
   extension: {
@@ -15,8 +15,18 @@ export const SITE_SHORTCUTS = {
     href: CHROME_WEB_STORE_URL,
     label: "Install the extension",
   },
+  /** Nav link to the CLI docs page. */
+  installCli: {
+    href: "/docs/cli",
+    label: "CLI",
+  },
+  /** Nav link to the Chrome extension docs page. */
+  installChrome: {
+    href: "/docs/chrome-extension",
+    label: "Chrome Extension",
+  },
   cli: {
-    href: "/docs/local-review",
+    href: "/docs/cli",
     label: "Try the CLI",
   },
   star: {

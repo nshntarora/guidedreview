@@ -1,0 +1,79 @@
+export const toc = [
+  { id: "layout", label: "Layout", level: 2 },
+  { id: "change-summary-and-pr-description", label: "Change summary and PR description", level: 2 },
+  { id: "review-units-sidebar", label: "Review units sidebar", level: 2 },
+  { id: "context-panel", label: "Context panel", level: 2 },
+  { id: "diff-pane", label: "Diff pane", level: 2 },
+  { id: "header-actions", label: "Header actions", level: 2 },
+];
+
+# Reading the overlay
+
+A map of the Guided Review UI once a review is open — so the sidebar, context column, and header stop feeling like three unrelated panels. Hands-on start: [Your first review](/docs/first-review) (extension) or [CLI](/docs/cli). How units are built: [How a review plan works](/docs/how-it-works).
+
+<TocCard toc={toc} />
+
+## Layout
+
+Left to right (desktop):
+
+1. **Sidebar** — ordered list of display units for this review.
+2. **Context panel** — title, guidance, errors, provider prompts, and the shortcut cheat sheet.
+3. **Diff pane** — the real hunks (or [image / binary](/docs/images-and-binaries) empty state) for the active unit.
+
+The **header** sits above: PR or local scope title, add/delete stats, and primary actions. The **footer** moves previous / next unit.
+
+Keyboard chords for the same surfaces: [Keyboard shortcuts](/docs/keyboard-shortcuts).
+
+## Change summary and PR description
+
+The first display step is synthetic — not an LLM unit:
+
+| Host                 | First step title   | What it shows                                         |
+| -------------------- | ------------------ | ----------------------------------------------------- |
+| **Chrome extension** | **PR Description** | PR title and body from the page                       |
+| **CLI**              | **Change summary** | Local scope context; **Structure with AI** lives here |
+
+On the CLI, the walkthrough starts **one unit per file** until you structure. **Structure with AI** on the Change summary card (or `⌘/Ctrl` + `I`) is the opt-in annotate call — [CLI → Walk the plan](/docs/cli#walk-the-plan).
+
+## Review units sidebar
+
+Labeled **Review Units**. Each row is a step: number, title, and optionally a **flask** icon when the unit is a tests step (production and tests stay separate — [How a review plan works](/docs/how-it-works#review-units)).
+
+- Click a row to jump.
+- `←` / `→` move previous / next; the active row stays scrolled into view.
+- While a plan is still streaming, skeleton rows may trail completed units.
+
+Without a provider, titles are mostly file paths. With AI, titles and short guidance come from the model — take them with a grain of salt ([FAQ](/docs/faq#does-the-ai-approve-prs)).
+
+## Context panel
+
+For the active unit the panel shows:
+
+- Unit title and commentary (empty on the no-provider file-per-unit fallback until you connect a key).
+- **Connect provider** / **Structure with AI** prompts when the plan is still a fallback or the CLI needs a key.
+- Errors with a Retry when annotate or fetch failed.
+- The same shortcut list as the docs page, always available while the overlay is open.
+
+On the PR description / Change summary step, the panel explains that unit instead of review commentary.
+
+## Diff pane
+
+Hunks for the files claimed by the active unit, mapped from the **real** parsed diff — the model never supplies those lines ([invariant](/docs/how-it-works#what-the-model-must-not-invent)).
+
+- Default view is **split**; toggle with `v` then `u` / `s`, or the toolbar. The extension remembers the choice.
+- [Search](/docs/keyboard-shortcuts#diff-search) (`⌘/Ctrl` + `F`) jumps to the unit that owns a match.
+- [Comment mode](/docs/leave-comments) (`c`) puts a line cursor on selectable lines in this pane.
+
+## Header actions
+
+| Control        | Extension                              | CLI                                           |
+| -------------- | -------------------------------------- | --------------------------------------------- |
+| Primary button | **Submit review** (`⌘/Ctrl` + `Enter`) | **Generate Prompt** (needs at least one note) |
+| Settings       | Options page (outside overlay)         | **Settings** (`⌘/Ctrl` + `,`)                 |
+| Scope          | —                                      | Diff-scope dropdown (`d`)                     |
+| Exit           | Confirm, then close                    | Confirm; session ends with the server         |
+
+Submit needs [GitHub connected](/docs/connect-github). Generate Prompt details: [Generate Prompt](/docs/generate-prompt).
+
+**Next.** [Your first review](/docs/first-review) · [Images & binary files](/docs/images-and-binaries) · [Leave line comments](/docs/leave-comments) · [Keyboard shortcuts](/docs/keyboard-shortcuts)

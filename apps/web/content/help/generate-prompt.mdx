@@ -1,0 +1,74 @@
+export const toc = [
+  { id: "when-to-use-it", label: "When to use it", level: 2 },
+  { id: "leave-notes-first", label: "Leave notes first", level: 2 },
+  { id: "open-generate-prompt", label: "Open Generate Prompt", level: 2 },
+  { id: "what-the-prompt-contains", label: "What the prompt contains", level: 2 },
+  { id: "copy-and-paste", label: "Copy and paste", level: 2 },
+  { id: "what-it-does-not-do", label: "What it does not do", level: 2 },
+];
+
+# Generate Prompt
+
+Turn [line notes](/docs/leave-comments) from a **local CLI** review into a coding-agent prompt you can paste yourself. Guided Review builds the text and copies it — it does not send the prompt to an agent or to GitHub.
+
+On a GitHub PR, use the [Chrome extension](/docs/chrome-extension) to [draft and submit](/docs/submit-review) instead.
+
+<TocCard toc={toc} />
+
+## When to use it
+
+Use **Generate Prompt** when you reviewed a local branch, commit, or working tree with the [CLI](/docs/cli) and want a coding agent (Claude Code, Codex, Grok, etc.) to apply the feedback you left as notes.
+
+Typical loop:
+
+1. Run `npx @guided-review/cli` and [walk the plan](/docs/cli#walk-the-plan).
+2. [Draft notes](/docs/leave-comments) on the lines that need fixes or questions.
+3. Generate Prompt → paste into your agent → iterate.
+
+## Leave notes first
+
+Generate Prompt is built only from the notes in the current session. With **zero notes**, the header button stays disabled and `⌘/Ctrl` + `Enter` does nothing useful — leave at least one draft first ([comment mode](/docs/keyboard-shortcuts#comment-mode)).
+
+Notes live in memory with the running CLI server. Stopping the process (Ctrl+C) clears them ([Troubleshooting → Session and resume](/docs/troubleshooting#session-and-resume)).
+
+## Open Generate Prompt
+
+In the local UI:
+
+1. Click **Generate Prompt** in the header (same place the extension shows **Submit review**), or press `⌘/Ctrl` + `Enter` while not typing in the composer.
+2. A dialog shows the full prompt text.
+
+Shortcut context: [Keyboard shortcuts → Local review](/docs/keyboard-shortcuts#local-review).
+
+## What the prompt contains
+
+The prompt is plain Markdown produced by the shared formatter — not another LLM call. For each note it includes:
+
+| Piece         | Source                                     |
+| ------------- | ------------------------------------------ |
+| File path     | The file you commented on                  |
+| Line range    | Single line or multi-line selection        |
+| Selected code | The diff lines under the selection, if any |
+| Feedback      | The note body you wrote                    |
+
+The header asks the agent to fix or resolve the feedback (and answer questions when a note is a question). Walking units and drafting notes do **not** call your provider again for this step ([Configure AI provider → Cost](/docs/configure-provider#cost-and-usage)).
+
+## Copy and paste
+
+1. Review the text in the dialog.
+2. Copy with the dialog’s copy control, or `⌘/Ctrl` + `Enter` while the modal is open.
+3. Paste into your coding agent’s chat or prompt input.
+4. Close with `Esc` when done.
+
+Nothing leaves your machine through Guided Review for this path — clipboard only ([Privacy & data](/docs/privacy-and-data)).
+
+## What it does not do
+
+- Does **not** post a GitHub review (that’s the [extension submit](/docs/submit-review) path).
+- Does **not** upload the prompt to Guided Review or to your AI provider.
+- Does **not** invent notes — empty session means no prompt.
+- Does **not** replace reading the code; it packages **your** feedback for an agent.
+
+> **Tip.** Prefer notes as you walk unit by unit, then Generate Prompt once — same habit as drafting on a PR before submit.
+
+**Next.** [CLI](/docs/cli) · [Leave line comments](/docs/leave-comments) · [Keyboard shortcuts](/docs/keyboard-shortcuts#local-review) · [Privacy & data](/docs/privacy-and-data)

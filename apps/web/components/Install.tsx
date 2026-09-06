@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useState, type ComponentType, type SVGProps } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+  type ComponentType,
+  type SVGProps,
+} from "react";
 import { buttonClassName, cn, Kbd } from "@guided-review/ui";
 import { InstallExtensionButton } from "./CtaButtons";
 import { ChromeIcon, TerminalIcon } from "./icons";
@@ -12,6 +19,11 @@ const CHROME_TRIGGER_SHOT = "/chrome-extension-trigger.png";
 
 type InstallTab = "cli" | "chrome";
 
+const TAB_HASH: Record<InstallTab, string> = {
+  cli: "install-cli",
+  chrome: "install-chrome",
+};
+
 const tabs: {
   id: InstallTab;
   label: string;
@@ -19,7 +31,7 @@ const tabs: {
   shortcut: string;
 }[] = [
   { id: "cli", label: "CLI", Icon: TerminalIcon, shortcut: "1" },
-  { id: "chrome", label: "Chrome extension", Icon: ChromeIcon, shortcut: "2" },
+  { id: "chrome", label: "Chrome Extension", Icon: ChromeIcon, shortcut: "2" },
 ];
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -29,8 +41,61 @@ function isEditableTarget(target: EventTarget | null): boolean {
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
 }
 
+/** Map location hash → install tab. `#install` defaults to CLI. */
+function tabFromHash(hash: string): InstallTab | null {
+  const id = hash.startsWith("#") ? hash.slice(1) : hash;
+  if (id === TAB_HASH.cli || id === "install") return "cli";
+  if (id === TAB_HASH.chrome) return "chrome";
+  return null;
+}
+
 export function Install() {
   const [active, setActive] = useState<InstallTab>("cli");
+
+  const selectTab = useCallback((id: InstallTab, syncUrl = true) => {
+    setActive(id);
+    if (!syncUrl || typeof window === "undefined") return;
+    const next = `#${TAB_HASH[id]}`;
+    if (window.location.hash !== next) {
+      history.pushState(null, "", next);
+    }
+  }, []);
+
+  // Keep the active tab in sync with the URL hash (nav deep links, back/forward).
+  useLayoutEffect(() => {
+    function syncFromHash() {
+      const tab = tabFromHash(window.location.hash);
+      if (tab) setActive(tab);
+    }
+
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    window.addEventListener("popstate", syncFromHash);
+
+    // Next.js <Link href="/#…"> and history.pushState update the hash without
+    // firing hashchange. Patch so header deep links still select the right tab.
+    const pushState = history.pushState.bind(history);
+    const replaceState = history.replaceState.bind(history);
+    function withHashNotify(method: typeof history.pushState): typeof history.pushState {
+      return (data, unused, url) => {
+        const prev = window.location.hash;
+        const result = method(data, unused, url);
+        if (window.location.hash !== prev) {
+          window.dispatchEvent(new Event("hashchange"));
+        }
+        return result;
+      };
+    }
+    history.pushState = withHashNotify(pushState);
+    history.replaceState = withHashNotify(replaceState);
+
+    return () => {
+      window.removeEventListener("hashchange", syncFromHash);
+      window.removeEventListener("popstate", syncFromHash);
+      history.pushState = pushState;
+      history.replaceState = replaceState;
+    };
+  }, []);
 
   // 1 → CLI tab, 2 → Chrome extension tab.
   useEffect(() => {
@@ -44,12 +109,12 @@ export function Install() {
       if (!match) return;
 
       event.preventDefault();
-      setActive(match.id);
+      selectTab(match.id);
     }
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [selectTab]);
 
   return (
     <section id="install" className="relative px-4 py-16 sm:px-6 sm:py-28">
@@ -72,22 +137,28 @@ export function Install() {
               {tabs.map((tab) => {
                 const selected = active === tab.id;
                 const { Icon } = tab;
+                const hashId = TAB_HASH[tab.id];
                 return (
-                  <button
+                  <a
                     key={tab.id}
-                    type="button"
+                    href={`#${hashId}`}
                     role="tab"
-                    id={`install-tab-${tab.id}`}
+                    id={hashId}
                     aria-selected={selected}
                     aria-controls={`install-panel-${tab.id}`}
                     aria-keyshortcuts={tab.shortcut}
                     tabIndex={selected ? 0 : -1}
-                    onClick={() => setActive(tab.id)}
+                    onClick={(event) => {
+                      // Same-page hash links already update the URL; keep React state in sync
+                      // without a full scroll jump when the tab is already nearby.
+                      event.preventDefault();
+                      selectTab(tab.id);
+                    }}
                     className={cn(
-                      "-mb-px inline-flex items-center gap-2 border-b-2 px-3 py-3 font-mono text-sm transition-colors sm:px-4 sm:text-base",
+                      "-mb-px inline-flex items-center gap-2 border-b-2 px-3 py-3 font-mono text-sm no-underline transition-colors sm:px-4 sm:text-base",
                       selected
                         ? "border-primary text-foreground"
-                        : "border-transparent text-muted hover:text-foreground",
+                        : "border-transparent text-muted hover:border-transparent hover:text-foreground",
                     )}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
@@ -95,7 +166,7 @@ export function Install() {
                     <Kbd aria-hidden="true" className="max-sm:hidden">
                       {tab.shortcut}
                     </Kbd>
-                  </button>
+                  </a>
                 );
               })}
             </div>
@@ -105,7 +176,7 @@ export function Install() {
                 <div
                   role="tabpanel"
                   id="install-panel-cli"
-                  aria-labelledby="install-tab-cli"
+                  aria-labelledby={TAB_HASH.cli}
                   className="flex flex-col gap-8 md:flex-row md:items-center md:gap-10"
                 >
                   <div className="min-w-0 md:flex-1">
@@ -123,7 +194,7 @@ export function Install() {
                       <InstallCommands />
                     </div>
                     <p className="mt-6 mb-0 text-base text-muted">
-                      Full flags and scopes: <a href="/docs/local-review">Review local changes →</a>
+                      Full flags and scopes: <a href="/docs/cli">CLI docs →</a>
                     </p>
                   </div>
                   <InstallScreenshot
@@ -138,12 +209,12 @@ export function Install() {
                 <div
                   role="tabpanel"
                   id="install-panel-chrome"
-                  aria-labelledby="install-tab-chrome"
+                  aria-labelledby={TAB_HASH.chrome}
                   className="flex flex-col gap-8 md:flex-row md:items-center md:gap-10"
                 >
                   <div className="min-w-0 md:flex-1">
                     <h3 className="m-0 text-2xl font-bold tracking-tight font-brand sm:text-3xl">
-                      Chrome extension
+                      Chrome Extension
                     </h3>
                     <p className="mt-3 mb-0 text-lg leading-relaxed text-muted sm:text-xl">
                       When you're reviewing pull requests on GitHub
@@ -172,7 +243,7 @@ export function Install() {
                     <div className="mt-6 flex flex-wrap items-center gap-3">
                       <InstallExtensionButton location="install" size="md" />
                       <a
-                        href="/docs/install#chrome-extension"
+                        href="/docs/chrome-extension"
                         className={buttonClassName({ variant: "secondary", size: "md" })}
                       >
                         Docs

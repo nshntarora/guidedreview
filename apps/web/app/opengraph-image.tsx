@@ -4,7 +4,7 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "nodejs";
 export const dynamic = "force-static";
-export const alt = "Guided Review — a better way to review AI generated code";
+export const alt = "Guided Review — review AI-generated code before you sign your name to it";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -40,14 +40,23 @@ export default async function OpengraphImage() {
           display: "flex",
           flexWrap: "wrap",
           marginTop: 48,
-          fontSize: 64,
+          fontSize: 56,
           fontWeight: 700,
-          lineHeight: 1.15,
-          maxWidth: 900,
+          lineHeight: 1.2,
+          maxWidth: 980,
         }}
       >
-        <span>A better way for humans to review&nbsp;</span>
-        <span style={{ color: ACCENT }}>AI generated code</span>
+        <span
+          style={{
+            background: ACCENT,
+            color: BG,
+            borderRadius: 8,
+            padding: "4px 12px",
+          }}
+        >
+          Review AI-generated code
+        </span>
+        <span style={{ marginLeft: 12 }}>before you sign your name to it</span>
       </div>
       <div style={{ marginTop: 32, fontSize: 30, color: MUTED, maxWidth: 820 }}>
         Free · Open source · Bring your own LLM key

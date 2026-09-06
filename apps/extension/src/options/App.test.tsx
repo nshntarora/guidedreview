@@ -31,7 +31,7 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "Local review" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "CLI" })).toHaveAttribute(
       "href",
-      "https://guidedreview.dev/docs/local-review",
+      "https://guidedreview.dev/docs/cli",
     );
     expect(screen.queryByRole("combobox", { name: /provider/i })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("aria-current", "page");

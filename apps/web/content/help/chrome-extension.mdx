@@ -1,0 +1,78 @@
+import { CHROME_WEB_STORE_URL } from "@web/lib/links";
+
+export const toc = [
+  { id: "install", label: "Install", level: 2 },
+  { id: "chrome-web-store", label: "Chrome Web Store", level: 3 },
+  { id: "after-install", label: "After install", level: 3 },
+  { id: "options", label: "Options", level: 2 },
+  { id: "start-a-review", label: "Start a review", level: 2 },
+  { id: "what-else", label: "What else", level: 2 },
+];
+
+# Chrome Extension
+
+Guided Review on `github.com` pull requests. The extension injects **Start Guided Review**, builds a plan from the real PR diff, and walks it in a Shadow DOM overlay — keyboard-first, with optional line comments and submit. Choosing between hosts: [Install](/docs/install). For local git work before a PR exists, use the [CLI](/docs/cli).
+
+<TocCard toc={toc} />
+
+## Install
+
+Guided Review runs as a Chrome Manifest V3 extension on `github.com` pull requests.
+
+### Chrome Web Store
+
+1. Open the <a href={CHROME_WEB_STORE_URL}>Guided Review listing</a> on the Chrome Web Store.
+2. Click **Add to Chrome** and confirm.
+3. Pin the extension from the puzzle-piece menu so the toolbar icon stays visible — unpinned extensions are easy to forget.
+
+> **Site shortcuts.** On [guidedreview.dev](https://guidedreview.dev), `⌘/Ctrl` + `E` opens the Chrome Web Store listing; `⌘/Ctrl` + `I` jumps to the Install section — see [Keyboard shortcuts](/docs/keyboard-shortcuts#marketing-site).
+
+### After install
+
+Chrome opens a short **welcome** page on first install (pin → connect provider → open a PR). You can also:
+
+1. Open the extension **Options** page (right-click the toolbar icon → Options, or open it from `chrome://extensions`).
+2. [Configure an AI provider](/docs/configure-provider) and save your API key (optional for a [file-by-file walk](/docs/how-it-works#without-a-provider); required for clustering and summaries).
+3. Optionally [connect GitHub](/docs/connect-github) if you want to [submit reviews](/docs/submit-review) from Guided Review.
+4. Open a PR and follow [Your first review](/docs/first-review).
+
+Keys and tokens stay on your machine — details in [Privacy & data](/docs/privacy-and-data). If the **Start Guided Review** button never appears, see [Troubleshooting](/docs/troubleshooting#no-start-guided-review-button).
+
+## Options
+
+Open Options from the toolbar icon (right-click → Options) or from the extension card on `chrome://extensions`. Three cards matter:
+
+| Section         | What you set                                                                                                                                   |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **GitHub**      | Optional device OAuth for [submit](/docs/submit-review) — [Connect GitHub](/docs/connect-github)                                               |
+| **AI Provider** | Provider, model, API key — Save, then **Test Connection** — [Configure AI provider](/docs/configure-provider)                                  |
+| **Review**      | **Automatically open on Files changed** — when on, opening a PR’s Files changed / Changes tab starts or resumes Guided Review (off by default) |
+
+Keys go to `chrome.storage.local` on this browser profile only (not synced). Diff view preference (unified / split) is also stored locally when you toggle it in the overlay — [Keyboard shortcuts → Diff view](/docs/keyboard-shortcuts#diff-view). Storage map: [Configure AI provider → Where settings live](/docs/configure-provider#where-settings-live).
+
+Clearing keys, disconnecting GitHub, or uninstalling: [Privacy & data → Clear data](/docs/privacy-and-data#clear-data-and-disconnect).
+
+## Start a review
+
+Once you’re on a PR tab:
+
+- Click **Start Guided Review** on the page.
+- Click the **toolbar icon** — on a PR it starts (or resumes) the review; off a PR it tells you to open one.
+- Enable **Automatically open on Files changed** in Options if you want that tab to open Guided Review for you.
+
+Full walkthrough: [Your first review](/docs/first-review).
+
+## What else
+
+| Topic                                      | Page                                                                            |
+| ------------------------------------------ | ------------------------------------------------------------------------------- |
+| Walk units, search, resume                 | [Your first review](/docs/first-review)                                         |
+| Overlay layout (sidebar, context, header)  | [Reading the overlay](/docs/reading-the-overlay)                                |
+| Images and binary / elided files           | [Images & binary files](/docs/images-and-binaries)                              |
+| API keys and models                        | [Configure AI provider](/docs/configure-provider)                               |
+| Submit Comment / Approve / Request Changes | [Connect GitHub](/docs/connect-github) · [Submit a review](/docs/submit-review) |
+| Draft line comments                        | [Leave line comments](/docs/leave-comments)                                     |
+| How the plan is built                      | [How a review plan works](/docs/how-it-works)                                   |
+| Keyboard chords                            | [Keyboard shortcuts](/docs/keyboard-shortcuts)                                  |
+
+**Next.** [Your first review](/docs/first-review) · [Reading the overlay](/docs/reading-the-overlay) · [CLI](/docs/cli) · [Configure AI provider](/docs/configure-provider)

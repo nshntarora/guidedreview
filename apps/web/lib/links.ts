@@ -10,3 +10,8 @@ export const NPM_PACKAGE_URL = "https://www.npmjs.com/package/@guided-review/cli
 
 /** One-shot install + run (no global install). Prefer this in docs and marketing. */
 export const CLI_INSTALL_COMMAND = "npx @guided-review/cli";
+
+/** Homepage Install section — deep links to a specific tab. */
+export const INSTALL_SECTION_HREF = "/#install";
+export const INSTALL_CLI_HREF = "/#install-cli";
+export const INSTALL_CHROME_HREF = "/#install-chrome";

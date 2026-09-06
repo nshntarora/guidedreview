@@ -45,29 +45,29 @@ export const DOCS_PAGES: DocsPage[] = [
   {
     slug: "install",
     section: "Getting Started",
-    title: "Install Guided Review",
+    title: "Install",
     description:
-      "Install the Chrome extension from the Web Store (or load unpacked), or run the CLI with npx for local git reviews.",
-    blurb: "Chrome extension or CLI (npx @guided-review/cli)",
+      "Install Guided Review — Chrome extension for GitHub PRs and CLI for local diffs — then jump to the detailed app docs.",
+    blurb: "CLI or Chrome extension — same engine, pick a host",
     load: () => import("@web/content/help/install.mdx"),
   },
   {
-    slug: "first-review",
-    section: "Getting Started",
-    title: "Your first review",
+    slug: "chrome-extension",
+    section: "Apps",
+    title: "Chrome Extension",
     description:
-      "Open a GitHub PR, start Guided Review from the button or toolbar, walk units, search the diff, and leave comments.",
-    blurb: "from a PR page to walking and searching units",
-    load: () => import("@web/content/help/first-review.mdx"),
+      "Install the Guided Review Chrome extension from the Web Store, then start a review on any github.com pull request.",
+    blurb: "Install from the Web Store, then Start Guided Review on a PR",
+    load: () => import("@web/content/help/chrome-extension.mdx"),
   },
   {
-    slug: "local-review",
-    section: "Getting Started",
-    title: "Review local changes",
+    slug: "cli",
+    section: "Apps",
+    title: "CLI",
     description:
       "Run Guided Review from your terminal on a local branch, commit, or working tree. The CLI serves the same walkthrough in the browser.",
-    blurb: "CLI for local branch, commit, or working-tree diffs",
-    load: () => import("@web/content/help/local-review.mdx"),
+    blurb: "npx @guided-review/cli for local branch, commit, or working-tree diffs",
+    load: () => import("@web/content/help/cli.mdx"),
   },
   {
     slug: "configure-provider",
@@ -88,6 +88,24 @@ export const DOCS_PAGES: DocsPage[] = [
     load: () => import("@web/content/help/connect-github.mdx"),
   },
   {
+    slug: "first-review",
+    section: "Product",
+    title: "Your first review",
+    description:
+      "Open a GitHub PR, start Guided Review from the button or toolbar, walk units, search the diff, and leave comments.",
+    blurb: "from a PR page to walking and searching units",
+    load: () => import("@web/content/help/first-review.mdx"),
+  },
+  {
+    slug: "reading-the-overlay",
+    section: "Product",
+    title: "Reading the overlay",
+    description:
+      "Sidebar, context panel, diff pane, Change summary vs PR Description, and header actions in the Guided Review overlay.",
+    blurb: "layout of the review UI for extension and CLI",
+    load: () => import("@web/content/help/reading-the-overlay.mdx"),
+  },
+  {
     slug: "how-it-works",
     section: "Product",
     title: "How a review plan works",
@@ -97,6 +115,15 @@ export const DOCS_PAGES: DocsPage[] = [
     load: () => import("@web/content/help/how-it-works.mdx"),
   },
   {
+    slug: "images-and-binaries",
+    section: "Product",
+    title: "Images & binary files",
+    description:
+      "How Guided Review shows image previews, binary or elided files, and what that means for comments and diff search.",
+    blurb: "image previews, binary empty state, comments and search",
+    load: () => import("@web/content/help/images-and-binaries.mdx"),
+  },
+  {
     slug: "leave-comments",
     section: "Product",
     title: "Leave line comments",
@@ -104,6 +131,15 @@ export const DOCS_PAGES: DocsPage[] = [
       "Draft multi-line comments while you walk the review plan — submit from the extension, or Generate Prompt from the CLI.",
     blurb: "comment mode, drafts, multi-line ranges",
     load: () => import("@web/content/help/leave-comments.mdx"),
+  },
+  {
+    slug: "generate-prompt",
+    section: "Product",
+    title: "Generate Prompt",
+    description:
+      "Turn local CLI line notes into a coding-agent prompt you copy yourself — nothing is uploaded by Guided Review.",
+    blurb: "clipboard prompt from local notes for a coding agent",
+    load: () => import("@web/content/help/generate-prompt.mdx"),
   },
   {
     slug: "submit-review",
@@ -146,8 +182,8 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Trust",
     title: "Privacy & data",
     description:
-      "What the extension and CLI send to GitHub and your AI provider, what stays local, and website analytics.",
-    blurb: "what leaves your machine and what doesn’t",
+      "What the extension and CLI send to GitHub and your AI provider, what stays local, how to clear keys or disconnect, and website analytics.",
+    blurb: "what leaves your machine, what stays, and how to clear it",
     load: () => import("@web/content/help/privacy-and-data.mdx"),
   },
 ];

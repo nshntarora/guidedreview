@@ -1,6 +1,6 @@
 const SITE_URL = "https://guidedreview.dev";
 const DOCS_URL = `${SITE_URL}/docs`;
-const LOCAL_REVIEW_URL = `${DOCS_URL}/local-review`;
+const LOCAL_REVIEW_URL = `${DOCS_URL}/cli`;
 const PRIVACY_POLICY_URL = `${SITE_URL}/privacy`;
 const TERMS_URL = `${SITE_URL}/terms`;
 const GITHUB_REPO_URL = "https://github.com/nshntarora/guidedreview";

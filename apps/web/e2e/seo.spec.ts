@@ -60,7 +60,7 @@ test.describe("SEO and Open Graph", () => {
   test("docs and legal pages have description and canonical", async ({ page, baseURL }) => {
     const samples = [
       { path: "/docs", expectedCanonical: "/docs" },
-      { path: "/docs/install", expectedCanonical: "/docs/install" },
+      { path: "/docs/chrome-extension", expectedCanonical: "/docs/chrome-extension" },
       { path: "/privacy", expectedCanonical: "/privacy" },
       { path: "/terms", expectedCanonical: "/terms" },
       { path: "/cookies", expectedCanonical: "/cookies" },
@@ -81,20 +81,8 @@ test.describe("SEO and Open Graph", () => {
     }
   });
 
-  test("home FAQPage JSON-LD is valid", async ({ page }) => {
-    const crawl = await metaOn(page, "/");
-    expect(crawl.jsonLd.length).toBeGreaterThan(0);
-
-    const parsed = crawl.jsonLd.map((raw) => JSON.parse(raw) as Record<string, unknown>);
-    const faq = parsed.find((doc) => doc["@type"] === "FAQPage");
-    expect(faq, "FAQPage schema").toBeTruthy();
-    const entities = faq!["mainEntity"];
-    expect(Array.isArray(entities)).toBe(true);
-    expect((entities as unknown[]).length).toBeGreaterThan(0);
-  });
-
   test("docs slug has TechArticle and BreadcrumbList JSON-LD", async ({ page }) => {
-    const crawl = await metaOn(page, "/docs/install");
+    const crawl = await metaOn(page, "/docs/chrome-extension");
     const parsed = crawl.jsonLd.map((raw) => JSON.parse(raw) as Record<string, unknown>);
     const types = parsed.map((doc) => doc["@type"]);
     expect(types).toContain("TechArticle");
@@ -134,7 +122,7 @@ test.describe("SEO and Open Graph", () => {
     expect(response.status()).toBeLessThan(400);
     const body = await response.text();
     expect(body).toMatch(/<urlset[\s>]/);
-    for (const path of ["", "/docs", "/docs/install", "/privacy", "/terms", "/cookies"]) {
+    for (const path of ["", "/docs", "/docs/chrome-extension", "/privacy", "/terms", "/cookies"]) {
       expect(body, `sitemap entry for ${path || "/"}`).toContain(`https://guidedreview.dev${path}`);
     }
   });

@@ -2,7 +2,7 @@ export const toc = [
   { id: "diff-to-plan", label: "Diff → plan", level: 2 },
   { id: "review-units", label: "Review units", level: 2 },
   { id: "without-a-provider", label: "Without a provider", level: 2 },
-  { id: "chunking-large-prs", label: "Chunking large diffs", level: 2 },
+  { id: "chunking-large-diffs", label: "Chunking large diffs", level: 2 },
   { id: "streaming-and-validation", label: "Streaming and validation", level: 2 },
   { id: "what-the-model-must-not-invent", label: "What the model must not invent", level: 2 },
 ];
@@ -11,7 +11,7 @@ export const toc = [
 
 A short tour of the pipeline behind Guided Review. The **Chrome extension** and the **CLI** share this engine in `@guided-review/core`; only the host differs (GitHub PR page vs local git + localhost UI).
 
-Hands-on paths: [Your first review](/docs/first-review) (extension) · [Review local changes](/docs/local-review) (CLI). Provider setup: [Configure AI provider](/docs/configure-provider).
+Hands-on paths: [Your first review](/docs/first-review) (extension) · [CLI](/docs/cli). Provider setup: [Configure AI provider](/docs/configure-provider).
 
 <TocCard toc={toc} />
 
@@ -31,7 +31,7 @@ A **review unit** is a logical step in the plan: a title, intent context, and on
 
 Units aim for a consistent structure on the same diff: same hunk partition, order, and change-vs-tests kind. Titles and wording may still vary slightly across models.
 
-On a GitHub PR, the first display step is a synthetic **PR description** unit built from page context, then the plan’s units. The CLI starts from the selected local scope (no PR description step). You step through units with the footer or [keyboard shortcuts](/docs/keyboard-shortcuts).
+On a GitHub PR, the first display step is a synthetic **PR Description** unit built from page context, then the plan’s units. On the CLI, the first step is **Change summary** (where **Structure with AI** lives) for the selected local scope. Overlay layout: [Reading the overlay](/docs/reading-the-overlay). You step through units with the footer or [keyboard shortcuts](/docs/keyboard-shortcuts).
 
 Summaries are optional guidance — you still judge the code ([FAQ](/docs/faq#does-the-ai-approve-prs)).
 
@@ -42,7 +42,7 @@ If you start a review before [configuring an API key](/docs/configure-provider),
 - The diff is parsed and shown as usual.
 - The plan is **one unit per changed file**, in the order files appear in the diff (tests still get the flask kind when the path looks like a test file).
 - Unit titles are file paths; commentary is empty so the context panel can prompt you to connect a provider instead of inventing text.
-- You can still navigate and [search the diff](/docs/keyboard-shortcuts#diff-search). On the extension you can also [draft comments](/docs/leave-comments) and [submit](/docs/submit-review) once GitHub is connected. On the CLI you can leave notes and [Generate Prompt](/docs/local-review#notes).
+- You can still navigate and [search the diff](/docs/keyboard-shortcuts#diff-search). On the extension you can also [draft comments](/docs/leave-comments) and [submit](/docs/submit-review) once GitHub is connected. On the CLI you can leave notes and [Generate Prompt](/docs/cli#notes).
 
 Connecting a provider and starting again (or **Structure with AI** / retry when prompted) replaces that fallback with an AI-clustered plan for the current diff.
 
@@ -68,4 +68,4 @@ As text deltas arrive, complete units are extracted and validated. Progressive u
 
 If a unit only references invalid hunks after cleanup, it won’t be shown. That keeps the overlay honest even when the model is imperfect.
 
-**Next.** [Your first review](/docs/first-review) · [Review local changes](/docs/local-review) · [Leave line comments](/docs/leave-comments) · [Keyboard shortcuts](/docs/keyboard-shortcuts) · [Privacy & data](/docs/privacy-and-data)
+**Next.** [Your first review](/docs/first-review) · [Reading the overlay](/docs/reading-the-overlay) · [Images & binary files](/docs/images-and-binaries) · [Leave line comments](/docs/leave-comments) · [Privacy & data](/docs/privacy-and-data)

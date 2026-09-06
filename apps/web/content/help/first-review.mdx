@@ -9,7 +9,7 @@ export const toc = [
 
 # Your first review
 
-From a normal GitHub PR page to a structured walkthrough in a few clicks. This page is the **Chrome extension** path. For a local branch, commit, or working tree, use the [CLI](/docs/local-review) instead. If the extension isn’t installed yet, start with [Install](/docs/install).
+From a normal GitHub PR page to a structured walkthrough in a few clicks. This page is the **Chrome extension** path. For a local branch, commit, or working tree, use the [CLI](/docs/cli) instead. If the extension isn’t installed yet, start with [Chrome Extension](/docs/chrome-extension).
 
 <TocCard toc={toc} />
 
@@ -24,7 +24,7 @@ No button? See [Troubleshooting](/docs/troubleshooting#no-start-guided-review-bu
 You can open the overlay any of these ways:
 
 1. Click **Start Guided Review** on the PR page.
-2. Click the **Guided Review toolbar icon** while a PR tab is active (pin it from Chrome’s puzzle-piece menu so it stays visible — [Install](/docs/install#after-install)).
+2. Click the **Guided Review toolbar icon** while a PR tab is active (pin it from Chrome’s puzzle-piece menu so it stays visible — [Chrome Extension](/docs/chrome-extension#after-install)).
 3. Optionally enable **Automatically open on Files changed** in Options so the review starts (or resumes) when you open that tab (classic `/files` or the newer `/changes` path). Off by default.
 
 Then:
@@ -38,12 +38,12 @@ Connection failures after a key is set: [Troubleshooting](/docs/troubleshooting#
 
 ## Walk the plan
 
-The overlay shows **display units** in order: a synthetic PR description step first, then each planned unit. How units are built and validated is covered in [How a review plan works](/docs/how-it-works).
+The overlay shows **display units** in order: a synthetic PR description step first, then each planned unit. UI map (sidebar, context, header): [Reading the overlay](/docs/reading-the-overlay). How units are built and validated: [How a review plan works](/docs/how-it-works).
 
 For each unit you can:
 
 - Read the unit’s title and guidance (take summaries with a grain of salt — see the [FAQ](/docs/faq#does-the-ai-approve-prs))
-- See the linked hunks from the real diff (default **split** view; switch with `v u` / `v s`, or the toolbar — choice is remembered)
+- See the linked hunks from the real diff (default **split** view; switch with `v u` / `v s`, or the toolbar — choice is remembered). [Images and binary files](/docs/images-and-binaries) use a preview or empty state instead of a line patch.
 - Move next / previous with the footer or [keyboard shortcuts](/docs/keyboard-shortcuts)
 
 With AI, the model chooses order and commentary; it does **not** supply the code lines you see. Hunk ids that don’t match the parsed diff are dropped. Without AI, order is file order and commentary is empty until you connect a provider.
@@ -67,4 +67,4 @@ Sessions (diff, plan, PR context, current step, drafts) are stored in `chrome.st
 
 If something fails mid-flight, see [Troubleshooting](/docs/troubleshooting).
 
-**Next.** [Review local changes](/docs/local-review) · [How a review plan works](/docs/how-it-works) · [Leave line comments](/docs/leave-comments)
+**Next.** [Reading the overlay](/docs/reading-the-overlay) · [CLI](/docs/cli) · [How a review plan works](/docs/how-it-works) · [Leave line comments](/docs/leave-comments)

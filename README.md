@@ -85,7 +85,7 @@ npx @guided-review/cli --base main --no-open
 npx @guided-review/cli --staged --agent claude-code
 ```
 
-The binary is `guidedreview`. Full detail: [Review local changes](https://guidedreview.dev/docs/local-review) · [`apps/cli/README.md`](apps/cli/README.md).
+The binary is `guidedreview`. Full detail: [CLI](https://guidedreview.dev/docs/cli) · [`apps/cli/README.md`](apps/cli/README.md).
 
 From this repo after `pnpm install`:
 
@@ -144,14 +144,14 @@ Docs: [Your first review](https://guidedreview.dev/docs/first-review) · [Keyboa
 
 **On local changes** — run the CLI in a git repo, pick the scope (branch vs base, uncommitted, unstaged, or a commit), then **Structure with AI** when you want a clustered plan. Line comments stay in the session; there is no GitHub submit. **Generate Prompt** builds a coding-agent prompt from those notes and copies it — Guided Review does not send it anywhere.
 
-Docs: [Review local changes](https://guidedreview.dev/docs/local-review).
+Docs: [CLI](https://guidedreview.dev/docs/cli).
 
 ## Configuration
 
 **LLM provider** — Anthropic, OpenAI, or Grok, with your own API key.
 
 - **Extension** — Options page; keys live in `chrome.storage.local` on your machine. See [Configure AI provider](https://guidedreview.dev/docs/configure-provider).
-- **CLI** — Settings in the local UI, env vars (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `XAI_API_KEY` or `GROK_API_KEY`), `~/.config/guided-review/config.json`, or a coding agent already on the machine (Claude Code, Codex, Grok). See [Review local changes](https://guidedreview.dev/docs/local-review).
+- **CLI** — Settings in the local UI, env vars (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `XAI_API_KEY` or `GROK_API_KEY`), `~/.config/guided-review/config.json`, or a coding agent already on the machine (Claude Code, Codex, Grok). See [CLI](https://guidedreview.dev/docs/cli).
 
 **GitHub OAuth (extension, optional)** — needed only to submit reviews from the overlay. Create an OAuth App with **Device Flow** enabled, then at the monorepo root:
 

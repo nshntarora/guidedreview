@@ -1,0 +1,48 @@
+export const toc = [
+  { id: "image-previews", label: "Image previews", level: 2 },
+  { id: "binary-and-elided-files", label: "Binary and elided files", level: 2 },
+  { id: "comments-and-search", label: "Comments and search", level: 2 },
+  { id: "how-the-plan-treats-them", label: "How the plan treats them", level: 2 },
+];
+
+# Images & binary files
+
+Not every changed file is a textual hunk. Guided Review still walks those files in the plan, but the diff pane behaves differently for images and for binary or elided content. Same behavior in the [Chrome extension](/docs/chrome-extension) and the [CLI](/docs/cli).
+
+<TocCard toc={toc} />
+
+## Image previews
+
+When a changed path looks like an image the overlay can display (`png`, `jpg` / `jpeg`, `gif`, `webp`, `svg`, `bmp`, `ico`, `avif`, `tif` / `tiff`, and a few related types), the diff pane shows a **preview** instead of a line patch:
+
+- **Added / removed** — one side’s image (or an empty side).
+- **Modified** — old and new side by side in split view, or stacked depending on [unified / split](/docs/keyboard-shortcuts#diff-view).
+- **SVG** — often reconstructed from the textual patch immediately; other formats load via the host (GitHub raw fetch on the extension, local blob on the CLI).
+
+If the preview cannot load, you fall back to the binary empty state below.
+
+## Binary and elided files
+
+Some files have no useful textual patch in the unified diff — true binaries, Git LFS pointers, or content GitHub / git elided as too large. For those, the pane shows:
+
+```
+(binary or elided — no textual diff available)
+```
+
+On a GitHub PR, Guided Review may offer a link into the Files changed tab for that path so you can inspect it on github.com. Locally, open the file in your editor or `git show` if you need the bytes.
+
+## Comments and search
+
+| Action                                              | Behavior                                                                                                  |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [Comment mode](/docs/leave-comments)                | Needs selectable diff lines. Binary / empty image units usually have none — `c` has nothing to attach to. |
+| [Diff search](/docs/keyboard-shortcuts#diff-search) | Binary / elided files still contribute **path** hits; there is no line content to match.                  |
+| Image units with a preview                          | Treat like other units for navigation; line comments still need selectable text lines.                    |
+
+## How the plan treats them
+
+The pipeline still assigns these files to [review units](/docs/how-it-works#review-units). The model sees a short “binary or elided” marker in the prompt instead of dumped bytes ([How a review plan works](/docs/how-it-works)). Large or mostly binary diffs often produce thinner structure — see [Troubleshooting → Plan generation fails](/docs/troubleshooting#plan-generation-fails).
+
+You still step past them with `←` / `→` so asset and lockfile noise stay in order with the rest of the change.
+
+**Next.** [Reading the overlay](/docs/reading-the-overlay) · [How a review plan works](/docs/how-it-works) · [Leave line comments](/docs/leave-comments) · [Your first review](/docs/first-review)

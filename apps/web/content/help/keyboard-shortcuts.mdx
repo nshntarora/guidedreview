@@ -12,7 +12,7 @@ export const toc = [
 
 Move through a guided review without leaving the keyboard. Focus must not be in an editable field for most of these — when the comment composer is open, typing goes to the text field and only Esc / ⌘/Ctrl+Enter are intercepted.
 
-The Guided Review sidebar always lists the same shortcuts as this page. Most chords work in both the [Chrome extension](/docs/first-review) and the [CLI](/docs/local-review); [Local review](#local-review) adds CLI-only keys. Submit chords apply to the extension only.
+The Guided Review sidebar always lists the same shortcuts as this page. Most chords work in both the [Chrome extension](/docs/first-review) and the [CLI](/docs/cli); [Local review](#local-review) adds CLI-only keys. Submit chords apply to the extension only.
 
 <TocCard toc={toc} />
 
@@ -80,7 +80,7 @@ Full submit flow: [Submit a review](/docs/submit-review). Auth gate: [Connect Gi
 
 ## Local review
 
-The [CLI](/docs/local-review) uses the same navigation, diff view, search, and comment-mode keys as the extension. Submit (`⌘/Ctrl` + `Enter` for a GitHub review) does not apply — use **Generate Prompt** from the UI instead. Extra in the local UI:
+The [CLI](/docs/cli) uses the same navigation, diff view, search, and comment-mode keys as the extension. Submit (`⌘/Ctrl` + `Enter` for a GitHub review) does not apply — use [Generate Prompt](/docs/generate-prompt) from the UI instead (needs at least one note). Extra in the local UI:
 
 | Shortcut       | Action                       |
 | -------------- | ---------------------------- |
@@ -95,7 +95,7 @@ On [guidedreview.dev](https://guidedreview.dev):
 | Shortcut       | Action                                                                                          |
 | -------------- | ----------------------------------------------------------------------------------------------- |
 | `⌘/Ctrl` + `I` | Jump to the Install section on the homepage                                                     |
-| `⌘/Ctrl` + `E` | Open the Chrome Web Store listing — also [Install Guided Review](/docs/install)                 |
+| `⌘/Ctrl` + `E` | Open the Chrome Web Store listing — also [Chrome Extension](/docs/chrome-extension)             |
 | `⌘/Ctrl` + `C` | Copy the CLI install command (`npx @guided-review/cli`) when the Install section is on the page |
 | `⌘/Ctrl` + `G` | Open the GitHub repository                                                                      |
 

@@ -12,7 +12,7 @@ export const toc = [
 
 Guided Review calls **your** LLM account. There is no Guided Review cloud that holds your key or rewrites diffs for you. That design is spelled out in [Privacy & data](/docs/privacy-and-data).
 
-A provider unlocks AI clustering and unit summaries on both the [Chrome extension](/docs/install#chrome-extension) and the [CLI](/docs/local-review). You can still [open a review without a key](/docs/how-it-works#without-a-provider) (file-by-file walk). GitHub auth is separate and only required to [submit a review](/docs/submit-review) from the extension — see [Connect GitHub](/docs/connect-github).
+A provider unlocks AI clustering and unit summaries on both the [Chrome extension](/docs/chrome-extension) and the [CLI](/docs/cli). You can still [open a review without a key](/docs/how-it-works#without-a-provider) (file-by-file walk). GitHub auth is separate and only required to [submit a review](/docs/submit-review) from the extension — see [Connect GitHub](/docs/connect-github).
 
 <TocCard toc={toc} />
 
@@ -30,12 +30,14 @@ We’ll keep adding more providers — [request one on the repo](https://github.
 
 ## Chrome extension
 
-1. Open the extension **Options** page (after [install](/docs/install#chrome-extension)).
-2. Choose a provider.
+1. Open the extension **Options** page (after you [install the extension](/docs/chrome-extension#options)).
+2. In the **AI Provider** card, choose a provider and model.
 3. Paste an API key from that provider’s console.
-4. Save.
+4. Click **Save**, then **Test Connection** if you want a cheap health check before a real review.
 
-Keys are stored in `chrome.storage.local` and are only used from the **background service worker** when annotating a review or testing the connection. Content scripts never hold the key for outbound LLM calls.
+The same Options page also has **GitHub** (optional, for [submit](/docs/submit-review)) and **Review → Automatically open on Files changed**. Full Options map: [Chrome Extension → Options](/docs/chrome-extension#options).
+
+Keys are stored in `chrome.storage.local` and are only used from the **background service worker** when annotating a review or testing the connection. Content scripts never hold the key for outbound LLM calls. To remove a key later: [Privacy & data → Clear data](/docs/privacy-and-data#clear-data-and-disconnect).
 
 ## CLI
 
@@ -47,11 +49,11 @@ Same providers. Keys resolve in order for each run:
 
 In the local UI, open **Settings** (`⌘/Ctrl` + `,`, or **Connect AI Provider** when no key is set). Paste an API key, or turn on **Use my subscription** to borrow an agent already logged in on the machine. A saved API key always wins for that machine; flags and env still win for the current run. Subscription reuse is unofficial and can break — a console key is the better option.
 
-When the CLI borrows an agent key, it reads that agent’s store at review time and does not copy the secret into Guided Review config. Details and scopes: [Review local changes](/docs/local-review#api-keys).
+When the CLI borrows an agent key, it reads that agent’s store at review time and does not copy the secret into Guided Review config. Details and scopes: [CLI → API keys](/docs/cli#api-keys).
 
 ## Pick a model
 
-Select a model available on your account. Prefer a model that handles long contexts well if you review large diffs — Guided Review [chunks oversized diffs by file](/docs/how-it-works#chunking-large-prs) (~60k characters per chunk) so no single call is expected to swallow an entire monorepo change set, but each chunk still benefits from a capable model.
+Select a model available on your account. Prefer a model that handles long contexts well if you review large diffs — Guided Review [chunks oversized diffs by file](/docs/how-it-works#chunking-large-diffs) (~60k characters per chunk) so no single call is expected to swallow an entire monorepo change set, but each chunk still benefits from a capable model.
 
 Models currently listed in the extension Options (ids can change as providers ship or retire models):
 
@@ -73,7 +75,7 @@ If the test fails, step through [Troubleshooting → Provider and API key](/docs
 
 ## Cost and usage
 
-- **Annotate / Structure with AI** — one provider call per [diff chunk](/docs/how-it-works#chunking-large-prs). Small diffs usually cost one call; large ones cost one call per chunk. On the CLI this only runs when you opt in.
+- **Annotate / Structure with AI** — one provider call per [diff chunk](/docs/how-it-works#chunking-large-diffs). Small diffs usually cost one call; large ones cost one call per chunk. On the CLI this only runs when you opt in.
 - **Not billed to the model** — stepping units, [searching](/docs/keyboard-shortcuts#diff-search), drafting comments / notes, [submitting to GitHub](/docs/submit-review), or **Generate Prompt**.
 - **Test connection** — a cheap health-check request when you run it from extension Options.
 
@@ -92,4 +94,4 @@ Token usage and cost are entirely between you and your provider. Guided Review d
 
 Extension session resume: [Your first review → Resume later](/docs/first-review#resume-later) and [Troubleshooting](/docs/troubleshooting#session-and-resume).
 
-**Next.** [Your first review](/docs/first-review) · [Review local changes](/docs/local-review) · [How a review plan works](/docs/how-it-works) · [Privacy & data](/docs/privacy-and-data)
+**Next.** [Your first review](/docs/first-review) · [CLI](/docs/cli) · [Chrome Extension → Options](/docs/chrome-extension#options) · [Privacy & data](/docs/privacy-and-data)

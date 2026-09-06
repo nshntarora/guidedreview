@@ -27,7 +27,7 @@ On either path:
 
 Without a key you still get a file-by-file walk. The model plans structure and commentary only — it never invents the code lines. For what leaves your machine, see [Privacy & data](/docs/privacy-and-data).
 
-The extension can optionally [submit reviews](/docs/submit-review) to GitHub. The CLI keeps line notes local and can [Generate Prompt](/docs/local-review#notes) for a coding agent instead.
+The extension can optionally [submit reviews](/docs/submit-review) to GitHub. The CLI keeps line notes local and can [Generate Prompt](/docs/generate-prompt) for a coding agent instead.
 
 ## What you'll find here
 
@@ -35,9 +35,11 @@ The extension can optionally [submit reviews](/docs/submit-review) to GitHub. Th
 
 ## Quick start
 
+Start at [Install](/docs/install) for both hosts, then:
+
 **GitHub pull requests**
 
-1. [Install the Chrome extension](/docs/install#chrome-extension).
+1. [Install the Chrome extension](/docs/chrome-extension) (or follow [Install](/docs/install)).
 2. [Configure a provider](/docs/configure-provider) (optional for a file-by-file walk).
 3. Open any GitHub pull request and click **Start Guided Review**.
 4. Step through the plan — see [Your first review](/docs/first-review).
@@ -45,9 +47,9 @@ The extension can optionally [submit reviews](/docs/submit-review) to GitHub. Th
 
 **Local changes**
 
-1. [Run the CLI](/docs/install#cli) with Node.js 22+: `npx @guided-review/cli`.
+1. [Install / run the CLI](/docs/install) with Node.js 22+: `npx @guided-review/cli`.
 2. Pick a diff scope (branch vs base, uncommitted, or a commit).
 3. Optionally hit **Structure with AI**, then walk the units.
-4. Full local workflow: [Review local changes](/docs/local-review).
+4. Full local workflow: [CLI](/docs/cli).
 
 > **Open source.** Guided Review is Apache-2.0. Source and issues live on [GitHub](https://github.com/nshntarora/guidedreview). Stuck? Start with the [FAQ](/docs/faq) or [Troubleshooting](/docs/troubleshooting).

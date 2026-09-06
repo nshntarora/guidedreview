@@ -3,6 +3,7 @@ import { Children, isValidElement, type HTMLAttributes, type ReactNode } from "r
 import type { TdHTMLAttributes, ThHTMLAttributes } from "react";
 import { Callout } from "@web/components/docs/Callout";
 import { DocsIndex } from "@web/components/docs/DocsIndex";
+import { InstallAppCards } from "@web/components/docs/InstallAppCards";
 import { LegalContactBlock } from "@web/components/LegalDocument";
 import { CopyButton } from "@web/components/docs/CopyButton";
 import { TocCard } from "@web/components/docs/TocCard";
@@ -53,6 +54,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ...components,
     TocCard,
     DocsIndex,
+    InstallAppCards,
     LegalContactBlock,
     // Lets MDX use <Callout type="tip" | "warning" | "danger"> directly;
     // blockquotes below map to the "note" variant.
