@@ -316,6 +316,7 @@ export function ProgressHeader({
           {host.submit && host.exportNotes && (
             <Button
               variant="secondary"
+              size="sm"
               onClick={onGeneratePrompt}
               disabled={(notesCount ?? 0) === 0}
               data-testid="generate-prompt-button"
@@ -325,6 +326,7 @@ export function ProgressHeader({
           )}
           <Button
             type="button"
+            size="sm"
             className={`${headerBtn} border-primary bg-primary text-primary-foreground hover:border-primary-hover hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50 [&_[data-slot=kbd]]:bg-[rgba(13,8,6,0.12)] [&_[data-slot=kbd]]:text-inherit`}
             onClick={onSubmitReview}
             disabled={primaryDisabled}
