@@ -37,6 +37,11 @@ export const VIEW_CHORD_WINDOW_MS = 1000;
 
 export type ViewChordPending = { armedAt: number } | null;
 
+/** Whether a custom select, rather than overlay navigation, owns this key. */
+export function shouldLetComboboxHandleKey(state: "open" | "closed" | null, key: string): boolean {
+  return state === "open" || (state === "closed" && key !== "ArrowLeft" && key !== "ArrowRight");
+}
+
 interface ViewChordResult {
   next: ViewChordPending;
   /** Non-null when the chord completed and a mode should be applied. */
@@ -489,19 +494,27 @@ export function useOverlayKeyboard({
     // and would fire s/t/c/a/i/etc. Always stopPropagation so the page never
     // sees keys while the overlay is open. Only preventDefault when we consume
     // the key (so typing into the comment composer still inserts characters).
-    function isComboboxEvent(event: KeyboardEvent): boolean {
+    function getComboboxState(event: KeyboardEvent): "open" | "closed" | null {
       for (const node of event.composedPath()) {
         if (!(node instanceof HTMLElement)) continue;
         const role = node.getAttribute("role");
-        if (role === "combobox" || role === "listbox" || role === "option") return true;
+        if (role === "listbox" || role === "option") return "open";
+        if (role === "combobox") {
+          return node.getAttribute("aria-expanded") === "true" ? "open" : "closed";
+        }
       }
-      return false;
+      return null;
     }
 
     function onKeyDown(event: KeyboardEvent): void {
-      // Custom selects own their keys. Do not stopPropagation or GitHub-style
-      // capture handling — React onKeyDown on the combobox never fires otherwise.
-      if (isComboboxEvent(event)) return;
+      // An open custom select owns its keys. A closed select keeps focus after
+      // a choice, but it does not use ←/→; let those resume review navigation.
+      // We still leave its other keys alone for native-like typeahead and
+      // ArrowUp/ArrowDown behavior.
+      const comboboxState = getComboboxState(event);
+      if (shouldLetComboboxHandleKey(comboboxState, event.key)) {
+        return;
+      }
 
       event.stopPropagation();
 

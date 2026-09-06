@@ -4,7 +4,7 @@ import { Overlay } from "./Overlay";
 import { resetConfirmationQueueForTests } from "@guided-review/ui";
 import { DEFAULT_DIFF_VIEW_MODE } from "./diffView";
 import { useReviewStore } from "./store";
-import { VIEW_CHORD_WINDOW_MS } from "./useOverlayKeyboard";
+import { shouldLetComboboxHandleKey, VIEW_CHORD_WINDOW_MS } from "./useOverlayKeyboard";
 import { buildFileReviewPlan } from "@guided-review/core";
 import type { ParsedDiff, PRContext, ReviewPlan } from "@extension/lib/types";
 import * as messaging from "@extension/lib/messaging";
@@ -476,6 +476,21 @@ describe("Overlay", () => {
       fireEvent.keyDown(window, { key: "d" });
       expect(picker).toHaveAttribute("aria-expanded", "true");
       expect(screen.getByRole("listbox")).toBeInTheDocument();
+    });
+
+    it("returns left and right navigation to the review after choosing a scope", () => {
+      const { onSelectScope } = renderLocalOverlay();
+      const picker = screen.getByRole("combobox", { name: /diff to review/i });
+
+      fireEvent.keyDown(window, { key: "d" });
+      fireEvent.keyDown(picker, { key: "ArrowDown", composed: true });
+      fireEvent.keyDown(picker, { key: "Enter", composed: true });
+
+      expect(onSelectScope).toHaveBeenCalledWith("uncommitted");
+      expect(picker).toHaveAttribute("aria-expanded", "false");
+      expect(shouldLetComboboxHandleKey("closed", "ArrowLeft")).toBe(false);
+      expect(shouldLetComboboxHandleKey("closed", "ArrowRight")).toBe(false);
+      expect(shouldLetComboboxHandleKey("open", "ArrowRight")).toBe(true);
     });
 
     it("opens settings on ⌘/Ctrl+,", () => {
