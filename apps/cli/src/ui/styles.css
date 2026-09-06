@@ -1,9 +1,8 @@
 @import "@fontsource/victor-mono/latin-400.css";
 @import "@fontsource/victor-mono/latin-700.css";
 @import "@guided-review/ui/theme.css";
-@import "@extension/content/overlay/styles/overlay.css";
+@import "@guided-review/ui/review/styles/review.css";
 @source "../../../../packages/ui/src/**/*.{ts,tsx}";
-@source "../../../extension/src/content/overlay/**/*.{ts,tsx}";
 @source "./**/*.{ts,tsx}";
 
 @theme {

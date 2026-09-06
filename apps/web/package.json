@@ -16,6 +16,7 @@
     "preview:cf": "pnpm run build && wrangler pages deploy out --project-name=guidedreview --branch=preview"
   },
   "dependencies": {
+    "@guided-review/core": "workspace:*",
     "@guided-review/ui": "workspace:*",
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",

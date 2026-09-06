@@ -43,6 +43,7 @@ Sessions: `chrome.storage.session`, key `owner/repo#number` (`buildSessionKey`).
 ## packages/ui · apps/web
 
 - **ui:** transpile via `transpilePackages`. Tokens `@guided-review/ui/theme.css`. Tailwind v4 that uses ui must `@source packages/ui/src/**/*.{ts,tsx}`.
+- **review UI:** `@guided-review/ui/review` contains the overlay, store, and host contract. GitHub, CLI, and the landing preview supply their own hosts; shared review code must not import from an app. Import `review/styles/review.css` alongside the theme in a document, or `review/styles/overlay.css?inline` for the extension Shadow DOM.
 - **web:** docs MDX in `content/help/`, legal in `content/legal/`. Register every docs page in `config/docs.ts` (sidebar, routes, metadata, sitemap).
 
 ## Building UI

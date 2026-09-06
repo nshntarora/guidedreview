@@ -2,12 +2,12 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vites
 import type { ChromeMock, MockPort } from "@extension/test/chromeMock";
 import type { FetchDiffResponse, ParsedDiff } from "@extension/lib/types";
 import { setProviderSettings } from "@extension/lib/settings";
-import { useReviewStore } from "./overlay/store";
+import { useReviewStore } from "@guided-review/ui/review/store";
 
 // The overlay itself is covered by Overlay.test.tsx; these tests are about the
 // start/restore/no-provider orchestration, so keep rendering out of the way.
-vi.mock("./overlay/styles/overlay.css?inline", () => ({ default: "" }));
-vi.mock("./overlay/Overlay", () => ({ Overlay: () => null }));
+vi.mock("@guided-review/ui/review/styles/overlay.css?inline", () => ({ default: "" }));
+vi.mock("@guided-review/ui/review/Overlay", () => ({ Overlay: () => null }));
 
 const PR_URL = "https://github.com/acme/web/pull/42";
 const SESSION_KEY = "guidedReview.session.acme/web#42";

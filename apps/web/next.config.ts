@@ -29,7 +29,7 @@ const posthogDevRewrites =
 
 const nextConfig: NextConfig = {
   // Required for workspace source package (TS/TSX under packages/ui)
-  transpilePackages: ["@guided-review/ui"],
+  transpilePackages: ["@guided-review/ui", "@guided-review/core"],
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
   experimental: {
     // Rust MDX compiler — Turbopack-compatible. GFM enables tables, strikethrough, etc.

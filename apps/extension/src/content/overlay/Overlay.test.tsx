@@ -1,17 +1,20 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Overlay } from "./Overlay";
+import { Overlay } from "@guided-review/ui/review/Overlay";
 import { resetConfirmationQueueForTests } from "@guided-review/ui";
-import { DEFAULT_DIFF_VIEW_MODE } from "./diffView";
-import { useReviewStore } from "./store";
-import { shouldLetComboboxHandleKey, VIEW_CHORD_WINDOW_MS } from "./useOverlayKeyboard";
+import { DEFAULT_DIFF_VIEW_MODE } from "@guided-review/ui/review/diffView";
+import { useReviewStore } from "@guided-review/ui/review/store";
+import {
+  shouldLetComboboxHandleKey,
+  VIEW_CHORD_WINDOW_MS,
+} from "@guided-review/ui/review/useOverlayKeyboard";
 import { buildFileReviewPlan } from "@guided-review/core";
 import type { ParsedDiff, PRContext, ReviewPlan } from "@extension/lib/types";
 import * as messaging from "@extension/lib/messaging";
 import * as oauthConfig from "@extension/lib/github/oauthConfig";
 import { createGitHubReviewHost } from "@extension/content/githubHost";
-import { createMemoryReviewHost, setActiveReviewHost } from "./host";
-import type { LocalDiffControls } from "./localReview";
+import { createMemoryReviewHost, setActiveReviewHost } from "@guided-review/ui/review/host";
+import type { LocalDiffControls } from "@guided-review/ui/review/localReview";
 
 const sampleAuth = {
   accessToken: "gho_test",

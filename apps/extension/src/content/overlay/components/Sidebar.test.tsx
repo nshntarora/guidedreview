@@ -2,8 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReviewPlan } from "@extension/lib/types";
 import { createGitHubReviewHost } from "@extension/content/githubHost";
-import { setActiveReviewHost } from "../host";
-import { Sidebar } from "./Sidebar";
+import { setActiveReviewHost } from "@guided-review/ui/review/host";
+import { Sidebar } from "@guided-review/ui/review/components/Sidebar";
 
 function planWithUnits(count: number): ReviewPlan {
   return {

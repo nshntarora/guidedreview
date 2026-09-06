@@ -2,10 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["node"],
-    "paths": {
-      "@extension/*": ["../extension/src/*"]
-    }
+    "types": ["node"]
   },
   "include": ["src/**/*.ts", "vite.config.ts", "vitest.config.ts"],
   "exclude": ["src/ui/**", "src/**/*.test.ts", "src/**/*.test.tsx", "dist"]

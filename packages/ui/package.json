@@ -9,6 +9,12 @@
   ],
   "exports": {
     ".": "./src/index.ts",
+    "./review": "./src/review/index.ts",
+    "./review/styles/*.css": "./src/review/styles/*.css",
+    "./review/components/*": "./src/review/components/*.tsx",
+    "./review/components/diff/deriveSelection": "./src/review/components/diff/deriveSelection.ts",
+    "./review/*": "./src/review/*.ts",
+    "./review/Overlay": "./src/review/Overlay.tsx",
     "./theme.css": "./src/styles/theme.css",
     "./assets/*": "./src/assets/*"
   },
@@ -17,6 +23,10 @@
     "react-dom": "^18.3.0 || ^19.0.0"
   },
   "dependencies": {
+    "@guided-review/core": "workspace:*",
+    "fuse.js": "^7.5.0",
+    "highlight.js": "^11.11.1",
+    "zustand": "^5.0.14",
     "clsx": "^2.1.1"
   },
   "devDependencies": {

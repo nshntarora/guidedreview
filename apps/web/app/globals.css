@@ -1,6 +1,7 @@
 /* Tailwind must scan shared UI components (workspace package lives outside this app tree). */
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
 @import "@guided-review/ui/theme.css";
+@import "@guided-review/ui/review/styles/review.css";
 
 /* Brand mono — Victor Mono via next/font (Google Fonts); CSS var set on <html>. */
 @theme {

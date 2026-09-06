@@ -5,7 +5,7 @@ import {
   GITHUB_CLIENT_ID_ENV_VAR,
   isGitHubOAuthConfigured,
 } from "@extension/lib/github/oauthConfig";
-import { useCopyToClipboard } from "@extension/lib/useCopyToClipboard";
+import { useCopyToClipboard } from "@guided-review/ui/review/useCopyToClipboard";
 import {
   openVerificationUri,
   useGitHubDeviceAuth,

@@ -1,7 +1,7 @@
 "use client";
 
 import { InstallButton, StarOnGitHubButton } from "./CtaButtons";
-import { ProductVideo } from "./ProductVideo";
+import { ProductPreview } from "./ProductPreview";
 
 export function Hero() {
   return (
@@ -29,7 +29,7 @@ export function Hero() {
           Free · Open source · Bring your own LLM key
         </p>
 
-        <ProductVideo />
+        <ProductPreview />
       </div>
     </section>
   );

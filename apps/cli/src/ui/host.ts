@@ -1,6 +1,6 @@
 import type { AnnotateReviewStreamEvent, ParsedDiff, ReviewContext } from "@guided-review/core";
-import type { ReviewHost, StreamPlanHandlers } from "@extension/content/overlay/host";
-import type { DiffViewMode } from "@extension/content/overlay/diffView";
+import type { ReviewHost, StreamPlanHandlers } from "@guided-review/ui/review/host";
+import type { DiffViewMode } from "@guided-review/ui/review/diffView";
 
 export function createLocalReviewHost(options: { onConnectProvider: () => void }): ReviewHost {
   const { onConnectProvider } = options;

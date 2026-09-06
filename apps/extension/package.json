@@ -27,11 +27,8 @@
     "@guided-review/core": "workspace:*",
     "@guided-review/ui": "workspace:*",
     "dompurify": "^3.4.13",
-    "fuse.js": "^7.5.0",
-    "highlight.js": "^11.11.1",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "zustand": "^5.0.14"
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.7.1",

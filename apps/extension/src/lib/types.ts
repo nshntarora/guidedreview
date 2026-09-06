@@ -5,6 +5,13 @@
  */
 
 import type { ParsedDiff, ProviderSettings, ReviewContext } from "@guided-review/core";
+import type { ReviewEvent, ReviewCommentInput } from "@guided-review/ui/review/types";
+export type {
+  ReviewEvent,
+  ReviewCommentInput,
+  SubmitReviewResponse,
+} from "@guided-review/ui/review/types";
+export { EMPTY_REVIEW_BODY_MESSAGE } from "@guided-review/ui/review/types";
 
 export type {
   DiffLine,
@@ -42,17 +49,6 @@ export type PRContext = ReviewContext & {
   number: number;
   url: string;
   author: string;
-};
-
-/**
- * Shown when a review that requires a summary is submitted without one. The
- * overlay checks this before calling the background worker so the user gets
- * the error without a round-trip; `submitReview.ts` enforces it again because
- * it is the actual boundary to GitHub.
- */
-export const EMPTY_REVIEW_BODY_MESSAGE: Record<"COMMENT" | "REQUEST_CHANGES", string> = {
-  COMMENT: "Add a review comment before submitting.",
-  REQUEST_CHANGES: "Add a summary explaining the requested changes before submitting.",
 };
 
 // ---- GitHub OAuth (device flow) ----------------------------------------------
@@ -198,25 +194,6 @@ export interface GitHubAuthClearResponse {
 
 // ---- Submit pull request review ---------------------------------------------
 
-/** GitHub pull request review event (create-review API). */
-export type ReviewEvent = "COMMENT" | "APPROVE" | "REQUEST_CHANGES";
-
-/** Inline comment payload for GitHub create-review `comments[]`. */
-export interface ReviewCommentInput {
-  path: string;
-  body: string;
-  side: "LEFT" | "RIGHT";
-  /** End line (file coordinates on `side`). */
-  line: number;
-  /**
-   * Start line when the range spans more than one line. Omit on single-line
-   * comments — GitHub's create-review API 422s if `start_line`/`start_side`
-   * are sent when they equal `line`.
-   */
-  startLine?: number;
-  startSide?: "LEFT" | "RIGHT";
-}
-
 export interface SubmitReviewRequest {
   type: typeof MessageType.SUBMIT_REVIEW;
   pr: { owner: string; repo: string; number: number };
@@ -224,13 +201,6 @@ export interface SubmitReviewRequest {
   event: ReviewEvent;
   comments: ReviewCommentInput[];
 }
-
-type SubmitReviewErrorCode =
-  "not_authenticated" | "forbidden" | "not_found" | "validation" | "network" | "unknown";
-
-export type SubmitReviewResponse =
-  | { ok: true; reviewId: number; htmlUrl: string }
-  | { ok: false; error: string; code?: SubmitReviewErrorCode };
 
 /** One-shot request/response messages (annotate uses a port instead). */
 export type BackgroundRequest =

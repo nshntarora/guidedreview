@@ -21,6 +21,7 @@ export default defineConfig({
           globals: true,
           setupFiles: ["./src/test/setup.ts"],
           include: ["src/**/*.test.ts"],
+          exclude: ["src/review/focusTrap.test.ts"],
         },
       },
       {
@@ -30,7 +31,7 @@ export default defineConfig({
           environment: "jsdom",
           globals: true,
           setupFiles: ["./src/test/setup.ts"],
-          include: ["src/**/*.test.tsx"],
+          include: ["src/**/*.test.tsx", "src/review/focusTrap.test.ts"],
         },
       },
     ],

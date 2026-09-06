@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildFileReviewPlan, getProvider, type ProviderId } from "@guided-review/core";
 import type { ReviewSessionPayload } from "../server/createServer";
-import { Overlay } from "@extension/content/overlay/Overlay";
-import { ReviewHostProvider } from "@extension/content/overlay/host";
-import { restoreSession, useReviewStore } from "@extension/content/overlay/store";
-import type { LocalDiffControls } from "@extension/content/overlay/localReview";
+import { Overlay } from "@guided-review/ui/review/Overlay";
+import { ReviewHostProvider } from "@guided-review/ui/review/host";
+import { restoreSession, useReviewStore } from "@guided-review/ui/review/store";
+import type { LocalDiffControls } from "@guided-review/ui/review/localReview";
 import { createLocalReviewHost } from "./host";
 import { codingAgentLabel, structureWithLabel } from "./codingAgentLabel";
 import { SettingsApp } from "./settings/SettingsApp";

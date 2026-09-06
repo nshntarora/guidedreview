@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createGitHubReviewHost } from "@extension/content/githubHost";
-import { createMemoryReviewHost, setActiveReviewHost } from "../host";
-import { ContextPanel } from "./ContextPanel";
+import { createMemoryReviewHost, setActiveReviewHost } from "@guided-review/ui/review/host";
+import { ContextPanel } from "@guided-review/ui/review/components/ContextPanel";
 
 beforeEach(() => {
   setActiveReviewHost(createGitHubReviewHost());

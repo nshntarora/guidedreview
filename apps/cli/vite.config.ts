@@ -7,9 +7,6 @@ export default defineConfig({
   root: path.resolve(__dirname, "src/ui"),
   plugins: [react(), tailwindcss()],
   resolve: {
-    alias: {
-      "@extension": path.resolve(__dirname, "../extension/src"),
-    },
     dedupe: ["react", "react-dom"],
   },
   publicDir: path.resolve(__dirname, "public"),

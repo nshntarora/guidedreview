@@ -9,7 +9,7 @@ import {
   isConfirmationOpen,
   Kbd,
 } from "@guided-review/ui";
-import { trapTabKey } from "@extension/content/overlay/focusTrap";
+import { trapTabKey } from "@guided-review/ui/review/focusTrap";
 import { About } from "./About";
 import { Settings, type PublicSettings } from "./Settings";
 

@@ -16,7 +16,6 @@ export const PRODUCTION_ORIGIN = new URL(configuredProductionOrigin).origin;
 export const PUBLIC_ASSETS = [
   "/favicon.ico",
   "/product-preview/thumbnail.webp",
-  "/product-preview/demo.webm",
   "/mitchell-hashimoto-tweet.png",
   "/opengraph-image",
 ] as const;

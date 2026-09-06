@@ -10,11 +10,11 @@ import { MessageType, type ContentRequest, type ParsedDiff } from "@extension/li
 import type { ReviewContext } from "@guided-review/core";
 import { ensureFallbackHost, FALLBACK_HOST_ID, findButtonAnchor } from "./buttonAnchor";
 import { createGitHubReviewHost } from "./githubHost";
-import { Overlay } from "./overlay/Overlay";
-import { ReviewHostProvider, setActiveReviewHost } from "./overlay/host";
+import { Overlay } from "@guided-review/ui/review/Overlay";
+import { ReviewHostProvider, setActiveReviewHost } from "@guided-review/ui/review/host";
 import { isPrFilesChangedPath } from "@extension/lib/github/prUrls";
-import overlayStyles from "./overlay/styles/overlay.css?inline";
-import { useReviewStore, restoreSession, buildSessionKey } from "./overlay/store";
+import overlayStyles from "@guided-review/ui/review/styles/overlay.css?inline";
+import { useReviewStore, restoreSession, buildSessionKey } from "@guided-review/ui/review/store";
 
 const reviewHost = createGitHubReviewHost();
 setActiveReviewHost(reviewHost);

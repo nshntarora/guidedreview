@@ -2,16 +2,13 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildFileLineUrl, buildPRFileDiffUrl } from "@extension/lib/github/prUrls";
 import type { DiffFile, DiffHunk, PRContext } from "@extension/lib/types";
-import { buildSelectableLines } from "@extension/content/overlay/buildSelectableLines";
-import { DEFAULT_DIFF_VIEW_MODE } from "@extension/content/overlay/diffView";
+import { buildSelectableLines } from "@guided-review/ui/review/buildSelectableLines";
+import { DEFAULT_DIFF_VIEW_MODE } from "@guided-review/ui/review/diffView";
 import { createGitHubReviewHost } from "@extension/content/githubHost";
-import { createMemoryReviewHost, setActiveReviewHost } from "../host";
-import {
-  resetDiffViewModeHydrationForTests,
-  useReviewStore,
-} from "@extension/content/overlay/store";
-import type { ResolvedUnitFile } from "@extension/content/overlay/buildSelectableLines";
-import { DiffPane } from "./DiffPane";
+import { createMemoryReviewHost, setActiveReviewHost } from "@guided-review/ui/review/host";
+import { resetDiffViewModeHydrationForTests, useReviewStore } from "@guided-review/ui/review/store";
+import type { ResolvedUnitFile } from "@guided-review/ui/review/buildSelectableLines";
+import { DiffPane } from "@guided-review/ui/review/components/DiffPane";
 
 function prContextFixture(overrides: Partial<PRContext> = {}): PRContext {
   return {

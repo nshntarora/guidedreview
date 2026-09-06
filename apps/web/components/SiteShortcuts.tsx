@@ -41,6 +41,7 @@ export function SiteShortcuts() {
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (document.querySelector("[data-review-preview]")) return;
       // Require primary modifier; reject Alt so Option-modified keys don't fire.
       // Reject Shift so we don't collide with Shift-modified browser/extension chords.
       if (!(event.metaKey || event.ctrlKey) || event.altKey || event.shiftKey) return;

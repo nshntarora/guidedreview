@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_DIFF_VIEW_MODE } from "./diffView";
-import { useReviewStore, persistSession, restoreSession, buildSessionKey } from "./store";
+import { DEFAULT_DIFF_VIEW_MODE } from "@guided-review/ui/review/diffView";
+import {
+  useReviewStore,
+  persistSession,
+  restoreSession,
+  buildSessionKey,
+} from "@guided-review/ui/review/store";
 import type { ParsedDiff, PRContext, ReviewPlan } from "@extension/lib/types";
 import { createGitHubReviewHost } from "@extension/content/githubHost";
-import { setActiveReviewHost } from "./host";
+import { setActiveReviewHost } from "@guided-review/ui/review/host";
 
 function diffFixture(): ParsedDiff {
   return { files: [] };

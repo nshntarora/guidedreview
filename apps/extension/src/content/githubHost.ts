@@ -20,7 +20,8 @@ import {
   navigateToPrConversation,
   pullHeadRef,
 } from "@extension/lib/github/prUrls";
-import type { ReviewHost } from "./overlay/host";
+import type { ReviewHost } from "@guided-review/ui/review/host";
+import { ConnectGitHubModal } from "./overlay/components/ConnectGitHubModal";
 
 function sessionStorageKey(sessionKey: string): string {
   return `guidedReview.session.${sessionKey}`;
@@ -85,6 +86,7 @@ export function createGitHubReviewHost(): ReviewHost {
       }
     },
     submit: {
+      ConnectionDialog: ConnectGitHubModal,
       getAuthStatus: getGitHubAuthStatus,
       submitReview: requestSubmitReview,
       afterSubmit: (context) => {

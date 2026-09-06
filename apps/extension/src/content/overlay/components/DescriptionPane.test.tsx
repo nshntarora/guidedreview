@@ -2,8 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { ParsedDiff, PRContext } from "@extension/lib/types";
 import { createGitHubReviewHost } from "@extension/content/githubHost";
-import { createMemoryReviewHost, setActiveReviewHost } from "../host";
-import { DescriptionPane } from "./DescriptionPane";
+import { createMemoryReviewHost, setActiveReviewHost } from "@guided-review/ui/review/host";
+import { DescriptionPane } from "@guided-review/ui/review/components/DescriptionPane";
 
 beforeEach(() => {
   setActiveReviewHost(createGitHubReviewHost());
