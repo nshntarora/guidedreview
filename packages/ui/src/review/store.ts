@@ -43,14 +43,14 @@ export type DisplayUnit =
   | { kind: "pr_description"; id: "__pr_description"; title: string }
   | { kind: "review"; id: string; title: string; unit: ReviewUnit; planIndex: number };
 
-export function summaryUnitTitle(kind: "github" | "local" | "preview" = "github"): string {
+export function summaryUnitTitle(kind: "github" | "local" = "github"): string {
   return kind === "local" ? "Change summary" : "PR Description";
 }
 
 /** Ordered units shown in the overlay (description is UI-only, not model output). */
 export function buildDisplayUnits(
   plan: ReviewPlan | null,
-  hostKind: "github" | "local" | "preview" = "github",
+  hostKind: "github" | "local" = "github",
 ): DisplayUnit[] {
   const description: DisplayUnit = {
     kind: "pr_description",

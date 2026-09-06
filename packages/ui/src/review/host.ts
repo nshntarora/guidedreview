@@ -1,6 +1,6 @@
 /**
- * Host adapter for the review overlay. GitHub, the local CLI, and the preview
- * implement this; overlay components must not import `chrome.*`.
+ * Host adapter for the review overlay. GitHub and the local CLI implement
+ * this; the marketing preview simulates either host without importing app code.
  */
 
 import {
@@ -65,7 +65,12 @@ export interface FilePreviewRequest {
 }
 
 export interface ReviewHost {
-  kind: "github" | "local" | "preview";
+  kind: "github" | "local";
+  /** Marketing demo controls. The underlying kind still drives the real host UI. */
+  preview?: {
+    mode: "cli" | "chrome";
+    onModeChange(mode: "cli" | "chrome"): void;
+  };
   assetUrl(path: string): string;
   persistSession(key: string, data: unknown): Promise<void>;
   restoreSession(key: string): Promise<unknown | null>;

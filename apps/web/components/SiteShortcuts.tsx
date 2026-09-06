@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { AnalyticsEvents } from "@web/lib/analytics";
-import { SITE_SHORTCUTS } from "@web/lib/shortcuts";
+import { OPEN_LIVE_PREVIEW_EVENT, SITE_SHORTCUTS } from "@web/lib/shortcuts";
 import { useAnalytics } from "./analytics/AnalyticsProvider";
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -27,7 +27,7 @@ function goToInstallSection() {
 }
 
 /**
- * Global ⌘/Ctrl-chord shortcuts for marketing CTAs (install / extension / star).
+ * Global ⌘/Ctrl-chord shortcuts for marketing CTAs (preview / install / extension / star).
  * Skips when focus is in an editable control.
  *
  * Uses the capture phase + stopImmediatePropagation so we run before other
@@ -49,6 +49,22 @@ export function SiteShortcuts() {
       if (isEditableTarget(event.target)) return;
 
       const key = event.key.toLowerCase();
+      if (key === SITE_SHORTCUTS.preview.key) {
+        // The preview is only mounted on the landing page. Let the browser
+        // retain its normal print shortcut everywhere else.
+        if (!document.querySelector("[data-live-preview-trigger]")) return;
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        window.dispatchEvent(new Event(OPEN_LIVE_PREVIEW_EVENT));
+        analytics.capture(AnalyticsEvents.SURFACES_CTA_CLICK, {
+          location: "keyboard",
+          method: "shortcut",
+          key: SITE_SHORTCUTS.preview.key,
+        });
+        return;
+      }
+
       const keyed = [
         SITE_SHORTCUTS.install,
         SITE_SHORTCUTS.extension,

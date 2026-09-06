@@ -1,15 +1,22 @@
 import type { ReviewHost } from "@guided-review/ui/review";
-import { sampleContext, sampleDiff, samplePlan } from "./sample";
+import { sampleContext, sampleDiff, sampleLocalContext, samplePlan } from "./sample";
 
-export function createPreviewHost(): ReviewHost {
+export type PreviewMode = "cli" | "chrome";
+
+export function createPreviewHost(
+  mode: PreviewMode,
+  onModeChange: (mode: PreviewMode) => void,
+  onUnsupported: (feature: string) => void,
+): ReviewHost {
   return {
-    kind: "preview",
+    kind: mode === "cli" ? "local" : "github",
+    preview: { mode, onModeChange },
     assetUrl: () => "/assets/logomark.svg",
     persistSession: async () => {},
     restoreSession: async () => null,
     readDiffViewMode: async () =>
       window.matchMedia("(min-width: 768px)").matches ? "split" : "unified",
-    connectProvider: () => {},
+    connectProvider: () => onUnsupported("Provider settings"),
     streamPlan: (_diff, _context, handlers) => {
       let cancelled = false;
       queueMicrotask(() => {
@@ -21,13 +28,21 @@ export function createPreviewHost(): ReviewHost {
         },
       };
     },
-    submit: {
-      getAuthStatus: async () => ({ ok: true, auth: { login: "sample-reviewer" } }),
-      submitReview: async () => ({ ok: true, reviewId: 0, htmlUrl: "" }),
-    },
+    ...(mode === "cli"
+      ? { exportNotes: () => {} }
+      : {
+          submit: {
+            getAuthStatus: async () => ({ ok: true, auth: { login: "sample-reviewer" } }),
+            submitReview: async () => ({ ok: true, reviewId: 0, htmlUrl: "" }),
+          },
+        }),
   };
 }
 
-export function loadPreviewReview() {
-  return { context: sampleContext, diff: sampleDiff, plan: samplePlan };
+export function loadPreviewReview(mode: PreviewMode) {
+  return {
+    context: mode === "cli" ? sampleLocalContext : sampleContext,
+    diff: sampleDiff,
+    plan: samplePlan,
+  };
 }

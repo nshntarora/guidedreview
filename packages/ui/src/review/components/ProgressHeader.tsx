@@ -240,9 +240,48 @@ export function ProgressHeader({
   }));
 
   return (
-    <header className="flex shrink-0 flex-col gap-1.5 border-b border-border bg-background px-5 py-3.5">
-      {host.kind === "preview" && (
-        <p className="m-0 text-sm text-muted">Sample review · Pre-generated AI structure</p>
+    <header
+      className={`flex shrink-0 flex-col gap-1.5 border-b border-border bg-background px-5 pb-3.5 ${host.preview ? "pt-0" : "pt-3.5"}`}
+    >
+      {host.preview && (
+        <div
+          className="-mx-5 mb-2 flex items-center justify-between gap-2 border-b border-border bg-surface-raised px-5 py-1.5 text-left"
+          aria-label="Preview mode"
+          data-testid="preview-mode-notice"
+        >
+          <div className="flex min-w-0 items-center gap-2 text-sm">
+            <span className="shrink-0 rounded-full border border-warning/50 bg-warning/10 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-warning">
+              Live preview
+            </span>
+            <span className="font-medium text-foreground max-sm:hidden">
+              Preview only. Nothing is saved or updated; most features work here.
+            </span>
+          </div>
+          <div
+            className="flex items-center rounded-md border border-border bg-background p-0.5"
+            role="group"
+            aria-label="Preview host"
+          >
+            <Button
+              size="sm"
+              variant={host.preview.mode === "cli" ? "primary" : "ghost"}
+              className="min-w-14 px-2 py-0.5 text-xs"
+              aria-pressed={host.preview.mode === "cli"}
+              onClick={() => host.preview?.onModeChange("cli")}
+            >
+              CLI
+            </Button>
+            <Button
+              size="sm"
+              variant={host.preview.mode === "chrome" ? "primary" : "ghost"}
+              className="min-w-16 px-2 py-0.5 text-xs"
+              aria-pressed={host.preview.mode === "chrome"}
+              onClick={() => host.preview?.onModeChange("chrome")}
+            >
+              Chrome
+            </Button>
+          </div>
+        </div>
       )}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 flex-1 items-center gap-3.5">

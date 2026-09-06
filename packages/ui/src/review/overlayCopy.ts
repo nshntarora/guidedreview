@@ -35,7 +35,7 @@ export function buildPhaseDetail(phase: BuildPhase, providerLabel: string | null
 export function missingMetadataHint(
   hasTitle: boolean,
   hasDescription: boolean,
-  kind: "github" | "local" | "preview" = "github",
+  kind: "github" | "local" = "github",
 ): string {
   if (kind === "local") {
     if (!hasTitle && !hasDescription) {

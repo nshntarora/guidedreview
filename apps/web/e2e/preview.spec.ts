@@ -1,9 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { sampleDiff, samplePlan } from "../components/preview/sample";
 
-test("sample review matches the extension flow, supports simulated submission, and restarts", async ({
-  page,
-}, testInfo) => {
+test("sample review switches between the CLI and extension flows", async ({ page }, testInfo) => {
   const externalRequests: string[] = [];
   page.on("request", (request) => {
     if (/github\.com|api\.(anthropic|openai|groq|x\.ai)|generativelanguage/.test(request.url())) {
@@ -11,17 +9,40 @@ test("sample review matches the extension flow, supports simulated submission, a
     }
   });
   await page.goto("/");
-  const trigger = page.getByRole("button", { name: "Try live preview" });
+  const trigger = page.getByRole("button", { name: "Try Live Preview" });
   await trigger.click();
   const overlay = page.getByTestId("guided-review-overlay");
   await expect(overlay).toBeFocused();
   expect(await trigger.evaluate((node) => Boolean(node.closest("[inert]")))).toBe(true);
-  await expect(page.getByTestId("preview-mode-notice")).toHaveText(
-    "Chrome extension preview · The CLI uses the same review UI.",
+  await expect(page.getByTestId("preview-mode-notice")).toContainText("Live preview");
+  await expect(page.getByRole("button", { name: "CLI", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
   );
   const units = page.getByRole("navigation", { name: "Review Units" });
   await expect(units.getByRole("button")).toHaveCount(6);
-  await expect(page.getByRole("button", { name: "Generate Prompt", exact: true })).toHaveCount(0);
+  await expect(page.getByTestId("submit-review-button")).toContainText("Generate Prompt");
+  await expect(units.getByRole("button", { name: /Change summary/ })).toHaveAttribute(
+    "aria-current",
+    "true",
+  );
+
+  await page.getByTestId("open-settings").click();
+  await expect(page.getByTestId("preview-unsupported-notice")).toContainText(
+    "isn’t available in the live preview",
+  );
+  await page.getByRole("button", { name: "Dismiss preview notification" }).click();
+
+  await page.getByRole("button", { name: "Chrome", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Chrome", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.getByTestId("submit-review-button")).toContainText("Submit Review");
+  await expect(units.getByRole("button", { name: /PR Description/ })).toHaveAttribute(
+    "aria-current",
+    "true",
+  );
 
   // Every fixture file and hunk must be represented by the prepared structure.
   expect(samplePlan.units).toHaveLength(5);
@@ -67,12 +88,13 @@ test("sample review matches the extension flow, supports simulated submission, a
   await page.getByTestId("review-submitted-exit").click();
   await expect(overlay).toHaveCount(0);
   await expect(trigger).toBeFocused();
+  await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe("");
 
   await page.setViewportSize({ width: 390, height: 844 });
   await trigger.click();
-  await expect(page.getByRole("button", { name: "Generate Prompt", exact: true })).toHaveCount(0);
+  await expect(page.getByTestId("submit-review-button")).toContainText("Generate Prompt");
   await expect(page.getByTestId("preview-mode-notice")).toBeInViewport();
-  await expect(units.getByRole("button", { name: /PR Description/ })).toHaveAttribute(
+  await expect(units.getByRole("button", { name: /Change summary/ })).toHaveAttribute(
     "aria-current",
     "true",
   );

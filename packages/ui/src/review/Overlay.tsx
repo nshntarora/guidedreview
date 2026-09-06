@@ -197,12 +197,11 @@ export function Overlay({
     if (!allowExit) return;
     confirm({
       title: "Exit Review?",
-      body:
-        host.kind === "preview"
-          ? "Preview comments will be discarded. You can open a fresh sample review anytime."
-          : host.kind === "local"
-            ? "Draft notes stay for this session. Re-run the command to start again."
-            : "You can reopen on this PR later. Draft comments stay for this browser session.",
+      body: host.preview
+        ? "Preview comments will be discarded. You can open a fresh sample review anytime."
+        : host.kind === "local"
+          ? "Draft notes stay for this session. Re-run the command to start again."
+          : "You can reopen on this PR later. Draft comments stay for this browser session.",
       variant: "destructive",
       okButtonText: "Exit",
       cancelButtonText: "Stay",
@@ -516,7 +515,7 @@ export function Overlay({
       />
 
       <SubmitReviewModal
-        preview={host.kind === "preview"}
+        preview={Boolean(host.preview)}
         open={submitReviewOpen}
         onClose={closeSubmitReviewModal}
         onSubmit={(submission) => {
@@ -530,7 +529,7 @@ export function Overlay({
       />
 
       <ReviewSubmittedModal
-        preview={host.kind === "preview"}
+        preview={Boolean(host.preview)}
         open={submitSuccess !== null}
         event={submitSuccess?.event ?? "COMMENT"}
         commentCount={submitSuccess?.commentCount ?? 0}

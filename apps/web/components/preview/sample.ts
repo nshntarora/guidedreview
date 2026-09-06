@@ -294,6 +294,16 @@ The public request function now makes up to three attempts for transient HTTP fa
 Review focus: compare the Retry-After promise with the delay cap, and check whether the client tests cover cancellation and attempt exhaustion.`,
 };
 
+export const sampleLocalContext: ReviewContext = {
+  source: "local",
+  title: "feat/retry-requests",
+  baseRef: "main",
+  headRef: "feat/retry-requests",
+  description: `Add bounded retries and cancellation to Parcel HTTP.
+
+The branch adds retry options, safe-method eligibility, jittered backoff, and cancellation. Review the Retry-After boundary and whether the client tests cover cancellation and attempt exhaustion.`,
+};
+
 const units = [
   [
     "options",
