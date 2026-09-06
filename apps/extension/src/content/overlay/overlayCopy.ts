@@ -1,7 +1,7 @@
 import type { BuildPhase } from "./store";
 
 /** Primary loading line while the review plan is being built. */
-export const BUILD_PLAN_PRIMARY = "Building a review plan";
+export const BUILD_PLAN_PRIMARY = "Building the walkthrough";
 
 /** Default right-pane copy when the PR has both a title and a description. */
 export const PR_DESCRIPTION_HINT =

@@ -27,7 +27,7 @@ In any local git repo:
 npx @guided-review/cli
 ```
 
-The CLI binds localhost, opens a browser UI, and walks the same kind of review units. Pick branch vs base, uncommitted work, or a specific commit. **Structure with AI** is opt-in. Line notes stay local; **Generate Prompt** copies a coding-agent prompt — no GitHub submit. Requires Node.js 22+. The binary is `guidedreview`. `npx guided-review` (unscoped, hyphen) is a different package.
+The CLI binds localhost, opens a browser UI, and walks the same kind of review units. Pick branch vs base, uncommitted work, or a specific commit. **Structure With AI** is opt-in. Line notes stay local; **Generate Prompt** copies a coding-agent prompt — no GitHub submit. Requires Node.js 22+. The binary is `guidedreview`. `npx guided-review` (unscoped, hyphen) is a different package.
 
 ### Shared ideas
 
@@ -58,7 +58,7 @@ Pipeline (high level) — shared by extension and CLI via `@guided-review/core`:
 
 Extension sessions live in `chrome.storage.session`, keyed by `owner/repo#number`. Optional GitHub device OAuth is only required to submit reviews from the overlay — not to generate or walk a plan. CLI sessions live with the running localhost server.
 
-Cost: one annotate call per diff chunk when a provider is configured (CLI: only when you Structure with AI). Walking units, searching, drafting, submitting, and Generate Prompt do not call the model again.
+Cost: one annotate call per diff chunk when a provider is configured (CLI: only when you Structure With AI). Walking units, searching, drafting, submitting, and Generate Prompt do not call the model again.
 
 ---
 
@@ -74,7 +74,7 @@ Cost: one annotate call per diff chunk when a provider is configured (CLI: only 
 **Local changes**
 
 1. `npx @guided-review/cli` (Node.js 22+)
-2. Pick a diff scope; optionally Structure with AI
+2. Pick a diff scope; optionally Structure With AI
 3. Walk units; leave notes; Generate Prompt if useful
 
 ---
@@ -103,7 +103,7 @@ Cost: one annotate call per diff chunk when a provider is configured (CLI: only 
 - [Reading the overlay](https://guidedreview.dev/docs/reading-the-overlay): Sidebar, context panel, Change summary vs PR Description, header actions
 - [How a review plan works](https://guidedreview.dev/docs/how-it-works): Units, chunking, no-AI fallback, and what the model may invent
 - [Images & binary files](https://guidedreview.dev/docs/images-and-binaries): Image previews, binary/elided empty state, comments and search
-- [Leave line comments](https://guidedreview.dev/docs/leave-comments): Multi-line drafts while you walk the plan
+- [Leave line comments](https://guidedreview.dev/docs/leave-comments): Multi-line drafts while you follow the walkthrough
 - [Generate Prompt](https://guidedreview.dev/docs/generate-prompt): Clipboard coding-agent prompt from local CLI notes
 - [Submit a review](https://guidedreview.dev/docs/submit-review): Comment / Approve / Request Changes from the extension
 - [Keyboard shortcuts](https://guidedreview.dev/docs/keyboard-shortcuts): Navigation, diff search, view mode, comments, submit, CLI extras

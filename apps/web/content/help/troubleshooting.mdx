@@ -30,9 +30,9 @@ If the on-page button is missing but the PR URL is valid, try the **toolbar icon
 | Symptom                              | What to try                                                                                                                                                                                                                                    |
 | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Prompted to connect a provider       | Extension: Options → [configure a provider](/docs/configure-provider) → paste a valid key → Save. CLI: Settings (`⌘/Ctrl` + `,`) or env / `--provider`. You can still walk [file by file](/docs/how-it-works#without-a-provider) without a key |
-| **Test connection** fails            | Wrong key or model, expired key, or network/VPN blocking the provider. Fix the key, [pick a model](/docs/configure-provider#pick-a-model) your account can use, retry                                                                          |
+| **Test Connection** fails            | Wrong key or model, expired key, or network/VPN blocking the provider. Fix the key, [pick a model](/docs/configure-provider#pick-a-model) your account can use, retry                                                                          |
 | Auth / invalid key from the provider | Regenerate the key in the provider console; don’t paste org-restricted keys your seat can’t use                                                                                                                                                |
-| CLI “Use my subscription” fails      | Agent not logged in, or the unofficial key path broke. Prefer a console API key in Settings or env                                                                                                                                             |
+| CLI “Use My Subscription” fails      | Agent not logged in, or the unofficial key path broke. Prefer a console API key in Settings or env                                                                                                                                             |
 
 Extension keys live in `chrome.storage.local`. CLI keys live in env, flags, or `~/.config/guided-review/config.json`. Both leave the machine toward **your** provider when annotating — not toward Guided Review servers ([Privacy & data](/docs/privacy-and-data)).
 
@@ -41,7 +41,7 @@ Extension keys live in `chrome.storage.local`. CLI keys live in env, flags, or `
 - **Mid-stream error** — Check the overlay or CLI message. Common causes: rate limits, insufficient quota, model unavailable, or a network blip. Wait and retry, or [switch model/provider](/docs/configure-provider).
 - **Empty or thin plan** — Very large or mostly binary diffs produce less useful structure. [Chunking](/docs/how-it-works#chunking-large-diffs) still runs by file; [binary/elided files](/docs/images-and-binaries) won’t get textual units.
 - **Lost connection to the worker** (extension) — Reload the extension and the PR tab, then start again ([first review](/docs/first-review#start-guided-review)).
-- **Structure with AI does nothing** (CLI) — Confirm a key is available ([Configure AI provider → CLI](/docs/configure-provider#cli)), then retry. Check the terminal log below the banner for the error.
+- **Structure With AI does nothing** (CLI) — Confirm a key is available ([Configure AI provider → CLI](/docs/configure-provider#cli)), then retry. Check the terminal log below the banner for the error.
 
 The model only supplies order and commentary ([How a review plan works](/docs/how-it-works#what-the-model-must-not-invent)). If hunks don’t match the real diff, those refs are dropped rather than shown as broken code.
 

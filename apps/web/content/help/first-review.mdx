@@ -1,7 +1,7 @@
 export const toc = [
   { id: "open-a-pull-request", label: "Open a pull request", level: 2 },
   { id: "start-guided-review", label: "Start Guided Review", level: 2 },
-  { id: "walk-the-plan", label: "Walk the plan", level: 2 },
+  { id: "walk-the-plan", label: "Follow the Walkthrough", level: 2 },
   { id: "search-the-diff", label: "Search the diff", level: 2 },
   { id: "leave-comments-and-submit", label: "Leave comments and submit", level: 2 },
   { id: "resume-later", label: "Resume later", level: 2 },
@@ -25,20 +25,22 @@ You can open the overlay any of these ways:
 
 1. Click **Start Guided Review** on the PR page.
 2. Click the **Guided Review toolbar icon** while a PR tab is active (pin it from Chrome’s puzzle-piece menu so it stays visible — [Chrome Extension](/docs/chrome-extension#after-install)).
-3. Optionally enable **Automatically open on Files changed** in Options so the review starts (or resumes) when you open that tab (classic `/files` or the newer `/changes` path). Off by default.
+3. Optionally enable **Automatically Open on Files Changed** in Options so the review starts (or resumes) when you open that tab (classic `/files` or the newer `/changes` path). Off by default.
 
 Then:
 
 1. The overlay opens in a Shadow DOM host so its styles don’t fight GitHub’s CSS.
 2. The extension fetches the PR diff.
-3. With a [provider configured](/docs/configure-provider), it streams a [review plan](/docs/how-it-works) from your model. Units appear progressively as each chunk finishes; the final merged plan is what you step through.
+3. With a [provider configured](/docs/configure-provider), it streams an ordered walkthrough from your model. Review units appear progressively as each chunk finishes; the final walkthrough is what you step through.
 4. **Without a provider key**, you still get a walkthrough: **one unit per changed file**, in diff order. The context panel prompts you to connect Claude, OpenAI, or Grok so related changes can be clustered and summarized. See [How a review plan works → Without a provider](/docs/how-it-works#without-a-provider).
 
 Connection failures after a key is set: [Troubleshooting](/docs/troubleshooting#provider-and-api-key).
 
-## Walk the plan
+<span id="walk-the-plan" />
 
-The overlay shows **display units** in order: a synthetic PR description step first, then each planned unit. UI map (sidebar, context, header): [Reading the overlay](/docs/reading-the-overlay). How units are built and validated: [How a review plan works](/docs/how-it-works).
+## Follow the Walkthrough
+
+The overlay shows each step in order: a synthetic PR description first, then the review units. UI map (sidebar, context, header): [Reading the overlay](/docs/reading-the-overlay). How units are built and validated: [How a review plan works](/docs/how-it-works).
 
 For each unit you can:
 
@@ -57,9 +59,9 @@ Press `⌘/Ctrl` + `F` to search file paths and code across the whole PR diff. P
 As you walk:
 
 1. Press `c` to enter comment mode, select lines, and [draft line comments](/docs/leave-comments). Drafts stay local until you submit ([privacy](/docs/privacy-and-data#what-stays-local)).
-2. When you’re ready, press `⌘/Ctrl` + `Enter` (or use **Submit review**) to choose Comment / Approve / Request Changes and [send the review](/docs/submit-review).
+2. When you’re ready, press `⌘/Ctrl` + `Enter` (or use **Submit Review**) to choose Comment / Approve / Request Changes and [send the review](/docs/submit-review).
 
-Submit needs [GitHub connected](/docs/connect-github). Walking the plan and drafting do not. Full shortcut list: [Keyboard shortcuts](/docs/keyboard-shortcuts).
+Submit needs [GitHub connected](/docs/connect-github). Following the walkthrough and drafting do not. Full shortcut list: [Keyboard shortcuts](/docs/keyboard-shortcuts).
 
 ## Resume later
 

@@ -21,6 +21,17 @@ Parent monorepo: [../../README.md](../../README.md) · Live site: [guidedreview.
 
 Docs are authored as MDX under `content/help/`. Register each page (slug, title, description, section, loader) in `config/docs.ts` — sidebar order, breadcrumbs, prev/next, routes, metadata, sitemap, and the index listing all read from it.
 
+## Product copy
+
+The landing page is the voice reference for user-facing copy. Keep the site, product UI, and public READMEs aligned on these terms:
+
+- Guided Review turns a diff into an ordered **walkthrough** of **review units**.
+- AI supplies structure and commentary; the reviewer reads the real diff and decides.
+- The CTA is **Start Guided Review**. Match the capitalization of other UI controls exactly, including **Structure With AI**, **Connect AI Provider**, **Test Connection**, **Submit Review**, **Generate Prompt**, and **Use My Subscription**.
+- The extension and CLI have no Guided Review product backend. They talk directly to the user's provider; the extension also talks to GitHub for PR workflows.
+
+Use “review plan” for the internal `ReviewPlan` data structure and pipeline documentation. Prefer “walkthrough” for the user-visible experience. User-facing help belongs in `content/help/`; this README owns development and deployment notes only.
+
 ---
 
 ## Development

@@ -19,7 +19,7 @@ Hands-on paths: [Your first review](/docs/first-review) (extension) · [CLI](/do
 
 1. **Parse** — The unified diff is parsed into files, hunks, and lines. Every hunk gets a stable id (`filePath#index`) that the model must reference exactly.
 2. **Prompt** — The parsed diff is rendered into LLM-readable text with hunk ids annotated.
-3. **Annotate** — A structured review plan is streamed from [your provider](/docs/configure-provider). On the extension that runs in the background worker; on the CLI it runs in the local server when you click **Structure with AI**.
+3. **Annotate** — A structured review plan is streamed from [your provider](/docs/configure-provider). On the extension that runs in the background worker; on the CLI it runs in the local server when you click **Structure With AI**.
 4. **Validate** — Each unit is cleaned against real file/hunk ids; hallucinated refs are dropped.
 5. **Display** — The overlay resolves unit refs back to the real diff for rendering.
 
@@ -31,7 +31,7 @@ A **review unit** is a logical step in the plan: a title, intent context, and on
 
 Units aim for a consistent structure on the same diff: same hunk partition, order, and change-vs-tests kind. Titles and wording may still vary slightly across models.
 
-On a GitHub PR, the first display step is a synthetic **PR Description** unit built from page context, then the plan’s units. On the CLI, the first step is **Change summary** (where **Structure with AI** lives) for the selected local scope. Overlay layout: [Reading the overlay](/docs/reading-the-overlay). You step through units with the footer or [keyboard shortcuts](/docs/keyboard-shortcuts).
+On a GitHub PR, the first display step is a synthetic **PR Description** unit built from page context, then the plan’s units. On the CLI, the first step is **Change summary** (where **Structure With AI** lives) for the selected local scope. Overlay layout: [Reading the overlay](/docs/reading-the-overlay). You step through units with the footer or [keyboard shortcuts](/docs/keyboard-shortcuts).
 
 Summaries are optional guidance — you still judge the code ([FAQ](/docs/faq#does-the-ai-approve-prs)).
 
@@ -44,7 +44,7 @@ If you start a review before [configuring an API key](/docs/configure-provider),
 - Unit titles are file paths; commentary is empty so the context panel can prompt you to connect a provider instead of inventing text.
 - You can still navigate and [search the diff](/docs/keyboard-shortcuts#diff-search). On the extension you can also [draft comments](/docs/leave-comments) and [submit](/docs/submit-review) once GitHub is connected. On the CLI you can leave notes and [Generate Prompt](/docs/cli#notes).
 
-Connecting a provider and starting again (or **Structure with AI** / retry when prompted) replaces that fallback with an AI-clustered plan for the current diff.
+Connecting a provider and starting again (or **Structure With AI** / Retry when prompted) replaces that fallback with an AI-clustered plan for the current diff.
 
 ## Chunking large diffs
 

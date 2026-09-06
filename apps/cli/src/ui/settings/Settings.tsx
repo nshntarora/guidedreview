@@ -313,7 +313,7 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
       body: JSON.stringify(payload()),
     });
     const data = (await res.json().catch(() => ({}))) as PublicSettings & { error?: string };
-    if (!res.ok) throw new Error(data.error ?? "Failed to save settings.");
+    if (!res.ok) throw new Error(data.error ?? "Couldn’t save settings. Try again.");
     applyPublished(data);
     return data;
   };
@@ -325,7 +325,7 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
       await persist();
       setSaveStatus({ kind: "ok", message: "Saved" });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to save settings.";
+      const message = error instanceof Error ? error.message : "Couldn’t save settings. Try again.";
       setSaveStatus({ kind: "error", message });
     }
   };
@@ -343,7 +343,12 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
         ok?: boolean;
         error?: string;
       };
-      if (!res.ok) throw new Error(data.error ?? "Connection test failed unexpectedly.");
+      if (!res.ok) {
+        throw new Error(
+          data.error ??
+            "Connection failed. Check the selected credentials and model, then try again.",
+        );
+      }
       if (data.ok) {
         setConnection({ kind: "ok", message: "Connection OK" });
         const published = await fetch("/api/settings").then(
@@ -351,11 +356,18 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
         );
         applyPublished(published);
       } else {
-        setConnection({ kind: "error", message: data.error ?? "Connection failed." });
+        setConnection({
+          kind: "error",
+          message:
+            data.error ??
+            "Connection failed. Check the selected credentials and model, then try again.",
+        });
       }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Connection test failed unexpectedly.";
+        error instanceof Error
+          ? error.message
+          : "Couldn’t test the connection. Check your network, then try again.";
       setConnection({ kind: "error", message });
     }
   };
@@ -467,7 +479,7 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
                   id="use-subscription-label"
                   className="m-0 font-brand text-base font-bold tracking-tight text-foreground"
                 >
-                  Use my subscription
+                  Use My Subscription
                 </p>
                 <p id="use-subscription-hint" className="mt-1 m-0 text-sm text-muted">
                   Read the current login from {agentName} on this machine. The token stays in that
@@ -524,7 +536,7 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
             {statusMessage && <Callout kind={statusMessage.kind} message={statusMessage.message} />}
 
             <div className="divide-y divide-border border-t border-border">
-              <HelpDetails title="How it works">
+              <HelpDetails title="How It Works">
                 <ol className="mt-0 mb-0 list-decimal space-y-1.5 pl-5">
                   <li>Pick a provider and model.</li>
                   <li>
@@ -538,7 +550,7 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
                   </li>
                 </ol>
               </HelpDetails>
-              <HelpDetails title="If it fails">
+              <HelpDetails title="If It Fails">
                 <ul className="mt-0 mb-0 list-disc space-y-1.5 pl-5">
                   <li>
                     Confirm the matching CLI is installed and on your PATH:{" "}
@@ -560,7 +572,7 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
                     Codex must have an OpenAI API key — a ChatGPT login is not accepted by
                     api.openai.com.
                   </li>
-                  <li>Then Save or Test connection. If it still fails, paste an API key.</li>
+                  <li>Then Save or Test Connection. If it still fails, paste an API key.</li>
                 </ul>
               </HelpDetails>
             </div>
@@ -569,7 +581,8 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
       </div>
 
       <p className="mt-6 m-0 text-sm leading-relaxed text-muted">
-        Keys stay on this machine. Diffs go only to the provider you choose.
+        Guided Review has no product backend. Local diffs are sent only to the provider you choose,
+        and notes stay in the running session until you copy them.
       </p>
     </main>
   );

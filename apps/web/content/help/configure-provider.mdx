@@ -3,7 +3,7 @@ export const toc = [
   { id: "chrome-extension", label: "Chrome extension", level: 2 },
   { id: "cli", label: "CLI", level: 2 },
   { id: "pick-a-model", label: "Pick a model", level: 2 },
-  { id: "test-connection", label: "Test connection", level: 2 },
+  { id: "test-connection", label: "Test Connection", level: 2 },
   { id: "cost-and-usage", label: "Cost and usage", level: 2 },
   { id: "where-settings-live", label: "Where settings live", level: 2 },
 ];
@@ -35,7 +35,7 @@ We’ll keep adding more providers — [request one on the repo](https://github.
 3. Paste an API key from that provider’s console.
 4. Click **Save**, then **Test Connection** if you want a cheap health check before a real review.
 
-The same Options page also has **GitHub** (optional, for [submit](/docs/submit-review)) and **Review → Automatically open on Files changed**. Full Options map: [Chrome Extension → Options](/docs/chrome-extension#options).
+The same Options page also has **GitHub** (optional, for [submit](/docs/submit-review)) and **Review → Automatically Open on Files Changed**. Full Options map: [Chrome Extension → Options](/docs/chrome-extension#options).
 
 Keys are stored in `chrome.storage.local` and are only used from the **background service worker** when annotating a review or testing the connection. Content scripts never hold the key for outbound LLM calls. To remove a key later: [Privacy & data → Clear data](/docs/privacy-and-data#clear-data-and-disconnect).
 
@@ -47,7 +47,7 @@ Same providers. Keys resolve in order for each run:
 2. A key saved in `~/.config/guided-review/config.json` (or `$XDG_CONFIG_HOME` / `GUIDED_REVIEW_CONFIG_DIR`)
 3. A coding agent already on this machine (Claude Code, Codex, or Grok)
 
-In the local UI, open **Settings** (`⌘/Ctrl` + `,`, or **Connect AI Provider** when no key is set). Paste an API key, or turn on **Use my subscription** to borrow an agent already logged in on the machine. A saved API key always wins for that machine; flags and env still win for the current run. Subscription reuse is unofficial and can break — a console key is the better option.
+In the local UI, open **Settings** (`⌘/Ctrl` + `,`, or **Connect AI Provider** when no key is set). Paste an API key, or turn on **Use My Subscription** to borrow an agent already logged in on the machine. A saved API key always wins for that machine; flags and env still win for the current run. Subscription reuse is unofficial and can break — a console key is the better option.
 
 When the CLI borrows an agent key, it reads that agent’s store at review time and does not copy the secret into Guided Review config. Details and scopes: [CLI → API keys](/docs/cli#api-keys).
 
@@ -65,19 +65,19 @@ Models currently listed in the extension Options (ids can change as providers sh
 
 If a stored model disappears from the catalog, Options falls back to that provider’s default. The CLI accepts `--model <id>` for any model id your account can call.
 
-## Test connection
+## Test Connection
 
-Use **Test connection** on the extension options page. That runs the same provider path as a lightweight health check and surfaces user-safe error messages if the key, model, or network path fails.
+Use **Test Connection** on the extension options page. That runs the same provider path as a lightweight health check and surfaces user-safe error messages if the key, model, or network path fails.
 
-In the CLI, structuring a plan with **Structure with AI** (or fixing Settings and retrying) is the practical check — there is no separate Test button in the local UI.
+In the CLI, structuring the walkthrough with **Structure With AI** (or fixing Settings and retrying) is the practical check — there is no separate Test button in the local UI.
 
 If the test fails, step through [Troubleshooting → Provider and API key](/docs/troubleshooting#provider-and-api-key).
 
 ## Cost and usage
 
-- **Annotate / Structure with AI** — one provider call per [diff chunk](/docs/how-it-works#chunking-large-diffs). Small diffs usually cost one call; large ones cost one call per chunk. On the CLI this only runs when you opt in.
+- **Annotate / Structure With AI** — one provider call per [diff chunk](/docs/how-it-works#chunking-large-diffs). Small diffs usually cost one call; large ones cost one call per chunk. On the CLI this only runs when you opt in.
 - **Not billed to the model** — stepping units, [searching](/docs/keyboard-shortcuts#diff-search), drafting comments / notes, [submitting to GitHub](/docs/submit-review), or **Generate Prompt**.
-- **Test connection** — a cheap health-check request when you run it from extension Options.
+- **Test Connection** — a cheap health-check request when you run it from extension Options.
 
 Token usage and cost are entirely between you and your provider. Guided Review does not meter or resell LLM usage. Short version: [FAQ → Will this run up my API bill?](/docs/faq#will-this-run-up-my-api-bill).
 
@@ -86,7 +86,7 @@ Token usage and cost are entirely between you and your provider. Guided Review d
 | Setting                             | Storage                               | Used by                     |
 | ----------------------------------- | ------------------------------------- | --------------------------- |
 | Provider, model, API key            | `chrome.storage.local`                | Extension background worker |
-| Automatically open on Files changed | `chrome.storage.local`                | Content script (auto-open)  |
+| Automatically Open on Files Changed | `chrome.storage.local`                | Content script (auto-open)  |
 | Diff view (unified / split)         | `chrome.storage.local`                | Overlay (default: split)    |
 | Active review session               | `chrome.storage.session`              | Extension overlay           |
 | Provider, model, API key, agent     | `~/.config/guided-review/config.json` | CLI                         |

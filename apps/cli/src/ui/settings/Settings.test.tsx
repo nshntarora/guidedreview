@@ -114,13 +114,13 @@ describe("Settings", () => {
       "false",
     );
     expect(screen.getByText("/tmp/guided-review/config.json")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "How it works" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "If it fails" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "How It Works" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "If It Fails" })).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "How it works" }).closest("details"),
+      screen.getByRole("heading", { name: "How It Works" }).closest("details"),
     ).not.toHaveAttribute("open");
     expect(
-      screen.getByRole("heading", { name: "If it fails" }).closest("details"),
+      screen.getByRole("heading", { name: "If It Fails" }).closest("details"),
     ).not.toHaveAttribute("open");
   });
 

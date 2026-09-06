@@ -1,8 +1,8 @@
 # `@guided-review/extension`
 
-Chrome **Manifest V3** extension — the Guided Review product.
+Chrome **Manifest V3** host for reviewing GitHub pull requests with Guided Review.
 
-Injects **Start Guided Review** on GitHub PR pages, fetches the PR diff, sends it to your LLM (Anthropic / OpenAI / Grok), and turns the raw diff into ordered **review units** in a Shadow DOM overlay so you can walk the change set with keyboard shortcuts, line comments, and an optional GitHub review submit.
+Injects **Start Guided Review** on GitHub PR pages and walks the real PR diff as ordered **review units** in a Shadow DOM overlay, with keyboard shortcuts, line comments, and optional GitHub review submit. Without an AI provider it starts one unit per file. With Anthropic, OpenAI, or Grok configured, the model groups related hunks and adds short commentary; it never supplies the code shown in the overlay.
 
 Parent monorepo: [../../README.md](../../README.md)
 
@@ -25,7 +25,7 @@ pnpm build:extension
 
 **Always load from `apps/extension/dist`**, never a root-level `dist/` left over from older layouts. Remove any stale root entry from `chrome://extensions` if you still have one.
 
-4. Open the extension **Options** page → choose a provider and paste an API key
+4. Open the extension **Options** page → optionally choose an **AI Provider** and paste an API key
 5. Open a GitHub pull request → click **Start Guided Review**
 
 ### After code changes
@@ -59,7 +59,7 @@ pnpm dev:extension       # same
 
 ## GitHub OAuth
 
-Submitting a review from the overlay (approve / comment / request changes via the GitHub API) uses GitHub’s **device OAuth** flow. Reading a PR and generating a plan works **without** GitHub auth.
+Submitting a review from the overlay (approve / comment / request changes via the GitHub API) uses GitHub’s **device OAuth** flow. Opening a PR walkthrough, structuring it with a provider, and drafting comments work **without** GitHub auth.
 
 1. Create an OAuth App at [GitHub Developer settings](https://github.com/settings/developers)
 2. Enable **Device Flow**
@@ -93,7 +93,7 @@ Shared contracts: `src/lib/types.ts`, messaging helpers in `src/lib/messaging.ts
 2. **Prompt** — render the parsed diff for the model; large diffs chunk by file (~60k chars)
 3. **Annotate** — stream structured plan from the configured provider
 4. **Validate** — drop hallucinated file/hunk refs; never show invented code
-5. **Display** — overlay resolves real hunks from the plan; you step through units
+5. **Display** — overlay resolves real hunks from the plan; the reviewer follows the walkthrough unit by unit
 
 Providers: Anthropic, OpenAI, and Grok (OpenAI-compatible). Settings live in `chrome.storage.local`. Sessions (diff + plan + step) live in `chrome.storage.session`, keyed by PR identity (`owner/repo#number`).
 
@@ -132,7 +132,7 @@ Throw `ProviderError` for all provider-side failures. Shared HTTP/SSE helpers li
 4. **Icon** — drop an SVG at `public/providers/<id>.svg` and set `iconSrc` to `providers/<id>.svg`. The options UI loads it via `ProviderIcon` / `chrome.runtime.getURL`.
 
 5. **Verify**
-   - Options page: provider + models appear; **Test connection** succeeds with a real key.
+   - Options page: provider + models appear; **Test Connection** succeeds with a real key.
    - Start Guided Review on a PR: units stream and match real file/hunk ids (validation drops hallucinations either way).
    - `pnpm typecheck` and `pnpm test` from the monorepo root.
 
@@ -208,8 +208,9 @@ apps/extension/
 
 ## Privacy (product defaults)
 
-- No Guided Review backend — code and keys do not hit our infrastructure (we don’t have any).
+- Guided Review has no product backend. PR diffs go only to the configured AI provider; GitHub requests go directly to GitHub.
 - API keys stay in `chrome.storage.local` and are used only from the background worker for LLM calls.
+- Review plans, the current step, and draft comments stay in `chrome.storage.session` for the browser session.
 - Host permissions are limited to GitHub, patch-diff, and the configured AI provider APIs.
 
 User-facing docs: [guidedreview.dev/docs](https://guidedreview.dev/docs).

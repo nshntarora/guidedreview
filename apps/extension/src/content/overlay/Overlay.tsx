@@ -60,10 +60,10 @@ function statusAnnouncementText(
     return `Error: ${error.message}`;
   }
   if (needsProvider && status === "ready" && plan) {
-    return `${displayUnitCount(plan)} steps, one per changed file. Connect an AI provider for guided ordering and context.`;
+    return `${displayUnitCount(plan)} steps, one per changed file. Connect an AI Provider for guided ordering and context.`;
   }
   if (needsProvider) {
-    return "Connect an AI provider to enable the AI features.";
+    return "Connect an AI Provider to enable the AI features.";
   }
   if (status === "loading" || status === "streaming") {
     const detail = buildPhase != null ? buildPhaseDetail(buildPhase, providerLabel) : null;
@@ -74,7 +74,7 @@ function statusAnnouncementText(
     return detail ? `${BUILD_PLAN_PRIMARY}. ${detail}` : `${BUILD_PLAN_PRIMARY}…`;
   }
   if (status === "ready" && plan) {
-    return `Review plan ready. ${displayUnitCount(plan)} steps.`;
+    return `Walkthrough ready. ${displayUnitCount(plan)} steps.`;
   }
   return "";
 }
@@ -192,7 +192,7 @@ export function Overlay({
   function requestExit() {
     if (!allowExit) return;
     confirm({
-      title: "Exit review?",
+      title: "Exit Review?",
       body:
         host.kind === "local"
           ? "Draft notes stay for this session. Re-run the command to start again."

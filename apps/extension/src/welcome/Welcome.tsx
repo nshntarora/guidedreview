@@ -65,7 +65,7 @@ export function Welcome() {
       </header>
 
       <ol className="mt-10 m-0 list-none space-y-0 divide-y divide-border rounded-lg border border-border bg-surface-raised/50 p-0">
-        <Step n={1} title="Pin the extension" done={pinState === "pinned"}>
+        <Step n={1} title="Pin the Extension" done={pinState === "pinned"}>
           {pinState === "pinned" ? (
             <p className="m-0 text-base leading-relaxed text-muted">
               Pinned to the toolbar — you&apos;re set.
@@ -78,14 +78,14 @@ export function Welcome() {
           )}
         </Step>
 
-        <Step n={2} title="Connect an AI provider">
+        <Step n={2} title="Connect an AI Provider">
           <p className="m-0 text-base leading-relaxed text-muted">
             Paste a key for Claude, OpenAI, or Grok. Keys stay in this browser — we don&apos;t have
             servers in the middle.
           </p>
         </Step>
 
-        <Step n={3} title="Start a review on a PR">
+        <Step n={3} title="Start a Review on a PR">
           <p className="m-0 text-base leading-relaxed text-muted">
             Open any GitHub pull request and click{" "}
             <strong className="font-semibold text-foreground">Start Guided Review</strong>. The
@@ -96,7 +96,7 @@ export function Welcome() {
 
       <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center">
         <Button onClick={openSettings} data-testid="welcome-connect-provider">
-          Connect AI provider
+          Connect AI Provider
         </Button>
         <a
           href={GITHUB_PULLS_URL}
@@ -105,12 +105,13 @@ export function Welcome() {
           className={buttonClassName({ variant: "secondary" })}
           data-testid="welcome-open-pulls"
         >
-          Open GitHub pull requests
+          Open GitHub Pull Requests
         </a>
       </div>
 
       <p className="mt-10 m-0 text-center text-sm leading-relaxed text-muted text-balance">
-        Your code never touches our infrastructure. Diffs go only to the provider you choose.
+        Guided Review has no product backend. PR content comes from GitHub and is sent only to the
+        provider you choose. Reviews return to GitHub only when you submit.
       </p>
 
       <nav

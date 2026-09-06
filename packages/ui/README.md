@@ -2,6 +2,8 @@
 
 Shared design tokens, brand assets, and presentational components for Guided Review apps.
 
+Product behavior and host-specific copy do not belong in this package. Components expose presentation and interaction primitives; the extension, CLI, or web app supplies labels, errors, and workflow language. When a control label is shared across hosts, match the canonical product wording documented in [`apps/web/README.md`](../../apps/web/README.md#product-copy).
+
 ## What belongs here
 
 Add a module when **all** are true:

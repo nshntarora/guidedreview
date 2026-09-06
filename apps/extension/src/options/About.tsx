@@ -43,8 +43,8 @@ export function About() {
           <p className="mt-2 m-0 font-mono text-xs text-muted tabular-nums">v{version}</p>
         ) : null}
         <p className="mt-5 m-0 text-base leading-relaxed text-muted text-balance sm:text-lg">
-          Chrome extension for GitHub PRs: clusters related changes into review units, short
-          summaries, keyboard-first. AI structures the plan — you still judge the code.
+          Guided Review clusters related changes in GitHub PRs into ordered review units with short
+          context. AI structures the walkthrough; you read the real diff and decide.
         </p>
         <p className="mt-3 m-0 font-mono text-xs text-muted">
           Free · Open source · Bring your own LLM key
@@ -66,11 +66,11 @@ export function About() {
           </li>
           <li>
             The extension fetches the diff and sends it to the AI provider you configured, which
-            clusters related changes into an ordered review plan.
+            clusters related changes into an ordered walkthrough.
           </li>
           <li>
-            Step through the plan in Guided Review — real diff hunks, short context, you still judge
-            the code.
+            Follow the walkthrough in Guided Review — real diff hunks, short context, and your
+            judgment.
           </li>
         </ol>
       </section>
@@ -88,7 +88,7 @@ export function About() {
             CLI
           </a>{" "}
           walks a local branch, commit, or working tree — file by file until you click{" "}
-          <strong className="font-semibold text-foreground">Structure with AI</strong>. Notes stay
+          <strong className="font-semibold text-foreground">Structure With AI</strong>. Notes stay
           in the session; there is no GitHub submit.
         </p>
       </section>
@@ -101,8 +101,9 @@ export function About() {
           Privacy
         </h2>
         <p className="mt-4 m-0 text-base leading-relaxed text-muted">
-          Your code never touches our infrastructure — we don&apos;t have any. Diffs and prompts go
-          only to the provider you choose. Your API key stays in this browser via{" "}
+          Guided Review has no product backend. PR content comes from GitHub and is sent only to the
+          provider you choose. Reviews return to GitHub only when you submit. Your API key stays in
+          this browser via{" "}
           <code className="rounded bg-surface-raised px-1 py-0.5 font-mono text-sm text-foreground">
             chrome.storage.local
           </code>

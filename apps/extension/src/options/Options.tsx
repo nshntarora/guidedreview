@@ -100,7 +100,7 @@ export function Options() {
       await setProviderSettings(settings);
       setSaveStatus({ kind: "ok", message: "Saved" });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to save settings.";
+      const message = error instanceof Error ? error.message : "Couldn’t save settings. Try again.";
       setSaveStatus({ kind: "error", message });
     }
   };
@@ -122,12 +122,15 @@ export function Options() {
       } else {
         setConnection({
           kind: "error",
-          message: result.error ?? "Connection failed.",
+          message:
+            result.error ?? "Connection failed. Check the API key and model, then try again.",
         });
       }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Connection test failed unexpectedly.";
+        error instanceof Error
+          ? error.message
+          : "Couldn’t test the connection. Check your network, then try again.";
       setConnection({ kind: "error", message });
     }
   };
@@ -250,7 +253,7 @@ export function Options() {
                 id="autoOpenOnFilesTab-label"
                 className="m-0 font-brand text-base font-bold tracking-tight text-foreground"
               >
-                Automatically open on Files changed
+                Automatically Open on Files Changed
               </p>
               <p id="autoOpenOnFilesTab-hint" className="mt-1 m-0 text-sm text-muted">
                 When enabled, Guided Review opens (or resumes) automatically on a PR’s Files changed
@@ -269,7 +272,8 @@ export function Options() {
       </div>
 
       <p className="mt-6 m-0 text-sm leading-relaxed text-muted">
-        Keys and tokens stay in this browser. Diffs go only to GitHub and the provider you choose.
+        Guided Review has no product backend. PR content comes from GitHub and is sent only to the
+        provider you choose. Reviews return to GitHub only when you submit.
       </p>
     </main>
   );

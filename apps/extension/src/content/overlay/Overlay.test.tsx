@@ -401,10 +401,10 @@ describe("Overlay", () => {
     fireEvent.keyDown(window, { key: "Escape" });
     expect(useReviewStore.getState().uiMode).toBe("navigate");
     expect(useReviewStore.getState().isOpen).toBe(true);
-    expect(screen.queryByText("Exit review?")).not.toBeInTheDocument();
+    expect(screen.queryByText("Exit Review?")).not.toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: "Escape" });
-    expect(screen.queryByText("Exit review?")).not.toBeInTheDocument();
+    expect(screen.queryByText("Exit Review?")).not.toBeInTheDocument();
     expect(useReviewStore.getState().isOpen).toBe(true);
   });
 
@@ -550,11 +550,11 @@ describe("Overlay", () => {
     expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
     const loading = screen.getByTestId("context-panel-loading");
-    expect(loading).toHaveTextContent(/building a review plan/i);
+    expect(loading).toHaveTextContent(/building the walkthrough/i);
     expect(screen.getByTestId("context-panel-loading-detail")).toHaveTextContent(
       /extracting the diff/i,
     );
-    expect(screen.getByRole("status", { name: /building a review plan/i })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: /building the walkthrough/i })).toBeInTheDocument();
     // Skeleton placeholders are present (non-interactive bars in the unit list).
     expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
     // Shortcuts are reserved for the ready state; spinner occupies that slot while loading.
@@ -580,7 +580,7 @@ describe("Overlay", () => {
     expect(screen.getByText("src/foo.ts")).toBeInTheDocument();
     // Plan still loading — skeleton + status copy remain.
     expect(screen.getByTestId("context-panel-loading")).toHaveTextContent(
-      /building a review plan/i,
+      /building the walkthrough/i,
     );
     expect(screen.getByTestId("context-panel-loading-detail")).toHaveTextContent(
       /processing the diff/i,
@@ -603,7 +603,7 @@ describe("Overlay", () => {
     expect(screen.getByText("Update foo")).toBeInTheDocument();
     expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
     expect(screen.getByTestId("context-panel-loading")).toHaveTextContent(
-      /building a review plan/i,
+      /building the walkthrough/i,
     );
     expect(screen.getByTestId("context-panel-loading-detail")).toHaveTextContent(
       /tokens are streaming/i,
@@ -1177,7 +1177,7 @@ describe("Overlay", () => {
 
       fireEvent.keyDown(window, { key: "Escape" });
       expect(await screen.findByTestId("confirmation-dialog")).toBeInTheDocument();
-      expect(screen.getByText("Exit review?")).toBeInTheDocument();
+      expect(screen.getByText("Exit Review?")).toBeInTheDocument();
       expect(useReviewStore.getState().isOpen).toBe(true);
 
       fireEvent.click(screen.getByTestId("confirmation-ok"));

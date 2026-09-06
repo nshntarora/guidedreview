@@ -151,7 +151,7 @@ function ConnectGitHubPrimaryAction({
         onClick={() => onOpenVerificationUri(flow.verificationUri)}
         data-testid="connect-github-enter-code"
       >
-        Enter Code On GitHub
+        Enter Code on GitHub
         <Kbd>Enter</Kbd>
       </Button>
     );

@@ -21,52 +21,52 @@ type ShortcutRow =
     };
 
 const SHORTCUTS: readonly ShortcutRow[] = [
-  { keys: ["←", "→"], join: "none", description: "Previous / next step" },
-  { keys: ["↑", "↓"], join: "none", description: "Scroll the code pane" },
-  { keys: ["v", "u"], join: "sequence", description: "Unified view" },
-  { keys: ["v", "s"], join: "sequence", description: "Split view" },
+  { keys: ["←", "→"], join: "none", description: "Previous / Next Step" },
+  { keys: ["↑", "↓"], join: "none", description: "Scroll the Code Pane" },
+  { keys: ["v", "u"], join: "sequence", description: "Unified View" },
+  { keys: ["v", "s"], join: "sequence", description: "Split View" },
   {
     keys: ["mod", "F"],
     join: "chord",
-    description: "Search files and code in this PR",
+    description: "Search Files and Code in This PR",
   },
-  { keys: ["c"], join: "none", description: "Enter comment mode" },
-  { keys: ["↑", "↓"], join: "none", description: "Select lines (in comment mode)" },
+  { keys: ["c"], join: "none", description: "Enter Comment Mode" },
+  { keys: ["↑", "↓"], join: "none", description: "Select Lines (in Comment Mode)" },
   {
-    description: "Multi-line select (comment mode)",
+    description: "Multi-Line Select (Comment Mode)",
     chordWithAlternatives: { modifier: "⇧", alternatives: ["↑", "↓"] },
   },
-  { keys: ["Enter"], join: "none", description: "Open comment on selection" },
+  { keys: ["Enter"], join: "none", description: "Open Comment on Selection" },
   {
     keys: ["mod", "Enter"],
     join: "chord",
-    description: "Open / submit review (save draft in composer)",
+    description: "Open / Submit Review (Save Draft in Composer)",
   },
-  { keys: ["Esc"], join: "none", description: "Exit comment mode / exit review" },
+  { keys: ["Esc"], join: "none", description: "Exit Comment Mode / Exit Review" },
 ];
 
 const LOCAL_SHORTCUTS: readonly ShortcutRow[] = SHORTCUTS.map((row) =>
   "keys" in row && row.keys[0] === "Esc"
-    ? { keys: ["Esc"], join: "none" as const, description: "Exit comment mode" }
+    ? { keys: ["Esc"], join: "none" as const, description: "Exit Comment Mode" }
     : row,
 );
 
 const SETTINGS_SHORTCUT: ShortcutRow = {
   keys: ["mod", ","],
   join: "chord",
-  description: "Open settings",
+  description: "Open Settings",
 };
 
 const SCOPE_PICKER_SHORTCUT: ShortcutRow = {
   keys: ["d"],
   join: "none",
-  description: "Choose which diff to review",
+  description: "Choose Which Diff to Review",
 };
 
 const STRUCTURE_REVIEW_SHORTCUT: ShortcutRow = {
   keys: ["mod", "I"],
   join: "chord",
-  description: "Structure with AI",
+  description: "Structure With AI",
 };
 
 function ShortcutRowKeys({ row }: { row: ShortcutRow }) {

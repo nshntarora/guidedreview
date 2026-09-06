@@ -282,7 +282,7 @@ test.describe("Guided review overlay", () => {
     await page.getByRole("button", { name: "Start Guided Review" }).click();
 
     await expect(page.getByTestId("connect-provider-prompt")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Connect an AI provider" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Connect an AI Provider" })).toBeVisible();
     await expect(page.getByTestId("connect-provider-open-settings")).toBeVisible();
     await expect(page.getByTestId("connect-provider-learn-more")).toBeVisible();
 
@@ -321,7 +321,7 @@ test.describe("Guided review overlay", () => {
     // Esc opens the exit confirmation; confirm to tear the overlay down.
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("confirmation-dialog")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Exit review?" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Exit Review?" })).toBeVisible();
     await page.getByTestId("confirmation-ok").click();
 
     await expect(page.getByText("PR Description")).toHaveCount(0);

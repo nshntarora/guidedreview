@@ -4,13 +4,13 @@
 
 ![Tests](https://github.com/nshntarora/guidedreview/actions/workflows/tests.yml/badge.svg)
 
-Clusters related changes into ordered **review units** so you can actually read AI-generated code — on GitHub pull requests (Chrome extension) or on a local branch, commit, or working tree (CLI).
+Review AI-generated code before you sign your name to it. Guided Review turns GitHub pull requests and local git changes into an ordered walkthrough of **review units** so you can read the change with intent instead of reconstructing it from an alphabetical file list.
 
 1. Open a pull request and hit **Start Guided Review**, or run `npx @guided-review/cli` in a repo.
-2. Your LLM clusters the diff into ordered units with short summaries — schema, then logic, then call-sites, then tests — instead of an alphabetical file dump.
-3. Walk the change keyboard-first. AI structures the pass — **you still read the code and decide**.
+2. When you ask for AI structure, your LLM clusters related hunks and adds short commentary — schema, then logic, then call-sites, then tests.
+3. Follow the walkthrough keyboard-first. The code always comes from the real diff; **you still read it and decide**.
 
-Free, open source, bring your own LLM key. Traffic goes to GitHub and your AI provider only — no Guided Review backend.
+Free, open source, bring your own LLM key. Guided Review has no product backend: the extension and CLI talk directly to your AI provider, and the extension talks to GitHub for PRs.
 
 - **Chrome extension** — [Chrome Web Store](https://chromewebstore.google.com/detail/pdnnimoajmnjpccboemeomoeomancodd), or build from source below
 - **CLI** — `npx @guided-review/cli` ([npm](https://www.npmjs.com/package/@guided-review/cli))
@@ -78,7 +78,7 @@ Requires **Node.js** ≥ 22. No clone needed:
 npx @guided-review/cli
 ```
 
-The CLI starts a local server on `127.0.0.1`, opens a browser UI, and walks the current branch versus its base, uncommitted work, or a single commit. File-by-file until you click **Structure with AI**.
+The CLI starts a local server on `127.0.0.1`, opens a browser UI, and walks the current branch versus its base, uncommitted work, or a single commit. It starts file-by-file and does not call an LLM until you click **Structure With AI**.
 
 ```bash
 npx @guided-review/cli --base main --no-open
@@ -142,7 +142,7 @@ Also available: `pnpm typecheck`, `pnpm lint`, `pnpm format`. Workspace-scoped r
 
 Docs: [Your first review](https://guidedreview.dev/docs/first-review) · [Keyboard shortcuts](https://guidedreview.dev/docs/keyboard-shortcuts) · [Submit a review](https://guidedreview.dev/docs/submit-review).
 
-**On local changes** — run the CLI in a git repo, pick the scope (branch vs base, uncommitted, unstaged, or a commit), then **Structure with AI** when you want a clustered plan. Line comments stay in the session; there is no GitHub submit. **Generate Prompt** builds a coding-agent prompt from those notes and copies it — Guided Review does not send it anywhere.
+**On local changes** — run the CLI in a git repo, pick the scope (branch vs base, uncommitted, unstaged, or a commit), then use **Structure With AI** when you want related files grouped into review units with short context. Line notes stay in the running session; there is no GitHub submit. **Generate Prompt** builds a coding-agent prompt from those notes and copies it — Guided Review does not send it anywhere.
 
 Docs: [CLI](https://guidedreview.dev/docs/cli).
 

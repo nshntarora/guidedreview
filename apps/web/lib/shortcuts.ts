@@ -13,7 +13,7 @@ export const SITE_SHORTCUTS = {
   extension: {
     key: "e",
     href: CHROME_WEB_STORE_URL,
-    label: "Install the extension",
+    label: "Install the Extension",
   },
   /** Nav link to the CLI docs page. */
   installCli: {

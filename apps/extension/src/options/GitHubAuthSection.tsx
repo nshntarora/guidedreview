@@ -104,7 +104,7 @@ function GitHubAuthAwaiting({
           onClick={() => void openVerificationUri(verificationUri)}
           data-testid="github-enter-code"
         >
-          Enter Code On GitHub
+          Enter Code on GitHub
         </Button>
       </div>
     </div>

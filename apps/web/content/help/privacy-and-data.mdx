@@ -16,7 +16,7 @@ Guided Review is designed so the product does not phone home. Diff content goes 
 
 | Destination               | When                                    | What                                                                                                                                                                                     |
 | ------------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Your AI provider**      | Annotating / **Structure with AI**      | Prompt built from the diff + schema instructions; API key in the Authorization header — [Configure AI provider](/docs/configure-provider), [How a review plan works](/docs/how-it-works) |
+| **Your AI provider**      | Annotating / **Structure With AI**      | Prompt built from the diff + schema instructions; API key in the Authorization header — [Configure AI provider](/docs/configure-provider), [How a review plan works](/docs/how-it-works) |
 | **GitHub** (extension)    | Diff fetch, device OAuth, submit review | Diff/patch URLs, [OAuth device flow](/docs/connect-github#device-flow), [review API payloads](/docs/submit-review) you initiate                                                          |
 | **Guided Review servers** | —                                       | **None** for extension or CLI product paths                                                                                                                                              |
 
@@ -39,7 +39,7 @@ Closing the browser session clears session storage; local settings remain until 
 
 - Provider / model / agent prefs in `~/.config/guided-review/config.json` (or `$XDG_CONFIG_HOME` / `GUIDED_REVIEW_CONFIG_DIR`)
 - Active review session and line notes in memory for the running server — gone when you Ctrl+C
-- Coding-agent keys stay in that agent’s own store when you use **Use my subscription**; Guided Review does not copy them into its config file
+- Coding-agent keys stay in that agent’s own store when you use **Use My Subscription**; Guided Review does not copy them into its config file
 
 ## Clear data and disconnect
 
@@ -59,7 +59,7 @@ Revoking the OAuth grant on GitHub’s side (Settings → Applications) also inv
 | Goal                      | How                                                                                                              |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | Clear a saved API key     | Settings → clear the key and save, or delete `apiKey` from the [config file](/docs/cli#config-file)              |
-| Stop using a coding agent | Turn off **Use my subscription** in Settings, or remove `codingAgent` from the config file                       |
+| Stop using a coding agent | Turn off **Use My Subscription** in Settings, or remove `codingAgent` from the config file                       |
 | End the session / notes   | Ctrl+C the CLI process — in-memory session and notes are gone                                                    |
 | Wipe saved prefs          | Delete `~/.config/guided-review/config.json` (or the path under `$XDG_CONFIG_HOME` / `GUIDED_REVIEW_CONFIG_DIR`) |
 

@@ -94,7 +94,7 @@ describe("ConnectGitHubModal", () => {
       /Copy this code, then paste it on the GitHub tab/i,
     );
     expect(screen.getByTestId("connect-github-enter-code")).toHaveTextContent(
-      /Enter Code On GitHub/,
+      /Enter Code on GitHub/,
     );
     expect(screen.getByTestId("connect-github-enter-code").querySelector("kbd")).toHaveTextContent(
       "Enter",
@@ -102,7 +102,7 @@ describe("ConnectGitHubModal", () => {
     expect(openVerificationUriSpy).not.toHaveBeenCalled();
   });
 
-  it("opens GitHub when Enter Code On GitHub is clicked", async () => {
+  it("opens GitHub when Enter Code on GitHub is clicked", async () => {
     const user = userEvent.setup();
     await startAwaitingFlow(user);
 

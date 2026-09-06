@@ -17,7 +17,7 @@ A map of the Guided Review UI once a review is open — so the sidebar, context 
 
 Left to right (desktop):
 
-1. **Sidebar** — ordered list of display units for this review.
+1. **Sidebar** — ordered list of review units for this walkthrough.
 2. **Context panel** — title, guidance, errors, provider prompts, and the shortcut cheat sheet.
 3. **Diff pane** — the real hunks (or [image / binary](/docs/images-and-binaries) empty state) for the active unit.
 
@@ -32,9 +32,9 @@ The first display step is synthetic — not an LLM unit:
 | Host                 | First step title   | What it shows                                         |
 | -------------------- | ------------------ | ----------------------------------------------------- |
 | **Chrome extension** | **PR Description** | PR title and body from the page                       |
-| **CLI**              | **Change summary** | Local scope context; **Structure with AI** lives here |
+| **CLI**              | **Change summary** | Local scope context; **Structure With AI** lives here |
 
-On the CLI, the walkthrough starts **one unit per file** until you structure. **Structure with AI** on the Change summary card (or `⌘/Ctrl` + `I`) is the opt-in annotate call — [CLI → Walk the plan](/docs/cli#walk-the-plan).
+On the CLI, the walkthrough starts **one unit per file** until you structure it. **Structure With AI** on the Change summary card (or `⌘/Ctrl` + `I`) is the opt-in annotate call — [CLI → Follow the Walkthrough](/docs/cli#walk-the-plan).
 
 ## Review units sidebar
 
@@ -51,7 +51,7 @@ Without a provider, titles are mostly file paths. With AI, titles and short guid
 For the active unit the panel shows:
 
 - Unit title and commentary (empty on the no-provider file-per-unit fallback until you connect a key).
-- **Connect provider** / **Structure with AI** prompts when the plan is still a fallback or the CLI needs a key.
+- **Connect AI Provider** / **Structure With AI** prompts when the walkthrough is still file-by-file or the CLI needs a key.
 - Errors with a Retry when annotate or fetch failed.
 - The same shortcut list as the docs page, always available while the overlay is open.
 
@@ -69,7 +69,7 @@ Hunks for the files claimed by the active unit, mapped from the **real** parsed 
 
 | Control        | Extension                              | CLI                                           |
 | -------------- | -------------------------------------- | --------------------------------------------- |
-| Primary button | **Submit review** (`⌘/Ctrl` + `Enter`) | **Generate Prompt** (needs at least one note) |
+| Primary button | **Submit Review** (`⌘/Ctrl` + `Enter`) | **Generate Prompt** (needs at least one note) |
 | Settings       | Options page (outside overlay)         | **Settings** (`⌘/Ctrl` + `,`)                 |
 | Scope          | —                                      | Diff-scope dropdown (`d`)                     |
 | Exit           | Confirm, then close                    | Confirm; session ends with the server         |

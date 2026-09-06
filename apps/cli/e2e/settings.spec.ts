@@ -22,7 +22,7 @@ test.describe("CLI settings", () => {
       .getByRole("link", { name: "About" })
       .click();
     await expect(page).toHaveURL(/#about/);
-    await expect(page.getByRole("heading", { name: "How it works" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "How It Works" })).toBeVisible();
     await expect(page.getByText(/Local walkthrough of a branch/i)).toBeVisible();
 
     await page

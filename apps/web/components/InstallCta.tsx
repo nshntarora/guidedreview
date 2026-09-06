@@ -24,7 +24,7 @@ export function InstallCta() {
           <p className="mt-3 text-lg text-muted">
             Run <code className="font-mono text-sm text-foreground">{CLI_INSTALL_COMMAND}</code> for
             local changes, or install the Chrome extension for GitHub PRs. Add an LLM API key, then
-            walk the plan — AI structures it, you decide.
+            follow the walkthrough — AI structures it, you decide.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <TryCliButton location="install_cta" variant="primary" />

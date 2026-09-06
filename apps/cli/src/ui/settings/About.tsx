@@ -43,8 +43,8 @@ export function About() {
           <p className="mt-2 m-0 font-mono text-xs text-muted tabular-nums">v{pkg.version}</p>
         ) : null}
         <p className="mt-5 m-0 text-base leading-relaxed text-muted text-balance sm:text-lg">
-          Local walkthrough of a branch, commit, or working tree. Same engine as the Chrome
-          extension. AI structures the plan — you still judge the code.
+          Walk a local branch, commit, or working tree as ordered review units. AI structures the
+          walkthrough when you ask; you read the real diff and decide.
         </p>
         <p className="mt-3 m-0 font-mono text-xs text-muted">
           Free · Open source · Bring your own LLM key
@@ -68,7 +68,7 @@ export function About() {
           </li>
           <li>Walk the change file by file — no model call yet.</li>
           <li>
-            Click <strong className="font-semibold text-foreground">Structure with AI</strong> when
+            Click <strong className="font-semibold text-foreground">Structure With AI</strong> when
             you want related files clustered into review units with short context.
           </li>
           <li>You still read the code. Notes stay in this session until you copy them.</li>
@@ -106,8 +106,9 @@ export function About() {
           Privacy
         </h2>
         <p className="mt-4 m-0 text-base leading-relaxed text-muted">
-          Your code never touches Guided Review infrastructure — we don&apos;t have any. Diffs and
-          prompts go only to the provider you choose. Your API key stays on this machine in{" "}
+          Guided Review has no product backend. Local diffs are sent only to the provider you
+          choose, and notes stay in the running session until you copy them. Your API key stays on
+          this machine in{" "}
           <code className="rounded bg-surface-raised px-1 py-0.5 font-mono text-sm text-foreground">
             config.json
           </code>

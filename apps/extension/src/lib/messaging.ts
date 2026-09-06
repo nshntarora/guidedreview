@@ -109,7 +109,7 @@ export function streamReviewPlan(
     finish(() => {
       const err = chrome.runtime.lastError?.message;
       handlers.onError({
-        message: err ?? "Lost connection to the review worker before the plan finished.",
+        message: err ?? "Lost connection to the review worker before the walkthrough finished.",
       });
     });
   });

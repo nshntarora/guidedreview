@@ -120,7 +120,7 @@ export function ConnectProviderPrompt() {
     >
       <DisconnectedProviderArt />
 
-      <h2 className="m-0 text-lg font-semibold text-foreground">Connect an AI provider</h2>
+      <h2 className="m-0 text-lg font-semibold text-foreground">Connect an AI Provider</h2>
 
       <p className="m-0 text-base leading-relaxed text-muted">
         {host.kind === "local"

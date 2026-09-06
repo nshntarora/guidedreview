@@ -117,7 +117,7 @@ function SummaryUnitPanel({
             data-testid="structure-review"
             aria-keyshortcuts="Meta+I Control+I"
           >
-            Structure with AI
+            Structure With AI
             <ShortcutKeys keys={["mod", "I"]} join="chord" />
           </Button>
           {structureWith ? (

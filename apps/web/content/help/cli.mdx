@@ -1,7 +1,7 @@
 export const toc = [
   { id: "run-it", label: "Run it", level: 2 },
   { id: "what-it-compares", label: "What it compares", level: 2 },
-  { id: "walk-the-plan", label: "Walk the plan", level: 2 },
+  { id: "walk-the-plan", label: "Follow the Walkthrough", level: 2 },
   { id: "api-keys", label: "API keys", level: 2 },
   { id: "config-file", label: "Config file", level: 2 },
   { id: "notes", label: "Notes", level: 2 },
@@ -10,7 +10,7 @@ export const toc = [
 
 # CLI
 
-The [Chrome extension](/docs/chrome-extension) reviews GitHub pull requests. The **CLI** reviews a local branch, a commit, or your working tree with the same engine and walkthrough — before you open a PR, or when there isn’t one. It does not start an AI plan until you ask. Choosing between hosts: [Install](/docs/install).
+The [Chrome extension](/docs/chrome-extension) reviews GitHub pull requests. The **CLI** reviews a local branch, a commit, or your working tree with the same engine and walkthrough — before you open a PR, or when there isn’t one. It does not structure the walkthrough with AI until you ask. Choosing between hosts: [Install](/docs/install).
 
 <TocCard toc={toc} />
 
@@ -47,9 +47,11 @@ Base resolution, in order: `--base` → `origin/HEAD` → `main` → `master`.
 
 If every scope is empty: `Nothing to review against <base>.` and exit 0. Not a git repo: an error that says what failed.
 
-## Walk the plan
+<span id="walk-the-plan" />
 
-The walkthrough starts **one unit per file**. **Structure with AI** on the Change summary card is the opt-in LLM call — same pipeline as the extension ([How a review plan works](/docs/how-it-works)). It groups files and adds context; it does not review for you.
+## Follow the Walkthrough
+
+The walkthrough starts **one unit per file**. **Structure With AI** on the Change summary card is the opt-in LLM call — same pipeline as the extension ([How a review plan works](/docs/how-it-works)). It groups files and adds context; it does not review for you.
 
 Press `d` to open the scope dropdown, `⌘/Ctrl` + `I` to structure, or `⌘/Ctrl` + `,` for Settings — same keys as [Keyboard shortcuts → Local review](/docs/keyboard-shortcuts#local-review). Navigation, diff search, and comment mode share the extension shortcuts where they apply.
 
@@ -67,9 +69,9 @@ Resolution, in order:
 
 If more than one agent has a usable key, the CLI asks which to use each run (Enter keeps the last choice). The chosen agent is shown in the browser UI. It reads the agent's own store at review time and does not copy the secret into Guided Review config.
 
-No key still walks one unit per file. **Structure with AI** asks for a key.
+No key still walks one unit per file. **Structure With AI** asks for a key.
 
-The local UI has **Settings** (header, `⌘/Ctrl` + `,`, or **Connect AI Provider** when no key is set). Paste an API key, or turn on **Use my subscription** to borrow Claude Code / Codex / Grok on this machine. A saved API key always wins. Subscription is unofficial and can break — a console key is the better option. Save writes the [config file](#config-file) below. Flags and env still win for that run.
+The local UI has **Settings** (header, `⌘/Ctrl` + `,`, or **Connect AI Provider** when no key is set). Paste an API key, or turn on **Use My Subscription** to borrow Claude Code / Codex / Grok on this machine. A saved API key always wins. Subscription is unofficial and can break — a console key is the better option. Save writes the [config file](#config-file) below. Flags and env still win for that run.
 
 ## Config file
 
@@ -94,7 +96,7 @@ Example shape (all fields optional — only what you saved appears):
 | `provider`    | `anthropic` \| `openai` \| `grok`                                     |
 | `model`       | Provider model id (any id your account can call)                      |
 | `apiKey`      | Console API key for that provider                                     |
-| `codingAgent` | `claude-code` \| `codex` \| `grok` when using **Use my subscription** |
+| `codingAgent` | `claude-code` \| `codex` \| `grok` when using **Use My Subscription** |
 
 Prefer editing through **Settings** in the UI. If you hand-edit the file, restart the CLI (or re-open Settings and save) so the running server picks up the change. Flags and env still override the file for that run. Clearing a key: remove `apiKey` from the file, or clear it in Settings — [Privacy & data → Clear data](/docs/privacy-and-data#clear-data-and-disconnect).
 
