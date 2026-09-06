@@ -13,7 +13,7 @@ test.describe("landing page", () => {
     const hero = page.locator("main").locator("section").first();
     const heroInstall = hero.getByRole("link", { name: /^Install$/i });
     await expect(heroInstall).toBeVisible();
-    await expect(heroInstall).toHaveAttribute("href", "#install");
+    await expect(heroInstall).toHaveAttribute("href", "/#install");
     await heroInstall.click();
     await expect(page.locator("#install")).toBeInViewport();
 
@@ -27,7 +27,7 @@ test.describe("landing page", () => {
     await expect(install.getByRole("tab", { name: /^CLI$/i })).toBeVisible();
     await expect(install.getByRole("tab", { name: /chrome extension/i })).toBeVisible();
 
-    await expect(install.getByRole("heading", { name: /from the command line/i })).toBeVisible();
+    await expect(install.getByRole("heading", { name: /^CLI$/i })).toBeVisible();
     await expect(install.getByText(CLI_INSTALL_COMMAND)).toBeVisible();
     await expect(install.getByText(/server will start up/i)).toBeVisible();
     await expect(install.getByRole("img", { name: /Guided Review CLI review UI/i })).toBeVisible();
@@ -39,6 +39,7 @@ test.describe("landing page", () => {
     await expect(installChrome).toHaveAttribute("href", CHROME_WEB_STORE_URL);
     await expect(installChrome).toHaveAttribute("target", "_blank");
     await expect(installChrome).toHaveAttribute("rel", /noopener/);
+    await expect(installChrome).toHaveAttribute("aria-keyshortcuts", /Meta\+E/);
     await expect(
       install.getByRole("img", { name: /Guided Review Chrome extension/i }),
     ).toBeVisible();
@@ -53,9 +54,12 @@ test.describe("landing page", () => {
     await expect(getStartedCli).toBeVisible();
     await expect(getStartedCli).toHaveAttribute("href", "/docs/local-review");
 
-    // Primary nav (desktop viewport). Hash links — not the Chrome install CTA.
+    // Primary nav (desktop viewport). Install CTA jumps to the Install section.
     const primaryNav = page.getByRole("navigation", { name: "Primary" });
-    await expect(primaryNav.locator('a[href="/#install"]')).toBeVisible();
+    const headerInstall = primaryNav.getByRole("link", { name: /^Install$/i });
+    await expect(headerInstall).toHaveAttribute("href", "/#install");
+    await expect(headerInstall).toHaveAttribute("aria-keyshortcuts", /Meta\+I/);
+    await expect(heroInstall).toHaveAttribute("aria-keyshortcuts", /Meta\+I/);
     await expect(primaryNav.locator('a[href="/#features"]')).toBeVisible();
     await expect(primaryNav.getByRole("link", { name: "Docs", exact: true })).toHaveAttribute(
       "href",

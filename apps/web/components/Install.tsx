@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ComponentType, type SVGProps } from "react";
 import { buttonClassName, cn, Kbd } from "@guided-review/ui";
-import { InstallButton } from "./CtaButtons";
+import { InstallExtensionButton } from "./CtaButtons";
 import { ChromeIcon, TerminalIcon } from "./icons";
 import { InstallCommands } from "./InstallCommands";
 import { WindowFrame } from "./WindowFrame";
@@ -170,7 +170,7 @@ export function Install() {
                       </figcaption>
                     </figure>
                     <div className="mt-6 flex flex-wrap items-center gap-3">
-                      <InstallButton location="install" size="md" />
+                      <InstallExtensionButton location="install" size="md" />
                       <a
                         href="/docs/install#chrome-extension"
                         className={buttonClassName({ variant: "secondary", size: "md" })}

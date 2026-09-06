@@ -35,6 +35,7 @@ function buildCtaProperties(
   };
 }
 
+/** Primary Install CTA — jumps to the Install section (`/#install`). */
 export function InstallButton({
   size = "lg",
   compact = false,
@@ -44,6 +45,41 @@ export function InstallButton({
   const analytics = useAnalytics();
   const { key, href, label } = SITE_SHORTCUTS.install;
   const displayLabel = compact ? "Install" : label;
+
+  return (
+    <a
+      href={href}
+      className={buttonClassName({ size })}
+      aria-keyshortcuts={ariaKeyShortcuts(key)}
+      aria-label={displayLabel}
+      onClick={() => {
+        analytics.capture(
+          AnalyticsEvents.SURFACES_CTA_CLICK,
+          buildCtaProperties(location, eventProperties, {
+            href,
+            size,
+            compact,
+            method: "click",
+          }),
+        );
+      }}
+    >
+      {displayLabel}
+      <ShortcutChord keyLabel={key} />
+    </a>
+  );
+}
+
+/** Chrome Web Store CTA — opens the extension listing. */
+export function InstallExtensionButton({
+  size = "lg",
+  compact = false,
+  location,
+  eventProperties,
+}: CtaButtonProps) {
+  const analytics = useAnalytics();
+  const { key, href, label } = SITE_SHORTCUTS.extension;
+  const displayLabel = compact ? "Extension" : label;
 
   return (
     <a

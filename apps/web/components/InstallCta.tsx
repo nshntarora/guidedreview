@@ -1,6 +1,6 @@
 import iconSvg from "@guided-review/ui/assets/icon.svg";
 import { CLI_INSTALL_COMMAND } from "@web/lib/links";
-import { InstallButton, TryCliButton } from "./CtaButtons";
+import { InstallExtensionButton, TryCliButton } from "./CtaButtons";
 import { WindowFrame } from "./WindowFrame";
 
 const iconSrc = typeof iconSvg === "string" ? iconSvg : (iconSvg as { src: string }).src;
@@ -27,7 +27,7 @@ export function InstallCta() {
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <TryCliButton location="install_cta" variant="primary" />
-            <InstallButton location="install_cta" />
+            <InstallExtensionButton location="install_cta" />
           </div>
         </div>
       </WindowFrame>

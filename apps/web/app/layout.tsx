@@ -96,12 +96,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 aria-label="Primary"
               >
                 <Link
-                  href="/#install"
-                  className="hidden text-foreground hover:text-primary md:inline"
-                >
-                  Install
-                </Link>
-                <Link
                   href="/#features"
                   className="hidden text-foreground hover:text-primary md:inline"
                 >

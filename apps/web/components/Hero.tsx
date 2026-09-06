@@ -1,14 +1,9 @@
 "use client";
 
-import { buttonClassName } from "@guided-review/ui";
-import { AnalyticsEvents } from "@web/lib/analytics";
-import { useAnalytics } from "./analytics/AnalyticsProvider";
-import { StarOnGitHubButton } from "./CtaButtons";
+import { InstallButton, StarOnGitHubButton } from "./CtaButtons";
 import { ProductVideo } from "./ProductVideo";
 
 export function Hero() {
-  const analytics = useAnalytics();
-
   return (
     <section className="relative overflow-hidden px-4 pb-16 pt-12 text-center sm:px-6 sm:pb-28 sm:pt-24">
       <div className="mx-auto max-w-5xl">
@@ -27,19 +22,7 @@ export function Hero() {
         </p>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <a
-            href="#install"
-            className={buttonClassName({ size: "lg" })}
-            onClick={() => {
-              analytics.capture(AnalyticsEvents.SURFACES_CTA_CLICK, {
-                location: "hero",
-                href: "#install",
-                method: "click",
-              });
-            }}
-          >
-            Install
-          </a>
+          <InstallButton location="hero" />
           <StarOnGitHubButton location="hero" />
         </div>
         <p className="mt-4 font-mono text-xs text-muted">

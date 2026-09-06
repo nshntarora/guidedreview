@@ -7,6 +7,11 @@ import { CHROME_WEB_STORE_URL, GITHUB_REPO_URL } from "./links";
 export const SITE_SHORTCUTS = {
   install: {
     key: "i",
+    href: "/#install",
+    label: "Install",
+  },
+  extension: {
+    key: "e",
     href: CHROME_WEB_STORE_URL,
     label: "Install the extension",
   },
