@@ -34,6 +34,15 @@ export const DOCS_PAGES: DocsPage[] = [
       "What Guided Review is — Chrome extension for GitHub PRs and CLI for local diffs — how it turns a change into an ordered walkthrough, and where to start in the docs.",
   },
   {
+    slug: "why",
+    section: "Getting Started",
+    title: "Why",
+    description:
+      "Why Guided Review exists — AI made writing code easy, reading and reviewing it with taste is still on you, and tools should help you read rather than approve blindly.",
+    blurb: "why reading code matters more when AI writes it",
+    load: () => import("@web/content/help/why.mdx"),
+  },
+  {
     slug: "install",
     section: "Getting Started",
     title: "Install Guided Review",
