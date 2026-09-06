@@ -9,7 +9,7 @@ import { CHROME_WEB_STORE_URL, NPM_PACKAGE_URL } from "@web/lib/links";
 import { HOME_DESCRIPTION, openGraphSite, SITE_NAME, SITE_URL } from "@web/lib/site";
 
 export const metadata: Metadata = {
-  title: "Guided Review — review AI-generated code before you sign your name to it",
+  title: "Review AI-generated code with intent — Guided Review",
   description: HOME_DESCRIPTION,
   alternates: { canonical: "/" },
   openGraph: {

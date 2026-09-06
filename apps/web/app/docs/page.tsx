@@ -2,10 +2,14 @@ import type { Metadata } from "next";
 import Content from "@web/content/help/index.mdx";
 import { DocsPageWrapper } from "@web/components/docs/DocsPageWrapper";
 import { JsonLd } from "@web/components/JsonLd";
+import { findDocsPage } from "@web/config/docs";
 import { openGraphSite, SITE_NAME, SITE_URL } from "@web/lib/site";
 
-const DOCS_DESCRIPTION =
-  "Learn how to install Guided Review, configure your AI provider, and walk through GitHub pull requests with structured review plans.";
+const docsPage = findDocsPage("");
+
+if (!docsPage) throw new Error("The docs index must be registered in DOCS_PAGES.");
+
+const DOCS_DESCRIPTION = docsPage.description;
 
 export const metadata: Metadata = {
   title: "Documentation",
@@ -20,6 +24,7 @@ const docsIndexSchema = {
   name: `Documentation · ${SITE_NAME}`,
   description: DOCS_DESCRIPTION,
   url: `${SITE_URL}/docs`,
+  dateModified: docsPage.lastModified,
   isPartOf: { "@type": "WebSite", url: SITE_URL, name: SITE_NAME },
 };
 

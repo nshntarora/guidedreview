@@ -116,6 +116,7 @@ jobs:
       - name: Build marketing site
         env:
           NEXT_TELEMETRY_DISABLED: "1"
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
           # Analytics is off unless ENABLED is exactly "true" and a key is set.
           # Add repo secrets/vars: NEXT_PUBLIC_ANALYTICS_KEY (and optionally the rest).
           # Production events go through the existing Worker at guidedreview.dev/i/*.

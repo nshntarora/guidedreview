@@ -25,6 +25,13 @@ Docs are authored as MDX under `content/help/`. Register each page (slug, title,
 
 ## Development
 
+The canonical origin is required at build time. Put it in `apps/web/.env.local`
+for local work (the file is intentionally not committed):
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://guidedreview.dev
+```
+
 From the **monorepo root**:
 
 ```bash
@@ -112,12 +119,13 @@ Deploy runs only after **Tests** succeeds on a **push to `main`** when web-relat
 | `CLOUDFLARE_ACCOUNT_ID`     | Cloudflare account ID                              |
 | `NEXT_PUBLIC_ANALYTICS_KEY` | (optional) Project key when analytics is on        |
 
-**GitHub variables** (optional; analytics stays off until set):
+**GitHub variables:**
 
-| Variable                           | Example |
-| ---------------------------------- | ------- |
-| `NEXT_PUBLIC_ANALYTICS_ENABLED`    | `true`  |
-| `NEXT_PUBLIC_ANALYTICS_PROXY_PATH` | `/i`    |
+| Variable                           | Required | Example                    |
+| ---------------------------------- | -------- | -------------------------- |
+| `NEXT_PUBLIC_SITE_URL`             | yes      | `https://guidedreview.dev` |
+| `NEXT_PUBLIC_ANALYTICS_ENABLED`    | no       | `true`                     |
+| `NEXT_PUBLIC_ANALYTICS_PROXY_PATH` | no       | `/i`                       |
 
 Pages **project name** is `guidedreview` (set via `--project-name` in the workflow and package scripts). First deploy creates the project if it does not exist yet.
 

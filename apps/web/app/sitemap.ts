@@ -5,36 +5,37 @@ import { SITE_URL } from "@web/lib/site";
 export const dynamic = "force-static";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
+  const docsIndex = DOCS_PAGES.find((page) => page.slug === "");
+  if (!docsIndex) throw new Error("The docs index must be registered in DOCS_PAGES.");
 
   const staticEntries: MetadataRoute.Sitemap = [
     {
       url: SITE_URL,
-      lastModified: now,
+      lastModified: "2026-09-06",
       changeFrequency: "weekly",
       priority: 1,
     },
     {
       url: `${SITE_URL}/docs`,
-      lastModified: now,
+      lastModified: docsIndex.lastModified,
       changeFrequency: "weekly",
       priority: 0.9,
     },
     {
       url: `${SITE_URL}/privacy`,
-      lastModified: now,
+      lastModified: "2026-09-06",
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
       url: `${SITE_URL}/terms`,
-      lastModified: now,
+      lastModified: "2026-09-06",
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
       url: `${SITE_URL}/cookies`,
-      lastModified: now,
+      lastModified: "2026-09-06",
       changeFrequency: "yearly",
       priority: 0.3,
     },
@@ -42,7 +43,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const docEntries: MetadataRoute.Sitemap = DOCS_PAGES.filter((page) => page.load).map((page) => ({
     url: `${SITE_URL}/docs/${page.slug}`,
-    lastModified: now,
+    lastModified: page.lastModified,
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));

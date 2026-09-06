@@ -20,7 +20,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: page.title,
     description: page.description,
     alternates: { canonical: `/docs/${slug}` },
-    openGraph: { ...openGraphSite, type: "article", url: `/docs/${slug}` },
+    openGraph: {
+      ...openGraphSite,
+      type: "article",
+      url: `/docs/${slug}`,
+      modifiedTime: page.lastModified,
+    },
   };
 }
 
@@ -39,6 +44,7 @@ export default async function DocsSlugPage({ params }: Props) {
     headline: page.title,
     description: page.description,
     url: pageUrl,
+    dateModified: page.lastModified,
     author: org,
     publisher: org,
     isPartOf: { "@type": "WebSite", url: SITE_URL, name: SITE_NAME },

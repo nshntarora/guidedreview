@@ -20,6 +20,7 @@ env:
   HUSKY: "0"
   NEXT_TELEMETRY_DISABLED: "1"
   CI: "true"
+  NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
 
 jobs:
   build:

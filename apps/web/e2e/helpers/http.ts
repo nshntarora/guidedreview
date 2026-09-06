@@ -30,7 +30,7 @@ export function resolveHref(
   }
 
   // Map production absolute URLs onto the local static server.
-  if (url.origin === PRODUCTION_ORIGIN || url.hostname === "guidedreview.dev") {
+  if (url.origin === PRODUCTION_ORIGIN) {
     const local = new URL(baseURL);
     url.protocol = local.protocol;
     url.host = local.host;

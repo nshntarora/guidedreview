@@ -3,8 +3,14 @@ import { DOCS_PAGES } from "@web/config/docs";
 /** Static marketing + legal routes (always present). */
 const STATIC_ROUTES = ["/", "/docs", "/privacy", "/terms", "/cookies"] as const;
 
+const configuredProductionOrigin = process.env.NEXT_PUBLIC_SITE_URL;
+
+if (!configuredProductionOrigin) {
+  throw new Error("NEXT_PUBLIC_SITE_URL is required for website E2E tests.");
+}
+
 /** Production origin used in metadataBase / absolute site links. */
-export const PRODUCTION_ORIGIN = "https://guidedreview.dev";
+export const PRODUCTION_ORIGIN = new URL(configuredProductionOrigin).origin;
 
 /** Public assets that must ship even if not currently linked from UI. */
 export const PUBLIC_ASSETS = [

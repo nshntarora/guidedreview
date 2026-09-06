@@ -262,6 +262,8 @@ jobs:
             next-${{ runner.os }}-
 
       - name: Run website e2e tests
+        env:
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
         run: pnpm --filter @guided-review/web test:e2e
 
       - name: Upload Playwright report

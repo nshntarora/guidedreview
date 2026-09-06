@@ -10,7 +10,13 @@ import { JsonLd } from "@web/components/JsonLd";
 import { LineGutter } from "@web/components/LineGutter";
 import { SiteShortcuts } from "@web/components/SiteShortcuts";
 import { GITHUB_REPO_URL } from "@web/lib/links";
-import { DEFAULT_DESCRIPTION, openGraphSite, SITE_NAME, SITE_URL } from "@web/lib/site";
+import {
+  DEFAULT_DESCRIPTION,
+  openGraphSite,
+  SITE_NAME,
+  SITE_URL,
+  SOCIAL_IMAGE,
+} from "@web/lib/site";
 import { SITE_SHORTCUTS } from "@web/lib/shortcuts";
 import "./globals.css";
 
@@ -51,6 +57,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    creator: "@nshntarora",
+    images: [{ url: SOCIAL_IMAGE.url, alt: SOCIAL_IMAGE.alt }],
   },
 };
 
@@ -59,7 +67,7 @@ const organizationSchema = {
   "@type": "Organization",
   name: SITE_NAME,
   url: SITE_URL,
-  logo: `${SITE_URL}/favicon.ico`,
+  logo: `${SITE_URL}/assets/icon.png`,
   sameAs: [GITHUB_REPO_URL, "https://x.com/nshntarora"],
 };
 

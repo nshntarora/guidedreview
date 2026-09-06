@@ -16,6 +16,7 @@ export function InstallCta() {
             className="mx-auto h-12 w-12 rounded-lg"
             width={512}
             height={512}
+            loading="lazy"
           />
           <h2 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl font-brand">
             Get Guided Review
