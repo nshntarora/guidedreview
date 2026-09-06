@@ -1,6 +1,7 @@
 export const toc = [
   { id: "run-it", label: "Run it", level: 2 },
   { id: "what-it-compares", label: "What it compares", level: 2 },
+  { id: "walk-the-plan", label: "Walk the plan", level: 2 },
   { id: "api-keys", label: "API keys", level: 2 },
   { id: "notes", label: "Notes", level: 2 },
   { id: "flags", label: "Flags", level: 2 },
@@ -8,7 +9,7 @@ export const toc = [
 
 # Review local changes
 
-The Chrome extension still reviews GitHub pull requests. The CLI reviews a local branch, a commit, or your working tree, using the same engine and walkthrough. It does not start an AI plan until you ask.
+The [Chrome extension](/docs/install#chrome-extension) reviews GitHub pull requests. The **CLI** reviews a local branch, a commit, or your working tree with the same engine and walkthrough — before you open a PR, or when there isn’t one. It does not start an AI plan until you ask.
 
 <TocCard toc={toc} />
 
@@ -26,9 +27,11 @@ Pass flags after the command:
 npx @guided-review/cli --base main --no-open
 ```
 
-The binary is `guidedreview`. `npx guided-review` (unscoped, hyphen) is a different package. From this repo: `pnpm build:cli` then `pnpm review` (flags after `--`).
+The published package is `@guided-review/cli`. The binary is `guidedreview`. `npx guided-review` (unscoped, hyphen) is a different package. From this repo: `pnpm build:cli` then `pnpm review` (flags after `--`).
 
 The CLI binds `127.0.0.1:7182` (ASCII G+R), keeps a short terminal banner (URL, diff, last pull), and opens the UI unless you pass `--no-open`. Only real events (structure, scope change, errors) go to the log below. Override with `--port`. `--port 0` picks any free port. Ctrl+C stops the server.
+
+Install overview (extension + CLI): [Install Guided Review](/docs/install).
 
 ## What it compares
 
@@ -45,11 +48,17 @@ Base resolution, in order: `--base` → `origin/HEAD` → `main` → `master`.
 
 If every scope is empty: `Nothing to review against <base>.` and exit 0. Not a git repo: an error that says what failed.
 
-The walkthrough starts one unit per file. **Structure with AI** on the Change summary card is the opt-in LLM call. It groups files and adds context — it does not review for you. Press `d` to open the dropdown, `⌘/Ctrl` + `I` to structure, or `⌘/Ctrl` + `,` for Settings — same keys as [Keyboard shortcuts](/docs/keyboard-shortcuts#local-review).
+## Walk the plan
+
+The walkthrough starts **one unit per file**. **Structure with AI** on the Change summary card is the opt-in LLM call — same pipeline as the extension ([How a review plan works](/docs/how-it-works)). It groups files and adds context; it does not review for you.
+
+Press `d` to open the scope dropdown, `⌘/Ctrl` + `I` to structure, or `⌘/Ctrl` + `,` for Settings — same keys as [Keyboard shortcuts → Local review](/docs/keyboard-shortcuts#local-review). Navigation, diff search, and comment mode share the extension shortcuts where they apply.
+
+Unlike the extension, there is no GitHub submit from the CLI UI. Line notes stay in the session until you [Generate Prompt](#notes) or stop the server.
 
 ## API keys
 
-Same providers as the extension: Anthropic, OpenAI, Grok.
+Same providers as the extension: Anthropic, OpenAI, Grok. Full setup (including borrowing a coding-agent subscription): [Configure AI provider → CLI](/docs/configure-provider#cli).
 
 Resolution, in order:
 
@@ -65,10 +74,25 @@ The local UI has **Settings** (header, `⌘/Ctrl` + `,`, or **Connect AI Provide
 
 ## Notes
 
-Line comments stay in the session. There is no GitHub submit. **Generate Prompt** builds a coding-agent prompt from those notes and copies it — Guided Review does not send it anywhere.
+Line comments stay in the session. There is no GitHub submit from the CLI. **Generate Prompt** builds a coding-agent prompt from those notes and copies it — Guided Review does not send it anywhere. On a GitHub PR, use the extension to [draft and submit](/docs/leave-comments) instead.
 
 ## Flags
 
 ```
 guidedreview [dir] --base main --port 8787 --no-open --staged --no-untracked --agent claude-code
 ```
+
+| Flag              | What                                    |
+| ----------------- | --------------------------------------- |
+| `--base <ref>`    | Base branch                             |
+| `--port <n>`      | Listen port (default `7182`)            |
+| `--no-open`       | Print the URL without opening a browser |
+| `--staged`        | Start on staged changes                 |
+| `--no-untracked`  | Skip untracked files                    |
+| `--provider <id>` | `anthropic` \| `openai` \| `grok`       |
+| `--model <id>`    | Provider model id                       |
+| `--agent <id>`    | `claude-code` \| `codex` \| `grok`      |
+
+Problems starting the server or structuring a plan: [Troubleshooting → CLI](/docs/troubleshooting#cli).
+
+**Next.** [Configure AI provider](/docs/configure-provider) · [How a review plan works](/docs/how-it-works) · [Keyboard shortcuts](/docs/keyboard-shortcuts#local-review)

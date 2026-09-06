@@ -22,7 +22,7 @@ const features: Feature[] = [
     Illustration: ClusteredChangesIllustration,
     title: "Review changes, not files",
     body: [
-      "GitHub gives you every changed file in alphabetical order and leaves you to work out how they connect. We use AI to cluster related changes into review units, so you read the change, not the file list.",
+      "Most tools dump every changed file in alphabetical order and leave you to work out how they connect. We use AI to cluster related changes into review units, so you read the change, not the file list.",
     ],
   },
   {

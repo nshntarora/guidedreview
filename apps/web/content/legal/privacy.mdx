@@ -1,4 +1,4 @@
-We, Artery Ventures, LLP ("we", "us", "our", "Company") are the owners of the website [guidedreview.dev](https://guidedreview.dev) ("Website") and the Guided Review Chrome browser extension ("Extension"). The Website and the Extension are collectively referred to as the "Platform". The Website describes the Extension and its features. The Extension helps users structure GitHub pull request reviews with AI-assisted review plans ("Services").
+We, Artery Ventures, LLP ("we", "us", "our", "Company") are the owners of the website [guidedreview.dev](https://guidedreview.dev) ("Website"), the Guided Review Chrome browser extension ("Extension"), and the Guided Review command-line tool published as `@guided-review/cli` ("CLI"). The Website, the Extension, and the CLI are collectively referred to as the "Platform". The Website describes the Extension and CLI and their features. The Extension helps users structure GitHub pull request reviews with AI-assisted review plans; the CLI helps users structure reviews of local git diffs with the same kind of plans ("Services").
 
 We respect data privacy rights and are committed to protecting personal information collected on this Platform. This Privacy Policy ("Privacy Policy") sets forth how we collect, use, and protect personal information in connection with the Platform.
 
@@ -14,7 +14,7 @@ This Privacy Policy is an electronic record in the form of an electronic contrac
 
 "UK Data Protection Law" means the UK GDPR, the United Kingdom Data Protection Act 2018, the Privacy and Electronic Communications Regulations, and any regulation superseding any of the foregoing.
 
-"LLM Provider" means a third-party large language model service that you choose to use with the Extension, under that provider's own terms and privacy policy.
+"LLM Provider" means a third-party large language model service that you choose to use with the Extension or the CLI, under that provider's own terms and privacy policy.
 
 ## 2. Personal information collected
 
@@ -30,19 +30,21 @@ For purposes of this Privacy Policy, "Personal Information" means information th
 
 Under ordinary use of the Extension, this information is not sent to Artery Ventures as part of the core review workflow. We do not operate a product backend that receives your API keys or stores your pull request content for that workflow.
 
-**Pull request content and third-party processing** — When you run a guided review, the Extension obtains the relevant pull request content from GitHub and may send that content (and related context needed to generate a review plan) to the LLM Provider you configured. That processing is subject to the provider's terms and privacy policy. We do not control how your chosen LLM Provider stores or uses that data. You are responsible for ensuring you are authorized to share repository and pull request content with that provider.
+**Information processed by the CLI (on your device)** — The CLI runs a local server on your machine and opens a browser UI. Depending on how you use the CLI, this may include credentials and preferences you supply (for example an LLM Provider API key, model settings, or a reference to a coding agent already installed on your machine) and an in-memory review session for the running process. Under ordinary use, that information is not sent to Artery Ventures as part of the core review workflow. The CLI does not use GitHub OAuth and does not submit reviews to GitHub.
 
-**GitHub** — Interactions with GitHub (obtaining pull request content, optional authentication, and submitting reviews) are subject to GitHub's terms and privacy policy. Those interactions occur between you, your browser, GitHub, and (where you have configured one) your LLM Provider.
+**Diff content and third-party processing** — When you run a guided review, the Extension obtains the relevant pull request content from GitHub, and the CLI obtains a local git diff from your machine. Either may send that content (and related context needed to generate a review plan) to the LLM Provider you configured. That processing is subject to the provider's terms and privacy policy. We do not control how your chosen LLM Provider stores or uses that data. You are responsible for ensuring you are authorized to share repository and pull request (or local diff) content with that provider.
+
+**GitHub** — Interactions with GitHub (obtaining pull request content, optional authentication, and submitting reviews) apply to the Extension and are subject to GitHub's terms and privacy policy. Those interactions occur between you, your browser, GitHub, and (where you have configured one) your LLM Provider. The CLI does not perform those GitHub interactions.
 
 **Social Media Platforms** — If you contact us through social media platforms such as LinkedIn, Twitter/X, or others, we may receive your publicly available profile information such as your name, email, and handle.
 
-**Log Data and Website analytics** — When you visit the Website, our hosting and infrastructure providers may process technical information such as IP address, browser type, referring page, pages visited, and similar log or request data needed to serve and secure the site. We also use a third-party analytics service on the Website to understand general traffic and improve content. That analytics relates to Website visits and selected interactions with marketing materials; it is not used to track Extension usage while you review code on GitHub. The Extension does not send analytics or usage telemetry to us; it communicates with GitHub and your configured LLM Provider as described above. See our [Cookies Policy](https://guidedreview.dev/cookies) for more detail.
+**Log Data and Website analytics** — When you visit the Website, our hosting and infrastructure providers may process technical information such as IP address, browser type, referring page, pages visited, and similar log or request data needed to serve and secure the site. We also use a third-party analytics service on the Website to understand general traffic and improve content. That analytics relates to Website visits and selected interactions with marketing materials; it is not used to track Extension or CLI usage while you review code. The Extension and CLI do not send analytics or usage telemetry to us; they communicate with your configured LLM Provider (and, for the Extension, GitHub) as described above. See our [Cookies Policy](https://guidedreview.dev/cookies) for more detail.
 
 **Payment Information** — The Platform is currently offered without a paid subscription. If we later introduce paid features, payment card details would be handled by a third-party payment processor and not stored by us; we would update this Privacy Policy before collecting such information.
 
 ## 3. Cookies
 
-The Website uses cookies and similar technologies for essential site operation and for Website analytics as described in Section 2 and our Cookies Policy. You may choose to disable cookies or clear site data through your browser settings. For more information, please refer to our Cookies Policy at [guidedreview.dev/cookies](https://guidedreview.dev/cookies). The Extension primarily relies on browser extension storage for its settings and session data rather than Website cookies, and does not use Website analytics.
+The Website uses cookies and similar technologies for essential site operation and for Website analytics as described in Section 2 and our Cookies Policy. You may choose to disable cookies or clear site data through your browser settings. For more information, please refer to our Cookies Policy at [guidedreview.dev/cookies](https://guidedreview.dev/cookies). The Extension primarily relies on browser extension storage for its settings and session data rather than Website cookies, and does not use Website analytics. The CLI stores optional preferences in a local config file on your machine and does not use Website cookies or Website analytics.
 
 ## 4. Accuracy of information
 

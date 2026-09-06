@@ -1,12 +1,14 @@
 # Guided Review
 
-> A better way for humans to review AI-generated code. Chrome extension that clusters GitHub PR diffs into ordered review units with short summaries — free, open source, bring your own LLM key.
+> A better way for humans to review AI-generated code. Chrome extension for GitHub PRs and CLI for local git diffs — clusters changes into ordered review units with short summaries. Free, open source, bring your own LLM key.
 
-Guided Review is a Chrome extension for github.com pull requests. AI structures the walkthrough; humans still decide. It never auto-approves PRs, never “reviews for you,” and has no product backend: traffic goes only to GitHub and the user’s AI provider.
+Guided Review is a Chrome extension for github.com pull requests and a local CLI (`npx @guided-review/cli`) for branch, commit, or working-tree diffs. AI structures the walkthrough; humans still decide. It never auto-approves PRs, never “reviews for you,” and has no product backend: traffic goes only to your AI provider (and GitHub for the extension).
 
 ---
 
 ## What it does
+
+### Chrome extension
 
 On a GitHub PR page, Guided Review adds a **Start Guided Review** button. When you start a review, the extension:
 
@@ -15,14 +17,24 @@ On a GitHub PR page, Guided Review adds a **Start Guided Review** button. When y
 3. Turns the response into a sequence of **review units** — logical groups of hunks with short commentary
 4. Shows those units in a Shadow DOM overlay so you step through the change set in a sensible order (schema, logic, call-sites, tests — not alphabetical files)
 
-You stay on GitHub. The model plans structure and commentary only; the code you see always comes from the real parsed diff. Without an API key you still get the overlay and a file-by-file plan — no AI clustering or summaries.
+You stay on GitHub. Optionally draft line comments and submit Comment / Approve / Request Changes from the overlay.
 
-### Core ideas
+### CLI
+
+In any local git repo:
+
+```bash
+npx @guided-review/cli
+```
+
+The CLI binds localhost, opens a browser UI, and walks the same kind of review units. Pick branch vs base, uncommitted work, or a specific commit. **Structure with AI** is opt-in. Line notes stay local; **Generate Prompt** copies a coding-agent prompt — no GitHub submit. Requires Node.js 22+. The binary is `guidedreview`. `npx guided-review` (unscoped, hyphen) is a different package.
+
+### Shared ideas
 
 - **Review units, not file lists** — Related hunks are clustered so you read the change, not the alphabetical tree
-- **Keyboard-first** — Navigate units, search the diff, comment, and submit without leaving the keys
+- **Keyboard-first** — Navigate units, search the diff, and comment without leaving the keys
 - **Short summaries** — Optional two-line overviews per unit; take them with a grain of salt
-- **BYO key** — Claude, OpenAI, or Grok; keys stay in `chrome.storage.local`
+- **BYO key** — Claude, OpenAI, or Grok; extension keys in `chrome.storage.local`, CLI keys in env / `~/.config/guided-review/config.json` / coding agents
 - **Open source** — Apache-2.0; fork, audit, or point at another provider
 
 ### What it does not do
@@ -30,32 +42,40 @@ You stay on GitHub. The model plans structure and commentary only; the code you 
 - Does not auto-approve or reject pull requests
 - Does not replace human judgment or “taste”
 - Does not run a Guided Review backend for review data — no SaaS product API for diffs or keys
-- Does not work outside `https://github.com/*` (no GitHub Enterprise custom hosts or other forges yet)
+- Extension does not work outside `https://github.com/*` (no GitHub Enterprise custom hosts or other forges yet); CLI works on any local git repo
 
 ---
 
 ## How a review plan works
 
-Pipeline (high level):
+Pipeline (high level) — shared by extension and CLI via `@guided-review/core`:
 
 1. **diffParser** — Parse the real unified diff into files and hunks
-2. **buildPrompt** — Chunk large PRs by file (never splits a single file); ~60k characters per chunk
+2. **buildPrompt** — Chunk large diffs by file (never splits a single file); ~60k characters per chunk
 3. **Provider stream** — User’s Anthropic / OpenAI / Grok client streams a plan
 4. **streamPlanParser / reviewPlan** — Validate structure; drop bad hunk ids
 5. **Overlay** — Render units from the real diff + plan commentary
 
-Sessions live in `chrome.storage.session`, keyed by `owner/repo#number`. Optional GitHub device OAuth is only required to submit reviews and line comments from the overlay — not to generate or walk a plan.
+Extension sessions live in `chrome.storage.session`, keyed by `owner/repo#number`. Optional GitHub device OAuth is only required to submit reviews from the overlay — not to generate or walk a plan. CLI sessions live with the running localhost server.
 
-Cost: one annotate call per diff chunk when a provider is configured. Walking units, searching, drafting comments, and submitting to GitHub do not call the model again.
+Cost: one annotate call per diff chunk when a provider is configured (CLI: only when you Structure with AI). Walking units, searching, drafting, submitting, and Generate Prompt do not call the model again.
 
 ---
 
 ## Getting started
 
+**GitHub PRs**
+
 1. Install the extension (Chrome Web Store or load unpacked from source)
 2. Open options and configure an AI provider + API key
 3. Open any github.com pull request and click **Start Guided Review**
-4. Step through units; optionally draft line comments and submit Comment / Approve / Request Changes
+4. Step through units; optionally draft line comments and submit
+
+**Local changes**
+
+1. `npx @guided-review/cli` (Node.js 22+)
+2. Pick a diff scope; optionally Structure with AI
+3. Walk units; leave notes; Generate Prompt if useful
 
 ---
 
@@ -63,26 +83,27 @@ Cost: one annotate call per diff chunk when a provider is configured. Walking un
 
 ### Getting started
 
-- [Introduction](https://guidedreview.dev/docs): What Guided Review is and how it turns a PR into an ordered walkthrough
-- [Install the extension](https://guidedreview.dev/docs/install): Chrome Web Store or load unpacked for development
+- [Introduction](https://guidedreview.dev/docs): What Guided Review is (extension + CLI) and how it turns a diff into an ordered walkthrough
+- [Install Guided Review](https://guidedreview.dev/docs/install): Chrome Web Store, load unpacked, or CLI via npx
 - [Your first review](https://guidedreview.dev/docs/first-review): From a PR page to walking units, search, and comments
+- [Review local changes](https://guidedreview.dev/docs/local-review): CLI scopes, flags, Settings, Generate Prompt
 
 ### Setup
 
-- [Configure AI provider](https://guidedreview.dev/docs/configure-provider): Anthropic, OpenAI, or Grok — keys, models, connection checks, cost
-- [Connect GitHub](https://guidedreview.dev/docs/connect-github): Optional device flow for submitting reviews from the overlay
+- [Configure AI provider](https://guidedreview.dev/docs/configure-provider): Anthropic, OpenAI, or Grok — keys for extension and CLI, models, cost
+- [Connect GitHub](https://guidedreview.dev/docs/connect-github): Optional device flow for submitting reviews from the extension
 
 ### Product
 
 - [How a review plan works](https://guidedreview.dev/docs/how-it-works): Units, chunking, no-AI fallback, and what the model may invent
-- [Leave line comments](https://guidedreview.dev/docs/leave-comments): Multi-line draft comments while you walk the plan
-- [Submit a review](https://guidedreview.dev/docs/submit-review): Comment / Approve / Request Changes without leaving Guided Review
-- [Keyboard shortcuts](https://guidedreview.dev/docs/keyboard-shortcuts): Navigation, diff search, view mode, comments, submit
+- [Leave line comments](https://guidedreview.dev/docs/leave-comments): Multi-line drafts while you walk the plan
+- [Submit a review](https://guidedreview.dev/docs/submit-review): Comment / Approve / Request Changes from the extension
+- [Keyboard shortcuts](https://guidedreview.dev/docs/keyboard-shortcuts): Navigation, diff search, view mode, comments, submit, CLI extras
 
 ### Help & trust
 
-- [Troubleshooting](https://guidedreview.dev/docs/troubleshooting): Missing button, provider errors, plan failures, GitHub auth
-- [FAQ](https://guidedreview.dev/docs/faq): Free, cost, tracking, no key, what the AI does and does not do
+- [Troubleshooting](https://guidedreview.dev/docs/troubleshooting): Missing button, provider errors, plan failures, CLI issues, GitHub auth
+- [FAQ](https://guidedreview.dev/docs/faq): Free, cost, tracking, extension vs CLI, what the AI does and does not do
 - [Privacy & data](https://guidedreview.dev/docs/privacy-and-data): What leaves the machine (GitHub + your provider only) and what stays local
 
 ---
@@ -90,18 +111,19 @@ Cost: one annotate call per diff chunk when a provider is configured. Walking un
 ## Product & install
 
 - [Homepage](https://guidedreview.dev/): Product overview and install CTA
-- [Chrome Web Store](https://chromewebstore.google.com/detail/pdnnimoajmnjpccboemeomoeomancodd): Install Guided Review
+- [Chrome Web Store](https://chromewebstore.google.com/detail/pdnnimoajmnjpccboemeomoeomancodd): Install the extension
+- [npm `@guided-review/cli`](https://www.npmjs.com/package/@guided-review/cli): Local review CLI
 - [Source on GitHub](https://github.com/nshntarora/guidedreview): Apache-2.0 source, issues, and PRs
 
 ---
 
 ## Privacy model
 
-- **Extension product paths** talk only to GitHub and the user’s AI provider. There is no Guided Review backend for diffs, keys, or review traffic.
-- **API keys and settings** stay in `chrome.storage.local` on the user’s machine.
-- **Active session** (diff, plan, step index) lives in `chrome.storage.session` until the browser session ends.
-- **Draft comments** stay local until the user explicitly submits a review.
-- **Marketing site** may use analytics for page views and CTA clicks; the extension does not embed product analytics.
+- **Extension and CLI product paths** talk only to your AI provider (and GitHub for the extension). There is no Guided Review backend for diffs, keys, or review traffic.
+- **Extension API keys and settings** stay in `chrome.storage.local`. **CLI** prefs stay in `~/.config/guided-review/config.json` (or XDG / env override).
+- **Extension active session** (diff, plan, step index) lives in `chrome.storage.session` until the browser session ends. **CLI session** lives with the running server.
+- **Draft comments / notes** stay local until the user explicitly submits (extension) or Generate Prompt copies them (CLI).
+- **Marketing site** may use analytics for page views and CTA clicks; the extension and CLI do not embed product analytics.
 
 Details: [Privacy & data](https://guidedreview.dev/docs/privacy-and-data) · [Privacy Policy](https://guidedreview.dev/privacy)
 

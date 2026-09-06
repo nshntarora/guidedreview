@@ -5,7 +5,7 @@ import { openGraphSite } from "@web/lib/site";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "Terms governing use of the Guided Review Chrome extension and website.",
+  description: "Terms governing use of the Guided Review Chrome extension, CLI, and website.",
   alternates: { canonical: "/terms" },
   openGraph: { ...openGraphSite, url: "/terms" },
 };

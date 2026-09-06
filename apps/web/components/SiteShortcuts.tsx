@@ -27,7 +27,8 @@ export function SiteShortcuts() {
       if (isEditableTarget(event.target)) return;
 
       const key = event.key.toLowerCase();
-      const match = Object.values(SITE_SHORTCUTS).find((s) => s.key === key);
+      const keyed = [SITE_SHORTCUTS.install, SITE_SHORTCUTS.star] as const;
+      const match = keyed.find((s) => s.key === key);
       if (!match) return;
 
       event.preventDefault();

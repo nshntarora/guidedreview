@@ -5,12 +5,13 @@ export const toc = [
   { id: "github-connect-and-submit", label: "GitHub connect and submit", level: 2 },
   { id: "private-repos-and-sso", label: "Private repos and SSO", level: 2 },
   { id: "session-and-resume", label: "Session and resume", level: 2 },
+  { id: "cli", label: "CLI", level: 2 },
   { id: "load-unpacked-stale-build", label: "Load unpacked / stale build", level: 2 },
 ];
 
 # Troubleshooting
 
-Straight fixes for the problems that show up most often. If something fails, read the message in Options or the overlay first — provider and GitHub errors are often already specific enough to act on.
+Straight fixes for the problems that show up most often. If something fails, read the message in Options, the overlay, or the CLI terminal first — provider and GitHub errors are often already specific enough to act on.
 
 Concept overviews: [How a review plan works](/docs/how-it-works) · [FAQ](/docs/faq) · [Privacy & data](/docs/privacy-and-data).
 
@@ -18,7 +19,7 @@ Concept overviews: [How a review plan works](/docs/how-it-works) · [FAQ](/docs/
 
 ## No Start Guided Review button
 
-1. Confirm the tab is a **pull request** URL on `github.com` (Conversation, Files changed, or Commits) — same as [Your first review](/docs/first-review#open-a-pull-request). Hosts other than github.com are not supported ([FAQ](/docs/faq#does-it-work-outside-github-com)).
+1. Confirm the tab is a **pull request** URL on `github.com` (Conversation, Files changed, or Commits) — same as [Your first review](/docs/first-review#open-a-pull-request). Hosts other than github.com are not supported by the extension ([FAQ](/docs/faq#does-it-work-outside-github-com)); use the [CLI](/docs/local-review) for local git instead.
 2. Avoid PR **sub-pages that aren’t review surfaces** — for example conflict resolution (`…/pull/N/conflicts`). The extension intentionally does not inject there; open Conversation, Files changed, or Commits instead. The toolbar popup says so when the active tab is one of those paths.
 3. Reload the page. SPA navigations from the PR list should still inject the button; a full reload clears stuck DOM.
 4. Check the extension is enabled and allowed on GitHub in `chrome://extensions`.
@@ -28,23 +29,27 @@ If the on-page button is missing but the PR URL is valid, try the **toolbar icon
 
 ## Provider and API key
 
-| Symptom                              | What to try                                                                                                                                                                        |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Prompted to connect a provider       | Open Options → [configure a provider](/docs/configure-provider) → paste a valid key → Save. You can still walk [file by file](/docs/how-it-works#without-a-provider) without a key |
-| **Test connection** fails            | Wrong key or model, expired key, or network/VPN blocking the provider. Fix the key, [pick a model](/docs/configure-provider#pick-a-model) your account can use, retry              |
-| Auth / invalid key from the provider | Regenerate the key in the provider console; don’t paste org-restricted keys your seat can’t use                                                                                    |
+| Symptom                              | What to try                                                                                                                                                                                                                                    |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prompted to connect a provider       | Extension: Options → [configure a provider](/docs/configure-provider) → paste a valid key → Save. CLI: Settings (`⌘/Ctrl` + `,`) or env / `--provider`. You can still walk [file by file](/docs/how-it-works#without-a-provider) without a key |
+| **Test connection** fails            | Wrong key or model, expired key, or network/VPN blocking the provider. Fix the key, [pick a model](/docs/configure-provider#pick-a-model) your account can use, retry                                                                          |
+| Auth / invalid key from the provider | Regenerate the key in the provider console; don’t paste org-restricted keys your seat can’t use                                                                                                                                                |
+| CLI “Use my subscription” fails      | Agent not logged in, or the unofficial key path broke. Prefer a console API key in Settings or env                                                                                                                                             |
 
-Keys live only in `chrome.storage.local` and leave the machine toward **your** provider when annotating — not toward Guided Review servers ([Privacy & data](/docs/privacy-and-data#what-the-extension-sends)).
+Extension keys live in `chrome.storage.local`. CLI keys live in env, flags, or `~/.config/guided-review/config.json`. Both leave the machine toward **your** provider when annotating — not toward Guided Review servers ([Privacy & data](/docs/privacy-and-data)).
 
 ## Plan generation fails
 
-- **Mid-stream error** — Check the overlay message. Common causes: rate limits, insufficient quota, model unavailable, or a network blip. Wait and retry, or [switch model/provider](/docs/configure-provider) in Options.
-- **Empty or thin plan** — Very large or mostly binary PRs produce less useful structure. [Chunking](/docs/how-it-works#chunking-large-prs) still runs by file; binary/elided files won’t get textual units.
-- **Lost connection to the worker** — Reload the extension and the PR tab, then start again ([first review](/docs/first-review#start-guided-review)).
+- **Mid-stream error** — Check the overlay or CLI message. Common causes: rate limits, insufficient quota, model unavailable, or a network blip. Wait and retry, or [switch model/provider](/docs/configure-provider).
+- **Empty or thin plan** — Very large or mostly binary diffs produce less useful structure. [Chunking](/docs/how-it-works#chunking-large-prs) still runs by file; binary/elided files won’t get textual units.
+- **Lost connection to the worker** (extension) — Reload the extension and the PR tab, then start again ([first review](/docs/first-review#start-guided-review)).
+- **Structure with AI does nothing** (CLI) — Confirm a key is available ([Configure AI provider → CLI](/docs/configure-provider#cli)), then retry. Check the terminal log below the banner for the error.
 
 The model only supplies order and commentary ([How a review plan works](/docs/how-it-works#what-the-model-must-not-invent)). If hunks don’t match the real diff, those refs are dropped rather than shown as broken code.
 
 ## GitHub connect and submit
+
+Extension-only. The CLI does not submit to GitHub.
 
 | Symptom                        | What to try                                                                                                                                          |
 | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -69,11 +74,24 @@ Narrative version: [Connect GitHub → Private repos and org SSO](/docs/connect-
 
 ## Session and resume
 
-- Active plans live in `chrome.storage.session`, keyed by `owner/repo#number`. Switching Conversation ↔ Files changed should resume the same step ([Your first review → Resume later](/docs/first-review#resume-later)).
-- Closing the browser (or ending the session) clears the plan. Settings and API keys in local storage remain ([Privacy & data](/docs/privacy-and-data#what-stays-local)).
-- Starting Guided Review again on the same PR after a clear rebuilds a **new** plan for the current diff ([How a review plan works](/docs/how-it-works)).
+- **Extension:** Active plans live in `chrome.storage.session`, keyed by `owner/repo#number`. Switching Conversation ↔ Files changed should resume the same step ([Your first review → Resume later](/docs/first-review#resume-later)). Closing the browser (or ending the session) clears the plan. Settings and API keys in local storage remain ([Privacy & data](/docs/privacy-and-data#what-stays-local)).
+- **CLI:** The session lives with the running local server. Stopping the process (Ctrl+C) ends it. Restarting `npx @guided-review/cli` starts a fresh walk for the current scope.
+- Starting Guided Review again after a clear rebuilds a **new** plan for the current diff ([How a review plan works](/docs/how-it-works)).
 
-Draft comments are part of the same session until you [submit](/docs/submit-review) or discard them ([Leave line comments](/docs/leave-comments)).
+Draft comments (extension) and notes (CLI) are part of that session until you submit, Generate Prompt, discard them, or stop the host.
+
+## CLI
+
+| Symptom                                  | What to try                                                                                                                         |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `npx guided-review` does the wrong thing | Use the scoped package: `npx @guided-review/cli`. The hyphenated unscoped name is a different tool                                  |
+| Port already in use                      | Pass `--port` (or `--port 0` for any free port), or stop the other process on `7182`                                                |
+| `Nothing to review against <base>.`      | Empty scopes — commit, stage, or pass `--base` / pick another scope in the UI ([local review](/docs/local-review#what-it-compares)) |
+| Not a git repository                     | Run from inside a git repo, or pass a repo path as the first argument                                                               |
+| Browser doesn’t open                     | Open the URL printed in the banner, or drop `--no-open`                                                                             |
+| Structure / Settings can’t find a key    | [Configure AI provider → CLI](/docs/configure-provider#cli); check env vars and `~/.config/guided-review/config.json`               |
+
+Full local workflow: [Review local changes](/docs/local-review).
 
 ## Load unpacked / stale build
 
@@ -84,5 +102,7 @@ If you develop from source:
 3. Refresh the GitHub PR tab.
 
 Chrome loads **`apps/extension/dist`**, not a root-level `dist/`. A stale folder means you keep seeing old behavior even with `pnpm dev` running. Full install steps: [Install → Load unpacked](/docs/install#load-unpacked-development).
+
+For CLI source builds: `pnpm build:cli` then `pnpm review` (flags after `--`).
 
 > **Still stuck?** Open an issue on [GitHub](https://github.com/nshntarora/guidedreview) with the exact error text (redact keys and private URLs). Concept questions: [FAQ](/docs/faq).

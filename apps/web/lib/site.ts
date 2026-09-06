@@ -12,7 +12,7 @@ export const DEFAULT_DESCRIPTION =
 
 /** Homepage-specific description (≤160 chars for SERP snippets). */
 export const HOME_DESCRIPTION =
-  "Chrome extension that clusters GitHub PR diffs into review units with summaries. Free, open source, bring your own LLM key.";
+  "Clustered review units for GitHub PRs and local diffs — summaries, keyboard-first. Free, open source, BYO LLM key.";
 
 /** Shared Open Graph fields — page-level `openGraph` can replace the root object, so re-spread these. */
 export const openGraphSite = {

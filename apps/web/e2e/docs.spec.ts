@@ -32,10 +32,10 @@ test.describe("docs registry", () => {
       "page",
     );
 
-    await sidebar.getByRole("link", { name: "Install the extension" }).click();
+    await sidebar.getByRole("link", { name: "Install Guided Review" }).click();
     await expect(page).toHaveURL(/\/docs\/install\/?$/);
     await expect(page.getByRole("heading", { level: 1, name: /Install/i })).toBeVisible();
-    await expect(sidebar.getByRole("link", { name: "Install the extension" })).toHaveAttribute(
+    await expect(sidebar.getByRole("link", { name: "Install Guided Review" })).toHaveAttribute(
       "aria-current",
       "page",
     );

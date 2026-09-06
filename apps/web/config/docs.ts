@@ -31,15 +31,15 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Getting Started",
     title: "Introduction",
     description:
-      "What Guided Review is, how it turns a GitHub PR into an ordered walkthrough, and where to start in the docs.",
+      "What Guided Review is — Chrome extension for GitHub PRs and CLI for local diffs — how it turns a change into an ordered walkthrough, and where to start in the docs.",
   },
   {
     slug: "install",
     section: "Getting Started",
-    title: "Install the extension",
+    title: "Install Guided Review",
     description:
-      "Install Guided Review from the Chrome Web Store or load an unpacked build for development.",
-    blurb: "Chrome Web Store or load unpacked for development",
+      "Install the Chrome extension from the Web Store (or load unpacked), or run the CLI with npx for local git reviews.",
+    blurb: "Chrome extension or CLI (npx @guided-review/cli)",
     load: () => import("@web/content/help/install.mdx"),
   },
   {
@@ -65,8 +65,8 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Setup",
     title: "Configure AI provider",
     description:
-      "Add your Anthropic, OpenAI, or Grok API key, pick a model, test the connection, and understand annotate cost.",
-    blurb: "API keys, models, connection checks, and usage cost",
+      "Add your Anthropic, OpenAI, or Grok API key in the extension or CLI, pick a model, and understand annotate cost.",
+    blurb: "API keys for extension and CLI, models, and usage cost",
     load: () => import("@web/content/help/configure-provider.mdx"),
   },
   {
@@ -74,8 +74,8 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Setup",
     title: "Connect GitHub",
     description:
-      "Optionally connect GitHub with device flow so you can submit reviews and line comments from Guided Review.",
-    blurb: "optional auth for submitting reviews from Guided Review",
+      "Optionally connect GitHub with device flow so you can submit reviews and line comments from the Chrome extension.",
+    blurb: "optional auth for submitting reviews from the extension",
     load: () => import("@web/content/help/connect-github.mdx"),
   },
   {
@@ -83,7 +83,7 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Product",
     title: "How a review plan works",
     description:
-      "How Guided Review parses a PR diff, chunks large changes, builds validated review units, and falls back file-by-file without a provider.",
+      "How Guided Review parses a diff, chunks large changes, builds validated review units, and falls back file-by-file without a provider — shared by extension and CLI.",
     blurb: "units, chunking, no-AI fallback, and what the model may invent",
     load: () => import("@web/content/help/how-it-works.mdx"),
   },
@@ -92,7 +92,7 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Product",
     title: "Leave line comments",
     description:
-      "Draft multi-line GitHub comments in Guided Review while you walk the review plan.",
+      "Draft multi-line comments while you walk the review plan — submit from the extension, or Generate Prompt from the CLI.",
     blurb: "comment mode, drafts, multi-line ranges",
     load: () => import("@web/content/help/leave-comments.mdx"),
   },
@@ -101,8 +101,8 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Product",
     title: "Submit a review",
     description:
-      "Post drafted comments and Comment, Approve, or Request Changes without leaving Guided Review.",
-    blurb: "Comment / Approve / Request Changes from Guided Review",
+      "Post drafted comments and Comment, Approve, or Request Changes from the Chrome extension without leaving Guided Review.",
+    blurb: "Comment / Approve / Request Changes from the extension",
     load: () => import("@web/content/help/submit-review.mdx"),
   },
   {
@@ -110,8 +110,8 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Product",
     title: "Keyboard shortcuts",
     description:
-      "Keyboard-first shortcuts for review navigation, diff search, unified/split view, comments, and submitting a review.",
-    blurb: "navigate, search, comment, and submit",
+      "Keyboard-first shortcuts for review navigation, diff search, unified/split view, comments, submit, and the local CLI UI.",
+    blurb: "navigate, search, comment, submit, and CLI extras",
     load: () => import("@web/content/help/keyboard-shortcuts.mdx"),
   },
   {
@@ -119,8 +119,8 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Help",
     title: "Troubleshooting",
     description:
-      "Fixes for a missing Start Guided Review button, provider errors, plan failures, and GitHub auth issues.",
-    blurb: "common failures and fixes",
+      "Fixes for a missing Start Guided Review button, provider errors, plan failures, CLI issues, and GitHub auth.",
+    blurb: "common failures and fixes for extension and CLI",
     load: () => import("@web/content/help/troubleshooting.mdx"),
   },
   {
@@ -128,8 +128,8 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Help",
     title: "FAQ",
     description:
-      "Answers about how Guided Review works, privacy, cost, AI providers, github.com-only, and whether AI approves PRs.",
-    blurb: "free, cost, tracking, no key, what the AI does and doesn’t do",
+      "Answers about how Guided Review works (extension and CLI), privacy, cost, AI providers, and whether AI approves PRs.",
+    blurb: "free, cost, tracking, extension vs CLI, what the AI does",
     load: () => import("@web/content/help/faq.mdx"),
   },
   {
@@ -137,7 +137,7 @@ export const DOCS_PAGES: DocsPage[] = [
     section: "Trust",
     title: "Privacy & data",
     description:
-      "What the extension sends to GitHub and your AI provider, what stays local, and website analytics.",
+      "What the extension and CLI send to GitHub and your AI provider, what stays local, and website analytics.",
     blurb: "what leaves your machine and what doesn’t",
     load: () => import("@web/content/help/privacy-and-data.mdx"),
   },

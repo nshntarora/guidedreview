@@ -1,5 +1,5 @@
 export const toc = [
-  { id: "what-the-extension-sends", label: "What the extension sends", level: 2 },
+  { id: "what-leaves-your-machine", label: "What leaves your machine", level: 2 },
   { id: "what-stays-local", label: "What stays local", level: 2 },
   { id: "website-analytics", label: "Website analytics", level: 2 },
   { id: "full-policy", label: "Full policy", level: 2 },
@@ -7,32 +7,42 @@ export const toc = [
 
 # Privacy & data
 
-Guided Review is designed so the extension does not phone home. Your PR content goes to **your** AI provider and (optionally) **GitHub** — not to a Guided Review backend. Short version also lives in the [FAQ](/docs/faq#do-you-track-anything).
+Guided Review is designed so the product does not phone home. Diff content goes to **your** AI provider and (for the Chrome extension, optionally) **GitHub** — not to a Guided Review backend. Short version also lives in the [FAQ](/docs/faq#do-you-track-anything).
 
 <TocCard toc={toc} />
 
-## What the extension sends
+## What leaves your machine
 
-| Destination               | When                                    | What                                                                                                                                                                                        |
-| ------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Your AI provider**      | Starting / streaming a review           | Prompt built from the PR diff + schema instructions; API key in the Authorization header — [Configure AI provider](/docs/configure-provider), [How a review plan works](/docs/how-it-works) |
-| **GitHub**                | Diff fetch, device OAuth, submit review | Diff/patch URLs, [OAuth device flow](/docs/connect-github#device-flow), [review API payloads](/docs/submit-review) you initiate                                                             |
-| **Guided Review servers** | —                                       | **None** for extension product paths                                                                                                                                                        |
+| Destination               | When                                    | What                                                                                                                                                                                     |
+| ------------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Your AI provider**      | Annotating / **Structure with AI**      | Prompt built from the diff + schema instructions; API key in the Authorization header — [Configure AI provider](/docs/configure-provider), [How a review plan works](/docs/how-it-works) |
+| **GitHub** (extension)    | Diff fetch, device OAuth, submit review | Diff/patch URLs, [OAuth device flow](/docs/connect-github#device-flow), [review API payloads](/docs/submit-review) you initiate                                                          |
+| **Guided Review servers** | —                                       | **None** for extension or CLI product paths                                                                                                                                              |
 
-The background service worker is the only context that holds the API key and performs cross-origin LLM requests. Line-comment drafts are **not** sent until you explicitly [submit](/docs/submit-review).
+**Extension:** The background service worker is the only context that holds the API key and performs cross-origin LLM requests. Line-comment drafts are **not** sent until you explicitly [submit](/docs/submit-review).
+
+**CLI:** The local server binds `127.0.0.1` only. LLM calls go from that process to your provider (or read a coding agent’s local key store). [Generate Prompt](/docs/local-review#notes) copies text to your clipboard — Guided Review does not upload it. There is no GitHub OAuth or submit path in the CLI.
 
 ## What stays local
 
+**Chrome extension**
+
 - Provider choice, model, and API key (`chrome.storage.local`) — [Configure AI provider](/docs/configure-provider#where-settings-live)
 - Active review session: diff, plan, step index (`chrome.storage.session`, keyed by `owner/repo#number`) — [Resume later](/docs/first-review#resume-later)
-- [Draft comments](/docs/leave-comments) in Guided Review until you submit
+- [Draft comments](/docs/leave-comments) until you submit
 - GitHub tokens after [Connect GitHub](/docs/connect-github), until you disconnect
 
 Closing the browser session clears session storage; local settings remain until you change or clear them. Session edge cases: [Troubleshooting](/docs/troubleshooting#session-and-resume).
 
+**CLI**
+
+- Provider / model / agent prefs in `~/.config/guided-review/config.json` (or `$XDG_CONFIG_HOME` / `GUIDED_REVIEW_CONFIG_DIR`)
+- Active review session and line notes in memory for the running server — gone when you Ctrl+C
+- Coding-agent keys stay in that agent’s own store when you use **Use my subscription**; Guided Review does not copy them into its config file
+
 ## Website analytics
 
-The **marketing site** uses an analytics service for page views and a few CTA clicks (install / star). That data is handled by our analytics provider, [PostHog](https://posthog.com). Analytics runs on the website only — not through the extension. The extension does not embed analytics and does not track review activity. Detail: [Cookies](/cookies) · [Privacy Policy](/privacy).
+The **marketing site** uses an analytics service for page views and a few CTA clicks (install / star). That data is handled by our analytics provider, [PostHog](https://posthog.com). Analytics runs on the website only — not through the extension or CLI. Neither product embeds analytics or tracks review activity. Detail: [Cookies](/cookies) · [Privacy Policy](/privacy).
 
 ## Full policy
 

@@ -8,9 +8,9 @@ export const toc = [
 
 # Leave line comments
 
-Draft GitHub-style line comments in Guided Review while you [walk the plan](/docs/first-review). Comments stay local until you [submit a review](/docs/submit-review).
+Draft GitHub-style line comments in Guided Review while you [walk the plan](/docs/first-review). On the **Chrome extension**, comments stay local until you [submit a review](/docs/submit-review). On the **CLI**, the same comment mode leaves notes in the local session — there is no GitHub submit; use [Generate Prompt](/docs/local-review#notes) to copy them for a coding agent instead.
 
-You need [GitHub connected](/docs/connect-github) only when you submit — drafting works either way. Shortcut reference: [Keyboard shortcuts → Comment mode](/docs/keyboard-shortcuts#comment-mode).
+You need [GitHub connected](/docs/connect-github) only when you submit from the extension — drafting works either way. Shortcut reference: [Keyboard shortcuts → Comment mode](/docs/keyboard-shortcuts#comment-mode).
 
 <TocCard toc={toc} />
 
@@ -32,7 +32,7 @@ If a unit has no selectable lines (for example binary or empty context), comment
 | Multi-line range | Hold `⇧` and press `↑` / `↓` |
 | Open composer    | `Enter` on the selection     |
 
-Selection is limited to lines the extension can map to a GitHub review comment on the current diff. Context-only lines may not all be selectable. Full chord list: [Keyboard shortcuts](/docs/keyboard-shortcuts#comment-mode).
+Selection is limited to lines Guided Review can map on the current diff (on the extension, lines that can become a GitHub review comment). Context-only lines may not all be selectable. Full chord list: [Keyboard shortcuts](/docs/keyboard-shortcuts#comment-mode).
 
 ## Write a draft
 
@@ -53,10 +53,12 @@ You can keep walking units and add more drafts before [submitting once](/docs/su
 
 ## What gets posted
 
-Nothing is sent to GitHub until you open **Submit review** and confirm. Then every remaining draft is included as line comments on that review, along with the overall event type and optional summary. Details: [Submit a review](/docs/submit-review).
+**Extension:** Nothing is sent to GitHub until you open **Submit review** and confirm. Then every remaining draft is included as line comments on that review, along with the overall event type and optional summary. Details: [Submit a review](/docs/submit-review).
 
 If the PR diff has changed since you drafted (rebase, force-push, new commits), GitHub may reject some line anchors — you’ll see an error on submit ([Troubleshooting](/docs/troubleshooting#github-connect-and-submit)). Re-open the review, refresh the plan if needed, and re-draft on the current lines.
 
-> **Tip.** Prefer commenting as you go unit by unit, then submit once. That matches how GitHub review drafts work: one review, many line comments.
+**CLI:** Notes never leave your machine via Guided Review. **Generate Prompt** builds a coding-agent prompt from them and copies it to the clipboard — [Review local changes → Notes](/docs/local-review#notes).
 
-**Next.** [Submit a review](/docs/submit-review) · [Connect GitHub](/docs/connect-github) · [Keyboard shortcuts](/docs/keyboard-shortcuts)
+> **Tip.** Prefer commenting as you go unit by unit, then submit (or Generate Prompt) once. That matches how GitHub review drafts work: one review, many line comments.
+
+**Next.** [Submit a review](/docs/submit-review) · [Review local changes](/docs/local-review) · [Connect GitHub](/docs/connect-github) · [Keyboard shortcuts](/docs/keyboard-shortcuts)

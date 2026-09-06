@@ -1,18 +1,24 @@
 import { CHROME_WEB_STORE_URL } from "@web/lib/links";
 
 export const toc = [
-  { id: "chrome-web-store", label: "Chrome Web Store", level: 2 },
-  { id: "load-unpacked-development", label: "Load unpacked (development)", level: 2 },
-  { id: "after-install", label: "After install", level: 2 },
+  { id: "chrome-extension", label: "Chrome extension", level: 2 },
+  { id: "chrome-web-store", label: "Chrome Web Store", level: 3 },
+  { id: "load-unpacked-development", label: "Load unpacked (development)", level: 3 },
+  { id: "after-install", label: "After install", level: 3 },
+  { id: "cli", label: "CLI", level: 2 },
 ];
 
-# Install the extension
+# Install Guided Review
 
-Guided Review runs as a Chrome Manifest V3 extension. Install it once, then use it on any `github.com` pull request. For the “why” and product map, see the [Introduction](/docs).
+Two ways in: the **Chrome extension** for GitHub pull requests, and the **CLI** for local branch, commit, or working-tree diffs. Same review engine; pick the host that matches the change you’re reviewing. For the “why” and product map, see the [Introduction](/docs).
 
 <TocCard toc={toc} />
 
-## Chrome Web Store
+## Chrome extension
+
+Guided Review runs as a Chrome Manifest V3 extension on `github.com` pull requests.
+
+### Chrome Web Store
 
 1. Open the <a href={CHROME_WEB_STORE_URL}>Guided Review listing</a> on the Chrome Web Store.
 2. Click **Add to Chrome** and confirm.
@@ -20,7 +26,7 @@ Guided Review runs as a Chrome Manifest V3 extension. Install it once, then use 
 
 > **Site shortcut.** On [guidedreview.dev](https://guidedreview.dev), `⌘/Ctrl` + `I` opens the Chrome Web Store listing — see [Keyboard shortcuts](/docs/keyboard-shortcuts#marketing-site).
 
-## Load unpacked (development)
+### Load unpacked (development)
 
 For local builds and contributors:
 
@@ -38,7 +44,7 @@ pnpm build:extension
 
 > **Dev HMR.** `pnpm dev` / `pnpm dev:extension` serves Vite HMR on port **5173**, but Chrome still loads the built files under `apps/extension/dist`. Rebuild (or rely on the dev pipeline that writes there) and reload the extension when behavior looks stale. More on stale builds: [Troubleshooting](/docs/troubleshooting#load-unpacked-stale-build).
 
-## After install
+### After install
 
 Chrome opens a short **welcome** page on first install (pin → connect provider → open a PR). You can also:
 
@@ -54,3 +60,15 @@ Chrome opens a short **welcome** page on first install (pin → connect provider
 - Enable **Automatically open on Files changed** in Options if you want that tab to open Guided Review for you.
 
 Keys and tokens stay on your machine — details in [Privacy & data](/docs/privacy-and-data). If the **Start Guided Review** button never appears, see [Troubleshooting](/docs/troubleshooting#no-start-guided-review-button).
+
+## CLI
+
+For local git work — before you open a PR, or when there isn’t one:
+
+```bash
+npx @guided-review/cli
+```
+
+Requires **Node.js 22+**. The published package is `@guided-review/cli`; the binary is `guidedreview`. `npx guided-review` (unscoped, hyphen) is a different tool.
+
+The CLI starts a localhost server, opens the browser UI, and walks the same kind of review units as the extension. Diff scopes, flags, Settings, and **Generate Prompt** are covered in [Review local changes](/docs/local-review). Provider setup for the CLI (env, config file, or a coding agent already on the machine): [Configure AI provider](/docs/configure-provider#cli).

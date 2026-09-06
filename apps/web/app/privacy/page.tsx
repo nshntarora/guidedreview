@@ -6,7 +6,7 @@ import { openGraphSite } from "@web/lib/site";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "How Guided Review collects, uses, and protects personal data across the website and Chrome extension.",
+    "How Guided Review collects, uses, and protects personal data across the website, Chrome extension, and CLI.",
   alternates: { canonical: "/privacy" },
   openGraph: { ...openGraphSite, url: "/privacy" },
 };

@@ -12,7 +12,7 @@ export const toc = [
 
 Move through a guided review without leaving the keyboard. Focus must not be in an editable field for most of these — when the comment composer is open, typing goes to the text field and only Esc / ⌘/Ctrl+Enter are intercepted.
 
-The Guided Review sidebar always lists the same shortcuts as this page. Hands-on walkthrough: [Your first review](/docs/first-review).
+The Guided Review sidebar always lists the same shortcuts as this page. Most chords work in both the [Chrome extension](/docs/first-review) and the [CLI](/docs/local-review); [Local review](#local-review) adds CLI-only keys. Submit chords apply to the extension only.
 
 <TocCard toc={toc} />
 
@@ -28,7 +28,7 @@ The Guided Review sidebar always lists the same shortcuts as this page. Hands-on
 | `⌘/Ctrl` + `F`     | Open [diff search](#diff-search)                                                                |
 | `⌘/Ctrl` + `Enter` | Open [Submit review](/docs/submit-review) (or [Connect GitHub](/docs/connect-github) if needed) |
 
-While Guided Review is open, keys are not passed through to GitHub’s page shortcuts. What a “unit” is: [How a review plan works](/docs/how-it-works#review-units).
+On a GitHub PR, while Guided Review is open, keys are not passed through to GitHub’s page shortcuts. What a “unit” is: [How a review plan works](/docs/how-it-works#review-units).
 
 ## Diff view
 
@@ -39,11 +39,11 @@ While Guided Review is open, keys are not passed through to GitHub’s page shor
 
 Type `v`, then `u` or `s` within about a second. You can also toggle unified / split from the toolbar while [walking the plan](/docs/first-review#walk-the-plan).
 
-**Default is split.** Your choice is remembered in `chrome.storage.local` for the next review on this browser.
+**Default is split.** In the extension, your choice is remembered in `chrome.storage.local` for the next review on this browser.
 
 ## Diff search
 
-Search **every** file path and line in the PR’s parsed diff — not only the active unit.
+Search **every** file path and line in the parsed diff — not only the active unit.
 
 1. Press `⌘/Ctrl` + `F` while the overlay is open.
 2. Type a path fragment or code snippet. Results are fuzzy-ranked (paths rank above line hits).
@@ -52,7 +52,7 @@ Search **every** file path and line in the PR’s parsed diff — not only the a
 
 Press `⌘/Ctrl` + `F` again while the palette is open to re-focus and select the query. Renames match on the old or new path. Binary / elided files contribute path hits only.
 
-This is Guided Review’s own search palette. GitHub’s page find does not run while the overlay owns the keyboard.
+This is Guided Review’s own search palette. On a PR page, GitHub’s find does not run while the overlay owns the keyboard.
 
 ## Comment mode
 
@@ -80,7 +80,7 @@ Full submit flow: [Submit a review](/docs/submit-review). Auth gate: [Connect Gi
 
 ## Local review
 
-The [CLI](/docs/local-review) uses the same overlay keys as a GitHub PR. Extra in the local UI:
+The [CLI](/docs/local-review) uses the same navigation, diff view, search, and comment-mode keys as the extension. Submit (`⌘/Ctrl` + `Enter` for a GitHub review) does not apply — use **Generate Prompt** from the UI instead. Extra in the local UI:
 
 | Shortcut       | Action                       |
 | -------------- | ---------------------------- |
@@ -94,7 +94,7 @@ On [guidedreview.dev](https://guidedreview.dev):
 
 | Shortcut       | Action                                                                        |
 | -------------- | ----------------------------------------------------------------------------- |
-| `⌘/Ctrl` + `I` | Open install (Chrome Web Store) — also [Install the extension](/docs/install) |
+| `⌘/Ctrl` + `I` | Open install (Chrome Web Store) — also [Install Guided Review](/docs/install) |
 | `⌘/Ctrl` + `G` | Open the GitHub repository                                                    |
 
 > **Tip.** Prefer keyboard navigation on large plans — it keeps attention on the unit narrative instead of hunting scroll position on the PR page.

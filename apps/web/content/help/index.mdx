@@ -6,20 +6,28 @@ export const toc = [
 
 # Introduction
 
-Guided Review turns a GitHub pull request into an ordered walkthrough — schema first, then logic, call-sites, and tests — so you can review with intent instead of scrolling a raw diff.
+Guided Review turns a diff into an ordered walkthrough — schema first, then logic, call-sites, and tests — so you can review with intent instead of scrolling a raw change list. Same engine for GitHub pull requests and local git work.
 
 <TocCard toc={toc} />
 
 ## What is Guided Review?
 
-Guided Review is a Chrome extension for GitHub pull requests. On a PR page it adds a **Start Guided Review** button. When you start a review, the extension:
+Guided Review is two surfaces on one review engine:
 
-1. Reads the PR’s unified diff (fetched through the extension’s background worker)
-2. Sends that diff to **[your configured AI provider](/docs/configure-provider)** (Anthropic, OpenAI, or Grok)
-3. Turns the response into a sequence of **[review units](/docs/how-it-works)** — logical groups of hunks with short commentary
-4. Shows those units in an overlay so you can step through the change set in a sensible order
+| Surface              | What you review                       | How you start                                      |
+| -------------------- | ------------------------------------- | -------------------------------------------------- |
+| **Chrome extension** | Pull requests on `github.com`         | **Start Guided Review** on the PR page             |
+| **CLI**              | Local branch, commit, or working tree | `npx @guided-review/cli` → browser UI on localhost |
 
-You stay on GitHub. Your API key stays in the extension. The model plans structure and commentary; the code you see always comes from the real parsed diff. For what leaves your machine, see [Privacy & data](/docs/privacy-and-data).
+On either path:
+
+1. The real unified diff is parsed into files, hunks, and lines
+2. With **[your AI provider](/docs/configure-provider)** configured (Anthropic, OpenAI, or Grok), the model returns **[review units](/docs/how-it-works)** — logical groups of hunks with short commentary
+3. You step through those units in a keyboard-first overlay; the code you see always comes from the real parsed diff
+
+Without a key you still get a file-by-file walk. The model plans structure and commentary only — it never invents the code lines. For what leaves your machine, see [Privacy & data](/docs/privacy-and-data).
+
+The extension can optionally [submit reviews](/docs/submit-review) to GitHub. The CLI keeps line notes local and can [Generate Prompt](/docs/local-review#notes) for a coding agent instead.
 
 ## What you'll find here
 
@@ -27,10 +35,19 @@ You stay on GitHub. Your API key stays in the extension. The model plans structu
 
 ## Quick start
 
-1. [Install](/docs/install) the extension.
-2. Open the options page and [configure a provider](/docs/configure-provider).
+**GitHub pull requests**
+
+1. [Install the Chrome extension](/docs/install#chrome-extension).
+2. [Configure a provider](/docs/configure-provider) (optional for a file-by-file walk).
 3. Open any GitHub pull request and click **Start Guided Review**.
-4. Step through the plan — see [Your first review](/docs/first-review) for details.
-5. Optionally [draft line comments](/docs/leave-comments) and [submit a review](/docs/submit-review) (needs [GitHub connected](/docs/connect-github)).
+4. Step through the plan — see [Your first review](/docs/first-review).
+5. Optionally [draft line comments](/docs/leave-comments) and [submit](/docs/submit-review) (needs [GitHub connected](/docs/connect-github)).
+
+**Local changes**
+
+1. [Run the CLI](/docs/install#cli) with Node.js 22+: `npx @guided-review/cli`.
+2. Pick a diff scope (branch vs base, uncommitted, or a commit).
+3. Optionally hit **Structure with AI**, then walk the units.
+4. Full local workflow: [Review local changes](/docs/local-review).
 
 > **Open source.** Guided Review is Apache-2.0. Source and issues live on [GitHub](https://github.com/nshntarora/guidedreview). Stuck? Start with the [FAQ](/docs/faq) or [Troubleshooting](/docs/troubleshooting).

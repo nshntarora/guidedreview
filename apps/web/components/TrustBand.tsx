@@ -10,8 +10,9 @@ export function TrustBand() {
           Your code never touches our infrastructure
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-muted text-balance sm:text-xl">
-          The extension talks directly to your AI provider and GitHub. We never see your diffs, your
-          keys, or your code — because there&apos;s nothing on our end to see them with.
+          The extension and CLI talk directly to your AI provider (and GitHub for PRs). We never see
+          your diffs, your keys, or your code — because there&apos;s nothing on our end to see them
+          with.
         </p>
 
         <div className="mx-auto mt-10 flex items-center justify-center rounded-lg bg-background/60 p-6">

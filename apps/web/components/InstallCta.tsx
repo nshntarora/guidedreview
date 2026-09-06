@@ -1,5 +1,6 @@
 import iconSvg from "@guided-review/ui/assets/icon.svg";
-import { InstallButton, StarOnGitHubButton } from "./CtaButtons";
+import { CLI_INSTALL_COMMAND } from "@web/lib/links";
+import { InstallButton, TryCliButton } from "./CtaButtons";
 import { WindowFrame } from "./WindowFrame";
 
 const iconSrc = typeof iconSvg === "string" ? iconSvg : (iconSvg as { src: string }).src;
@@ -20,13 +21,13 @@ export function InstallCta() {
             Get Guided Review
           </h2>
           <p className="mt-3 text-lg text-muted">
-            Install the Chrome extension, add an LLM API key in options, and open any GitHub pull
-            request. Click{" "}
-            <strong className="font-semibold text-foreground">Start Guided Review</strong> to begin.
+            Install the Chrome extension for GitHub PRs, or run{" "}
+            <code className="font-mono text-sm text-foreground">{CLI_INSTALL_COMMAND}</code> for
+            local changes. Add an LLM API key, then walk the plan — AI structures it, you decide.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <InstallButton location="install_cta" />
-            <StarOnGitHubButton location="install_cta" />
+            <TryCliButton location="install_cta" />
           </div>
         </div>
       </WindowFrame>

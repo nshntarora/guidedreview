@@ -14,14 +14,17 @@ const UI_HOST = "https://us.posthog.com";
  */
 export const AnalyticsEvents = {
   INSTALL_EXTENSION_CLICK: "install_extension_click",
+  INSTALL_CLI_CLICK: "install_cli_click",
   GITHUB_STAR_CLICK: "github_star_click",
+  SURFACES_CTA_CLICK: "surfaces_cta_click",
 } as const;
 
 /**
  * Known CTA placement ids. Free-form strings are also allowed so new surfaces
  * do not require a type change.
  */
-export type CtaLocation = "header" | "hero" | "install_cta" | "keyboard" | (string & {});
+export type CtaLocation =
+  "header" | "hero" | "install_cta" | "surfaces" | "keyboard" | (string & {});
 
 /**
  * Base properties every CTA click should include. Callers may attach any extra

@@ -22,50 +22,52 @@ const faqs: Faq[] = [
     question: "So how does it actually work?",
     answer: [
       <>
-        Once the <FaqLink href={CHROME_WEB_STORE_URL}>Chrome extension</FaqLink> is installed, it
-        adds a Start Guided Review button to the <FaqLink href="https://github.com">GitHub</FaqLink>{" "}
-        PR page. Click it and the review opens as an overlay on top of GitHub.
+        Two surfaces, same engine — see <a href="/#surfaces">Chrome &amp; CLI</a> above. The{" "}
+        <FaqLink href={CHROME_WEB_STORE_URL}>Chrome extension</FaqLink> adds Start Guided Review on
+        a <FaqLink href="https://github.com">GitHub</FaqLink> PR page. The CLI (
+        <code className="font-mono text-sm">npx @guided-review/cli</code>) reviews a local branch,
+        commit, or working tree — see <a href="/docs/local-review">Review local changes</a>.
       </>,
-      "We read the diff from the PR, send it to your configured AI provider to get review units and summaries, map those back to the diff, and show you the result.",
+      "We read the real diff, optionally send it to your AI provider for review units and summaries, map those back to the hunks, and you walk the plan. AI structures; you decide.",
     ],
     plainAnswer:
-      "Once the Chrome extension is installed, it adds a Start Guided Review button to the GitHub PR page. Click it and the review opens as an overlay on top of GitHub. We read the diff from the PR, send it to your configured AI provider to get review units and summaries, map those back to the diff, and show you the result.",
+      "Two surfaces, same engine. The Chrome extension adds Start Guided Review on a GitHub PR page. The CLI (npx @guided-review/cli) reviews a local branch, commit, or working tree. We read the real diff, optionally send it to your AI provider for review units and summaries, map those back to the hunks, and you walk the plan.",
   },
   {
     question: "Which AI providers work?",
     answer: [
       <>
-        Claude (Anthropic), OpenAI, and Grok (xAI). You pick the provider and model in the
-        extension&apos;s <a href="/docs/configure-provider">options page</a> and paste your own API
-        key. We&apos;ll keep adding more providers —{" "}
-        <FaqLink href={GITHUB_REPO_URL}>request one on the GitHub repo</FaqLink>, or open a PR that
-        adds yours.
+        Claude (Anthropic), OpenAI, and Grok (xAI). Configure a key in the extension{" "}
+        <a href="/docs/configure-provider">options page</a> or the CLI Settings / env. The CLI can
+        also reuse Claude Code, Codex, or Grok already on the machine. We&apos;ll keep adding more
+        providers — <FaqLink href={GITHUB_REPO_URL}>request one on the GitHub repo</FaqLink>, or
+        open a PR that adds yours.
       </>,
     ],
     plainAnswer:
-      "Claude (Anthropic), OpenAI, and Grok (xAI). You pick the provider and model in the extension's options page and paste your own API key. We'll keep adding more providers — request one on the GitHub repo, or open a PR that adds yours.",
+      "Claude (Anthropic), OpenAI, and Grok (xAI). Configure a key in the extension options page or the CLI Settings / env. The CLI can also reuse Claude Code, Codex, or Grok already on the machine. We'll keep adding more providers — request one on the GitHub repo, or open a PR that adds yours.",
   },
   {
     question: "Will this run up my API bill?",
     answer: [
-      "Starting a review makes one call to your provider to cluster the diff into review units and summarize them. Cost scales with how big the diff is and which model you picked — a small PR on a cheap model is fractions of a cent, a huge PR on a frontier model is not.",
+      "Annotating makes one call per diff chunk to cluster changes into review units and summarize them. Cost scales with how big the diff is and which model you picked — a small change on a cheap model is fractions of a cent, a huge one on a frontier model is not. On the CLI that call only runs when you Structure with AI.",
       "You're paying your provider directly, so whatever it costs shows up on their dashboard, not ours. We never see it.",
     ],
     plainAnswer:
-      "Starting a review makes one call to your provider to cluster the diff into review units and summarize them. Cost scales with how big the diff is and which model you picked. You're paying your provider directly, so it shows up on their dashboard, not ours.",
+      "Annotating makes one call per diff chunk to cluster changes into review units and summarize them. Cost scales with how big the diff is and which model you picked. On the CLI that call only runs when you Structure with AI. You're paying your provider directly, so it shows up on their dashboard, not ours.",
   },
   {
     question: "So you don't track anything at all?",
     answer: [
       <>
         Almost. This marketing site uses an analytics service for page views and a few CTA clicks.
-        That&apos;s it. The extension doesn&apos;t track anything and doesn&apos;t talk to any
-        third-party servers other than <FaqLink href="https://github.com">GitHub</FaqLink> and your
-        AI provider.
+        That&apos;s it. The extension and CLI don&apos;t track anything and don&apos;t talk to any
+        third-party servers other than your AI provider (and{" "}
+        <FaqLink href="https://github.com">GitHub</FaqLink> for the extension).
       </>,
     ],
     plainAnswer:
-      "Almost. This marketing site uses an analytics service for page views and a few CTA clicks. That's it. The extension doesn't track anything and doesn't talk to any third-party servers other than GitHub and your AI provider.",
+      "Almost. This marketing site uses an analytics service for page views and a few CTA clicks. That's it. The extension and CLI don't track anything and don't talk to any third-party servers other than your AI provider (and GitHub for the extension).",
   },
   {
     question: "Is it free forever?",

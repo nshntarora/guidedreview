@@ -71,6 +71,44 @@ export function InstallButton({
   );
 }
 
+type TryCliButtonProps = CtaButtonProps & {
+  variant?: "primary" | "secondary";
+};
+
+export function TryCliButton({
+  size = "lg",
+  compact = false,
+  location,
+  eventProperties,
+  variant = "secondary",
+}: TryCliButtonProps) {
+  const analytics = useAnalytics();
+  const { href, label } = SITE_SHORTCUTS.cli;
+  const displayLabel = compact ? "CLI" : label;
+
+  return (
+    <a
+      href={href}
+      className={buttonClassName({ variant, size })}
+      aria-label={displayLabel}
+      onClick={() => {
+        analytics.capture(
+          AnalyticsEvents.INSTALL_CLI_CLICK,
+          buildCtaProperties(location, eventProperties, {
+            href,
+            size,
+            compact,
+            variant,
+            method: "click",
+          }),
+        );
+      }}
+    >
+      {displayLabel}
+    </a>
+  );
+}
+
 export function StarOnGitHubButton({
   size = "lg",
   compact = false,

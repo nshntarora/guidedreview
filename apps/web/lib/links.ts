@@ -4,3 +4,9 @@ export const CHROME_WEB_STORE_URL =
 
 /** Open source repository (star / source). */
 export const GITHUB_REPO_URL = "https://github.com/nshntarora/guidedreview";
+
+/** Published CLI package on npm. */
+export const NPM_PACKAGE_URL = "https://www.npmjs.com/package/@guided-review/cli";
+
+/** Install command for the CLI (copy / display). */
+export const CLI_INSTALL_COMMAND = "npx @guided-review/cli";
