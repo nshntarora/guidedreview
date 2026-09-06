@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { buttonClassName, cn } from "@guided-review/ui";
+import { Button, cn } from "@guided-review/ui";
 
 type CopyButtonProps = {
   text: string;
@@ -22,17 +22,15 @@ export function CopyButton({ text, className }: CopyButtonProps) {
   }
 
   return (
-    <button
+    <Button
       type="button"
+      variant="secondary"
+      size="sm"
       onClick={handleCopy}
       aria-label={copied ? "Copied" : "Copy code"}
-      className={cn(
-        buttonClassName({ variant: "secondary", size: "sm" }),
-        "px-2 py-1 text-xs",
-        className,
-      )}
+      className={cn("px-2 py-1 text-xs", className)}
     >
       {copied ? "Copied" : "Copy"}
-    </button>
+    </Button>
   );
 }

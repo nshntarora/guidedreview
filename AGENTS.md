@@ -45,6 +45,11 @@ Sessions: `chrome.storage.session`, key `owner/repo#number` (`buildSessionKey`).
 - **ui:** transpile via `transpilePackages`. Tokens `@guided-review/ui/theme.css`. Tailwind v4 that uses ui must `@source packages/ui/src/**/*.{ts,tsx}`.
 - **web:** docs MDX in `content/help/`, legal in `content/legal/`. Register every docs page in `config/docs.ts` (sidebar, routes, metadata, sitemap).
 
+## Building UI
+
+- There might already exist some components which we should use before we go ahead and use native elements or build our own. For example, always use the Button component instead of using the <button> element directly. If a relevant component exists but it needs significant rewrite to support the new change confirm the change with the user.
+- Think about accessibility and make sure all components we create are accessible.
+
 ## Tailwind
 
 - Tokens live in `@guided-review/ui/theme.css`. Use semantic utilities (`bg-background`, `text-muted`, `text-warning`) — not raw hex or one-off arbitrary colors.

@@ -8,5 +8,5 @@ export const GITHUB_REPO_URL = "https://github.com/nshntarora/guidedreview";
 /** Published CLI package on npm. */
 export const NPM_PACKAGE_URL = "https://www.npmjs.com/package/@guided-review/cli";
 
-/** Install command for the CLI (copy / display). */
+/** One-shot install + run (no global install). Prefer this in docs and marketing. */
 export const CLI_INSTALL_COMMAND = "npx @guided-review/cli";

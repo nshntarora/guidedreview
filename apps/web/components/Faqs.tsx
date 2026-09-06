@@ -22,16 +22,16 @@ const faqs: Faq[] = [
     question: "So how does it actually work?",
     answer: [
       <>
-        Two surfaces, same engine — see <a href="/#surfaces">Chrome &amp; CLI</a> above. The{" "}
-        <FaqLink href={CHROME_WEB_STORE_URL}>Chrome extension</FaqLink> adds Start Guided Review on
-        a <FaqLink href="https://github.com">GitHub</FaqLink> PR page. The CLI (
+        Two surfaces, same engine — see <a href="/#install">Install</a> above. The CLI (
         <code className="font-mono text-sm">npx @guided-review/cli</code>) reviews a local branch,
-        commit, or working tree — see <a href="/docs/local-review">Review local changes</a>.
+        commit, or working tree — see <a href="/docs/local-review">Review local changes</a>. The{" "}
+        <FaqLink href={CHROME_WEB_STORE_URL}>Chrome extension</FaqLink> adds Start Guided Review on
+        a <FaqLink href="https://github.com">GitHub</FaqLink> PR page.
       </>,
       "We read the real diff, optionally send it to your AI provider for review units and summaries, map those back to the hunks, and you walk the plan. AI structures; you decide.",
     ],
     plainAnswer:
-      "Two surfaces, same engine. The Chrome extension adds Start Guided Review on a GitHub PR page. The CLI (npx @guided-review/cli) reviews a local branch, commit, or working tree. We read the real diff, optionally send it to your AI provider for review units and summaries, map those back to the hunks, and you walk the plan.",
+      "Two surfaces, same engine. The CLI (npx @guided-review/cli) reviews a local branch, commit, or working tree. The Chrome extension adds Start Guided Review on a GitHub PR page. We read the real diff, optionally send it to your AI provider for review units and summaries, map those back to the hunks, and you walk the plan.",
   },
   {
     question: "Which AI providers work?",

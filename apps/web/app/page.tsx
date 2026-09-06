@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Hero } from "@web/components/Hero";
-import { Surfaces } from "@web/components/Surfaces";
+import { Install } from "@web/components/Install";
 import { Why } from "@web/components/Why";
 import { FeatureGrid } from "@web/components/FeatureGrid";
 import { TrustBand } from "@web/components/TrustBand";
@@ -73,7 +73,7 @@ export default function HomePage() {
     <>
       <JsonLd data={homeSchema} />
       <Hero />
-      <Surfaces />
+      <Install />
       <Why />
       <FeatureGrid />
       <TrustBand />

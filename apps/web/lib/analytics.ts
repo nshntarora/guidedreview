@@ -24,7 +24,7 @@ export const AnalyticsEvents = {
  * do not require a type change.
  */
 export type CtaLocation =
-  "header" | "hero" | "install_cta" | "surfaces" | "keyboard" | (string & {});
+  "header" | "hero" | "install" | "install_cta" | "keyboard" | (string & {});
 
 /**
  * Base properties every CTA click should include. Callers may attach any extra

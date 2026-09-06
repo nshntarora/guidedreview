@@ -96,10 +96,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 aria-label="Primary"
               >
                 <Link
-                  href="/#surfaces"
+                  href="/#install"
                   className="hidden text-foreground hover:text-primary md:inline"
                 >
-                  Chrome &amp; CLI
+                  Install
                 </Link>
                 <Link
                   href="/#features"

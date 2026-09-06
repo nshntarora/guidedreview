@@ -21,3 +21,25 @@ export function GitHubIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function TerminalIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base(props)}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="m7 9 3 3-3 3" />
+      <path d="M12 15h5" />
+    </svg>
+  );
+}
+
+export function ChromeIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="3.25" />
+      <path d="M12 8.75V3" />
+      <path d="m9.2 13.6-5.2 3" />
+      <path d="m14.8 13.6 5.2 3" />
+    </svg>
+  );
+}

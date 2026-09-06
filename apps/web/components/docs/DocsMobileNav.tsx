@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { buttonClassName, cn } from "@guided-review/ui";
+import { Button } from "@guided-review/ui";
 import { DocsSidebar } from "@web/components/docs/DocsSidebar";
 
 export function DocsMobileNav() {
@@ -24,15 +24,17 @@ export function DocsMobileNav() {
 
   return (
     <div className="sticky top-[3.6rem] z-30 flex items-center gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-sm lg:hidden">
-      <button
+      <Button
         type="button"
-        className={cn(buttonClassName({ variant: "ghost", size: "sm" }), "gap-2")}
+        variant="ghost"
+        size="sm"
+        className="gap-2"
         onClick={() => setOpen(true)}
         aria-expanded={open}
         aria-controls="docs-mobile-drawer"
       >
         Menu
-      </button>
+      </Button>
       <span className="text-sm text-muted">Documentation</span>
 
       {open ? (
@@ -56,13 +58,9 @@ export function DocsMobileNav() {
               <p id={titleId} className="m-0 text-sm font-semibold text-foreground">
                 Docs
               </p>
-              <button
-                type="button"
-                className={buttonClassName({ variant: "ghost", size: "sm" })}
-                onClick={() => setOpen(false)}
-              >
+              <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
                 Close
-              </button>
+              </Button>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
               <DocsSidebar onNavigate={() => setOpen(false)} />

@@ -13,30 +13,32 @@ export function Hero() {
     <section className="relative overflow-hidden px-4 pb-16 pt-12 text-center sm:px-6 sm:pb-28 sm:pt-24">
       <div className="mx-auto max-w-5xl">
         <h1 className="mx-auto max-w-3xl text-3xl leading-[1.35] font-bold tracking-tight text-balance sm:text-5xl sm:leading-[1.3] md:text-6xl font-brand">
-          A better way for humans to{" "}
           <span className="rounded-md bg-primary px-2 py-0.5 text-primary-foreground [box-decoration-break:clone] [-webkit-box-decoration-break:clone]">
-            review AI generated code
-          </span>
+            Review AI generated code
+          </span>{" "}
+          {/* <span className="ml-3 rounded-md bg-primary px-2 py-0.5 text-primary-foreground [box-decoration-break:clone] [-webkit-box-decoration-break:clone]"> */}
+          before you sign your name to it
+          {/* </span> */}
         </h1>
 
         <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted text-balance sm:text-xl">
-          Makes &ldquo;reading code&rdquo; wayyyy better: clusters diffs into review units, short
-          summaries, keyboard-first. AI structures the walkthrough — you still decide.
+          Converts your commits into a structured diff you can review for common "AI-code" issues
+          yourself before you ask your team for a review
         </p>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
           <a
-            href="#surfaces"
+            href="#install"
             className={buttonClassName({ size: "lg" })}
             onClick={() => {
               analytics.capture(AnalyticsEvents.SURFACES_CTA_CLICK, {
                 location: "hero",
-                href: "#surfaces",
+                href: "#install",
                 method: "click",
               });
             }}
           >
-            See Chrome &amp; CLI
+            Install
           </a>
           <StarOnGitHubButton location="hero" />
         </div>
