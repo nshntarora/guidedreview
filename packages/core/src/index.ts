@@ -25,7 +25,7 @@ export {
   NO_API_KEY_ERROR_CODE,
 } from "./types";
 
-export { parseDiff, parseUnifiedDiff } from "./diff/parse";
+export { parseDiff } from "./diff/parse";
 export { summarizeDiff } from "./diff/summary";
 export type { DiffSummary, FileDiffSummary } from "./diff/summary";
 export { isImagePath, imageMimeType } from "./diff/image";

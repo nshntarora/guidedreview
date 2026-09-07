@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { SelectHandle } from "@guided-review/ui";
-import { formatAgentPrompt } from "@guided-review/core";
+import { formatAgentPrompt, resolveUnitFiles } from "@guided-review/core";
 import type { ReviewErrorInfo, ReviewPlan } from "@guided-review/ui/review/types";
 import {
   buildDisplayUnits,
@@ -10,7 +10,7 @@ import {
   type BuildPhase,
   type ReviewStatus,
 } from "./store";
-import { buildSelectableLines, resolveUnitFiles } from "./buildSelectableLines";
+import { buildSelectableLines } from "./buildSelectableLines";
 import { restoreFocusAfterOverlay } from "./focusTrap";
 import { useOverlayKeyboard, type ViewChordPending } from "./useOverlayKeyboard";
 import { useSubmitReviewFlow } from "./useSubmitReviewFlow";

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { parseUnifiedDiff } from "./parse";
+import { parseDiff } from "./parse";
 
-describe("parseUnifiedDiff", () => {
+describe("parseDiff", () => {
   it("parses a simple modified file with one hunk", () => {
     const raw = [
       "diff --git a/src/foo.ts b/src/foo.ts",
@@ -16,7 +16,7 @@ describe("parseUnifiedDiff", () => {
       " export { a, b };",
     ].join("\n");
 
-    const diff = parseUnifiedDiff(raw);
+    const diff = parseDiff(raw);
 
     expect(diff.files).toHaveLength(1);
     const file = diff.files[0];
@@ -53,7 +53,7 @@ describe("parseUnifiedDiff", () => {
       " d",
     ].join("\n");
 
-    const diff = parseUnifiedDiff(raw);
+    const diff = parseDiff(raw);
     const hunks = diff.files[0].hunks;
     expect(hunks.map((h) => h.id)).toEqual(["src/foo.ts#0", "src/foo.ts#1"]);
   });
@@ -70,7 +70,7 @@ describe("parseUnifiedDiff", () => {
       "+export default x;",
     ].join("\n");
 
-    const diff = parseUnifiedDiff(raw);
+    const diff = parseDiff(raw);
     expect(diff.files[0].status).toBe("added");
     expect(diff.files[0].path).toBe("src/new.ts");
   });
@@ -87,7 +87,7 @@ describe("parseUnifiedDiff", () => {
       "-export default x;",
     ].join("\n");
 
-    const diff = parseUnifiedDiff(raw);
+    const diff = parseDiff(raw);
     const file = diff.files[0];
     expect(file.status).toBe("removed");
     expect(file.path).toBe("src/old.ts");
@@ -102,7 +102,7 @@ describe("parseUnifiedDiff", () => {
       "rename to src/new-name.ts",
     ].join("\n");
 
-    const diff = parseUnifiedDiff(raw);
+    const diff = parseDiff(raw);
     const file = diff.files[0];
     expect(file.status).toBe("renamed");
     expect(file.path).toBe("src/new-name.ts");
@@ -117,7 +117,7 @@ describe("parseUnifiedDiff", () => {
       "Binary files a/logo.png and b/logo.png differ",
     ].join("\n");
 
-    const diff = parseUnifiedDiff(raw);
+    const diff = parseDiff(raw);
     expect(diff.files[0].isBinaryOrElided).toBe(true);
     expect(diff.files[0].hunks).toHaveLength(0);
   });
@@ -134,7 +134,7 @@ describe("parseUnifiedDiff", () => {
       "\\ No newline at end of file",
     ].join("\n");
 
-    const diff = parseUnifiedDiff(raw);
+    const diff = parseDiff(raw);
     expect(diff.files[0].hunks[0].lines).toEqual([
       { type: "del", content: "a", oldLine: 1 },
       { type: "add", content: "b", newLine: 1 },
@@ -157,12 +157,12 @@ describe("parseUnifiedDiff", () => {
       "+4",
     ].join("\n");
 
-    const diff = parseUnifiedDiff(raw);
+    const diff = parseDiff(raw);
     expect(diff.files.map((f) => f.path)).toEqual(["a.ts", "b.ts"]);
   });
 
   it("returns no files for an empty diff", () => {
-    expect(parseUnifiedDiff("")).toEqual({ files: [] });
+    expect(parseDiff("")).toEqual({ files: [] });
   });
 
   describe("ambiguous and quoted paths", () => {
@@ -176,7 +176,7 @@ describe("parseUnifiedDiff", () => {
         "+2",
       ].join("\n");
 
-      const diff = parseUnifiedDiff(raw);
+      const diff = parseDiff(raw);
       expect(diff.files[0].path).toBe("src/my file.ts");
       expect(diff.files[0].hunks[0].id).toBe("src/my file.ts#0");
     });
@@ -193,7 +193,7 @@ describe("parseUnifiedDiff", () => {
         "+2",
       ].join("\n");
 
-      const diff = parseUnifiedDiff(raw);
+      const diff = parseDiff(raw);
       expect(diff.files[0].path).toBe("x b/y.ts");
       expect(diff.files[0].hunks[0].id).toBe("x b/y.ts#0");
     });
@@ -205,7 +205,7 @@ describe("parseUnifiedDiff", () => {
         "Binary files a/x b/y.png and b/x b/y.png differ",
       ].join("\n");
 
-      const diff = parseUnifiedDiff(raw);
+      const diff = parseDiff(raw);
       expect(diff.files[0].path).toBe("x b/y.png");
       expect(diff.files[0].isBinaryOrElided).toBe(true);
     });
@@ -220,7 +220,7 @@ describe("parseUnifiedDiff", () => {
         "+2",
       ].join("\n");
 
-      const diff = parseUnifiedDiff(raw);
+      const diff = parseDiff(raw);
       expect(diff.files[0].path).toBe("src/weiß.ts");
     });
 
@@ -232,7 +232,7 @@ describe("parseUnifiedDiff", () => {
         "rename to new name.ts",
       ].join("\n");
 
-      const diff = parseUnifiedDiff(raw);
+      const diff = parseDiff(raw);
       expect(diff.files[0].status).toBe("renamed");
       expect(diff.files[0].path).toBe("new name.ts");
       expect(diff.files[0].previousPath).toBe("old name.ts");
@@ -248,7 +248,7 @@ describe("parseUnifiedDiff", () => {
         "-1",
       ].join("\n");
 
-      const diff = parseUnifiedDiff(raw);
+      const diff = parseDiff(raw);
       expect(diff.files[0].path).toBe("src/gone.ts");
       expect(diff.files[0].status).toBe("removed");
     });
@@ -263,7 +263,7 @@ describe("parseUnifiedDiff", () => {
         "+1",
       ].join("\n");
 
-      const diff = parseUnifiedDiff(raw);
+      const diff = parseDiff(raw);
       expect(diff.files[0].path).toBe("src/new.ts");
       expect(diff.files[0].status).toBe("added");
     });

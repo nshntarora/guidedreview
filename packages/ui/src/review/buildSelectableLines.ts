@@ -4,9 +4,6 @@ import { buildSplitRows } from "./buildSplitRows";
 import type { DiffViewMode } from "./diffView";
 import { lineIdFor, sideForLine, type DiffSide, type SelectableLine } from "./commentTypes";
 
-export { resolveUnitFiles } from "@guided-review/core";
-export type { ResolvedUnitFile } from "@guided-review/core";
-
 function fromDiffLine(
   filePath: string,
   hunkId: string,

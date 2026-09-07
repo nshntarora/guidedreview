@@ -1,4 +1,4 @@
-import { parseUnifiedDiff, type ReviewContext, type ReviewPlan } from "@guided-review/core";
+import { parseDiff, type ReviewContext, type ReviewPlan } from "@guided-review/core";
 
 // Frozen source for a fictional package. The review plan never supplies rendered code.
 const changes = [
@@ -276,7 +276,7 @@ export const sampleDiffText =
     })
     .join("\n") + "\n";
 
-export const sampleDiff = parseUnifiedDiff(sampleDiffText);
+export const sampleDiff = parseDiff(sampleDiffText);
 
 export const sampleContext: ReviewContext = {
   source: "github",

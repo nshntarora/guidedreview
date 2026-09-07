@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@guided-review/ui";
 
-import { isImagePath } from "@guided-review/core";
+import { isImagePath, type ResolvedUnitFile } from "@guided-review/core";
 import { languageForPath } from "@guided-review/ui/review/highlight";
 import {
   displayLineNumber,
@@ -13,7 +13,6 @@ import {
 import type { SearchScrollTarget } from "@guided-review/ui/review/diffSearch";
 import { withHunkGaps } from "@guided-review/ui/review/hunkGaps";
 import { hydrateDiffViewMode, useReviewStore } from "@guided-review/ui/review/store";
-import type { ResolvedUnitFile } from "@guided-review/ui/review/buildSelectableLines";
 import type { DiffViewMode } from "@guided-review/ui/review/diffView";
 import type { ComposerRange } from "@guided-review/ui/review/components/diff/hunkShared";
 import {

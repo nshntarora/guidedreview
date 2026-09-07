@@ -122,12 +122,7 @@ function findClosingQuote(value: string): number {
  * recover file identity + hunks + line-level add/del/context — not arbitrary
  * diff algorithms.
  */
-/** Alias used by hosts. Same as `parseUnifiedDiff`. */
 export function parseDiff(raw: string): ParsedDiff {
-  return parseUnifiedDiff(raw);
-}
-
-export function parseUnifiedDiff(raw: string): ParsedDiff {
   const lines = raw.split("\n");
   const files: DiffFile[] = [];
 

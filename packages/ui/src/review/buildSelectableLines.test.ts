@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
+import type { ResolvedUnitFile } from "@guided-review/core";
 import type { DiffFile, DiffHunk } from "@guided-review/ui/review/types";
 import { buildSelectableLines } from "./buildSelectableLines";
-import type { ResolvedUnitFile } from "./buildSelectableLines";
 
 function hunkFixture(overrides: Partial<DiffHunk> = {}): DiffHunk {
   return {

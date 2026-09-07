@@ -1,4 +1,4 @@
-import { parseUnifiedDiff } from "@guided-review/core";
+import { parseDiff } from "@guided-review/core";
 import type { ParsedDiff } from "@extension/lib/types";
 
 export interface PRIdentity {
@@ -46,5 +46,5 @@ export async function fetchPRDiff(pr: PRIdentity): Promise<ParsedDiff> {
   }
 
   const raw = await response.text();
-  return parseUnifiedDiff(raw);
+  return parseDiff(raw);
 }
