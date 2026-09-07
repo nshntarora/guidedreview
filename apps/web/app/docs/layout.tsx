@@ -11,7 +11,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
       <div className="mx-auto w-full max-w-5xl flex-1 px-4 sm:px-6">
         <div className="flex gap-8">
           <aside className="hidden w-56 shrink-0 lg:block">
-            <div className="sticky top-20 h-[calc(100vh-5rem)] overflow-y-auto py-8 pr-4">
+            <div className="py-8 pr-4">
               <DocsSidebar />
             </div>
           </aside>

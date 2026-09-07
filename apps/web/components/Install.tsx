@@ -123,7 +123,7 @@ export function Install() {
           Install
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-muted text-balance sm:text-xl">
-          Same review engine, two hosts — pick the one that matches the change you&apos;re
+          Same review engine, two surfaces — pick the one that matches the change you&apos;re
           reviewing.
         </p>
 

@@ -22,7 +22,7 @@ test.describe("docs registry", () => {
   });
 
   test("docs sidebar and pager navigate between pages", async ({ page }) => {
-    // Desktop Chrome viewport shows the sticky sidebar (lg:block).
+    // Desktop Chrome viewport shows the sidebar (lg:block).
     await page.goto("/docs", { waitUntil: "domcontentloaded" });
 
     const sidebar = page.getByRole("navigation", { name: "Documentation" });

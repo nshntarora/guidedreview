@@ -58,7 +58,7 @@ export function ProductPreview() {
           <div className="absolute inset-x-0 bottom-0 grid items-center gap-5 px-5 py-5 text-left sm:px-8 sm:py-7 md:grid-cols-[1fr_auto] md:gap-8">
             <div>
               <p className="m-0 text-xl font-semibold tracking-tight text-foreground font-brand sm:text-2xl">
-                Walk through a review before you install.
+                Try it out without installing anything
               </p>
               <p
                 className="mt-2 mb-0 text-base leading-relaxed text-muted sm:text-lg"
@@ -66,7 +66,7 @@ export function ProductPreview() {
               >
                 {error
                   ? "The preview failed to load. Try opening it again."
-                  : "Start in the local CLI, then switch to the Chrome extension from inside the preview."}
+                  : "Play around with Guided Review before you decide to install"}
               </p>
             </div>
             <Button
@@ -79,7 +79,7 @@ export function ProductPreview() {
               size="lg"
               className="pointer-events-auto w-full whitespace-nowrap md:w-auto"
             >
-              {loading ? "Opening Preview…" : "Try Live Preview"}
+              {loading ? "Opening Preview…" : "Open Live Preview"}
               {!loading && <ShortcutChord keyLabel={SITE_SHORTCUTS.preview.key} />}
             </Button>
           </div>
