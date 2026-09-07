@@ -7,7 +7,7 @@ import { CHROME_WEB_STORE_URL, GITHUB_REPO_URL, INSTALL_SECTION_HREF } from "./l
 export const SITE_SHORTCUTS = {
   preview: {
     key: "p",
-    label: "Try Live Preview",
+    label: "Open Live Preview",
   },
   install: {
     key: "i",

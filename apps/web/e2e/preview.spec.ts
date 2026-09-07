@@ -9,7 +9,7 @@ test("sample review switches between the CLI and extension flows", async ({ page
     }
   });
   await page.goto("/");
-  const trigger = page.getByRole("button", { name: "Try Live Preview" });
+  const trigger = page.getByRole("button", { name: "Open Live Preview" });
   await trigger.click();
   const overlay = page.getByTestId("guided-review-overlay");
   await expect(overlay).toBeFocused();
