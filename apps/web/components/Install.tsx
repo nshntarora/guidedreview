@@ -117,7 +117,11 @@ export function Install() {
   }, [selectTab]);
 
   return (
-    <section id="install" className="relative px-4 py-16 sm:px-6 sm:py-28">
+    <section
+      id="install"
+      className="relative px-4 py-16 sm:px-6 sm:py-28"
+      data-testid="install-section"
+    >
       <div className="mx-auto max-w-5xl">
         <h2 className="m-0 text-center text-3xl font-bold tracking-tight sm:text-4xl font-brand">
           Install
@@ -132,6 +136,7 @@ export function Install() {
             <div
               role="tablist"
               aria-label="Install options"
+              data-testid="install-tabs"
               className="flex gap-1 border-b border-border px-4 pt-1 sm:px-6 md:px-8"
             >
               {tabs.map((tab) => {
@@ -154,6 +159,7 @@ export function Install() {
                       event.preventDefault();
                       selectTab(tab.id);
                     }}
+                    data-testid={`install-tab-${tab.id}`}
                     className={cn(
                       "-mb-px inline-flex items-center gap-2 border-b-2 px-3 py-3 font-mono text-sm no-underline transition-colors sm:px-4 sm:text-base",
                       selected
@@ -178,6 +184,7 @@ export function Install() {
                   id="install-panel-cli"
                   aria-labelledby={TAB_HASH.cli}
                   className="flex flex-col gap-8 md:flex-row md:items-center md:gap-10"
+                  data-testid="install-panel-cli"
                 >
                   <div className="min-w-0 md:flex-1">
                     <h3 className="m-0 text-2xl font-bold tracking-tight font-brand sm:text-3xl">
@@ -211,6 +218,7 @@ export function Install() {
                   id="install-panel-chrome"
                   aria-labelledby={TAB_HASH.chrome}
                   className="flex flex-col gap-8 md:flex-row md:items-center md:gap-10"
+                  data-testid="install-panel-chrome"
                 >
                   <div className="min-w-0 md:flex-1">
                     <h3 className="m-0 text-2xl font-bold tracking-tight font-brand sm:text-3xl">

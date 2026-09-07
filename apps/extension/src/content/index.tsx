@@ -211,6 +211,8 @@ function tryInjectButton(): void {
   const label = document.createElement("span");
   label.textContent = "Start Guided Review";
 
+  button.dataset.testid = "guided-review-start";
+
   button.append(mark, label);
   button.addEventListener("click", onStartReview);
 

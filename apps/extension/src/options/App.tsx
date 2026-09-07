@@ -67,6 +67,7 @@ export function OptionsShell({ route, children }: { route: OptionsRoute; childre
           <nav
             className="flex shrink-0 items-center gap-2 text-base sm:gap-3 md:gap-5"
             aria-label="Options"
+            data-testid="options-nav"
           >
             {ROUTES.map((item) => {
               const active = route === item.id;
@@ -76,6 +77,7 @@ export function OptionsShell({ route, children }: { route: OptionsRoute; childre
                   href={`#${item.id}`}
                   aria-current={active ? "page" : undefined}
                   className={cn(NAV_LINK_CLASS, active && "text-primary")}
+                  data-testid={`options-nav-${item.id}`}
                 >
                   {item.label}
                 </a>

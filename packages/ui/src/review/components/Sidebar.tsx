@@ -34,6 +34,7 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
     <nav
       className="min-h-0 flex-[1_1_50%] overflow-y-auto border-t border-border-strong"
       aria-label="Review Units"
+      data-testid="review-units"
     >
       <div className="px-5 pt-4 pb-6">
         <div className="px-2 pb-1 pt-2.5 text-xs tracking-[0.04em] text-muted uppercase">
@@ -61,6 +62,7 @@ export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }:
                 isActive && "bg-primary-muted text-primary!",
               )}
               onClick={() => onSelectUnit(displayIndex)}
+              data-testid={`review-unit-${displayIndex}`}
             >
               <span className={cn("mr-1.5 shrink-0", isActive ? "text-primary" : "text-muted")}>
                 {displayIndex + 1}.

@@ -71,7 +71,7 @@ function ContextError({ error, onRetry }: { error: ReviewErrorInfo; onRetry?: ()
 
       {onRetry && (
         <div className="mt-3">
-          <Button size="sm" onClick={onRetry}>
+          <Button size="sm" onClick={onRetry} data-testid="context-panel-retry">
             Retry
           </Button>
         </div>

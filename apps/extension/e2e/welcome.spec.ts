@@ -15,7 +15,7 @@ test.describe("Welcome page", () => {
     await expect(optionsPage).toHaveURL(
       new RegExp(`chrome-extension://${extensionId}/src/options/`),
     );
-    await expect(optionsPage.getByRole("heading", { name: "Settings" })).toBeVisible();
-    await expect(optionsPage.getByRole("combobox", { name: "Provider" })).toBeVisible();
+    await expect(optionsPage.getByTestId("options-nav")).toBeVisible();
+    await expect(optionsPage.getByTestId("settings-provider")).toBeVisible();
   });
 });

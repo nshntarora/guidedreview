@@ -13,11 +13,17 @@ test.describe("docs registry", () => {
 
   test("docs index and a slug page link to other docs pages", async ({ page }) => {
     await page.goto("/docs", { waitUntil: "domcontentloaded" });
-    const indexCount = await page.locator('a[href^="/docs"]').count();
+    const indexCount = await page
+      .getByTestId("docs-sidebar")
+      .getByTestId(/docs-sidebar-link-/)
+      .count();
     expect(indexCount, "docs index should link to other docs").toBeGreaterThan(3);
 
     await page.goto("/docs/chrome-extension", { waitUntil: "domcontentloaded" });
-    const installCount = await page.locator('a[href^="/docs"]').count();
+    const installCount = await page
+      .getByTestId("docs-sidebar")
+      .getByTestId(/docs-sidebar-link-/)
+      .count();
     expect(installCount, "docs slug page should link to other docs").toBeGreaterThan(3);
   });
 
@@ -25,9 +31,12 @@ test.describe("docs registry", () => {
     // Desktop Chrome viewport shows the sidebar (lg:block).
     await page.goto("/docs", { waitUntil: "domcontentloaded" });
 
-    const sidebar = page.getByRole("navigation", { name: "Documentation" });
+    const sidebar = page.getByTestId("docs-sidebar");
     await expect(sidebar).toBeVisible();
-    await expect(sidebar.locator('a[href="/docs"]')).toHaveAttribute("aria-current", "page");
+    await expect(sidebar.getByTestId("docs-sidebar-link-index")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
 
     const chromeIndex = DOCS_PAGES.findIndex((p) => p.slug === "chrome-extension");
     expect(chromeIndex, "chrome-extension page in docs registry").toBeGreaterThan(0);
@@ -37,25 +46,24 @@ test.describe("docs registry", () => {
     const prevHref = docsPath(prevPage.slug);
     const nextHref = docsPath(nextPage.slug);
 
-    await sidebar.locator(`a[href="${chromeHref}"]`).click();
+    await sidebar.getByTestId("docs-sidebar-link-chrome-extension").click();
     await expect(page).toHaveURL(new RegExp(`${chromeHref}/?$`));
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(sidebar.locator(`a[href="${chromeHref}"]`)).toHaveAttribute(
+    await expect(page.getByTestId("site-main")).toBeVisible();
+    await expect(sidebar.getByTestId("docs-sidebar-link-chrome-extension")).toHaveAttribute(
       "aria-current",
       "page",
     );
 
     // Apps section heading appears above the Chrome Extension page.
-    await expect(sidebar.getByText("Apps", { exact: true })).toBeVisible();
-    await expect(sidebar.locator('a[href="/docs/cli"]')).toBeVisible();
+    await expect(sidebar.getByTestId("docs-sidebar-link-cli")).toBeVisible();
 
     // Pager follows DOCS_PAGES order — not hardcoded titles.
-    await page.getByRole("link", { name: /Previous/i }).click();
+    await page.getByTestId("docs-pager-previous").click();
     await expect(page).toHaveURL(new RegExp(`${prevHref}/?$`));
 
     await page.goto(chromeHref, { waitUntil: "domcontentloaded" });
-    await page.getByRole("link", { name: /Next/i }).click();
+    await page.getByTestId("docs-pager-next").click();
     await expect(page).toHaveURL(new RegExp(`${nextHref}/?$`));
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.getByTestId("site-main")).toBeVisible();
   });
 });

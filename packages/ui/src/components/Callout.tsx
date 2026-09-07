@@ -4,10 +4,12 @@ export function Callout({
   kind,
   message,
   className,
+  "data-testid": testId,
 }: {
   kind: "ok" | "error";
   message: string;
   className?: string;
+  "data-testid"?: string;
 }) {
   const text = kind === "error" ? `Error: ${message}` : message;
 
@@ -15,6 +17,7 @@ export function Callout({
     <p
       role="status"
       aria-live="polite"
+      data-testid={testId}
       className={cn(
         "m-0 rounded-md border px-3 py-2 text-base",
         kind === "ok" && "border-border bg-background/60 text-success",

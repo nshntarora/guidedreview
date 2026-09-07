@@ -121,6 +121,7 @@ function SettingsShell({
             <nav
               className="flex items-center gap-2 text-base sm:gap-3 md:gap-5"
               aria-label="Settings"
+              data-testid="settings-nav"
             >
               {ROUTES.map((item) => {
                 const active = route === item.id;
@@ -130,6 +131,7 @@ function SettingsShell({
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(NAV_LINK_CLASS, active && "text-primary")}
+                    data-testid={`settings-nav-${item.id}`}
                   >
                     {item.label}
                   </a>

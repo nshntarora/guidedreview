@@ -103,31 +103,40 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <nav
                 className="flex shrink-0 items-center gap-2 text-base sm:gap-3 md:gap-5"
                 aria-label="Primary"
+                data-testid="primary-nav"
               >
                 <Link
                   href={SITE_SHORTCUTS.installCli.href}
                   className="hidden text-foreground hover:text-primary md:inline"
+                  data-testid="primary-nav-cli"
                 >
                   {SITE_SHORTCUTS.installCli.label}
                 </Link>
                 <Link
                   href={SITE_SHORTCUTS.installChrome.href}
                   className="hidden text-foreground hover:text-primary md:inline"
+                  data-testid="primary-nav-chrome"
                 >
                   {SITE_SHORTCUTS.installChrome.label}
                 </Link>
                 <Link
                   href="/#features"
                   className="hidden text-foreground hover:text-primary md:inline"
+                  data-testid="primary-nav-features"
                 >
                   Features
                 </Link>
-                <Link href="/docs" className="hidden text-foreground hover:text-primary md:inline">
+                <Link
+                  href="/docs"
+                  className="hidden text-foreground hover:text-primary md:inline"
+                  data-testid="primary-nav-docs"
+                >
                   Docs
                 </Link>
                 <Link
                   href="/docs/faq"
                   className="hidden text-foreground hover:text-primary md:inline"
+                  data-testid="primary-nav-faq"
                 >
                   FAQ
                 </Link>
@@ -137,7 +146,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
           </header>
           <SiteShortcuts />
-          <main id="main">{children}</main>
+          <main id="main" data-testid="site-main">
+            {children}
+          </main>
           <Footer />
         </AnalyticsProvider>
       </body>

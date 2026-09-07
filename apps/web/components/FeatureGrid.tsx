@@ -60,7 +60,11 @@ export function FeatureGrid() {
   const last = rest.pop();
 
   return (
-    <section id="features" className="relative px-4 py-16 sm:px-6 sm:py-28">
+    <section
+      id="features"
+      className="relative px-4 py-16 sm:px-6 sm:py-28"
+      data-testid="features-section"
+    >
       <div className="mx-auto max-w-5xl">
         <h2 className="m-0 text-center text-3xl font-bold tracking-tight sm:text-4xl font-brand">
           Features

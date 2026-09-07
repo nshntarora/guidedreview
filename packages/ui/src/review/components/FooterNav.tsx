@@ -25,6 +25,7 @@ export function FooterNav({ currentIndex, total, onPrev, onNext }: FooterNavProp
         onClick={onPrev}
         disabled={currentIndex === 0 || total === 0}
         aria-label="Previous review unit"
+        data-testid="review-previous-unit"
       >
         Previous
         <Kbd>←</Kbd>
@@ -58,6 +59,7 @@ export function FooterNav({ currentIndex, total, onPrev, onNext }: FooterNavProp
         onClick={onNext}
         disabled={total === 0 || currentIndex >= total - 1}
         aria-label="Next review unit"
+        data-testid="review-next-unit"
       >
         Next
         <Kbd>→</Kbd>

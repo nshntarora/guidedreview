@@ -162,6 +162,7 @@ function LocalTitleCluster({
           disabled={localDiff.scopeBusy}
           onChange={localDiff.onSelectScope}
           trailing={<Kbd>d</Kbd>}
+          data-testid="review-scope-select"
         />
       )}
       {stats && <FileChangeStats {...stats} />}
@@ -264,6 +265,7 @@ export function ProgressHeader({
               variant={host.preview.mode === "cli" ? "primary" : "ghost"}
               className="min-w-14 px-2 py-0.5 text-xs"
               aria-pressed={host.preview.mode === "cli"}
+              data-testid="preview-mode-cli"
               onClick={() => host.preview?.onModeChange("cli")}
             >
               CLI
@@ -273,6 +275,7 @@ export function ProgressHeader({
               variant={host.preview.mode === "chrome" ? "primary" : "ghost"}
               className="min-w-16 px-2 py-0.5 text-xs"
               aria-pressed={host.preview.mode === "chrome"}
+              data-testid="preview-mode-chrome"
               onClick={() => host.preview?.onModeChange("chrome")}
             >
               Chrome
@@ -352,6 +355,7 @@ export function ProgressHeader({
               size="sm"
               className="gap-2 bg-surface font-medium hover:bg-surface-muted"
               onClick={onExit}
+              data-testid="review-exit"
             >
               Exit
               <span className="hidden sm:inline-flex">
@@ -376,6 +380,7 @@ export function ProgressHeader({
             size="sm"
             className="shrink-0 bg-surface font-medium hover:bg-background"
             onClick={() => localDiff.onRefresh?.()}
+            data-testid="stale-diff-refresh"
           >
             Refresh
           </Button>

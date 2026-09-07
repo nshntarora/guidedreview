@@ -40,7 +40,11 @@ interface ConnectGitHubBodyProps {
 function ConnectGitHubBody({ configured, flow, copied, onCopyCode }: ConnectGitHubBodyProps) {
   if (!configured) {
     return (
-      <p className="m-0 w-full text-center text-base leading-relaxed text-muted" role="status">
+      <p
+        className="m-0 w-full text-center text-base leading-relaxed text-muted"
+        role="status"
+        data-testid="connect-github-unconfigured"
+      >
         GitHub connection isn’t configured in this build. Set{" "}
         <code className="rounded bg-surface px-1 py-0.5 text-sm text-foreground">
           {GITHUB_CLIENT_ID_ENV_VAR}

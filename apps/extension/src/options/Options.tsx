@@ -185,6 +185,7 @@ export function Options() {
                 options={providerOptions}
                 onChange={onProviderChange}
                 disabled={busy}
+                data-testid="settings-provider"
               />
             </div>
 
@@ -199,6 +200,7 @@ export function Options() {
                 options={modelOptions}
                 onChange={onModelChange}
                 disabled={busy}
+                data-testid="settings-model"
               />
             </div>
 
@@ -213,6 +215,7 @@ export function Options() {
                 onChange={(e) => onApiKeyChange(e.target.value)}
                 disabled={busy}
                 aria-describedby="apiKey-hint"
+                data-testid="settings-api-key"
               />
               <p id="apiKey-hint" className="mt-1.5 m-0 text-sm text-muted">
                 Stored locally on this device via{" "}
@@ -224,7 +227,7 @@ export function Options() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5 pt-1">
-              <Button onClick={onSave} disabled={busy}>
+              <Button onClick={onSave} disabled={busy} data-testid="settings-save">
                 {saveStatus.kind === "working" && <Spinner size={14} label="Saving" />}
                 {saveStatus.kind === "working" ? "Saving…" : "Save"}
               </Button>
@@ -232,13 +235,20 @@ export function Options() {
                 variant="secondary"
                 onClick={onTestConnection}
                 disabled={!settings.apiKey || busy}
+                data-testid="settings-test-connection"
               >
                 {connection.kind === "working" && <Spinner size={14} label="Testing connection" />}
                 {connection.kind === "working" ? "Testing…" : "Test Connection"}
               </Button>
             </div>
 
-            {statusMessage && <Callout kind={statusMessage.kind} message={statusMessage.message} />}
+            {statusMessage && (
+              <Callout
+                kind={statusMessage.kind}
+                message={statusMessage.message}
+                data-testid="settings-status"
+              />
+            )}
           </div>
         </Card>
 
@@ -266,6 +276,7 @@ export function Options() {
               onChange={(enabled) => void onAutoOpenChange(enabled)}
               aria-labelledby="autoOpenOnFilesTab-label"
               aria-describedby="autoOpenOnFilesTab-hint"
+              data-testid="settings-auto-open"
             />
           </div>
         </Card>

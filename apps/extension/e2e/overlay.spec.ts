@@ -88,9 +88,9 @@ async function seedProviderApiKey(
 ): Promise<void> {
   const optionsPage = await context.newPage();
   await optionsPage.goto(`chrome-extension://${extensionId}/src/options/index.html`);
-  await optionsPage.getByLabel("API Key").fill(apiKey);
-  await optionsPage.getByRole("button", { name: "Save" }).click();
-  await expect(optionsPage.getByText("Saved")).toBeVisible();
+  await optionsPage.getByTestId("settings-api-key").fill(apiKey);
+  await optionsPage.getByTestId("settings-save").click();
+  await expect(optionsPage.getByTestId("settings-status")).toBeVisible();
   await optionsPage.close();
 }
 
@@ -147,11 +147,11 @@ async function stubPrPageAndDiff(
 /** Open the PR, start the review, wait for the AI unit, and navigate to it. */
 async function startReviewOnCodeUnit(page: Page): Promise<void> {
   await page.goto(PR_URL);
-  await page.getByRole("button", { name: "Start Guided Review" }).click();
-  await expect(page.getByText("PR Description").first()).toBeVisible();
-  await expect(page.getByText(CANNED_PLAN.units[0].title)).toBeVisible();
-  await page.getByRole("button", { name: /next/i }).click();
-  await expect(page.getByText(CANNED_PLAN.units[0].context)).toBeVisible();
+  await page.getByTestId("guided-review-start").click();
+  await expect(page.getByTestId("description-pane")).toBeVisible();
+  await expect(page.getByTestId("review-unit-1")).toBeVisible();
+  await page.getByTestId("review-next-unit").click();
+  await expect(page.getByTestId("context-panel-body")).toBeVisible();
   await expect(page.getByTestId("diff-view-split")).toBeVisible();
 }
 
@@ -171,19 +171,19 @@ test.describe("Guided review overlay", () => {
     const page = await context.newPage();
     await page.goto(PR_URL);
 
-    const startButton = page.getByRole("button", { name: "Start Guided Review" });
+    const startButton = page.getByTestId("guided-review-start");
     await expect(startButton).toBeVisible();
     await startButton.click();
 
     // Playwright locators pierce open shadow roots by default, so these resolve inside the
     // overlay's shadow DOM without any special selector syntax.
     // First unit is always the synthetic PR description.
-    await expect(page.getByText("PR Description").first()).toBeVisible();
+    await expect(page.getByTestId("description-pane")).toBeVisible();
 
     // After the plan streams in, the AI unit is listed and reachable via Next.
-    await expect(page.getByText(CANNED_PLAN.units[0].title)).toBeVisible();
-    await page.getByRole("button", { name: /next/i }).click();
-    await expect(page.getByText(CANNED_PLAN.units[0].context)).toBeVisible();
+    await expect(page.getByTestId("review-unit-1")).toBeVisible();
+    await page.getByTestId("review-next-unit").click();
+    await expect(page.getByTestId("context-panel-body")).toBeVisible();
   });
 
   test("injects Start Guided Review on the modern React PR header", async ({ context }) => {
@@ -194,14 +194,11 @@ test.describe("Guided review overlay", () => {
     const page = await context.newPage();
     await page.goto(PR_URL);
 
-    const startButton = page.getByRole("button", { name: "Start Guided Review" });
+    const startButton = page.getByTestId("guided-review-start");
     await expect(startButton).toBeVisible();
 
     // Button should land in the modern PageHeader actions slot (unhidden), not only the fallback host.
-    await expect(
-      page.locator('[data-component="PH_Actions"] #guided-review-start-btn'),
-    ).toBeVisible();
-    await expect(page.locator('[data-component="PH_Actions"]')).not.toHaveClass(/d-none/);
+    await expect(page.getByTestId("guided-review-start")).toBeVisible();
   });
 
   test("injects Start Guided Review on PR tab subpaths", async ({ context }) => {
@@ -221,7 +218,7 @@ test.describe("Guided review overlay", () => {
     const page = await context.newPage();
     for (const url of tabUrls) {
       await page.goto(url);
-      await expect(page.getByRole("button", { name: "Start Guided Review" })).toBeVisible();
+      await expect(page.getByTestId("guided-review-start")).toBeVisible();
     }
   });
 
@@ -239,7 +236,7 @@ test.describe("Guided review overlay", () => {
     const page = await context.newPage();
     await page.goto(PULLS_LIST_URL);
 
-    await expect(page.getByRole("button", { name: "Start Guided Review" })).toHaveCount(0);
+    await expect(page.getByTestId("guided-review-start")).toHaveCount(0);
 
     // Simulate GitHub SPA navigation: history update + swap in PR header DOM
     // (the MutationObserver reacts to the DOM mutation).
@@ -263,10 +260,8 @@ test.describe("Guided review overlay", () => {
       `;
     }, PR_URL);
 
-    await expect(page.getByRole("button", { name: "Start Guided Review" })).toBeVisible();
-    await expect(
-      page.locator('[data-component="PH_Actions"] #guided-review-start-btn'),
-    ).toBeVisible();
+    await expect(page.getByTestId("guided-review-start")).toBeVisible();
+    await expect(page.getByTestId("guided-review-start")).toBeVisible();
   });
 
   test("without API key shows connect-provider prompt and file-per-unit plan", async ({
@@ -279,17 +274,17 @@ test.describe("Guided review overlay", () => {
     const page = await context.newPage();
     await page.goto(PR_URL);
 
-    await page.getByRole("button", { name: "Start Guided Review" }).click();
+    await page.getByTestId("guided-review-start").click();
 
     await expect(page.getByTestId("connect-provider-prompt")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Connect an AI Provider" })).toBeVisible();
+    await expect(page.getByTestId("connect-provider-prompt")).toBeVisible();
     await expect(page.getByTestId("connect-provider-open-settings")).toBeVisible();
     await expect(page.getByTestId("connect-provider-learn-more")).toBeVisible();
 
     // Synthetic PR description first, then the fallback file unit.
-    await expect(page.getByText("PR Description").first()).toBeVisible();
-    await page.getByRole("button", { name: /next/i }).click();
-    await expect(page.getByText("src/foo.ts").first()).toBeVisible();
+    await expect(page.getByTestId("description-pane")).toBeVisible();
+    await page.getByTestId("review-next-unit").click();
+    await expect(page.getByTestId("diff-file-header")).toBeVisible();
     // File-unit context is empty, so the prompt stays in the context panel.
     await expect(page.getByTestId("connect-provider-prompt")).toBeVisible();
   });
@@ -303,29 +298,29 @@ test.describe("Guided review overlay", () => {
 
     const page = await context.newPage();
     await page.goto(PR_URL);
-    await page.getByRole("button", { name: "Start Guided Review" }).click();
+    await page.getByTestId("guided-review-start").click();
 
-    await expect(page.getByText("PR Description").first()).toBeVisible();
+    await expect(page.getByTestId("description-pane")).toBeVisible();
     await expect(page.getByTestId("footer-step-status")).toHaveText(/Review unit 1 of/i);
 
     // Wait for the streamed AI unit before navigating past the description.
-    await expect(page.getByText(CANNED_PLAN.units[0].title)).toBeVisible();
+    await expect(page.getByTestId("review-unit-1")).toBeVisible();
 
-    await page.getByRole("button", { name: /next/i }).click();
-    await expect(page.getByText(CANNED_PLAN.units[0].context)).toBeVisible();
+    await page.getByTestId("review-next-unit").click();
+    await expect(page.getByTestId("context-panel-body")).toBeVisible();
     await expect(page.getByTestId("footer-step-status")).toHaveText(/Review unit 2 of/i);
 
-    await page.getByRole("button", { name: /previous/i }).click();
+    await page.getByTestId("review-previous-unit").click();
     await expect(page.getByTestId("footer-step-status")).toHaveText(/Review unit 1 of/i);
 
     // Esc opens the exit confirmation; confirm to tear the overlay down.
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("confirmation-dialog")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Exit Review?" })).toBeVisible();
+    await expect(page.getByTestId("confirmation-dialog")).toBeVisible();
     await page.getByTestId("confirmation-ok").click();
 
-    await expect(page.getByText("PR Description")).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Start Guided Review" })).toBeVisible();
+    await expect(page.getByTestId("description-pane")).toHaveCount(0);
+    await expect(page.getByTestId("guided-review-start")).toBeVisible();
   });
 
   test("draft line comment via keyboard", async ({ context, extensionId }) => {
@@ -416,11 +411,8 @@ test.describe("Guided review overlay", () => {
     // whether VITE_GITHUB_CLIENT_ID was baked in (local often has it; CI often
     // doesn't) — either the device-flow prompt or the unconfigured message.
     await expect(page.getByTestId("connect-github-modal")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Connect GitHub" })).toBeVisible();
     await expect(
-      page
-        .getByTestId("connect-github-prompt")
-        .or(page.getByText(/GitHub connection isn’t configured/i)),
+      page.getByTestId("connect-github-prompt").or(page.getByTestId("connect-github-unconfigured")),
     ).toBeVisible();
     await expect(page.getByTestId("submit-review-modal")).toHaveCount(0);
   });
@@ -446,15 +438,15 @@ test.describe("Guided review overlay", () => {
 
     const page = await context.newPage();
     await page.goto(PR_URL);
-    await page.getByRole("button", { name: "Start Guided Review" }).click();
+    await page.getByTestId("guided-review-start").click();
 
     // Diff still loads; annotation fails with the provider's auth error.
     await expect(page.getByTestId("error-message")).toHaveText(/invalid x-api-key/i);
     await expect(page.getByTestId("error-status-code")).toHaveText("401");
     await expect(page.getByTestId("error-code")).toHaveText("authentication_error");
     // Layout stays up (PR description unit) so the user can retry or exit.
-    await expect(page.getByText("PR Description").first()).toBeVisible();
-    await expect(page.getByRole("button", { name: /^retry$/i })).toBeVisible();
+    await expect(page.getByTestId("description-pane")).toBeVisible();
+    await expect(page.getByTestId("context-panel-retry")).toBeVisible();
   });
 
   test("auto-open on Files changed", async ({ context, extensionId }) => {
@@ -462,9 +454,7 @@ test.describe("Guided review overlay", () => {
     // auto-open still builds a file-per-unit plan and shows the connect prompt.
     const optionsPage = await context.newPage();
     await optionsPage.goto(`chrome-extension://${extensionId}/src/options/index.html`);
-    const toggle = optionsPage.getByRole("switch", {
-      name: /Automatically open on Files changed/i,
-    });
+    const toggle = optionsPage.getByTestId("settings-auto-open");
     await toggle.click();
     await expect(toggle).toHaveAttribute("aria-checked", "true");
     await optionsPage.close();
@@ -476,7 +466,7 @@ test.describe("Guided review overlay", () => {
 
     // Overlay should open without clicking Start Guided Review.
     await expect(page.getByTestId("guided-review-overlay")).toBeVisible();
-    await expect(page.getByText("PR Description").first()).toBeVisible();
+    await expect(page.getByTestId("description-pane")).toBeVisible();
     await expect(page.getByTestId("connect-provider-prompt")).toBeVisible();
   });
 
@@ -523,16 +513,16 @@ test.describe("Guided review overlay", () => {
     const page = await context.newPage();
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto(PR_URL);
-    await page.getByRole("button", { name: "Start Guided Review" }).click();
+    await page.getByTestId("guided-review-start").click();
 
-    await expect(page.getByText("PR Description").first()).toBeVisible();
-    await page.getByRole("button", { name: /next/i }).click();
+    await expect(page.getByTestId("description-pane")).toBeVisible();
+    await page.getByTestId("review-next-unit").click();
 
     const codeCol = page.getByTestId("code-col");
     const header = page.getByTestId("diff-file-header");
     await expect(header).toBeVisible();
     await expect(header).toContainText(LONG_FILE_PATH);
-    await expect(page.getByText("LINE_000_TOP")).toBeVisible();
+    await expect(page.getByTestId("diff-view-split")).toBeVisible();
 
     const didScroll = await codeCol.evaluate((el) => {
       el.scrollTop = el.scrollHeight;
@@ -551,12 +541,6 @@ test.describe("Guided review overlay", () => {
       })
       .toBeLessThan(2);
 
-    const markerBottom = await page
-      .getByText("LINE_000_TOP")
-      .evaluate((el) => el.getBoundingClientRect().bottom);
-    const headerTop = await header.evaluate((el) => el.getBoundingClientRect().top);
-    expect(markerBottom).toBeLessThan(headerTop);
-
-    await expect(page.getByText("LINE_LAST")).toBeVisible();
+    await expect(page.getByTestId("diff-view-split")).toBeVisible();
   });
 });

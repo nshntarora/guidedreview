@@ -74,4 +74,10 @@ Goal is **not** coverage. Goal is the fewest tests that still give confidence to
 **E2E:** executable journeys a user would care about. Do not E2E static marketing pages, "button exists," or exact wording.
 **a11y:** interactive paths only (keyboard, focus trap, dialogs, forms) — not decorative markup.
 
+**E2E selectors:** target product elements exclusively with `data-testid` / Playwright's
+`getByTestId`. Do not locate elements by visible copy, accessible name, role, DOM structure,
+CSS classes, `href`, or other mutable attributes. Add a small, semantic test ID to the product
+markup when an E2E flow needs a stable hook; assertions on text or attributes of a test-ID
+locator are fine.
+
 Prefer consolidating overlapping tests and extracting shared setup over adding more cases. If a feature's complexity is mostly test surface, consider removing the feature instead.

@@ -18,24 +18,20 @@ test.describe("Options page", () => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/src/options/index.html`);
 
-    await expect(page.getByRole("combobox", { name: "Provider" })).toContainText(
-      "Claude (Anthropic)",
-    );
+    await expect(page.getByTestId("settings-provider")).toContainText("Claude (Anthropic)");
 
-    await page.getByLabel("API Key").fill("sk-e2e-test-key");
-    await page.getByRole("button", { name: "Save" }).click();
-    await expect(page.getByText("Saved")).toBeVisible();
+    await page.getByTestId("settings-api-key").fill("sk-e2e-test-key");
+    await page.getByTestId("settings-save").click();
+    await expect(page.getByTestId("settings-status")).toHaveText("Saved");
 
-    await page.getByRole("button", { name: "Test Connection" }).click();
-    await expect(page.getByText("Connection OK")).toBeVisible();
+    await page.getByTestId("settings-test-connection").click();
+    await expect(page.getByTestId("settings-status")).toHaveText("Connection OK");
 
     // Reload to prove the settings round-tripped through the real chrome.storage.local,
     // not just in-memory component state.
     await page.reload();
-    await expect(page.getByLabel("API Key")).toHaveValue("sk-e2e-test-key");
-    await expect(page.getByRole("combobox", { name: "Provider" })).toContainText(
-      "Claude (Anthropic)",
-    );
+    await expect(page.getByTestId("settings-api-key")).toHaveValue("sk-e2e-test-key");
+    await expect(page.getByTestId("settings-provider")).toContainText("Claude (Anthropic)");
   });
 
   test("switching provider resets the model to that provider's default", async ({
@@ -45,27 +41,26 @@ test.describe("Options page", () => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/src/options/index.html`);
 
-    await expect(page.getByRole("combobox", { name: "Provider" })).toContainText(
-      "Claude (Anthropic)",
-    );
+    await expect(page.getByTestId("settings-provider")).toContainText("Claude (Anthropic)");
 
-    await page.getByRole("combobox", { name: "Provider" }).click();
-    await page.getByRole("option", { name: /Grok/ }).click();
+    await page.getByTestId("settings-provider").click();
+    await page.getByTestId("settings-provider").press("End");
+    await page.getByTestId("settings-provider").press("Enter");
 
-    await expect(page.getByRole("combobox", { name: "Model" })).toContainText("Grok 4");
+    await expect(page.getByTestId("settings-model")).toContainText("Grok 4");
   });
 
   test("navigates to About from Settings and back", async ({ context, extensionId }) => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/src/options/index.html`);
 
-    await page.getByRole("link", { name: "About" }).click();
-    await expect(page.getByRole("heading", { name: "How it works" })).toBeVisible();
+    await page.getByTestId("options-nav-about").click();
+    await expect(page.getByTestId("options-nav")).toBeVisible();
     await expect(page).toHaveURL(/#about$/);
     await expect(page).toHaveTitle(/About/);
 
-    await page.getByRole("link", { name: "Settings" }).click();
-    await expect(page.getByRole("combobox", { name: "Provider" })).toBeVisible();
+    await page.getByTestId("options-nav-settings").click();
+    await expect(page.getByTestId("settings-provider")).toBeVisible();
     await expect(page).toHaveURL(/#settings$/);
   });
 
@@ -73,7 +68,7 @@ test.describe("Options page", () => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/src/options/index.html`);
 
-    const toggle = page.getByRole("switch", { name: /Automatically open on Files changed/i });
+    const toggle = page.getByTestId("settings-auto-open");
     await expect(toggle).toBeVisible();
     await expect(toggle).toHaveAttribute("aria-checked", "false");
 
@@ -81,8 +76,6 @@ test.describe("Options page", () => {
     await expect(toggle).toHaveAttribute("aria-checked", "true");
 
     await page.reload();
-    await expect(
-      page.getByRole("switch", { name: /Automatically open on Files changed/i }),
-    ).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("settings-auto-open")).toHaveAttribute("aria-checked", "true");
   });
 });

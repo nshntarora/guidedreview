@@ -8,6 +8,7 @@ export function Toggle({
   "aria-labelledby": ariaLabelledBy,
   "aria-describedby": ariaDescribedBy,
   className,
+  "data-testid": testId,
 }: {
   id: string;
   checked: boolean;
@@ -16,6 +17,7 @@ export function Toggle({
   "aria-labelledby"?: string;
   "aria-describedby"?: string;
   className?: string;
+  "data-testid"?: string;
 }) {
   return (
     <button
@@ -25,6 +27,7 @@ export function Toggle({
       aria-checked={checked}
       aria-labelledby={ariaLabelledBy}
       aria-describedby={ariaDescribedBy}
+      data-testid={testId}
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(

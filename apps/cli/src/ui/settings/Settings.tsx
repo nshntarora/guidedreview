@@ -157,6 +157,7 @@ function ApiKeyField({
         onChange={(e) => onChange(e.target.value)}
         disabled={busy}
         aria-describedby="apiKey-hint"
+        data-testid="settings-api-key"
       />
       <p id="apiKey-hint" className="mt-1.5 m-0 text-sm text-muted">
         Stored on this machine in{" "}
@@ -453,6 +454,7 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
                 options={providerOptions}
                 onChange={onProviderChange}
                 disabled={busy}
+                data-testid="settings-provider"
               />
             </div>
 
@@ -470,6 +472,7 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
                   setSaveStatus({ kind: "idle" });
                 }}
                 disabled={busy}
+                data-testid="settings-model"
               />
             </div>
 
@@ -498,6 +501,7 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
                 disabled={busy}
                 aria-labelledby="use-subscription-label"
                 aria-describedby="use-subscription-hint"
+                data-testid="settings-use-subscription"
               />
             </div>
 
@@ -519,7 +523,7 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
             )}
 
             <div className="flex flex-wrap items-center gap-2.5 pt-1">
-              <Button onClick={() => void onSave()} disabled={busy}>
+              <Button onClick={() => void onSave()} disabled={busy} data-testid="settings-save">
                 {saveStatus.kind === "working" && <Spinner size={14} label="Saving" />}
                 {saveStatus.kind === "working" ? "Saving…" : "Save"}
               </Button>
@@ -527,13 +531,20 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
                 variant="secondary"
                 onClick={() => void onTestConnection()}
                 disabled={!canTest || busy}
+                data-testid="settings-test-connection"
               >
                 {connection.kind === "working" && <Spinner size={14} label="Testing connection" />}
                 {connection.kind === "working" ? "Testing…" : "Test Connection"}
               </Button>
             </div>
 
-            {statusMessage && <Callout kind={statusMessage.kind} message={statusMessage.message} />}
+            {statusMessage && (
+              <Callout
+                kind={statusMessage.kind}
+                message={statusMessage.message}
+                data-testid="settings-status"
+              />
+            )}
 
             <div className="divide-y divide-border border-t border-border">
               <HelpDetails title="How It Works">

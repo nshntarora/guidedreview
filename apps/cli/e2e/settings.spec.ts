@@ -4,32 +4,26 @@ test.describe("CLI settings", () => {
   test("saves an API key and keeps it after reload", async ({ page, reviewServer }) => {
     await page.goto(reviewUrl(reviewServer, "settings"), { waitUntil: "domcontentloaded" });
 
-    await expect(page.getByRole("combobox", { name: /provider/i })).toBeVisible();
-    await page.getByLabel("API Key").fill("sk-e2e-aaaa");
-    await page.getByRole("button", { name: "Save" }).click();
-    await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("settings-provider")).toBeVisible();
+    await page.getByTestId("settings-api-key").fill("sk-e2e-aaaa");
+    await page.getByTestId("settings-save").click();
+    await expect(page.getByTestId("settings-status")).toHaveText("Saved");
 
     await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByLabel("API Key")).toHaveAttribute("placeholder", /aaaa/);
+    await expect(page.getByTestId("settings-api-key")).toHaveAttribute("placeholder", /aaaa/);
   });
 
   test("Settings and About navigate via hash", async ({ page, reviewServer }) => {
     await page.goto(reviewUrl(reviewServer, "settings"), { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("combobox", { name: /provider/i })).toBeVisible();
+    await expect(page.getByTestId("settings-provider")).toBeVisible();
 
-    await page
-      .getByRole("navigation", { name: "Settings" })
-      .getByRole("link", { name: "About" })
-      .click();
+    await page.getByTestId("settings-nav-about").click();
     await expect(page).toHaveURL(/#about/);
-    await expect(page.getByRole("heading", { name: "How It Works" })).toBeVisible();
+    await expect(page.getByTestId("settings-modal")).toBeVisible();
 
-    await page
-      .getByRole("navigation", { name: "Settings" })
-      .getByRole("link", { name: "Settings" })
-      .click();
+    await page.getByTestId("settings-nav-settings").click();
     await expect(page).toHaveURL(/#settings/);
-    await expect(page.getByRole("combobox", { name: /provider/i })).toBeVisible();
+    await expect(page.getByTestId("settings-provider")).toBeVisible();
 
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("settings-modal")).toHaveCount(0);

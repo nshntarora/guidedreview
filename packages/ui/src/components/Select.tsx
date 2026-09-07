@@ -47,6 +47,7 @@ export interface SelectProps<T extends string = string> {
   "aria-labelledby"?: string;
   "aria-label"?: string;
   "aria-keyshortcuts"?: string;
+  "data-testid"?: string;
   value: T;
   options: SelectOption<T>[];
   onChange: (value: T) => void;
@@ -82,6 +83,7 @@ export function Select<T extends string = string>({
   "aria-labelledby": ariaLabelledBy,
   "aria-label": ariaLabel,
   "aria-keyshortcuts": ariaKeyShortcuts,
+  "data-testid": testId,
   value,
   options,
   onChange,
@@ -265,6 +267,7 @@ export function Select<T extends string = string>({
         aria-labelledby={ariaLabelledBy}
         aria-label={ariaLabel}
         aria-keyshortcuts={ariaKeyShortcuts}
+        data-testid={testId}
         disabled={disabled}
         className={cn(
           "flex w-full items-center gap-2 rounded-md border border-border bg-surface-raised px-2.5 py-2 text-left text-base text-foreground",
@@ -339,6 +342,7 @@ export function Select<T extends string = string>({
                   role="option"
                   aria-selected={isSelected}
                   aria-disabled={opt.disabled || undefined}
+                  data-testid={testId ? `${testId}-option-${opt.value}` : undefined}
                   className={cn(
                     "flex cursor-pointer items-center gap-2 px-2.5 py-1.5 text-base text-foreground",
                     isHighlighted && "bg-primary-muted",

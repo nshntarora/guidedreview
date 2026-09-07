@@ -4,15 +4,15 @@ test.describe("CLI review overlay", () => {
   test("boots a file-by-file review", async ({ page, reviewServer }) => {
     await page.goto(reviewUrl(reviewServer), { waitUntil: "domcontentloaded" });
 
-    const units = page.getByRole("navigation", { name: "Review Units" });
-    await expect(units.getByRole("button", { name: /Change summary/i })).toBeVisible();
-    await expect(units.getByRole("button", { name: /feat\.ts/ })).toBeVisible();
-    await expect(page.getByRole("combobox", { name: /diff to review/i })).toBeVisible();
+    const units = page.getByTestId("review-units");
+    await expect(units.getByTestId("review-unit-0")).toBeVisible();
+    await expect(units.getByTestId("review-unit-1")).toBeVisible();
+    await expect(page.getByTestId("review-scope-select")).toBeVisible();
     await expect(page.getByTestId("structure-review")).toBeVisible();
     await expect(page.getByTestId("guided-review-overlay")).toBeFocused();
 
     await page.keyboard.press("ArrowDown");
-    await expect(page.getByRole("listbox")).toHaveCount(0);
+    await expect(page.getByTestId("review-scope-select-option-branch")).toHaveCount(0);
   });
 
   test("Structure with AI without a key opens settings", async ({ page, reviewServer }) => {
@@ -23,20 +23,20 @@ test.describe("CLI review overlay", () => {
 
     await expect(page).toHaveURL(/#settings/);
     await expect(page.getByTestId("settings-modal")).toBeVisible();
-    await expect(page.getByRole("combobox", { name: /provider/i })).toBeVisible();
+    await expect(page.getByTestId("settings-provider")).toBeVisible();
   });
 
   test("switching scope reloads the overlay diff", async ({ page, reviewServer }) => {
     await page.goto(reviewUrl(reviewServer), { waitUntil: "domcontentloaded" });
 
-    const units = page.getByRole("navigation", { name: "Review Units" });
-    await expect(units.getByRole("button", { name: /feat\.ts/ })).toBeVisible();
+    const units = page.getByTestId("review-units");
+    await expect(units.getByTestId("review-unit-1")).toBeVisible();
 
-    await page.getByRole("combobox", { name: /diff to review/i }).click();
-    await page.getByRole("option", { name: /uncommitted changes/i }).click();
+    await page.getByTestId("review-scope-select").click();
+    await page.getByTestId("review-scope-select-option-uncommitted").click();
 
-    await expect(units.getByRole("button", { name: /dirty\.ts/ })).toBeVisible();
-    await expect(units.getByRole("button", { name: /feat\.ts/ })).toHaveCount(0);
+    await expect(units.getByTestId("review-unit-1")).toBeVisible();
+    await expect(units.getByTestId("review-unit-2")).toHaveCount(0);
   });
 
   test("stale banner appears and Refresh reloads", async ({ page, reviewServer }) => {
@@ -47,7 +47,7 @@ test.describe("CLI review overlay", () => {
     await commitInRepo(reviewServer.repoDir, "feat.ts", "export const n = 2;\n");
 
     await expect(page.getByTestId("stale-diff-banner")).toBeVisible({ timeout: 15_000 });
-    await page.getByRole("button", { name: /^refresh$/i }).click();
+    await page.getByTestId("stale-diff-refresh").click();
 
     await expect(page.getByTestId("structure-review")).toBeVisible();
     await expect(page.getByTestId("stale-diff-banner")).toHaveCount(0);

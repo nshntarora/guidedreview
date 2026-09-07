@@ -72,6 +72,7 @@ export function ProductPreview() {
             <Button
               ref={triggerRef}
               data-live-preview-trigger
+              data-testid="open-live-preview"
               onClick={() => void openPreview()}
               disabled={loading}
               aria-haspopup="dialog"

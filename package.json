@@ -19,7 +19,7 @@
     "test": "pnpm --filter \"./apps/**\" --filter \"./packages/**\" --if-present test",
     "test:watch": "pnpm --filter @guided-review/extension test:watch",
     "test:coverage": "pnpm --filter @guided-review/extension test:coverage",
-    "test:e2e": "pnpm --filter @guided-review/extension test:e2e",
+    "test:e2e": "pnpm --filter \"./apps/**\" --filter \"./packages/**\" --if-present test:e2e",
     "test:e2e:ui": "pnpm --filter @guided-review/extension test:e2e:ui",
     "test:e2e:install": "pnpm --filter @guided-review/extension test:e2e:install",
     "test:e2e:web": "pnpm --filter @guided-review/web test:e2e",

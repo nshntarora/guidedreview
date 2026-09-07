@@ -9,7 +9,7 @@ export function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Documentation" className="w-full">
+    <nav aria-label="Documentation" className="w-full" data-testid="docs-sidebar">
       <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
         {DOCS_PAGES.map((page, idx) => {
           const href = docsPath(page.slug);
@@ -39,6 +39,7 @@ export function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
                     : "text-muted hover:bg-surface-raised/70 hover:text-foreground",
                 )}
                 aria-current={active ? "page" : undefined}
+                data-testid={`docs-sidebar-link-${page.slug || "index"}`}
               >
                 {page.title}
               </Link>

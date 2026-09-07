@@ -5,9 +5,15 @@ import { ProductPreview } from "./ProductPreview";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden px-4 pb-16 pt-12 text-center sm:px-6 sm:pb-28 sm:pt-24">
+    <section
+      className="relative overflow-hidden px-4 pb-16 pt-12 text-center sm:px-6 sm:pb-28 sm:pt-24"
+      data-testid="home-hero"
+    >
       <div className="mx-auto max-w-5xl">
-        <h1 className="mx-auto max-w-3xl text-3xl leading-[1.35] font-bold tracking-tight text-balance sm:text-5xl sm:leading-[1.3] md:text-6xl font-brand">
+        <h1
+          data-testid="home-heading"
+          className="mx-auto max-w-3xl text-3xl leading-[1.35] font-bold tracking-tight text-balance sm:text-5xl sm:leading-[1.3] md:text-6xl font-brand"
+        >
           <span className="rounded-md bg-primary px-2 py-0.5 text-primary-foreground [box-decoration-break:clone] [-webkit-box-decoration-break:clone]">
             Review AI-generated code
           </span>{" "}

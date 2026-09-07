@@ -9,40 +9,28 @@ test("sample review switches between the CLI and extension flows", async ({ page
     }
   });
   await page.goto("/");
-  const trigger = page.getByRole("button", { name: "Open Live Preview" });
+  const trigger = page.getByTestId("open-live-preview");
   await trigger.click();
   const overlay = page.getByTestId("guided-review-overlay");
   await expect(overlay).toBeFocused();
   expect(await trigger.evaluate((node) => Boolean(node.closest("[inert]")))).toBe(true);
   await expect(page.getByTestId("preview-mode-notice")).toContainText("Live preview");
-  await expect(page.getByRole("button", { name: "CLI", exact: true })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  const units = page.getByRole("navigation", { name: "Review Units" });
-  await expect(units.getByRole("button")).toHaveCount(6);
+  await expect(page.getByTestId("preview-mode-cli")).toHaveAttribute("aria-pressed", "true");
+  const units = page.getByTestId("review-units");
+  await expect(units.getByTestId(/review-unit-/)).toHaveCount(6);
   await expect(page.getByTestId("submit-review-button")).toContainText("Generate Prompt");
-  await expect(units.getByRole("button", { name: /Change summary/ })).toHaveAttribute(
-    "aria-current",
-    "true",
-  );
+  await expect(units.getByTestId("review-unit-0")).toHaveAttribute("aria-current", "true");
 
   await page.getByTestId("open-settings").click();
   await expect(page.getByTestId("preview-unsupported-notice")).toContainText(
     "isn’t available in the live preview",
   );
-  await page.getByRole("button", { name: "Dismiss preview notification" }).click();
+  await page.getByTestId("preview-notice-dismiss").click();
 
-  await page.getByRole("button", { name: "Chrome", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Chrome", exact: true })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  await page.getByTestId("preview-mode-chrome").click();
+  await expect(page.getByTestId("preview-mode-chrome")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("submit-review-button")).toContainText("Submit Review");
-  await expect(units.getByRole("button", { name: /PR Description/ })).toHaveAttribute(
-    "aria-current",
-    "true",
-  );
+  await expect(units.getByTestId("review-unit-0")).toHaveAttribute("aria-current", "true");
 
   // Every fixture file and hunk must be represented by the prepared structure.
   expect(samplePlan.units).toHaveLength(5);
@@ -58,7 +46,7 @@ test("sample review switches between the CLI and extension flows", async ({ page
 
   await page.keyboard.press("ArrowRight");
   await expect(page.getByTestId("diff-unit-title")).toHaveText("Define the retry contract");
-  await units.getByRole("button", { name: /Schedule retries with jitter/ }).click();
+  await units.getByTestId("review-unit-2").click();
   await page.screenshot({ path: testInfo.outputPath("preview-desktop.png") });
   await overlay.focus();
   await page.keyboard.press("c");
@@ -94,17 +82,14 @@ test("sample review switches between the CLI and extension flows", async ({ page
   await trigger.click();
   await expect(page.getByTestId("submit-review-button")).toContainText("Generate Prompt");
   await expect(page.getByTestId("preview-mode-notice")).toBeInViewport();
-  await expect(units.getByRole("button", { name: /Change summary/ })).toHaveAttribute(
-    "aria-current",
-    "true",
-  );
-  await expect(page.getByRole("button", { name: /Next review unit/ })).toBeInViewport();
-  await page.getByRole("button", { name: /Next review unit/ }).click();
-  await expect(page.getByRole("button", { name: "Unified", exact: true })).toHaveAttribute(
+  await expect(units.getByTestId("review-unit-0")).toHaveAttribute("aria-current", "true");
+  await expect(page.getByTestId("review-next-unit")).toBeInViewport();
+  await page.getByTestId("review-next-unit").click();
+  await expect(page.getByTestId("diff-view-unified-toggle")).toHaveAttribute(
     "aria-pressed",
     "true",
   );
-  await expect(page.getByRole("button", { name: "Exit", exact: true })).toBeInViewport();
+  await expect(page.getByTestId("review-exit")).toBeInViewport();
   expect(await overlay.evaluate((node) => node.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath("preview-mobile.png") });
   await overlay.focus();

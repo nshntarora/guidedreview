@@ -15,6 +15,7 @@ export function DocsPager({ slug }: { slug: string }) {
         <Link
           href={docsPath(prev.slug)}
           className="group inline-flex h-auto flex-col items-start gap-1 rounded-lg border border-border bg-surface-raised/40 p-4 no-underline transition-colors hover:border-muted hover:bg-surface-raised"
+          data-testid="docs-pager-previous"
         >
           <span className="flex items-center gap-1 text-xs uppercase tracking-widest text-muted">
             ← Previous
@@ -30,6 +31,7 @@ export function DocsPager({ slug }: { slug: string }) {
         <Link
           href={docsPath(next.slug)}
           className="group inline-flex h-auto flex-col items-end gap-1 rounded-lg border border-border bg-surface-raised/40 p-4 no-underline transition-colors hover:border-muted hover:bg-surface-raised"
+          data-testid="docs-pager-next"
         >
           <span className="flex items-center gap-1 text-xs uppercase tracking-widest text-muted">
             Next →

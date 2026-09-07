@@ -52,6 +52,7 @@ export function InstallButton({
       className={buttonClassName({ size })}
       aria-keyshortcuts={ariaKeyShortcuts(key)}
       aria-label={displayLabel}
+      data-testid={`install-button-${location}`}
       onClick={() => {
         analytics.capture(
           AnalyticsEvents.SURFACES_CTA_CLICK,
@@ -89,6 +90,7 @@ export function InstallExtensionButton({
       rel="noopener noreferrer"
       aria-keyshortcuts={ariaKeyShortcuts(key)}
       aria-label={displayLabel}
+      data-testid={`install-extension-button-${location}`}
       onClick={() => {
         analytics.capture(
           AnalyticsEvents.INSTALL_EXTENSION_CLICK,
@@ -127,6 +129,7 @@ export function TryCliButton({
       href={href}
       className={buttonClassName({ variant, size })}
       aria-label={displayLabel}
+      data-testid={`try-cli-button-${location}`}
       onClick={() => {
         analytics.capture(
           AnalyticsEvents.INSTALL_CLI_CLICK,
@@ -162,6 +165,7 @@ export function StarOnGitHubButton({
       rel="noopener noreferrer"
       aria-keyshortcuts={ariaKeyShortcuts(key)}
       aria-label={label}
+      data-testid={`star-github-button-${location}`}
       onClick={() => {
         analytics.capture(
           AnalyticsEvents.GITHUB_STAR_CLICK,

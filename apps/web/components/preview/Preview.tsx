@@ -133,6 +133,7 @@ export default function Preview({ onClose }: { onClose: () => void }) {
               size="sm"
               aria-label="Dismiss preview notification"
               onClick={() => setUnsupportedFeature(null)}
+              data-testid="preview-notice-dismiss"
             >
               Dismiss
             </Button>

@@ -26,6 +26,7 @@ export function DiffViewToggle({
               : "bg-transparent text-muted hover:bg-surface-muted hover:text-foreground",
           )}
           aria-pressed={mode === "unified"}
+          data-testid="diff-view-unified-toggle"
           onClick={() => onChange("unified")}
         >
           Unified
@@ -42,6 +43,7 @@ export function DiffViewToggle({
               : "bg-transparent text-muted hover:bg-surface-muted hover:text-foreground",
           )}
           aria-pressed={mode === "split"}
+          data-testid="diff-view-split-toggle"
           onClick={() => onChange("split")}
         >
           Split
