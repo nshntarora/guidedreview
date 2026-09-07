@@ -36,13 +36,7 @@ export function Callout({ type = "note", title, children }: CalloutProps) {
   const label = title ?? titleDefault;
 
   return (
-    <div
-      className={cn(
-        "callout my-4 flex gap-3 rounded-lg border px-4 py-3",
-        `callout-${type}`,
-        className,
-      )}
-    >
+    <div className={cn("callout my-4 flex gap-3 rounded-lg border px-4 py-3", className)}>
       <div className="min-w-0 flex-1">
         <div className="mb-1 text-sm font-semibold">{label}</div>
         <div className="text-sm leading-relaxed text-muted [&>p]:m-0 [&>p]:leading-relaxed">

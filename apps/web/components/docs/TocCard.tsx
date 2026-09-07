@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { cn } from "@guided-review/ui";
 import type { TocEntry } from "@web/config/docs";
 
 export function TocCard({ toc }: { toc: TocEntry[] }) {
@@ -13,9 +12,7 @@ export function TocCard({ toc }: { toc: TocEntry[] }) {
           <li key={id} className={level === 3 ? "pl-3" : ""}>
             <Link
               href={`#${id}`}
-              className={cn(
-                "list-item border-b-0 py-0.5 text-sm leading-snug text-muted no-underline transition-colors hover:border-b-transparent hover:text-foreground",
-              )}
+              className="list-item border-b-0 py-0.5 text-sm leading-snug text-muted no-underline transition-colors hover:border-b-transparent hover:text-foreground"
             >
               {label}
             </Link>

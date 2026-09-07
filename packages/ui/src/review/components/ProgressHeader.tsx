@@ -34,9 +34,6 @@ interface ProgressHeaderProps {
   scopeSelectRef?: Ref<SelectHandle | null>;
 }
 
-const headerBtn =
-  "inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-3 py-1.5 text-base font-medium";
-
 function RefreshIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -327,7 +324,6 @@ export function ProgressHeader({
           <Button
             type="button"
             size="sm"
-            className={`${headerBtn} border-primary bg-primary text-primary-foreground hover:border-primary-hover hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50 [&_[data-slot=kbd]]:bg-[rgba(13,8,6,0.12)] [&_[data-slot=kbd]]:text-inherit`}
             onClick={onSubmitReview}
             disabled={primaryDisabled}
             data-testid="submit-review-button"
@@ -338,28 +334,30 @@ export function ProgressHeader({
             </span>
           </Button>
           {isLocal && (
-            <button
-              type="button"
-              className={`${headerBtn} gap-2 border-border bg-surface text-foreground hover:bg-surface-muted`}
+            <Button
+              variant="secondary"
+              size="sm"
+              className="gap-2 bg-surface font-medium hover:bg-surface-muted"
               onClick={() => host.connectProvider()}
               aria-keyshortcuts="Meta+, Control+,"
               data-testid="open-settings"
             >
               Settings
               <ShortcutKeys keys={["mod", ","]} join="chord" />
-            </button>
+            </Button>
           )}
           {allowExit && (
-            <button
-              type="button"
-              className={`${headerBtn} gap-2 border-border bg-surface text-foreground hover:bg-surface-muted`}
+            <Button
+              variant="secondary"
+              size="sm"
+              className="gap-2 bg-surface font-medium hover:bg-surface-muted"
               onClick={onExit}
             >
               Exit
               <span className="hidden sm:inline-flex">
                 <Kbd>Esc</Kbd>
               </span>
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -373,13 +371,14 @@ export function ProgressHeader({
             <RefreshIcon className="text-muted" />
             <span>The diff on disk has changed. Refresh the page to get the latest changes.</span>
           </p>
-          <button
-            type="button"
-            className={`${headerBtn} shrink-0 border-border bg-surface text-foreground hover:bg-background`}
+          <Button
+            variant="secondary"
+            size="sm"
+            className="shrink-0 bg-surface font-medium hover:bg-background"
             onClick={() => localDiff.onRefresh?.()}
           >
             Refresh
-          </button>
+          </Button>
         </div>
       )}
     </header>

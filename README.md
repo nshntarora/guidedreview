@@ -2,11 +2,13 @@
 
 # Guided Review
 
+### Review AI-generated code before you sign your name to it.
+
 ![Tests](https://github.com/nshntarora/guidedreview/actions/workflows/tests.yml/badge.svg)
 
-Review AI-generated code before you sign your name to it. Guided Review turns GitHub pull requests and local git changes into an ordered walkthrough of **review units** so you can read the change with intent instead of reconstructing it from an alphabetical file list.
+Guided Review turns GitHub pull requests and local git changes into an ordered walkthrough of **review units** so you can read the change with intent instead of reconstructing it from an alphabetical file list.
 
-1. Open a pull request and hit **Start Guided Review**, or run `npx @guided-review/cli` in a repo.
+1. Run `npx @guided-review/cli` in your project directory (or click on Start Guided Review on a GitHub PR if you're using the Chrome Extension)
 2. When you ask for AI structure, your LLM clusters related hunks and adds short commentary — schema, then logic, then call-sites, then tests.
 3. Follow the walkthrough keyboard-first. The code always comes from the real diff; **you still read it and decide**.
 
@@ -29,19 +31,15 @@ Site and docs: [guidedreview.dev](https://guidedreview.dev) · [docs](https://gu
 - [Configuration](#configuration)
 - [License](#license)
 
-## Demo
-
-Click the image below to play
-
-[![Product demo](apps/web/public/product-preview/thumbnail.webp)](https://guidedreview.dev/product-preview/demo.webm)
-
 ## Why?
 
-AI agents are writing a lot of the code landing in your PRs and on your branches. Review agents help find bugs and edge cases you missed — useful — but they are not a replacement for you. They lack taste: product context, people, when an abstraction is unnecessary, when to break the rules.
+Automated review agents help find bugs and edge cases you missed — useful — but they are not a replacement for you. They lack taste: product context, people, when an abstraction is unnecessary, when to break the rules.
 
-Nothing beats reading the code. GitHub still hands you every changed file in alphabetical order; a raw `git diff` is no better. That was awkward for human-written diffs; for large AI-shaped changes it is actively hostile.
+Even with AI today, nothing beats reading the code. GitHub still hands you every changed file in alphabetical order; a raw `git diff` is no better. That was awkward for human-written diffs; for large AI-shaped changes it is actively hostile.
 
-Guided Review uses AI only where it helps: clustering related hunks into a walkable order and adding short summaries you can take or ignore. It does not auto-approve, and it does not invent the code you see. You still decide.
+Guided Review uses AI only where it helps: clustering related hunks into a walkable order and adding short summaries you can take or ignore.
+
+The Chrome extension does this on GitHub PRs. This CLI does the same for local work — before you open the PR, or when there is no PR at all.
 
 ## Getting Started
 

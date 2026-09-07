@@ -49,7 +49,7 @@ function frame(props: SVGProps<SVGSVGElement>) {
   };
 }
 
-/** `+` / `−` used on diff lines in the landing-page summaries scene. */
+/** `+` glyph used in local scope-picker diff icons. */
 function Plus({ x, y }: { x: number; y: number }) {
   return (
     <path

@@ -26,11 +26,11 @@ Site and docs: [guidedreview.dev](https://guidedreview.dev) · [CLI](https://gui
 
 ## Why?
 
-AI agents are writing a lot of the code on your branches. Review agents help find bugs and edge cases you missed — useful — but they are not a replacement for you. They lack taste: product context, people, when an abstraction is unnecessary, when to break the rules.
+Automated review agents help find bugs and edge cases you missed — useful — but they are not a replacement for you. They lack taste: product context, people, when an abstraction is unnecessary, when to break the rules.
 
-Nothing beats reading the code. A raw `git diff` or an alphabetical file list still leaves you to reconstruct the story. That was awkward for human-written diffs; for large AI-shaped changes it is actively hostile.
+Even with AI today, nothing beats reading the code. GitHub still hands you every changed file in alphabetical order; a raw `git diff` is no better. That was awkward for human-written diffs; for large AI-shaped changes it is actively hostile.
 
-Guided Review uses AI only where it helps: grouping related hunks into a walkable order and adding short commentary you can take or ignore. It does not auto-approve, and it does not supply the code you see. You still decide.
+Guided Review uses AI only where it helps: clustering related hunks into a walkable order and adding short summaries you can take or ignore.
 
 The Chrome extension does this on GitHub PRs. This CLI does the same for local work — before you open the PR, or when there is no PR at all.
 

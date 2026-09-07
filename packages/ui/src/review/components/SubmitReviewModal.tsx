@@ -65,6 +65,28 @@ function eventIndex(event: ReviewEvent): number {
   return i >= 0 ? i : 0;
 }
 
+/** Arrow/Enter behavior shared by overlay capture and the listbox fallback. */
+function handleReviewEventKey(
+  key: string,
+  currentIndex: number,
+  onHighlight: (index: number) => void,
+  onConfirm: (index: number) => void,
+): boolean {
+  if (key === "ArrowDown") {
+    onHighlight((currentIndex + 1) % REVIEW_EVENTS.length);
+    return true;
+  }
+  if (key === "ArrowUp") {
+    onHighlight((currentIndex - 1 + REVIEW_EVENTS.length) % REVIEW_EVENTS.length);
+    return true;
+  }
+  if (key === "Enter") {
+    onConfirm(currentIndex);
+    return true;
+  }
+  return false;
+}
+
 interface ChooseReviewEventStepProps {
   listboxId: string;
   listboxRef: RefObject<HTMLDivElement | null>;
@@ -334,19 +356,7 @@ export function SubmitReviewModal({
     }
     keyActionRef.current = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return false;
-      if (e.key === "ArrowDown") {
-        setHighlight((highlightIndexRef.current + 1) % REVIEW_EVENTS.length);
-        return true;
-      }
-      if (e.key === "ArrowUp") {
-        setHighlight((highlightIndexRef.current - 1 + REVIEW_EVENTS.length) % REVIEW_EVENTS.length);
-        return true;
-      }
-      if (e.key === "Enter") {
-        confirmMode(highlightIndexRef.current);
-        return true;
-      }
-      return false;
+      return handleReviewEventKey(e.key, highlightIndexRef.current, setHighlight, confirmMode);
     };
     return () => {
       keyActionRef.current = null;
@@ -383,22 +393,15 @@ export function SubmitReviewModal({
       return;
     }
     if (e.metaKey || e.ctrlKey || e.altKey) return;
-    if (e.key === "ArrowDown") {
+    const handled = handleReviewEventKey(
+      e.key,
+      highlightIndexRef.current,
+      setHighlight,
+      confirmMode,
+    );
+    if (handled) {
       e.preventDefault();
       e.stopPropagation();
-      setHighlight((highlightIndexRef.current + 1) % REVIEW_EVENTS.length);
-      return;
-    }
-    if (e.key === "ArrowUp") {
-      e.preventDefault();
-      e.stopPropagation();
-      setHighlight((highlightIndexRef.current - 1 + REVIEW_EVENTS.length) % REVIEW_EVENTS.length);
-      return;
-    }
-    if (e.key === "Enter") {
-      e.preventDefault();
-      e.stopPropagation();
-      confirmMode(highlightIndexRef.current);
     }
   }
 
