@@ -80,21 +80,10 @@ test("sample review switches between the CLI and extension flows", async ({ page
 
   await page.setViewportSize({ width: 390, height: 844 });
   await trigger.click();
-  await expect(page.getByTestId("submit-review-button")).toContainText("Generate Prompt");
-  await expect(page.getByTestId("preview-mode-notice")).toBeInViewport();
-  await expect(units.getByTestId("review-unit-0")).toHaveAttribute("aria-current", "true");
-  await expect(page.getByTestId("review-next-unit")).toBeInViewport();
-  await page.getByTestId("review-next-unit").click();
-  await expect(page.getByTestId("diff-view-unified-toggle")).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  await expect(page.getByTestId("review-exit")).toBeInViewport();
-  expect(await overlay.evaluate((node) => node.scrollWidth <= window.innerWidth)).toBe(true);
-  await page.screenshot({ path: testInfo.outputPath("preview-mobile.png") });
-  await overlay.focus();
-  await page.keyboard.press("Escape");
-  await page.getByTestId("confirmation-ok").click();
+  const mobileNotice = page.getByTestId("live-preview-mobile-notice");
+  await expect(mobileNotice).toContainText("available on larger screens");
+  await expect(overlay).toHaveCount(0);
+  await page.getByTestId("live-preview-mobile-dismiss").click();
   await expect(trigger).toBeFocused();
   expect(externalRequests).toEqual([]);
 });

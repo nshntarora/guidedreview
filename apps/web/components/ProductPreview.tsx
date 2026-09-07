@@ -1,21 +1,90 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ComponentType } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type ComponentType } from "react";
 import { createPortal } from "react-dom";
-import { Button } from "@guided-review/ui";
+import { Button, ModalShell } from "@guided-review/ui";
 import { OPEN_LIVE_PREVIEW_EVENT, ariaKeyShortcuts, SITE_SHORTCUTS } from "@web/lib/shortcuts";
 import { ShortcutChord } from "./ShortcutChord";
 import { WindowFrame } from "./WindowFrame";
+
+const LIVE_PREVIEW_MEDIA_QUERY = "(min-width: 768px)";
+
+function MobilePreviewNotice({ onClose }: { onClose: () => void }) {
+  const titleId = useId();
+  const bodyId = useId();
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    closeRef.current?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key === "Tab") {
+        event.preventDefault();
+        closeRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  return createPortal(
+    <ModalShell
+      position="fixed"
+      zIndexClassName="z-[60]"
+      scrimTestId="live-preview-mobile-notice-scrim"
+      onScrimDismiss={onClose}
+      maxWidthClassName="max-w-[420px]"
+      panelProps={{
+        role: "dialog",
+        "aria-modal": "true",
+        "aria-labelledby": titleId,
+        "aria-describedby": bodyId,
+        "data-testid": "live-preview-mobile-notice",
+      }}
+    >
+      <div className="flex flex-col gap-2 px-4 py-4">
+        <h2 id={titleId} className="m-0 text-lg font-semibold text-foreground">
+          Live preview needs a larger screen
+        </h2>
+        <p id={bodyId} className="m-0 text-base leading-relaxed text-muted">
+          Guided Review&apos;s live preview is available on larger screens. Switch to one and try
+          again.
+        </p>
+      </div>
+      <div className="flex justify-end border-t border-border px-4 py-3">
+        <Button
+          ref={closeRef}
+          size="sm"
+          onClick={onClose}
+          data-testid="live-preview-mobile-dismiss"
+        >
+          Got it
+        </Button>
+      </div>
+    </ModalShell>,
+    document.body,
+  );
+}
 
 export function ProductPreview() {
   const [Preview, setPreview] = useState<ComponentType<{ onClose: () => void }> | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [mobileNoticeOpen, setMobileNoticeOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const openPreview = useCallback(async () => {
     if (loading) return;
+    if (!window.matchMedia(LIVE_PREVIEW_MEDIA_QUERY).matches) {
+      setMobileNoticeOpen(true);
+      return;
+    }
     setLoading(true);
     setError(false);
     try {
@@ -36,6 +105,11 @@ export function ProductPreview() {
 
   function closePreview() {
     setOpen(false);
+    requestAnimationFrame(() => triggerRef.current?.focus());
+  }
+
+  function closeMobileNotice() {
+    setMobileNoticeOpen(false);
     requestAnimationFrame(() => triggerRef.current?.focus());
   }
 
@@ -87,6 +161,7 @@ export function ProductPreview() {
         </div>
       </WindowFrame>
       {open && Preview && createPortal(<Preview onClose={closePreview} />, document.body)}
+      {mobileNoticeOpen && <MobilePreviewNotice onClose={closeMobileNotice} />}
     </>
   );
 }
