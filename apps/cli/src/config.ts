@@ -31,11 +31,13 @@ export interface CliConfigFile {
   model?: string;
   apiKey?: string;
   codingAgent?: CodingAgentId;
+  baseUrl?: string;
 }
 
-export type ConfigPatch = Omit<Partial<CliConfigFile>, "codingAgent" | "apiKey"> & {
+export type ConfigPatch = Omit<Partial<CliConfigFile>, "codingAgent" | "apiKey" | "baseUrl"> & {
   codingAgent?: CodingAgentId | null;
   apiKey?: string | null;
+  baseUrl?: string | null;
 };
 
 export interface PublicCliSettings {
@@ -45,6 +47,7 @@ export interface PublicCliSettings {
   last4: string | null;
   codingAgent: CodingAgentId | null;
   configPath: string;
+  baseUrl: string | null;
 }
 
 export interface PublicCodingAgent {
@@ -83,6 +86,17 @@ function envKeyFor(provider: ProviderId): string | undefined {
   }
 }
 
+function envBaseUrlFor(provider: ProviderId): string | undefined {
+  switch (provider) {
+    case "anthropic":
+      return process.env.ANTHROPIC_BASE_URL;
+    case "openai":
+      return process.env.OPENAI_BASE_URL;
+    case "grok":
+      return process.env.XAI_BASE_URL || process.env.GROK_BASE_URL;
+  }
+}
+
 export async function readConfigFile(): Promise<CliConfigFile> {
   let raw: string;
   try {
@@ -107,12 +121,14 @@ export async function writeConfigFile(next: CliConfigFile): Promise<void> {
 
 export async function patchConfigFile(partial: ConfigPatch): Promise<void> {
   const current = await readConfigFile();
-  const { codingAgent, apiKey, ...rest } = partial;
+  const { codingAgent, apiKey, baseUrl, ...rest } = partial;
   const next: CliConfigFile = { ...current, ...rest };
   if (codingAgent === null) delete next.codingAgent;
   else if (codingAgent !== undefined) next.codingAgent = codingAgent;
   if (apiKey === null) delete next.apiKey;
   else if (apiKey !== undefined) next.apiKey = apiKey;
+  if (baseUrl === null) delete next.baseUrl;
+  else if (baseUrl !== undefined) next.baseUrl = baseUrl;
   await writeConfigFile(next);
 }
 
@@ -123,7 +139,7 @@ export async function patchConfigFile(partial: ConfigPatch): Promise<void> {
 export function applyProviderSettings(
   current: ProviderSettings,
   codingAgent: CodingAgentId | null,
-  body: Partial<Pick<ProviderSettings, "provider" | "model" | "apiKey">>,
+  body: Partial<Pick<ProviderSettings, "provider" | "model" | "apiKey" | "baseUrl">>,
 ): {
   settings: ProviderSettings;
   codingAgent: CodingAgentId | null;
@@ -131,12 +147,15 @@ export function applyProviderSettings(
 } {
   const hasNewKey = typeof body.apiKey === "string" && body.apiKey.length > 0;
   const requestedModel = body.model ?? current.model;
+  // Unlike apiKey, baseUrl isn't sensitive, so an explicit blank clears it.
+  const nextBaseUrl = body.baseUrl !== undefined ? body.baseUrl.trim() : current.baseUrl;
   const normalized = normalizeProviderSettings({
     provider: body.provider ?? current.provider,
     model: requestedModel,
     apiKey: hasNewKey ? body.apiKey : current.apiKey,
     authScheme: hasNewKey ? undefined : current.authScheme,
     extraHeaders: hasNewKey ? undefined : current.extraHeaders,
+    baseUrl: nextBaseUrl,
   });
   const settings: ProviderSettings = {
     ...normalized,
@@ -149,6 +168,7 @@ export function applyProviderSettings(
     persist: {
       provider: settings.provider,
       model: settings.model,
+      baseUrl: nextBaseUrl ? nextBaseUrl : null,
       ...(hasNewKey ? { apiKey: settings.apiKey, codingAgent: null } : {}),
     },
   };
@@ -172,12 +192,16 @@ export async function resolveSettings(flags: {
     provider,
     model,
     apiKey: file.apiKey ?? "",
+    baseUrl: file.baseUrl,
   });
   const envKey = envKeyFor(normalized.provider);
+  const envBaseUrl = envBaseUrlFor(normalized.provider)?.trim() || undefined;
+  const resolvedBaseUrl = envBaseUrl ?? file.baseUrl;
   const settings: ProviderSettings = {
     ...normalized,
     apiKey: envKey ?? file.apiKey ?? "",
     model: flags.model ?? normalized.model ?? defaultModelFor(normalized.provider),
+    ...(resolvedBaseUrl ? { baseUrl: resolvedBaseUrl } : {}),
   };
 
   if (settings.apiKey) {
@@ -230,6 +254,7 @@ export function publicSettings(
     last4: key ? key.slice(-4) : null,
     codingAgent: codingAgent ?? null,
     configPath: configPath(),
+    baseUrl: settings.baseUrl ?? null,
   };
 }
 

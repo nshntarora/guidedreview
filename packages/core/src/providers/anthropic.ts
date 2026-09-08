@@ -1,12 +1,16 @@
 import type { ProviderSettings } from "../types";
 import { buildUserPrompt, SYSTEM_PROMPT } from "../review/buildPrompt";
 import { REVIEW_PLAN_JSON_SCHEMA } from "../review/reviewSchema";
-import { postProviderJson } from "./http";
+import { postProviderJson, resolveApiUrl } from "./http";
 import { readSseJsonStream } from "./sse";
 import type { AnnotateReviewInput, AnnotateStreamEvent, ProviderClient } from "./types";
 import { ProviderError } from "./types";
 
-const API_URL = "https://api.anthropic.com/v1/messages";
+const DEFAULT_API_URL = "https://api.anthropic.com/v1/messages";
+
+function apiUrl(settings: ProviderSettings): string {
+  return resolveApiUrl(settings.baseUrl, DEFAULT_API_URL, "/v1/messages");
+}
 
 function headers(settings: ProviderSettings): Record<string, string> {
   const result: Record<string, string> = {
@@ -35,7 +39,7 @@ export const anthropicProvider: ProviderClient = {
     options?: { signal?: AbortSignal },
   ): AsyncGenerator<AnnotateStreamEvent, void, unknown> {
     const response = await postProviderJson(
-      API_URL,
+      apiUrl(settings),
       headers(settings),
       {
         model: settings.model,
@@ -91,7 +95,7 @@ export const anthropicProvider: ProviderClient = {
 
   async testConnection(settings: ProviderSettings): Promise<void> {
     await postProviderJson(
-      API_URL,
+      apiUrl(settings),
       headers(settings),
       {
         model: settings.model,

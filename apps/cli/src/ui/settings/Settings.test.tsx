@@ -14,6 +14,7 @@ const settings: PublicSettings = {
   last4: "key1",
   codingAgent: null,
   configPath: "/tmp/guided-review/config.json",
+  baseUrl: null,
 };
 
 const agents: PublicAgent[] = [
@@ -205,6 +206,7 @@ describe("Settings", () => {
     expect(JSON.parse(String(put?.[1]?.body))).toEqual({
       provider: "openai",
       model: defaultModelFor("openai"),
+      baseUrl: "",
       codingAgent: "codex",
     });
   });

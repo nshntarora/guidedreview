@@ -47,6 +47,27 @@ export async function parseProviderHttpError(response: Response): Promise<Provid
   }
 }
 
+/**
+ * Join a user-supplied `baseUrl` override with a provider's request path,
+ * avoiding double-appending when the override already includes part or all
+ * of that path (e.g. a proxy configured with `.../v1` when the path is
+ * `/v1/messages`, or the full path already).
+ */
+export function resolveApiUrl(
+  baseUrl: string | undefined,
+  defaultUrl: string,
+  path: string,
+): string {
+  const base = baseUrl?.trim().replace(/\/+$/, "");
+  if (!base) return defaultUrl;
+  if (base.endsWith(path)) return base;
+  const [firstSegment, ...rest] = path.split("/").filter(Boolean);
+  if (rest.length > 0 && base.endsWith(`/${firstSegment}`)) {
+    return `${base}/${rest.join("/")}`;
+  }
+  return `${base}${path}`;
+}
+
 function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError";
 }
