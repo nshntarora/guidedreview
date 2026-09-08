@@ -21,6 +21,8 @@ interface ProviderDefinition {
   iconSrc: string;
   /** Default model id when this provider is selected. */
   defaultModelId: string;
+  /** Example value shown as the Base URL field's placeholder. */
+  baseUrlPlaceholder: string;
 }
 
 interface ModelDefinition {
@@ -39,6 +41,7 @@ export const PROVIDERS: Record<ProviderId, ProviderDefinition> = {
     keyPlaceholder: "sk-ant-…",
     iconSrc: "providers/claude.svg",
     defaultModelId: "claude-opus-4-8",
+    baseUrlPlaceholder: "https://api.anthropic.com",
   },
   openai: {
     id: "openai",
@@ -46,6 +49,7 @@ export const PROVIDERS: Record<ProviderId, ProviderDefinition> = {
     keyPlaceholder: "sk-…",
     iconSrc: "providers/openai.svg",
     defaultModelId: "gpt-4.1",
+    baseUrlPlaceholder: "https://api.openai.com/v1",
   },
   grok: {
     id: "grok",
@@ -53,6 +57,7 @@ export const PROVIDERS: Record<ProviderId, ProviderDefinition> = {
     keyPlaceholder: "xai-…",
     iconSrc: "providers/grok.svg",
     defaultModelId: "grok-4",
+    baseUrlPlaceholder: "https://api.x.ai/v1",
   },
 };
 
@@ -110,12 +115,14 @@ export function normalizeProviderSettings(stored: {
   apiKey?: string;
   authScheme?: "api-key" | "bearer";
   extraHeaders?: Record<string, string>;
+  baseUrl?: string;
 }): {
   provider: ProviderId;
   model: string;
   apiKey: string;
   authScheme?: "api-key" | "bearer";
   extraHeaders?: Record<string, string>;
+  baseUrl?: string;
 } {
   const provider =
     stored.provider && stored.provider in PROVIDERS ? (stored.provider as ProviderId) : "anthropic";
@@ -127,5 +134,6 @@ export function normalizeProviderSettings(stored: {
     apiKey: stored.apiKey ?? "",
     ...(stored.authScheme ? { authScheme: stored.authScheme } : {}),
     ...(stored.extraHeaders ? { extraHeaders: stored.extraHeaders } : {}),
+    ...(stored.baseUrl ? { baseUrl: stored.baseUrl } : {}),
   };
 }
