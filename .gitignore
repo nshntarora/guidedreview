@@ -1,4 +1,5 @@
 node_modules/
+.pnpm*
 dist/
 dist_chrome/
 *.zip
