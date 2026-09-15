@@ -6,11 +6,8 @@ on:
   pull_request:
     branches: [main]
 
-# paths-filter uses the Pulls API on pull_request events; without
-# pull-requests:read the job fails with "Resource not accessible by integration".
 permissions:
   contents: read
-  pull-requests: read
 
 concurrency:
   group: tests-${{ github.workflow }}-${{ github.ref }}
@@ -22,59 +19,6 @@ env:
   CI: "true"
 
 jobs:
-  changes:
-    name: Detect changes
-    runs-on: ubuntu-latest
-    outputs:
-      extension: ${{ steps.filter.outputs.extension }}
-      ui: ${{ steps.filter.outputs.ui }}
-      web: ${{ steps.filter.outputs.web }}
-      cli: ${{ steps.filter.outputs.cli }}
-      root: ${{ steps.filter.outputs.root }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4
-        id: filter
-        with:
-          filters: |
-            extension:
-              - 'apps/extension/**'
-              - 'packages/ui/**'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - 'tsconfig.base.json'
-              - '.github/workflows/**'
-            ui:
-              - 'packages/ui/**'
-              - '.github/workflows/**'
-            web:
-              - 'apps/web/**'
-              - 'packages/ui/**'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - 'tsconfig.base.json'
-              - '.github/workflows/**'
-            cli:
-              - 'apps/cli/**'
-              - 'packages/core/**'
-              - 'packages/ui/**'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - 'tsconfig.base.json'
-              - '.github/workflows/**'
-            root:
-              - 'eslint.config.js'
-              - '.prettierrc'
-              - '.prettierignore'
-              - 'lint-staged.config.js'
-              - '.github/workflows/**'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-
   lint:
     name: Lint and typecheck
     runs-on: ubuntu-latest
@@ -145,9 +89,6 @@ jobs:
   unit:
     name: Unit tests
     runs-on: ubuntu-latest
-    needs: changes
-    # Path filters apply on both PRs and main — docs-only merges skip unit.
-    if: needs.changes.outputs.extension == 'true' || needs.changes.outputs.ui == 'true' || needs.changes.outputs.cli == 'true' || needs.changes.outputs.root == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -167,8 +108,6 @@ jobs:
   e2e:
     name: End-to-end tests
     runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.extension == 'true' || needs.changes.outputs.ui == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -220,8 +159,6 @@ jobs:
   e2e-web:
     name: End-to-end tests (website)
     runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.web == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -281,8 +218,6 @@ jobs:
   e2e-cli:
     name: End-to-end tests (CLI UI)
     runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.cli == 'true'
     steps:
       - uses: actions/checkout@v4
 
