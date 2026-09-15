@@ -141,6 +141,11 @@ export interface ProviderSettings {
   authScheme?: "api-key" | "bearer";
   /** Merged into the provider request. Used by agent adapters (e.g. Anthropic beta). */
   extraHeaders?: Record<string, string>;
+  /**
+   * Overrides the provider's default API host, e.g. to point at a proxy or
+   * gateway. Falls back to the provider's public API when unset.
+   */
+  baseUrl?: string;
 }
 
 // ---- Annotate stream (host-agnostic) ----------------------------------------

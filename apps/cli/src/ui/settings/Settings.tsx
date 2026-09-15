@@ -28,6 +28,7 @@ export interface PublicSettings {
   last4: string | null;
   codingAgent: string | null;
   configPath: string;
+  baseUrl: string | null;
 }
 
 export interface PublicAgent {
@@ -170,6 +171,39 @@ function ApiKeyField({
   );
 }
 
+function BaseUrlField({
+  baseUrl,
+  placeholder,
+  busy,
+  onChange,
+}: {
+  baseUrl: string;
+  placeholder: string;
+  busy: boolean;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <Label htmlFor="baseUrl">Base URL</Label>
+      <Input
+        id="baseUrl"
+        type="text"
+        autoComplete="off"
+        placeholder={placeholder}
+        value={baseUrl}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={busy}
+        aria-describedby="baseUrl-hint"
+        data-testid="settings-base-url"
+      />
+      <p id="baseUrl-hint" className="mt-1.5 m-0 text-sm text-muted">
+        Optional. Point requests at a proxy or gateway instead of the provider&apos;s public API.
+        Leave blank to use the default.
+      </p>
+    </div>
+  );
+}
+
 function agentForProvider(
   agents: PublicAgent[] | null,
   provider: ProviderId,
@@ -182,6 +216,7 @@ interface SettingsSnapshot {
   provider: ProviderId;
   model: string;
   useSubscription: boolean;
+  baseUrl: string;
 }
 
 interface SettingsProps {
@@ -194,6 +229,7 @@ function snapshotFromPublished(data: PublicSettings): SettingsSnapshot {
     provider: data.provider,
     model: data.model,
     useSubscription: Boolean(data.codingAgent),
+    baseUrl: data.baseUrl ?? "",
   };
 }
 
@@ -204,6 +240,7 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
   const [hasKey, setHasKey] = useState(false);
   const [last4, setLast4] = useState<string | null>(null);
   const [useSubscription, setUseSubscription] = useState(false);
+  const [baseUrl, setBaseUrl] = useState("");
   const [configPath, setConfigPath] = useState("~/.config/guided-review/config.json");
   const [agents, setAgents] = useState<PublicAgent[] | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -230,6 +267,7 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
         setHasKey(data.hasKey);
         setLast4(data.last4);
         setUseSubscription(Boolean(data.codingAgent));
+        setBaseUrl(data.baseUrl ?? "");
         setConfigPath(data.configPath);
         setAgents(listed);
         setSaved(snapshotFromPublished(data));
@@ -280,6 +318,7 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
     setHasKey(data.hasKey);
     setLast4(data.last4);
     setUseSubscription(Boolean(data.codingAgent));
+    setBaseUrl(data.baseUrl ?? "");
     setConfigPath(data.configPath);
     setApiKey("");
     setSaved(snapshotFromPublished(data));
@@ -295,13 +334,15 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
       provider !== saved.provider ||
         model !== saved.model ||
         useSubscription !== saved.useSubscription ||
+        baseUrl !== saved.baseUrl ||
         apiKey !== "",
     );
-  }, [loaded, saved, provider, model, useSubscription, apiKey, onDirtyChange]);
+  }, [loaded, saved, provider, model, useSubscription, baseUrl, apiKey, onDirtyChange]);
 
   const payload = () => ({
     provider,
     model,
+    baseUrl: baseUrl.trim(),
     ...(useSubscription
       ? { codingAgent: agentIdForProvider(provider) }
       : { codingAgent: null, ...(apiKey ? { apiKey } : {}) }),
@@ -376,6 +417,7 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
   const onProviderChange = (next: ProviderId) => {
     setProvider(next);
     setModel(defaultModelFor(next));
+    setBaseUrl("");
     setSaveStatus({ kind: "idle" });
     setConnection({ kind: "idle" });
   };
@@ -521,6 +563,19 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
                 }}
               />
             )}
+
+            <HelpDetails title="Advanced">
+              <BaseUrlField
+                baseUrl={baseUrl}
+                placeholder={providerDef.baseUrlPlaceholder}
+                busy={busy}
+                onChange={(value) => {
+                  setBaseUrl(value);
+                  setSaveStatus({ kind: "idle" });
+                  setConnection({ kind: "idle" });
+                }}
+              />
+            </HelpDetails>
 
             <div className="flex flex-wrap items-center gap-2.5 pt-1">
               <Button onClick={() => void onSave()} disabled={busy} data-testid="settings-save">
