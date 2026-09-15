@@ -48,4 +48,8 @@ jobs:
             next-${{ runner.os }}-
 
       - name: Build packages
+        # The client ID is public and is only inlined into this CI verification
+        # artifact. Release builds must provide the real OAuth client ID.
+        env:
+          VITE_GITHUB_CLIENT_ID: test-client-id
         run: pnpm --filter "./apps/**" --filter "./packages/**" --if-present build
