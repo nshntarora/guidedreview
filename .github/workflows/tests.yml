@@ -145,6 +145,10 @@ jobs:
 
       - name: Run e2e tests
         run: pnpm --filter @guided-review/extension test:e2e
+        # E2E never completes GitHub device auth, but the extension build requires
+        # a client ID so release builds cannot accidentally omit one.
+        env:
+          VITE_GITHUB_CLIENT_ID: test-client-id
 
       - name: Upload Playwright report
         if: failure()
