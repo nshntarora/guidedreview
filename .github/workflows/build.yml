@@ -20,7 +20,9 @@ env:
   HUSKY: "0"
   NEXT_TELEMETRY_DISABLED: "1"
   CI: "true"
-  NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+  # The repository variable can be empty (e.g. on fork PRs); fall back so the
+  # build check still runs. Deploys set the real value in deploy.yml.
+  NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://guidedreview.dev' }}
 
 jobs:
   build:
