@@ -86,6 +86,7 @@ interface SettingsBody {
   model?: string;
   apiKey?: string;
   codingAgent?: CodingAgentId | null;
+  baseUrl?: string;
 }
 
 type RequestWithRaw = Request & { rawBody?: Buffer };
@@ -147,6 +148,7 @@ function parseSettingsBody(value: unknown): SettingsBody | null {
   }
   if (typeof raw.model === "string") body.model = raw.model;
   if (typeof raw.apiKey === "string") body.apiKey = raw.apiKey;
+  if (typeof raw.baseUrl === "string") body.baseUrl = raw.baseUrl;
   if (raw.codingAgent === null) body.codingAgent = null;
   else if (typeof raw.codingAgent === "string") {
     if (!isCodingAgentId(raw.codingAgent)) return null;

@@ -1,7 +1,7 @@
 import type { ProviderSettings } from "../types";
 import { buildUserPrompt, SYSTEM_PROMPT } from "../review/buildPrompt";
 import { REVIEW_PLAN_JSON_SCHEMA } from "../review/reviewSchema";
-import { postProviderJson } from "./http";
+import { postProviderJson, resolveApiUrl } from "./http";
 import { readSseJsonStream } from "./sse";
 import type { AnnotateReviewInput, AnnotateStreamEvent, ProviderClient } from "./types";
 import { ProviderError } from "./types";
@@ -16,10 +16,12 @@ import { ProviderError } from "./types";
  * Streams completion deltas so the overlay can surface completed units early.
  */
 export function createOpenAICompatibleProvider(
-  baseUrl: string,
+  defaultBaseUrl: string,
   displayName: string,
 ): ProviderClient {
-  const chatUrl = `${baseUrl}/chat/completions`;
+  const defaultChatUrl = `${defaultBaseUrl}/chat/completions`;
+  const chatUrl = (settings: ProviderSettings) =>
+    resolveApiUrl(settings.baseUrl, defaultChatUrl, "/chat/completions");
   const headers = (settings: ProviderSettings) => ({
     authorization: `Bearer ${settings.apiKey}`,
     ...settings.extraHeaders,
@@ -31,7 +33,7 @@ export function createOpenAICompatibleProvider(
       options?: { signal?: AbortSignal },
     ): AsyncGenerator<AnnotateStreamEvent, void, unknown> {
       const response = await postProviderJson(
-        chatUrl,
+        chatUrl(settings),
         headers(settings),
         {
           model: settings.model,
@@ -96,7 +98,7 @@ export function createOpenAICompatibleProvider(
 
     async testConnection(settings: ProviderSettings): Promise<void> {
       await postProviderJson(
-        chatUrl,
+        chatUrl(settings),
         headers(settings),
         {
           model: settings.model,

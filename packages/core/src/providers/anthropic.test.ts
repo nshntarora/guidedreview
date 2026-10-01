@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AnnotateReviewInput } from "./types";
 
-vi.mock("./http", () => ({
+vi.mock("./http", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./http")>()),
   postProviderJson: vi.fn(),
 }));
 
