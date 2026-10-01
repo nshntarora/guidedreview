@@ -29,7 +29,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           # PR: head branch. Push: branch name. Avoids the PR merge commit so
-          # autofix commits land on the contributor branch.
+          # autofix commits land on the contributor branch. Fork PR heads only
+          # exist in the fork, so check out from the head repository.
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
           ref: ${{ github.head_ref || github.ref_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
