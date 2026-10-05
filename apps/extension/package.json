@@ -27,7 +27,7 @@
     "@guided-review/core": "workspace:*",
     "@guided-review/ui": "workspace:*",
     "dompurify": "^3.4.16",
-    "react": "^19.2.8",
+    "react": "^19.3.0",
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
@@ -39,7 +39,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/chrome": "^0.3.0",
     "@types/node": "^26.2.0",
-    "@types/react": "^19.2.18",
+    "@types/react": "^19.3.0",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.0.5",
     "@vitest/coverage-v8": "^5.0.0",
