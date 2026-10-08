@@ -86,7 +86,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             Skip to content
           </a>
           <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
-            <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3.5 sm:gap-4 sm:px-6">
+            <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:gap-4 sm:px-6">
               <Link
                 href="/"
                 className="shrink-0 rounded-sm border-b-0 no-underline hover:border-b-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
@@ -101,44 +101,58 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 />
               </Link>
               <nav
-                className="flex shrink-0 items-center gap-2 text-base sm:gap-3 md:gap-5"
+                className="flex w-full flex-wrap items-center gap-3 text-sm sm:w-auto sm:gap-4"
                 aria-label="Primary"
                 data-testid="primary-nav"
               >
                 <Link
                   href={SITE_SHORTCUTS.installCli.href}
-                  className="hidden text-foreground hover:text-primary md:inline"
+                  className="hidden text-foreground hover:text-primary xl:inline"
                   data-testid="primary-nav-cli"
                 >
                   {SITE_SHORTCUTS.installCli.label}
                 </Link>
                 <Link
                   href={SITE_SHORTCUTS.installChrome.href}
-                  className="hidden text-foreground hover:text-primary md:inline"
+                  className="hidden text-foreground hover:text-primary xl:inline"
                   data-testid="primary-nav-chrome"
                 >
                   {SITE_SHORTCUTS.installChrome.label}
                 </Link>
                 <Link
                   href="/#features"
-                  className="hidden text-foreground hover:text-primary md:inline"
+                  className="hidden text-foreground hover:text-primary xl:inline"
                   data-testid="primary-nav-features"
                 >
                   Features
                 </Link>
                 <Link
                   href="/docs"
-                  className="hidden text-foreground hover:text-primary md:inline"
+                  className="text-foreground hover:text-primary"
                   data-testid="primary-nav-docs"
                 >
                   Docs
                 </Link>
                 <Link
                   href="/docs/faq"
-                  className="hidden text-foreground hover:text-primary md:inline"
+                  className="hidden text-foreground hover:text-primary xl:inline"
                   data-testid="primary-nav-faq"
                 >
                   FAQ
+                </Link>
+                <Link
+                  href="/compare"
+                  className="text-foreground hover:text-primary"
+                  data-testid="primary-nav-compare"
+                >
+                  Compare
+                </Link>
+                <Link
+                  href="/guides"
+                  className="text-foreground hover:text-primary"
+                  data-testid="primary-nav-guides"
+                >
+                  Guides
                 </Link>
                 <StarOnGitHubButton size="sm" compact location="header" />
                 <InstallButton size="sm" compact location="header" />

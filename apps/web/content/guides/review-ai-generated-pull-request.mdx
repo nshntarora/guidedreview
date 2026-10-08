@@ -1,0 +1,43 @@
+# How to review an AI-generated pull request
+
+You ask an agent to rename `timeout` to `timeoutMs`. It updates the type, the parser, two callers, and a test. The PR description says “updated callers.” The tests pass.
+
+What did you ask for? A rename? A conversion from seconds to milliseconds? Support for both spellings while clients migrate?
+
+Those are three different changes. The diff can look reasonable for all three.
+
+I'd settle that question before reading the implementation. An agent can produce a consistent answer to the wrong question.
+
+## Follow the value
+
+For this example, start with the type and parser. Does the parser still accept `timeout`? If both names are present, which wins? If neither is present, what default reaches the caller?
+
+Then follow the value into both callers. A variable named `timeoutMs` can still contain seconds. The name doesn't do the conversion.
+
+This is the reading order I want: definition, behavior, callers. Alphabetical file order makes me reconstruct it myself.
+
+Guided Review groups related hunks into **review units** and orders them for that reading. The [Chrome extension](/docs/chrome-extension) keeps the walkthrough on the github.com PR. For work that hasn't become a PR, there's a [local CLI](/guides/review-local-changes-before-pr).
+
+The model supplies the order and commentary. The code on screen comes from the real diff. [Invalid hunk references are dropped](/docs/how-it-works); a plausible summary can still be wrong.
+
+## Make the test prove something
+
+Now read the test separately.
+
+If it passes `1000` and expects `1000`, what has it established? Possibly that a value survives a rename. It hasn't established that seconds become milliseconds, or that old clients still work.
+
+I'd look for the input that separates the intended behavior from the mistake. If compatibility matters, use the old spelling. If units matter, check the value at the point where time is consumed. If a default matters, omit the option.
+
+A test that repeats the implementation's assumption won't challenge it.
+
+## Leave the unresolved question beside the code
+
+“Is this right?” gives the author very little to work with.
+
+“This caller still passes seconds. Should this value be converted, or is the new name wrong?” gives them a contract to answer.
+
+The extension lets you draft line comments while reading. Connecting GitHub is optional; it enables you to [submit Comment, Approve, or Request Changes](/docs/submit-review). Guided Review never chooses that outcome.
+
+For a three-line change you already understand, the normal diff view is enough. The point of a walkthrough is to help you follow a change that crosses files.
+
+Before approving the rename, you should be able to say what happens to an old caller passing five seconds.

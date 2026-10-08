@@ -1,0 +1,35 @@
+# A Chrome extension to review GitHub pull requests
+
+A new request option can touch a type, a builder, two callers, and a test. GitHub shows you the files. You still have to work out which order explains the change.
+
+I built Guided Review to make that reading easier. The Chrome extension opens an overlay on the PR and groups related hunks into review units. You stay on GitHub, with the real diff in front of you.
+
+## Get the walkthrough on the PR
+
+Install [Guided Review from the Chrome Web Store](https://chromewebstore.google.com/detail/guided-review/pdnnimoajmnjpccboemeomoeomancodd). In Options, configure your own Anthropic, OpenAI, or Grok key if you want AI grouping and summaries. Without a provider, you get one unit per file.
+
+Open a github.com PR and choose **Start Guided Review**. The extension fetches the diff and opens the overlay. The [first-review docs](/docs/first-review) cover navigation, search, and comments. It's keyboard-first; the [shortcut reference](/docs/keyboard-shortcuts) has the keys.
+
+The supported host is `https://github.com/*`. GitLab, Bitbucket, and GitHub Enterprise on a custom host aren't supported. For a branch that hasn't become a PR, use the [local CLI](/guides/review-local-changes-before-pr).
+
+## Read what happens when the option is missing
+
+For the request-option example, I'd start with the type and builder. Is the option required? If it's omitted, does the builder apply a default or leave the request alone?
+
+Then read both callers. One might omit the option; the other might pass an empty value. Those aren't necessarily the same input.
+
+Read the tests next, as a separate unit. A test with an explicit value tells you very little about omission. Find the assertion that answers the question you're approving.
+
+The model can put these hunks next to each other. It can't decide what the default should be. That's still a product question.
+
+## Keep the comment attached to the question
+
+Draft a line comment beside the branch that chooses the default. Keep reading. You don't have to submit the moment you notice something.
+
+Connecting GitHub through device flow is optional. It enables [review submission](/docs/submit-review) from the overlay: Comment, Approve, or Request Changes. You choose the action. The extension never auto-approves.
+
+The displayed code comes from the parsed diff, even when the model gets its commentary wrong. Settings and keys stay in `chrome.storage.local`; active review state lives in `chrome.storage.session`. AI requests go to your provider, and the extension also talks to GitHub. There's no Guided Review product backend. The [data docs](/docs/privacy-and-data) cover storage and clearing it.
+
+Guided Review is free and Apache-2.0. Provider usage is billed to your account.
+
+A summary saying “adds an optional field” is a place to start reading. I'd still want to know what happens when nobody passes it.

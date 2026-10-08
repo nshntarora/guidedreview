@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
-import { DOCS_PAGES } from "@web/config/docs";
+import { DOCS_PAGES, docsPath } from "@web/config/docs";
+import { GUIDES } from "@web/config/guides";
+import { COMPARISONS } from "@web/config/compare";
 import { SITE_URL } from "@web/lib/site";
 
 export const dynamic = "force-static";
@@ -11,7 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const staticEntries: MetadataRoute.Sitemap = [
     {
       url: SITE_URL,
-      lastModified: "2026-09-06",
+      lastModified: "2026-10-08",
       changeFrequency: "weekly",
       priority: 1,
     },
@@ -42,11 +44,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
 
   const docEntries: MetadataRoute.Sitemap = DOCS_PAGES.filter((page) => page.load).map((page) => ({
-    url: `${SITE_URL}/docs/${page.slug}`,
+    url: `${SITE_URL}${docsPath(page.slug)}`,
     lastModified: page.lastModified,
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
 
-  return [...staticEntries, ...docEntries];
+  const articleEntries: MetadataRoute.Sitemap = [...GUIDES, ...COMPARISONS].map((article) => ({
+    url: `${SITE_URL}${article.path}`,
+    lastModified: article.lastModified,
+    changeFrequency: "monthly",
+    priority: 0.7,
+  }));
+  const collections: MetadataRoute.Sitemap = ["/guides", "/compare"].map((path) => ({
+    url: `${SITE_URL}${path}`,
+    lastModified: "2026-10-08",
+    changeFrequency: "monthly",
+    priority: 0.8,
+  }));
+  return [...staticEntries, ...docEntries, ...collections, ...articleEntries];
 }

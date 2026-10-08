@@ -1,0 +1,170 @@
+import { JsonLd } from "@web/components/JsonLd";
+
+export const faqs = [
+  {
+    question: "How do Guided Review and CodeRabbit prices differ?",
+    answer:
+      "Guided Review is free today; provider usage is billed separately. CodeRabbit has a paid seat model, with the checked Essentials rates in the table above. Compare your expected usage and billing term before estimating a total.",
+  },
+  {
+    question: "Can I move from CodeRabbit to Guided Review without moving my code?",
+    answer:
+      "Yes. Guided Review reads an existing github.com PR or a local git diff. It has no import for CodeRabbit settings or findings, so keep any needed history in your existing tools.",
+  },
+  {
+    question: "What does CodeRabbit do better than Guided Review?",
+    answer:
+      "CodeRabbit provides automated PR findings and suggested fixes. Guided Review organizes code for you to read and does not provide those outputs.",
+  },
+  {
+    question: "How do Guided Review and CodeRabbit work with GitHub?",
+    answer:
+      "Guided Review opens a Chrome overlay on github.com and can submit a review you choose. CodeRabbit connects to a repository and posts automated review comments. Pick the handoff your team needs.",
+  },
+  {
+    question: "Who should keep CodeRabbit instead of switching to Guided Review?",
+    answer:
+      "Keep CodeRabbit if its automated findings and fixes are the work you need. Guided Review adds a reading task rather than replacing that service.",
+  },
+  {
+    question: "Do Guided Review and CodeRabbit both help explain a diff?",
+    answer:
+      "Yes, but the interfaces differ. Guided Review uses ordered review units, while CodeRabbit offers PR walkthroughs and Change Stack. This comparison has no benchmark showing which reading interface is faster.",
+  },
+];
+
+# Guided Review vs CodeRabbit: reading or automated feedback (2026)
+
+Pick Guided Review if you're an engineer who wants to follow a change across files before approving it. Pick CodeRabbit if you want automated PR findings and suggested fixes. The deciding question is what you need next: help reading the implementation, or feedback generated for you? CodeRabbit also offers Change Stack for reading large diffs, so this isn't a claim that only Guided Review helps with context. If your current CodeRabbit workflow answers your questions, keep it. The case for Guided Review starts when you want a walkthrough with your own provider account.
+
+I built Guided Review, and Guided Review publishes this page. Yes, it's biased. Product claims below link to sources checked on **2026-10-08**; prices and features can change.
+
+CodeRabbit describes its review plan as “Agentic code reviews for every PR.” ([Vendor source](https://www.coderabbit.ai/pricing), checked 2026-10-08.)
+
+## Key takeaways
+
+- Guided Review organizes real diff hunks into review units. You read and decide.
+- CodeRabbit wins on automated findings and suggested fixes.
+- CodeRabbit also offers Change Stack. Compare reading interfaces on a real patch.
+
+## Choose Guided Review when
+
+You want to read related changes together, use your own provider account, and write the feedback yourself. You need the same reading interface for a github.com PR and a local git diff.
+
+## Choose CodeRabbit when
+
+You need findings posted when PRs change, suggested fixes, or checks that run as part of a team workflow. Those are jobs Guided Review leaves to other tools.
+
+[Read the docs](/docs/install) to choose the extension or local CLI.
+
+## At a glance
+
+Checked 2026-10-08. Prices are in USD. Source IDs link to the dated list below. A winner is named only where the requested output has a clear match.
+
+| Criterion          | Guided Review                                                                      | CodeRabbit                                                                  | Why it matters                                                           |
+| ------------------ | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Reading context    | Ordered review units; real diff and commentary [G1](#source-g1).                   | PR walkthroughs [C1](#source-c1); Change Stack [C2](#source-c2).            | Try both on a change that crosses files. No measured winner.             |
+| Automated findings | No generated findings list [G1](#source-g1).                                       | Automatic PR review comments [C1](#source-c1).                              | CodeRabbit wins if you need feedback without starting a reading session. |
+| Suggested fixes    | No generated replacement code [G1](#source-g1).                                    | One-click fixes [C1](#source-c1).                                           | CodeRabbit wins if you want proposed edits.                              |
+| GitHub handoff     | Chrome overlay; you submit your review [G2](#source-g2).                           | Repository integration posts review comments [C1](#source-c1).              | Choose where you want feedback to appear.                                |
+| Local review       | Branch, working tree, or commit in a browser [G3](#source-g3).                     | CLI reviews included in Essentials [C3](#source-c3).                        | Both support local work; the outputs differ.                             |
+| Data processing    | Local host sends AI prompts to your provider [G4](#source-g4).                     | Cloud analysis clones the repository in a sandbox [C4](#source-c4).         | Check each route against your code-sharing rules.                        |
+| Price model        | Free product; provider usage billed separately [G5](#source-g5).                   | Essentials: $30/developer/month, or $24 billed annually [C3](#source-c3).   | A seat price and an inference bill need separate estimates.              |
+| Setup              | Install a host; configure a provider for AI [G2](#source-g2), [G3](#source-g3).    | Connect a repository for automatic PR review [C1](#source-c1).              | Setup effort follows the workflow you choose.                            |
+| Review limits      | No hosted quota; provider account limits apply [G1](#source-g1), [G5](#source-g5). | Essentials: 5 reviews/developer/hour, subject to fair use [C3](#source-c3). | Check burst usage before a team rollout.                                 |
+
+## Workflow: decide what you want to receive
+
+For an engineer, the first choice is whether you want another set of findings or a way to read the code. I'd decide that before comparing plans.
+
+CodeRabbit's automated review produces comments and suggestions [C1](#source-c1). Guided Review produces an ordered reading path [G1](#source-g1). These outputs leave you with different work. In one, you assess the findings. In the other, you inspect the implementation and write your own feedback. Neither output proves that a change fits your product.
+
+Take an optional filter on a list endpoint. You still need to know what happens when the filter is missing. Reading the type, query builder, caller, and test can answer that. Resolving a comment about one of those files may leave the rest of the question open.
+
+CodeRabbit's Change Stack also addresses reading context [C2](#source-c2). I wouldn't dismiss it to make this comparison easier. Use a patch you already understand and see which interface lets you follow the behavior with less backtracking. There isn't a measured speed or accuracy winner here.
+
+## Pricing: compare the work, then the bill
+
+A product subscription and direct provider usage aren't the same bill. For a small team, I'd estimate the work you expect each tool to do before calling either one cheaper.
+
+Guided Review is free today, with provider usage billed to your account [G5](#source-g5). Its AI path makes one annotate call per diff chunk. Navigation, search, drafting, and submitting don't make another model call. Re-running structuring does [G1](#source-g1). A large diff can need more than one chunk, so time spent in the overlay isn't a useful estimate of cost.
+
+The CodeRabbit prices and hourly allowance are in the table above, taken from its pricing page [C3](#source-c3). Check billing terms and what happens after the included allowance before buying seats. A published seat price alone doesn't describe every usage pattern.
+
+The practical question is whether you need the service behind that bill. If automated feedback is part of your team's process, replacing it with a reading tool removes work the service was doing. A lower product fee wouldn't make that an equivalent purchase.
+
+## Data: follow the code to its destination
+
+Your team's rules about sending code may settle the choice before the interface does. I'd map the actual request path rather than use “local” as a privacy claim.
+
+Guided Review's extension talks to GitHub and your configured AI provider. The CLI sends AI prompts from its local process to that provider. There's no Guided Review backend receiving diffs or keys [G4](#source-g4). That still sends code outside your machine when you request AI structuring. Your provider's terms remain part of the decision.
+
+CodeRabbit documents sandboxed cloud analysis with a clone of the repository [C4](#source-c4). That's a different processing path. It doesn't, by itself, establish a security ranking between the tools. This page makes no claim about which company protects data better.
+
+For Guided Review, check local storage separately from traffic. Extension settings and keys live in browser local storage; active review state uses session storage. CLI preferences live in your config directory [G4](#source-g4). A provider choice, a storage location, and a retention policy are three different facts. Don't let one stand in for the others.
+
+## Switching
+
+Trying Guided Review doesn't require moving your repository. Install the extension or CLI, configure a provider if needed, and read one patch [G2](#source-g2), [G3](#source-g3). There's no import for CodeRabbit rules, findings, or history. Keep existing GitHub discussions where they are.
+
+If you remove CodeRabbit from a workflow, Guided Review won't replace its automated findings, fixes, or checks. Copy CLI notes you need before stopping the server; they live in that session [G3](#source-g3). Trying the walkthrough alongside CodeRabbit is reversible. Changing a team's review checks is a separate decision.
+
+## Recommendation
+
+I'd pick Guided Review for reading the implementation with my own provider. I'd pick CodeRabbit for automated findings and fixes. The choice flips when the missing help changes from understanding the diff to generating feedback on it.
+
+## Sources
+
+Every source below was checked on **2026-10-08**. Guided Review claims were also checked against the source and manuals in this repository.
+
+- <span id="source-g1" /> **G1** — [Guided Review plan
+  docs](https://guidedreview.dev/docs/how-it-works): review units, real diff, model scope, chunking,
+  file-by-file fallback and model calls. Checked 2026-10-08.
+- <span id="source-g2" /> **G2** — [Guided Review extension
+  docs](https://guidedreview.dev/docs/chrome-extension): github.com host, setup and human-selected
+  review submission. Checked 2026-10-08.
+- <span id="source-g3" /> **G3** — [Guided Review CLI docs](https://guidedreview.dev/docs/cli):
+  local scopes, setup, notes, Generate Prompt and session lifetime. Checked 2026-10-08.
+- <span id="source-g4" /> **G4** — [Guided Review data
+  docs](https://guidedreview.dev/docs/privacy-and-data): processing paths, local storage and no
+  product backend. Checked 2026-10-08.
+- <span id="source-g5" /> **G5** — [Guided Review price and
+  usage](https://guidedreview.dev/docs/faq#is-it-free-forever): free product today and separate
+  provider billing. Checked 2026-10-08.
+- <span id="source-c1" /> **C1** — [CodeRabbit review
+  overview](https://docs.coderabbit.ai/guides/code-review-overview): automatic PR reviews,
+  walkthroughs, comments, fixes, setup. Checked 2026-10-08.
+- <span id="source-c2" /> **C2** — [CodeRabbit homepage](https://www.coderabbit.ai/): Change Stack.
+  Checked 2026-10-08.
+- <span id="source-c3" /> **C3** — [CodeRabbit pricing](https://www.coderabbit.ai/pricing):
+  Essentials rates, billing terms, CLI access, hourly allowance and fair-use condition. Checked
+  2026-10-08.
+- <span id="source-c4" /> **C4** — [CodeRabbit
+  architecture](https://docs.coderabbit.ai/overview/architecture): sandboxed cloud analysis and
+  repository cloning. Checked 2026-10-08.
+
+## FAQ
+
+<JsonLd
+  data={{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map(({ question, answer }) => ({
+      "@type": "Question",
+      name: question,
+      acceptedAnswer: { "@type": "Answer", text: answer },
+    })),
+  }}
+/>
+
+{faqs.map(({ question, answer }) => (
+
+  <section key={question}>
+    <h3>{question}</h3>
+    <p>{answer}</p>
+  </section>
+))}
+
+## Read the docs
+
+[Read the docs](/docs/install) to pick a host and see what setup involves.

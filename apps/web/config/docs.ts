@@ -4,9 +4,11 @@ import type React from "react";
 export type TocEntry = { id: string; label: string; level: 2 | 3 };
 
 export type DocsPage = {
-  /** URL slug under /docs. The empty slug is the /docs index itself. */
+  /** Unique content slug. Defaults to /docs; the empty slug is the docs index. */
   slug: string;
   title: string;
+  /** Optional search title; keep manual navigation labels concise. */
+  seoTitle?: string;
   /** Meta description and social card text. Full sentence. */
   description: string;
   /** ISO date for TechArticle metadata and sitemap freshness. */
@@ -16,7 +18,7 @@ export type DocsPage = {
   /** Sidebar group heading. Pages sharing a section must be adjacent. */
   section: string;
   /**
-   * MDX loader for /docs/[slug]. The index page has none — `app/docs/page.tsx`
+   * MDX loader for the content route. The index page has none — `app/docs/page.tsx`
    * imports `content/help/index.mdx` directly.
    */
   load?: () => Promise<{ default: React.ComponentType; toc?: TocEntry[] }>;
@@ -24,7 +26,7 @@ export type DocsPage = {
 
 /**
  * Every docs page, in sidebar and prev/next order. This is the only place the
- * docs table of contents is written down: sidebar, breadcrumbs, pager, route
+ * content table of contents is written down: sidebar, breadcrumbs, pager, route
  * generation, page metadata, and the index listing all read from here.
  */
 export const DOCS_PAGES: DocsPage[] = [
@@ -40,9 +42,10 @@ export const DOCS_PAGES: DocsPage[] = [
     slug: "why",
     section: "Getting Started",
     title: "Why",
+    seoTitle: "Why AI-generated code still needs a human review | Guided Review",
     description:
-      "Why Guided Review helps engineers read AI-generated code with context and taste, instead of outsourcing judgment or approving changes blindly.",
-    lastModified: "2026-09-06",
+      "What changes when an agent wrote the diff, and what Guided Review does not do for you.",
+    lastModified: "2026-10-08",
     blurb: "why reading code matters more when AI writes it",
     load: () => import("@web/content/help/why.mdx"),
   },
@@ -60,9 +63,10 @@ export const DOCS_PAGES: DocsPage[] = [
     slug: "chrome-extension",
     section: "Apps",
     title: "Chrome Extension",
+    seoTitle: "GitHub pull request review extension | Guided Review",
     description:
-      "Install the Guided Review Chrome extension from the Web Store, then start an ordered review on any pull request hosted at github.com.",
-    lastModified: "2026-09-06",
+      "Start Guided Review on a github.com PR. Your key, your provider. Draft comments and submit from the overlay.",
+    lastModified: "2026-10-08",
     blurb: "Install from the Web Store, then Start Guided Review on a PR",
     load: () => import("@web/content/help/chrome-extension.mdx"),
   },
@@ -70,9 +74,10 @@ export const DOCS_PAGES: DocsPage[] = [
     slug: "cli",
     section: "Apps",
     title: "CLI",
+    seoTitle: "Review a local branch before you open the PR | Guided Review CLI",
     description:
-      "Run Guided Review from your terminal on a local branch, commit, or working tree. The CLI serves the same walkthrough in the browser.",
-    lastModified: "2026-09-06",
+      "npx @guided-review/cli walks a branch, commit, or working tree as review units. Node 22+. No Guided Review backend.",
+    lastModified: "2026-10-08",
     blurb: "npx @guided-review/cli for local branch, commit, or working-tree diffs",
     load: () => import("@web/content/help/cli.mdx"),
   },
@@ -200,9 +205,10 @@ export const DOCS_PAGES: DocsPage[] = [
     slug: "privacy-and-data",
     section: "Trust",
     title: "Privacy & data",
+    seoTitle: "Code review tool that does not upload your diff | Guided Review",
     description:
-      "What the extension and CLI send to GitHub and your AI provider, what stays local, how to clear keys or disconnect, and website analytics.",
-    lastModified: "2026-09-06",
+      "No product backend. Diffs and keys go to your AI provider and, for the extension, GitHub. Not stored by Guided Review.",
+    lastModified: "2026-10-08",
     blurb: "what leaves your machine, what stays, and how to clear it",
     load: () => import("@web/content/help/privacy-and-data.mdx"),
   },

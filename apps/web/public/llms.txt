@@ -116,6 +116,20 @@ Cost: one annotate call per diff chunk when a provider is configured (CLI: only 
 
 ---
 
+## Guides & comparisons
+
+- [Guides](https://guidedreview.dev/guides): Detailed posts on reviewing code, local workflows, and provider keys
+- [Compare tools](https://guidedreview.dev/compare): Choose a code review workflow and read individual tool comparisons
+
+- [How to review an AI-generated pull request](https://guidedreview.dev/guides/review-ai-generated-pull-request): Read intent, related hunks, production changes, and tests before deciding
+- [Review local git changes before opening a PR](https://guidedreview.dev/guides/review-local-changes-before-pr): Local scopes, opt-in AI structuring, notes, and the handoff before publishing
+- [Chrome extension to review GitHub pull requests](https://guidedreview.dev/guides/github-pr-review-extension): A github.com walkthrough with your key and explicit review submission
+- [CodeRabbit alternative for reading the diff yourself](https://guidedreview.dev/compare/coderabbit-alternative): Human walkthrough versus automated PR feedback, with worse-fit cases
+- [Graphite Diamond alternative](https://guidedreview.dev/compare/graphite-diamond-alternative): Compare the current Graphite AI Reviews product with a walkthrough you drive
+- [Copilot code review alternative](https://guidedreview.dev/compare/copilot-code-review-alternative): Compare GitHub review feedback and optional approvals with a human-driven walkthrough
+- [Bring your own key to code review](https://guidedreview.dev/guides/byo-key-code-review): Provider choice, diff traffic, local key storage, and usage cost
+- [AI code review that does not auto-approve](https://guidedreview.dev/guides/code-review-without-auto-approve): AI structures the diff; a human makes the decision
+
 ## Product & install
 
 - [Homepage](https://guidedreview.dev/): Product overview and install CTA

@@ -1,0 +1,37 @@
+# AI code review that does not auto-approve
+
+I don't want the model that explains a change to decide whether I should merge it.
+
+You read “invalid input is rejected” in a summary. You see a passing test with a similar name. It feels like the question has been answered.
+
+But which input? A missing field? An empty string? A value outside a range?
+
+The summary has compressed three questions into one reassuring sentence.
+
+## Open the branch that rejects the input
+
+For this example, read the condition in the handler. Work out exactly what reaches the rejection path. Then read any caller that depends on the old behavior.
+
+Now look at the test. Rejecting a missing field doesn't establish what happens to an empty string. The test name can be broader than its assertion.
+
+I'd leave a comment beside the condition if the requirement is unclear. “Should an empty string be rejected too?” is a decision someone can answer. Another confident summary won't answer it.
+
+That's the job I want AI to help with: get the related code in front of me, in an order I can follow.
+
+## What Guided Review lets the model do
+
+The model groups hunks into review units, orders them, and adds commentary. The overlay resolves those references against the real parsed diff. It never displays model-generated replacement code as if it came from the patch.
+
+[Invalid hunk references are dropped](/docs/how-it-works). The commentary can still be wrong, and the grouping can still be unhelpful. I can validate a hunk ID. I can't validate a product decision that way.
+
+Production changes and tests appear as separate units. You can check the implementation before reading the test's account of it. The [AI-generated PR guide](/guides/review-ai-generated-pull-request) walks through that reading order.
+
+## An Approve button still needs a person
+
+The [Chrome extension](/docs/chrome-extension) can submit Comment, Approve, or Request Changes after you connect GitHub. You pick the outcome and what to send. Guided Review never auto-approves or rejects a PR.
+
+The [CLI](/docs/cli) doesn't submit GitHub reviews. You leave local notes and can use Generate Prompt to copy them into a coding-agent prompt. AI structuring is opt-in. Both hosts support your own Anthropic, OpenAI, or Grok key, with no Guided Review backend receiving the diff.
+
+If you want automated findings or a model-selected approval, a walkthrough won't replace that workflow. For a tiny patch you can read directly, you may not need one at all.
+
+Before I approve that validation change, I want an answer about the empty string.

@@ -1,0 +1,168 @@
+import { JsonLd } from "@web/components/JsonLd";
+
+export const faqs = [
+  {
+    question: "How do Guided Review and GitHub Copilot prices differ?",
+    answer:
+      "Guided Review is free today, with separate provider usage. GitHub Copilot Pro has a monthly subscription, and review also consumes AI credits and Actions minutes. The checked base price is in the table above.",
+  },
+  {
+    question: "Can I migrate from GitHub Copilot to Guided Review?",
+    answer:
+      "You can read the same PR or local diff without moving the repository. Guided Review does not import Copilot settings or review history. Keep any past discussion in GitHub.",
+  },
+  {
+    question: "What does GitHub Copilot do better than Guided Review?",
+    answer:
+      "GitHub Copilot generates review comments and suggested changes. Guided Review does not provide those outputs; it organizes code for you to read.",
+  },
+  {
+    question: "How do Guided Review and GitHub Copilot integrate with GitHub?",
+    answer:
+      "Guided Review opens a Chrome overlay on github.com and offers optional review submission. Copilot review runs within the GitHub PR workflow. Copilot also offers file diff reviews in supported code editors.",
+  },
+  {
+    question: "Who should keep GitHub Copilot instead of switching to Guided Review?",
+    answer:
+      "Keep GitHub Copilot if its comments and suggested fixes are the help you need. Guided Review will not replace those functions or a process that depends on them.",
+  },
+  {
+    question: "Can Guided Review and GitHub Copilot approve a PR?",
+    answer:
+      "Guided Review can submit an approval you explicitly choose. GitHub documents optional Copilot approvals in public preview that can count toward required approval when enabled. Check your repository settings before relying on that behavior.",
+  },
+];
+
+# Guided Review vs GitHub Copilot: reading or review comments (2026)
+
+Pick Guided Review if you're an engineer who wants an ordered walkthrough of a PR or local diff using your own provider account. Pick GitHub Copilot if you want review comments and suggested changes within your existing GitHub workflow. The deciding difference is whether you want help reading the implementation or feedback generated for you. Guided Review never chooses an approval; Copilot has an optional approval feature in public preview. If Copilot already supplies the feedback you need, keep it. The choice flips when your missing tool is a reading interface rather than another reviewer.
+
+I built Guided Review, and Guided Review publishes this page. Yes, it's biased. Product claims below link to sources checked on **2026-10-08**; prices and features can change.
+
+GitHub describes Copilot code review as “producing feedback comments and suggested changes.” ([Vendor source](https://docs.github.com/en/copilot/responsible-use/agents), checked 2026-10-08.)
+
+## Key takeaways
+
+- Guided Review organizes code for you to read. It never chooses approval.
+- GitHub Copilot wins on generated review feedback and suggested fixes.
+- Copilot can submit an approval when the preview feature is enabled. Check repository settings.
+
+## Choose Guided Review when
+
+You want to follow related changes in an ordered walkthrough, use your own provider, and write the review yourself. You need a local browser view before a PR exists.
+
+## Choose GitHub Copilot when
+
+You want generated review comments and suggested fixes inside GitHub or supported editors. You already use Copilot and its review output answers the questions you need answered.
+
+[Read the docs](/docs/install) to choose the extension or local CLI.
+
+## At a glance
+
+Checked 2026-10-08. Prices are in USD. Source IDs link to the dated list below. A winner is named only where the requested output has a clear match.
+
+| Criterion          | Guided Review                                                                   | GitHub Copilot                                                                    | Why it matters                                                      |
+| ------------------ | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Reading context    | Ordered real diff hunks and commentary [G1](#source-g1).                        | Review feedback with relevant code context [C1](#source-c1).                      | Choose the output you will use to assess the change.                |
+| Automated findings | No generated findings list [G1](#source-g1).                                    | Generated review comments [C1](#source-c1).                                       | GitHub Copilot wins if you need another set of findings.            |
+| Suggested fixes    | No generated replacement code [G1](#source-g1).                                 | Suggested changes [C1](#source-c1).                                               | GitHub Copilot wins if you want proposed edits.                     |
+| GitHub handoff     | Chrome overlay; you choose what to submit [G2](#source-g2).                     | Native PR review workflow [C2](#source-c2).                                       | Check how your team requests and responds to reviews.               |
+| Local review       | Branch, working tree, or commit in a browser [G3](#source-g3).                  | File diff reviews in code editors on paid plans [C3](#source-c3).                 | A browser walkthrough and editor feedback are different interfaces. |
+| Data processing    | Local host sends prompts to your provider [G4](#source-g4).                     | GitHub documents review diffs and metadata as inputs [C1](#source-c1).            | Check your provider or GitHub terms for the intended account.       |
+| Price model        | Free product; provider usage is separate [G5](#source-g5).                      | Pro: $10/month; code review uses AI credits and Actions minutes [C3](#source-c3). | The subscription is not a flat per-review price.                    |
+| Setup              | Install a host; configure a provider for AI [G2](#source-g2), [G3](#source-g3). | Use a supported paid plan and review settings [C2](#source-c2), [C3](#source-c3). | Existing access may make keeping Copilot simpler.                   |
+| Approval authority | Only the user selects approval [G2](#source-g2).                                | Optional approving reviews in public preview [C2](#source-c2).                    | Choose whether model-selected approval belongs in your process.     |
+
+## Workflow: do you want to read or receive feedback?
+
+If you're already using Copilot, I'd start with the question it hasn't answered. Installing another tool only makes sense if that missing job matters.
+
+GitHub describes review comments and suggested changes [C1](#source-c1). Guided Review instead gives you a reading path through related hunks [G1](#source-g1). You still decide whether the implementation fits the requirement and whether the tests challenge it. A walkthrough won't produce a list of findings in place of that reading.
+
+For an expiration change, I'd want to know what happens at equality: does an entry expire when the current time matches the expiry time? Reading the comparison, the caller's units, and the boundary test can answer that. A passing test comfortably before expiry leaves the question open.
+
+This is an example of a review question, not a claim that either product would find a bug. If Copilot's feedback already gives you the context you need, keep it. If you want to trace the behavior yourself with related changes together, that's the job Guided Review is built to support.
+
+## Pricing: a subscription is only part of the cost
+
+For an individual engineer, an existing Copilot plan can change the purchase question. You may already have access to its review feature. I'd check that before adding another provider account.
+
+GitHub's pricing page lists the Pro subscription and notes that review consumes AI credits and Actions minutes [C3](#source-c3). The table records the checked base price. It isn't a promised cost for a review, and this page doesn't estimate a monthly bill from a fictional patch. Review size and usage can vary.
+
+Guided Review is free today, with model usage billed to your configured provider [G5](#source-g5). Structuring makes one annotate call per diff chunk. Moving through units, searching, and drafting comments don't make more calls. Repeating AI structuring does [G1](#source-g1). You can also read the file-by-file view without making that call.
+
+I'd compare expected usage alongside the missing job. Paying less for a reading interface doesn't replace generated findings if those findings are what you need. Keeping an existing subscription can be the simpler choice, even when a second product has no product fee.
+
+## Approval: check what the tool is allowed to submit
+
+Your repository's approval rule can make this a process decision, not just a choice of interface. I'd check the settings before assuming every AI review leaves the same decision to a person.
+
+GitHub documents optional Copilot approvals in public preview. When enabled in the relevant settings, an approving Copilot review can count toward a required approval [C2](#source-c2). This page doesn't treat that as the default or make a claim about which policy your team should adopt.
+
+Guided Review never selects an approval. The extension lets you submit Comment, Approve, or Request Changes after connecting GitHub, but you choose the action and the feedback [G2](#source-g2). The CLI doesn't submit a GitHub review. It keeps local notes you can copy into a coding-agent prompt [G3](#source-g3).
+
+That difference matters if your aim is to make the human decision visible. It also means Guided Review won't satisfy a requirement for a model-selected approval. Use the authority your process actually calls for. A summary sounding certain isn't evidence that the repository settings or the intended behavior have been checked.
+
+## Switching
+
+There's no import for Copilot review history or settings. Guided Review can read an existing PR or local diff after you install a host; AI structuring needs provider configuration [G2](#source-g2), [G3](#source-g3). Keep past review discussions in GitHub.
+
+If you disable Copilot review, Guided Review won't replace generated findings, suggested edits, or optional Copilot approvals. Test the reading workflow alongside it before changing repository policy. Uninstalling the extension or stopping the CLI reverses the trial; submitted GitHub reviews remain on GitHub. Copy local CLI notes before stopping the server [G3](#source-g3).
+
+## Recommendation
+
+I'd pick Guided Review to read the change with my own provider and make the review decision myself. I'd keep GitHub Copilot for generated feedback in an existing GitHub workflow. The choice flips when the missing job is reading context rather than review comments.
+
+## Sources
+
+Every source below was checked on **2026-10-08**. Guided Review claims were also checked against the source and manuals in this repository.
+
+- <span id="source-g1" /> **G1** — [Guided Review plan
+  docs](https://guidedreview.dev/docs/how-it-works): review units, real diff, model scope, chunking,
+  file-by-file fallback and model calls. Checked 2026-10-08.
+- <span id="source-g2" /> **G2** — [Guided Review extension
+  docs](https://guidedreview.dev/docs/chrome-extension): github.com host, setup and human-selected
+  review submission. Checked 2026-10-08.
+- <span id="source-g3" /> **G3** — [Guided Review CLI docs](https://guidedreview.dev/docs/cli):
+  local scopes, setup, notes, Generate Prompt and session lifetime. Checked 2026-10-08.
+- <span id="source-g4" /> **G4** — [Guided Review data
+  docs](https://guidedreview.dev/docs/privacy-and-data): processing paths, local storage and no
+  product backend. Checked 2026-10-08.
+- <span id="source-g5" /> **G5** — [Guided Review price and
+  usage](https://guidedreview.dev/docs/faq#is-it-free-forever): free product today and separate
+  provider billing. Checked 2026-10-08.
+- <span id="source-c1" /> **C1** — [GitHub Copilot application
+  card](https://docs.github.com/en/copilot/responsible-use/agents): self-description, code review
+  inputs, comments and suggested changes. Checked 2026-10-08.
+- <span id="source-c2" /> **C2** — [About GitHub Copilot code
+  review](https://docs.github.com/en/copilot/concepts/agents/code-review): PR workflow, settings and
+  optional approvals in public preview. Checked 2026-10-08.
+- <span id="source-c3" /> **C3** — [GitHub Copilot plans and
+  pricing](https://github.com/features/copilot/plans): Pro price, paid-plan review access, editor
+  diff reviews, AI credits and Actions-minute billing. Checked 2026-10-08.
+
+## FAQ
+
+<JsonLd
+  data={{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map(({ question, answer }) => ({
+      "@type": "Question",
+      name: question,
+      acceptedAnswer: { "@type": "Answer", text: answer },
+    })),
+  }}
+/>
+
+{faqs.map(({ question, answer }) => (
+
+  <section key={question}>
+    <h3>{question}</h3>
+    <p>{answer}</p>
+  </section>
+))}
+
+## Read the docs
+
+[Read the docs](/docs/install) to pick a host and see what setup involves.

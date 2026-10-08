@@ -1,0 +1,47 @@
+# Review local git changes before opening a PR
+
+You review your branch. The retry loop looks right. You remember adding a test for zero retries, so you open the PR.
+
+Except the test is still in your working tree. You reviewed the committed diff and filled in the missing bit from memory.
+
+That's an easy mistake to make. A branch diff and a working-tree diff answer different questions. I'd check both before handing the change to someone else.
+
+## Pick the diff you mean
+
+Guided Review's local CLI opens a browser walkthrough from a git repository. It needs Node.js 22 or newer:
+
+```bash
+npx @guided-review/cli
+```
+
+The package is `@guided-review/cli`; the binary is `guidedreview`. `npx guided-review` is a different tool.
+
+The scope matters more than the command:
+
+- **Branch vs base** shows committed work since the branches diverged.
+- **Uncommitted** shows staged and unstaged work against `HEAD`.
+- **A specific commit** shows that commit's patch.
+
+Use `--base` if you need a particular base branch. The [CLI docs](/docs/cli) cover the flags and the other scopes.
+
+The first walkthrough has one unit per file. It doesn't call a model. **Structure With AI** is an explicit action that groups related hunks and adds commentary using your configured provider.
+
+## Read the retry contract before the test
+
+Back to the retry example. Does `retries: 3` mean three attempts, or an initial attempt plus three retries?
+
+Read the option type, the loop, and the caller together. Then check zero. If the caller sets zero, does the request run once or not at all?
+
+Now switch to the uncommitted scope and read the test you remembered. Does its expected count match the contract? Is it even testing the same path?
+
+I want production changes and tests in separate review units for this reason. First work out what the code does. Then ask whether the test would catch the mistake you're worried about.
+
+## Carry the question back to the agent
+
+You can leave a line note in the local walkthrough. **Generate Prompt** formats those notes into a prompt you can copy into your coding agent. It runs locally and doesn't make another model call. You choose where to paste it.
+
+The notes live with the running server. Copy what you need before stopping it. There's no GitHub review submission in the CLI; that belongs to the [extension workflow](/guides/github-pr-review-extension).
+
+The server binds `127.0.0.1:7182` by default. AI structuring sends the diff prompt to your provider. There's no Guided Review backend receiving it. [Local review doesn't mean offline inference](/docs/privacy-and-data).
+
+After the agent edits the retry loop, read the new diff and run the checks the change needs. Before `gh pr create`, make sure the test you relied on is in the branch you're publishing.

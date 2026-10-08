@@ -1,0 +1,39 @@
+# Bring your own key to code review
+
+“Bring your own key” tells you who pays for inference. It doesn't tell you that your code stays on your machine.
+
+In Guided Review, AI structuring sends a prompt built from your diff to Anthropic, OpenAI, or Grok, using your account. There's no Guided Review backend between you and the provider.
+
+That's the boundary I want to make clear. The provider still receives the prompt.
+
+## Follow one request
+
+In the [local CLI](/docs/cli), the initial walkthrough is file by file. Starting the server doesn't ask a model to organize the diff.
+
+When you choose **Structure With AI**, the local process builds the prompt and sends it to your configured provider. The response groups and orders real hunks into review units, with commentary. The displayed code still comes from git.
+
+The extension uses the same engine, with its AI request running in the background worker. It also talks to GitHub to fetch the PR and submit reviews you choose to send.
+
+Neither path sends review data to a Guided Review product backend. Both AI paths send code to a third party. Having your own key doesn't settle whether your repository's rules allow that.
+
+## Count model calls, not clicks
+
+Guided Review is free and Apache-2.0. You pay your provider for usage.
+
+Structuring makes one annotate call per diff chunk. Large diffs are chunked by file at roughly 60,000 characters. A file is never split, so one large file can exceed that target. Characters aren't tokens; that number isn't a price estimate.
+
+Walking units, searching, drafting comments, and submitting a review don't call the model again. Neither does **Generate Prompt**, which formats your local notes for copying. Running structuring again does.
+
+I'd check the selected model and diff size before estimating cost. There's no useful dollar figure I can promise for a diff I haven't seen.
+
+## Storage is a separate question
+
+Extension keys and settings live in `chrome.storage.local`. Active review state lives in `chrome.storage.session`.
+
+CLI settings live in `~/.config/guided-review/config.json`, unless you override the config directory. The [provider docs](/docs/configure-provider) cover configuration. The [privacy and data docs](/docs/privacy-and-data) explain how to clear local data.
+
+Your provider's retention, training, and residency terms are a separate check for your account. Guided Review's lack of a backend doesn't answer those questions.
+
+If you want inference bundled into a managed service, configuring a provider yourself adds work. If the diff can't go to that provider, keep the file-by-file view and don't request AI structuring.
+
+Your key gives you a choice of provider. Read that provider's terms before sending the code.

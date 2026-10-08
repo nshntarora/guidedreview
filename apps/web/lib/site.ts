@@ -15,9 +15,9 @@ export const SITE_NAME = "Guided Review";
 export const DEFAULT_DESCRIPTION =
   "Review AI-generated code before you sign your name to it. Structured review units for GitHub PRs and local diffs — free, open source, bring your own LLM key.";
 
-/** Homepage-specific description (≤160 chars for SERP snippets). */
+/** Homepage-specific search description. */
 export const HOME_DESCRIPTION =
-  "Turn your commits into a structured review that helps you catch AI-code issues before your teammates do. Free, open source, BYO LLM key.";
+  "A Chrome extension for GitHub PRs and a CLI for local diffs. AI clusters the change into review units. You still read the code. Free, open source, your API key.";
 
 export const SOCIAL_IMAGE = {
   url: "/opengraph-image",
