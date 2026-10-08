@@ -40,7 +40,7 @@ export const PROVIDERS: Record<ProviderId, ProviderDefinition> = {
     displayName: "Claude (Anthropic)",
     keyPlaceholder: "sk-ant-…",
     iconSrc: "providers/claude.svg",
-    defaultModelId: "claude-opus-4-8",
+    defaultModelId: "claude-haiku-5-5",
     baseUrlPlaceholder: "https://api.anthropic.com",
   },
   openai: {
@@ -48,7 +48,7 @@ export const PROVIDERS: Record<ProviderId, ProviderDefinition> = {
     displayName: "OpenAI",
     keyPlaceholder: "sk-…",
     iconSrc: "providers/openai.svg",
-    defaultModelId: "gpt-4.1",
+    defaultModelId: "gpt-6-luna",
     baseUrlPlaceholder: "https://api.openai.com/v1",
   },
   grok: {
@@ -56,7 +56,7 @@ export const PROVIDERS: Record<ProviderId, ProviderDefinition> = {
     displayName: "Grok (xAI)",
     keyPlaceholder: "xai-…",
     iconSrc: "providers/grok.svg",
-    defaultModelId: "grok-4",
+    defaultModelId: "grok-4.7",
     baseUrlPlaceholder: "https://api.x.ai/v1",
   },
 };
@@ -70,27 +70,19 @@ export const PROVIDER_LIST: readonly ProviderDefinition[] = Object.values(PROVID
  */
 export const MODELS: readonly ModelDefinition[] = [
   // --- Anthropic ---
-  { id: "claude-opus-4-8", displayName: "Claude Opus 4.8", provider: "anthropic" },
-  { id: "claude-opus-4-7", displayName: "Claude Opus 4.7", provider: "anthropic" },
-  { id: "claude-sonnet-5", displayName: "Claude Sonnet 5", provider: "anthropic" },
-  { id: "claude-sonnet-4-6", displayName: "Claude Sonnet 4.6", provider: "anthropic" },
-  { id: "claude-haiku-4-5-20251001", displayName: "Claude Haiku 4.5", provider: "anthropic" },
+  { id: "claude-opus-5-5", displayName: "Claude Opus 5.5", provider: "anthropic" },
+  { id: "claude-fable-5-1", displayName: "Claude Fable 5.1", provider: "anthropic" },
+  { id: "claude-sonnet-5-5", displayName: "Claude Sonnet 5.5", provider: "anthropic" },
+  { id: "claude-haiku-5-5", displayName: "Claude Haiku 5.5", provider: "anthropic" },
 
   // --- OpenAI ---
-  { id: "gpt-5", displayName: "GPT-5", provider: "openai" },
-  { id: "gpt-5-mini", displayName: "GPT-5 Mini", provider: "openai" },
-  { id: "gpt-4.1", displayName: "GPT-4.1", provider: "openai" },
-  { id: "gpt-4.1-mini", displayName: "GPT-4.1 Mini", provider: "openai" },
-  { id: "gpt-4o", displayName: "GPT-4o", provider: "openai" },
-  { id: "o3", displayName: "o3", provider: "openai" },
-  { id: "o4-mini", displayName: "o4 Mini", provider: "openai" },
+  { id: "gpt-6-astra", displayName: "GPT-6 Astra", provider: "openai" },
+  { id: "gpt-6.1-sol", displayName: "GPT-6.1 Sol", provider: "openai" },
+  { id: "gpt-6-luna", displayName: "GPT-6 Luna", provider: "openai" },
 
   // --- Grok (xAI) ---
-  { id: "grok-4.6", displayName: "Grok 4.6", provider: "grok" },
-  { id: "grok-4.5", displayName: "Grok 4.5", provider: "grok" },
-  { id: "grok-4", displayName: "Grok 4", provider: "grok" },
-  { id: "grok-3", displayName: "Grok 3", provider: "grok" },
-  { id: "grok-3-mini", displayName: "Grok 3 Mini", provider: "grok" },
+  { id: "grok-4.7", displayName: "Grok 4.7", provider: "grok" },
+  { id: "grok-4.3", displayName: "Grok 4.3", provider: "grok" },
 ] as const;
 
 export function getProvider(id: ProviderId): ProviderDefinition {

@@ -154,7 +154,7 @@ describe("createOpenAICompatibleProvider", () => {
       { authorization: "Bearer sk-test" },
       expect.objectContaining({
         model: "gpt-4o",
-        max_tokens: 8,
+        max_completion_tokens: 8,
         messages: [{ role: "user", content: "Reply with OK." }],
       }),
       "OpenAI",
