@@ -55,7 +55,7 @@ const homeSchema = [
     applicationCategory: "DeveloperApplication",
     operatingSystem: "macOS, Linux, Windows",
     description:
-      "CLI that reviews local git branch, commit, or working-tree diffs in the browser. Free, open source, bring your own LLM key.",
+      "CLI that shows a local branch, commit, or working-tree diff as review units in your browser. You read the code and decide. Free, open source, your provider key.",
     url: `${SITE_URL}/docs/cli`,
     installUrl: NPM_PACKAGE_URL,
     offers: {

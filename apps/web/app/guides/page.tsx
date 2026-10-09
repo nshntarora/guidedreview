@@ -5,7 +5,7 @@ import { openGraphSite } from "@web/lib/site";
 
 const title = "Guides";
 const description =
-  "Practical ways to review AI-generated code, read local changes, and keep the review decision yours. Worked examples, tradeoffs, and workflows you can use on your next diff.";
+  "An agent wrote the change. You still have to read it. Guides to following the diff, checking tests, and reviewing local work before opening a PR.";
 
 export const metadata: Metadata = {
   title,

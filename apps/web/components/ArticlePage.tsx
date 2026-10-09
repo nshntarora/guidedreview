@@ -6,7 +6,7 @@ import { openGraphSite, SITE_NAME, SITE_URL } from "@web/lib/site";
 
 export function articleMetadata(article: Article): Metadata {
   return {
-    title: article.title,
+    title: article.seoTitle ? { absolute: article.seoTitle } : article.title,
     description: article.description,
     alternates: { canonical: article.path },
     openGraph: {

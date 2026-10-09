@@ -1,6 +1,6 @@
 # Guided Review
 
-> Review AI-generated code before you sign your name to it. Turn your commits into a structured review that helps you catch AI-code issues before your teammates do. Chrome extension for GitHub PRs and CLI for local git diffs. Free, open source, bring your own LLM key.
+> Review AI-generated code before you sign your name to it. AI groups related changes into review units. You read the real diff and decide. Chrome extension for GitHub PRs and CLI for local git diffs. Free, open source, bring your own LLM key.
 
 Guided Review is a Chrome extension for github.com pull requests and a local CLI (`npx @guided-review/cli`) for branch, commit, or working-tree diffs. AI structures the walkthrough; humans still decide. It never auto-approves PRs, never “reviews for you,” and has no product backend: traffic goes only to your AI provider (and GitHub for the extension).
 
@@ -124,9 +124,9 @@ Cost: one annotate call per diff chunk when a provider is configured (CLI: only 
 - [How to review an AI-generated pull request](https://guidedreview.dev/guides/review-ai-generated-pull-request): Read intent, related hunks, production changes, and tests before deciding
 - [Review local git changes before opening a PR](https://guidedreview.dev/guides/review-local-changes-before-pr): Local scopes, opt-in AI structuring, notes, and the handoff before publishing
 - [Chrome extension to review GitHub pull requests](https://guidedreview.dev/guides/github-pr-review-extension): A github.com walkthrough with your key and explicit review submission
-- [CodeRabbit alternative for reading the diff yourself](https://guidedreview.dev/compare/coderabbit-alternative): Human walkthrough versus automated PR feedback, with worse-fit cases
-- [Graphite Diamond alternative](https://guidedreview.dev/compare/graphite-diamond-alternative): Compare the current Graphite AI Reviews product with a walkthrough you drive
-- [Copilot code review alternative](https://guidedreview.dev/compare/copilot-code-review-alternative): Compare GitHub review feedback and optional approvals with a human-driven walkthrough
+- [CodeRabbit alternative for reading the diff yourself](https://guidedreview.dev/compare/coderabbit-alternative): Diff reading, automated findings, fixes, pricing, and reasons to keep CodeRabbit
+- [Graphite Diamond alternative](https://guidedreview.dev/compare/graphite-diamond-alternative): Diff reading, AI Reviews, team workflow, pricing, and reasons to keep Graphite
+- [Copilot code review alternative](https://guidedreview.dev/compare/copilot-code-review-alternative): Diff reading, generated feedback, pricing, and optional Copilot approvals
 - [Bring your own key to code review](https://guidedreview.dev/guides/byo-key-code-review): Provider choice, diff traffic, local key storage, and usage cost
 - [AI code review that does not auto-approve](https://guidedreview.dev/guides/code-review-without-auto-approve): AI structures the diff; a human makes the decision
 

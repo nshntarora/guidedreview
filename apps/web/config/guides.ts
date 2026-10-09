@@ -6,8 +6,8 @@ export const GUIDES: Article[] = [
     path: "/guides/review-ai-generated-pull-request",
     title: "How to review an AI-generated pull request",
     description:
-      "Read intent, walk related hunks, inspect production changes and tests separately, and check summaries against the diff before deciding on an AI-written PR.",
-    lastModified: "2026-10-08",
+      "An agent renames timeout to timeoutMs. Is it a rename, a conversion, or a compatibility change? Follow the value before approving the PR.",
+    lastModified: "2026-10-09",
     load: () => import("@web/content/guides/review-ai-generated-pull-request.mdx"),
   },
   {
@@ -15,8 +15,8 @@ export const GUIDES: Article[] = [
     path: "/guides/review-local-changes-before-pr",
     title: "Review local git changes before opening a PR",
     description:
-      "Walk a branch, working tree, or commit before gh pr create. Use the local CLI, opt into AI structuring, and turn your own notes into a coding-agent prompt.",
-    lastModified: "2026-10-08",
+      "A branch diff can miss the test still in your working tree. Pick the right local scope, read the change, and check what you are about to publish.",
+    lastModified: "2026-10-09",
     load: () => import("@web/content/guides/review-local-changes-before-pr.mdx"),
   },
   {
@@ -24,8 +24,8 @@ export const GUIDES: Article[] = [
     path: "/guides/github-pr-review-extension",
     title: "A Chrome extension to review GitHub pull requests",
     description:
-      "Read github.com pull requests as ordered review units in a Chrome overlay. Bring your own provider key, draft line comments, and choose what to submit.",
-    lastModified: "2026-10-08",
+      "Follow a GitHub PR across types, callers, and tests in a Chrome overlay. Your provider key, the real diff, and comments you choose to submit.",
+    lastModified: "2026-10-09",
     load: () => import("@web/content/guides/github-pr-review-extension.mdx"),
   },
   {
@@ -33,8 +33,8 @@ export const GUIDES: Article[] = [
     path: "/guides/byo-key-code-review",
     title: "Bring your own key to code review",
     description:
-      "Understand provider choice, diff traffic, local key storage, and usage costs when you bring an Anthropic, OpenAI, or Grok key to a human review walkthrough.",
-    lastModified: "2026-10-08",
+      "Your key tells you who pays for inference. Follow where Guided Review sends the diff, what stays local, and which actions make a model call.",
+    lastModified: "2026-10-09",
     load: () => import("@web/content/guides/byo-key-code-review.mdx"),
   },
   {
@@ -42,8 +42,8 @@ export const GUIDES: Article[] = [
     path: "/guides/code-review-without-auto-approve",
     title: "AI code review that does not auto-approve",
     description:
-      "Use AI to structure a diff while keeping the review decision yours. Learn what a human-driven walkthrough does, what it leaves out, and when it fits.",
-    lastModified: "2026-10-08",
+      "A summary says invalid input is rejected. Which input? Read the condition and its test before choosing whether to approve.",
+    lastModified: "2026-10-09",
     load: () => import("@web/content/guides/code-review-without-auto-approve.mdx"),
   },
 ];

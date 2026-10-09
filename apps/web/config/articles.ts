@@ -4,6 +4,7 @@ export type Article = {
   slug: string;
   path: string;
   title: string;
+  seoTitle?: string;
   tool?: string;
   description: string;
   lastModified: string;

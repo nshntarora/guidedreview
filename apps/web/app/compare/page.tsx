@@ -5,7 +5,7 @@ import { openGraphSite } from "@web/lib/site";
 
 const title = "Compare code review tools";
 const description =
-  "Choose around the review work you need to do. Compare Guided Review with CodeRabbit, Graphite Diamond, and GitHub Copilot, including where each workflow fits.";
+  "Guided Review, CodeRabbit, Graphite, and GitHub Copilot. Compare the work each tool does, the costs, and the reasons to keep what you already use.";
 
 export const metadata: Metadata = {
   title,
