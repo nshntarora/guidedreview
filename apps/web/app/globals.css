@@ -294,6 +294,40 @@ body::before {
 
 /* ---- Legal MDX prose (privacy / terms / cookies) ---- */
 
+/* Articles use the same mono headings and quiet surfaces as the landing page.
+   MDX owns this markup, so its prose styling lives here. */
+.article-content h1 {
+  font-family: var(--font-brand);
+  font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+  line-height: 1.35;
+  margin-bottom: 1.75rem;
+  text-wrap: balance;
+}
+
+.article-content h2 {
+  font-family: var(--font-brand);
+  margin-top: 2.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+  line-height: 1.5;
+}
+
+.article-content p,
+.article-content li {
+  line-height: 1.8;
+}
+
+.article-content table {
+  display: block;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.article-content thead th {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
 .legal-content h2 {
   margin: 0;
   font-size: 1rem; /* text-lg in the product scale */
