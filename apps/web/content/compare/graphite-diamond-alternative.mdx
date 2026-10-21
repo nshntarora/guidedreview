@@ -2,16 +2,6 @@ import { JsonLd } from "@web/components/JsonLd";
 
 export const faqs = [
   {
-    question: "How do Guided Review and Graphite prices differ?",
-    answer:
-      "Guided Review is free today, with separate provider usage. Graphite offers a free Hobby plan with limited AI Reviews and paid team plans. The table records the checked Team rate and annual billing term.",
-  },
-  {
-    question: "Can I migrate from Graphite to Guided Review?",
-    answer:
-      "You can read the same github.com PR or local repository in Guided Review. There is no import for Graphite rules or queue settings. Replacing a team process requires separate work.",
-  },
-  {
     question: "What does Graphite do better than Guided Review?",
     answer:
       "Graphite provides automated review comments and suggested changes. Its Team plan also includes a merge queue and automations. Guided Review does not replace those features.",
@@ -33,25 +23,15 @@ export const faqs = [
   },
 ];
 
-# Guided Review vs Graphite: a walkthrough or team review tools (2026)
+# Graphite Diamond alternative for a human-driven walkthrough
 
 Pick Guided Review if you're an engineer who wants to read a GitHub PR or local diff with your own AI provider. Pick Graphite if you need automated review comments and suggested changes as part of a broader team workflow. The deciding difference is the work you want the tool to do: organize your reading, or provide review feedback and team tools. Guided Review won't replace a merge queue or review rules. If those are why you use Graphite, keep it. The choice flips toward Guided Review when your unmet need is a reading session you control.
 
-I built Guided Review, and Guided Review publishes this page. Yes, it's biased. Product claims below link to sources checked on **2026-10-08**; prices and features can change.
+I built Guided Review, and Guided Review publishes this page. Yes, it's biased. Product claims below link to sources checked on **2026-10-21**; features can change.
 
-Graphite describes AI Reviews as “Instant AI code review.” ([Vendor source](https://graphite.com/features/ai-reviews), checked 2026-10-08.)
+Graphite's old Diamond URL now redirects to its **AI Reviews** page, which also uses the **Graphite Chat** name. This comparison follows that current page rather than pretending Diamond remains a separate product.
 
-## Key takeaways
-
-- Guided Review helps you follow the real diff and leaves feedback to you.
-- Graphite wins on automated findings and suggested fixes.
-- Diamond now points to AI Reviews. Compare the current Graphite product, not the old name.
-
-## Choose Guided Review when
-
-You want an ordered view of a PR or local diff, will write your own comments, and prefer configuring your own model provider.
-
-## Choose Graphite when
+## When Guided Review is the worse choice
 
 You need automated comments and suggested changes, or use Graphite for team review rules and its merge queue. Guided Review does not replace those jobs.
 
@@ -59,19 +39,16 @@ You need automated comments and suggested changes, or use Graphite for team revi
 
 ## At a glance
 
-Checked 2026-10-08. Prices are in USD. Source IDs link to the dated list below. A winner is named only where the requested output has a clear match.
+Checked 2026-10-21. Prices are in USD. Source IDs link to the dated list below. A winner is named only where the requested output has a clear match.
 
-| Criterion           | Guided Review                                                                       | Graphite                                                                                             | Why it matters                                                                                         |
-| ------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Reading context     | Ordered review units, with real diff and commentary [G1](#source-g1).               | PR comments and suggested changes [C1](#source-c1).                                                  | Decide whether you need a reading path or generated feedback.                                          |
-| Automated findings  | No generated findings list [G1](#source-g1).                                        | Automated AI review comments [C1](#source-c1).                                                       | Graphite wins for feedback generated on PRs.                                                           |
-| Suggested fixes     | No generated replacement code [G1](#source-g1).                                     | One-click suggested changes [C1](#source-c1).                                                        | Graphite wins for proposed edits.                                                                      |
-| GitHub handoff      | Chrome overlay; submit a review you choose [G2](#source-g2).                        | GitHub integration for AI review [C1](#source-c1).                                                   | Choose where you want to read and respond.                                                             |
-| Local review        | Branch, working tree, or commit in a browser [G3](#source-g3).                      | CLI for stacked PRs and git commands [C2](#source-c2).                                               | These are different CLI jobs; a matching local walkthrough is Not published in the cited pricing page. |
-| Data processing     | AI prompt goes to your provider; no product backend [G4](#source-g4).               | AI Reviews connects to GitHub [C1](#source-c1); exact processing region: Not published on that page. | A missing region is a question for the vendor, not a security ranking.                                 |
-| Price model         | Free product; provider usage is separate [G5](#source-g5).                          | Hobby: free, limited AI Reviews; Team: $40/user/month, billed annually [C2](#source-c2).             | Compare the relevant plan and separate inference costs.                                                |
-| Setup               | Install a host; configure a provider for AI [G2](#source-g2), [G3](#source-g3).     | Connect GitHub for AI Reviews [C1](#source-c1).                                                      | An individual reading session and a team integration need different setup.                             |
-| Team review process | No merge queue or automated review-rule service [G1](#source-g1), [G2](#source-g2). | Team includes merge queue, automations, and AI review customizations [C2](#source-c2).               | Graphite wins if these are required parts of your process.                                             |
+|                     | Guided Review                                                         | Graphite AI Reviews                                                                                                             |
+| ------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Who decides         | You. It never auto-approves.                                          | Graphite posts automated comments and suggested changes [C1](#source-c1).                                                       |
+| Where the diff goes | Your AI provider. No Guided Review backend [G4](#source-g4).          | Connects to GitHub; further processing detail is omitted because the fetched feature page does not publish it [C1](#source-c1). |
+| Host                | github.com extension or local CLI [G2](#source-g2), [G3](#source-g3). | GitHub integration; Graphite also has a CLI for stacked PRs [C1](#source-c1), [C2](#source-c2).                                 |
+| Key                 | Yours: Anthropic, OpenAI, or Grok.                                    | —                                                                                                                               |
+| Price               | Free, Apache-2.0. Provider usage is yours [G5](#source-g5).           | Hobby is free with limited AI Reviews; Team is $40/user/month billed annually on 2026-10-21 [C2](#source-c2).                   |
+| Worse fit           | You wanted automated feedback, review rules, or a merge queue.        | You wanted an individual walkthrough using your own provider.                                                                   |
 
 ## Workflow: a reading tool will not replace a team process
 
@@ -103,39 +80,9 @@ Graphite's AI Reviews starts by connecting GitHub [C1](#source-c1). I'd check th
 
 For Guided Review, the same check includes your model provider. A local server and a remote model can be part of one workflow. Knowing where the interface runs is useful, but it doesn't tell you where the code goes for inference.
 
-## Switching
-
-There's no migration tool for Graphite rules, queue settings, comments, or history. Trying Guided Review means installing a host and, for AI, configuring a provider [G2](#source-g2), [G3](#source-g3). Existing PR discussions can stay in GitHub.
-
-Replacing Graphite's team workflow is a larger change. Guided Review won't run its automated review rules, proposed fixes, or merge queue. Keep those dependencies in place while trying a walkthrough. Removing the extension or stopping the CLI reverses the trial; it doesn't reverse a submitted GitHub review. Copy needed CLI notes before ending its session [G3](#source-g3).
-
-## Recommendation
-
-I'd pick Guided Review for an individual reading session with my own provider. I'd pick Graphite for automated feedback and team review tools. The choice flips when the problem moves from understanding a diff to running a shared review process.
-
 ## Sources
 
-Every source below was checked on **2026-10-08**. Guided Review claims were also checked against the source and manuals in this repository.
-
-- <span id="source-g1" /> **G1** — [Guided Review plan
-  docs](https://guidedreview.dev/docs/how-it-works): review units, real diff, model scope, chunking,
-  file-by-file fallback and model calls. Checked 2026-10-08.
-- <span id="source-g2" /> **G2** — [Guided Review extension
-  docs](https://guidedreview.dev/docs/chrome-extension): github.com host, setup and human-selected
-  review submission. Checked 2026-10-08.
-- <span id="source-g3" /> **G3** — [Guided Review CLI docs](https://guidedreview.dev/docs/cli):
-  local scopes, setup, notes, Generate Prompt and session lifetime. Checked 2026-10-08.
-- <span id="source-g4" /> **G4** — [Guided Review data
-  docs](https://guidedreview.dev/docs/privacy-and-data): processing paths, local storage and no
-  product backend. Checked 2026-10-08.
-- <span id="source-g5" /> **G5** — [Guided Review price and
-  usage](https://guidedreview.dev/docs/faq#is-it-free-forever): free product today and separate
-  provider billing. Checked 2026-10-08.
-- <span id="source-c1" /> **C1** — [Graphite AI Reviews](https://graphite.com/features/ai-reviews):
-  self-description, GitHub setup, comments, suggested changes and custom rules; Diamond redirects
-  here. Checked 2026-10-08.
-- <span id="source-c2" /> **C2** — [Graphite pricing](https://graphite.com/pricing): Hobby and Team
-  pricing, billing term, CLI purpose, AI access, automations and merge queue. Checked 2026-10-08.
+Checked 2026-10-21: <span id="source-g1" />[plan docs](https://guidedreview.dev/docs/how-it-works) · <span id="source-g2" />[extension docs](https://guidedreview.dev/docs/chrome-extension) · <span id="source-g3" />[CLI docs](https://guidedreview.dev/docs/cli) · <span id="source-g4" />[data docs](https://guidedreview.dev/docs/privacy-and-data) · <span id="source-g5" />[price and usage](https://guidedreview.dev/docs/faq#is-it-free-forever) · <span id="source-c1" />[Graphite AI Reviews](https://graphite.com/features/ai-reviews) · <span id="source-c2" />[Graphite pricing](https://graphite.com/pricing).
 
 ## FAQ
 
