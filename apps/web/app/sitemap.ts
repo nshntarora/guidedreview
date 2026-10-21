@@ -58,7 +58,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }));
   const collections: MetadataRoute.Sitemap = ["/guides", "/compare"].map((path) => ({
     url: `${SITE_URL}${path}`,
-    lastModified: "2026-10-08",
+    lastModified: "2026-10-21",
     changeFrequency: "monthly",
     priority: 0.8,
   }));

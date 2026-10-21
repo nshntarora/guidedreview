@@ -1,4 +1,26 @@
+import { JsonLd } from "@web/components/JsonLd";
+
+export const faqs = [
+  {
+    question: "Does bring your own key keep the diff on my machine?",
+    answer:
+      "No. AI structuring sends a prompt built from the diff to your selected provider. Bring your own key removes a Guided Review inference account, not the provider request.",
+  },
+  {
+    question: "Which providers can I configure?",
+    answer:
+      "Guided Review supports Anthropic, OpenAI, and Grok. The extension stores its key in chrome.storage.local; the CLI uses its config file or supported environment and agent sources.",
+  },
+  {
+    question: "Does every click create a model charge?",
+    answer:
+      "No. Structuring makes one annotate call per diff chunk. Navigation, search, drafting, review submission, and Generate Prompt do not call the model again.",
+  },
+];
+
 # Bring your own key to code review
+
+Bring-your-own-key code review means the review tool uses your Anthropic, OpenAI, or Grok credential and your provider account pays for model usage. It does not mean the diff stays offline: requesting AI structure still sends a prompt built from the diff to that provider. Check the request path, local key storage, chunking behavior, and provider terms separately before using it with repository code.
 
 “Bring your own key” tells you who pays for inference. It doesn't tell you that your code stays on your machine.
 
@@ -6,7 +28,13 @@ In Guided Review, AI structuring sends a prompt built from your diff to Anthropi
 
 That's the boundary I want to make clear. The provider still receives the prompt.
 
-## Follow one request
+## Who this is for
+
+BYO-key review fits an individual or team that already has an approved provider account, wants to choose the model, and does not want a Guided Review backend to receive the diff or resell inference. It also makes the boundary inspectable: the open-source host sends the request directly to the provider you configured.
+
+It does not answer every privacy or procurement question. Your provider can still receive code, and its retention, training, regional, and account terms apply. Confirm those rules for your own account rather than inferring them from the key's location.
+
+## How it works: follow one request
 
 In the [local CLI](/docs/cli), the initial walkthrough is file by file. Starting the server doesn't ask a model to organize the diff.
 
@@ -16,7 +44,15 @@ The extension uses the same engine, with its AI request running in the backgroun
 
 Neither path sends review data to a Guided Review product backend. Both AI paths send code to a third party. Having your own key doesn't settle whether your repository's rules allow that.
 
-## Count model calls, not clicks
+## What to include in a BYO-key check
+
+Before enabling AI structuring, identify the provider, model, credential storage, data sent, action that triggers the request, and way to clear local configuration. Separate those facts from website analytics: the marketing site may record page views and CTA clicks, while the extension and CLI have no product analytics.
+
+Also identify which actions are local. Walking review units, searching, drafting comments, and formatting a Generate Prompt do not require another annotate call. Submitting an extension review goes to GitHub because you initiated a GitHub action, not to a Guided Review backend.
+
+Use the [provider configuration guide](/docs/configure-provider) for setup and the [privacy and data guide](/docs/privacy-and-data) for the storage and traffic map. Those manuals are the source of operational detail; this page explains the decision.
+
+## A worked example: count model calls, not clicks
 
 Guided Review is free and Apache-2.0. You pay your provider for usage.
 
@@ -26,7 +62,7 @@ Walking units, searching, drafting comments, and submitting a review don't call 
 
 I'd check the selected model and diff size before estimating cost. There's no useful dollar figure I can promise for a diff I haven't seen.
 
-## Storage is a separate question
+## Where keys and sessions live
 
 Extension keys and settings live in `chrome.storage.local`. Active review state lives in `chrome.storage.session`.
 
@@ -37,3 +73,33 @@ Your provider's retention, training, and residency terms are a separate check fo
 If you want inference bundled into a managed service, configuring a provider yourself adds work. If the diff can't go to that provider, keep the file-by-file view and don't request AI structuring.
 
 Your key gives you a choice of provider. Read that provider's terms before sending the code.
+
+## When not to use BYO-key review
+
+Guided Review is the worse choice if you want hosted inference bundled into one service, a company-managed key, administrative controls, or a fixed product bill that includes model usage. It does not offer those things.
+
+Do not request AI structuring when repository policy forbids sending the diff to the selected provider. You can keep the file-by-file walkthrough without making the annotate request, or use a workflow approved for that code. BYO key is a routing and billing choice, not a compliance certificate.
+
+## FAQ
+
+<JsonLd
+  data={{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map(({ question, answer }) => ({
+      "@type": "Question",
+      name: question,
+      acceptedAnswer: { "@type": "Answer", text: answer },
+    })),
+  }}
+/>
+
+{faqs.map(({ question, answer }) => (
+
+  <section key={question}>
+    <h3>{question}</h3>
+    <p>{answer}</p>
+  </section>
+))}
+
+Configure a provider with the [setup instructions](/docs/configure-provider), or run `npx @guided-review/cli` and keep the initial file-by-file view.
