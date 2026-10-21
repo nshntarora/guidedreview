@@ -24,7 +24,7 @@
     "next": "^16.3.8",
     "posthog-js": "^1.418.10",
     "react": "^19.3.1",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
     "@next/env": "^16.3.4",
