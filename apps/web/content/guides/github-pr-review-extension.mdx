@@ -1,0 +1,101 @@
+import { JsonLd } from "@web/components/JsonLd";
+
+export const faqs = [
+  {
+    question: "Which pull requests does the extension support?",
+    answer:
+      "It supports pull requests on github.com. It does not support GitHub Enterprise custom hosts, GitLab, or Bitbucket.",
+  },
+  {
+    question: "Do I need to connect GitHub?",
+    answer:
+      "Only if you want to submit Comment, Approve, or Request Changes from the overlay. Reading a PR and structuring it with your provider do not require device-flow connection.",
+  },
+  {
+    question: "Does the extension review or approve the code for me?",
+    answer:
+      "No. AI groups hunks and adds commentary. You read the real diff, write any comments, and select the review outcome.",
+  },
+];
+
+# A Chrome extension to review GitHub pull requests
+
+A Chrome extension can make a GitHub pull request easier to review by keeping the real diff on the PR while grouping related changes into a reading order. With Guided Review, install the extension, add your own Anthropic, OpenAI, or Grok key, open a github.com PR, and choose **Start Guided Review**. AI structures the walkthrough; you inspect the code, draft comments, and decide whether to comment, approve, or request changes.
+
+A new request option can touch a type, a builder, two callers, and a test. GitHub shows you the files. You still have to work out which order explains the change.
+
+I built Guided Review to make that reading easier. The Chrome extension opens an overlay on the PR and groups related hunks into review units. You stay on GitHub, with the real diff in front of you.
+
+## Who this is for
+
+This is for reviewers who want help following a multi-file PR without moving the decision to a bot. It fits a workflow where GitHub remains the source of the diff and review conversation, but alphabetical file order is a poor explanation of the change.
+
+It is also useful for authors doing a final pass on an existing PR. If the work is still local, use the CLI instead; it can review branch-vs-base, uncommitted changes, or one commit.
+
+## How the extension works
+
+Install [Guided Review from the Chrome Web Store](https://chromewebstore.google.com/detail/guided-review/pdnnimoajmnjpccboemeomoeomancodd). In Options, configure your own Anthropic, OpenAI, or Grok key if you want AI grouping and summaries. Without a provider, you get one unit per file.
+
+Open a github.com PR and choose **Start Guided Review**. The extension fetches the diff and opens the overlay. The [first-review docs](/docs/first-review) cover navigation, search, and comments. It's keyboard-first; the [shortcut reference](/docs/keyboard-shortcuts) has the keys.
+
+The supported host is `https://github.com/*`. GitLab, Bitbucket, and GitHub Enterprise on a custom host aren't supported. For a branch that hasn't become a PR, use the [local CLI](/guides/review-local-changes-before-pr).
+
+## What to include in the review
+
+Start with the contract: types, schemas, interfaces, or public behavior. Follow the value into callers and failure paths. Read production changes before tests, then check whether the test would fail for the specific mistake you are considering.
+
+Use the review-unit commentary to orient yourself, not as evidence. The model can group hunks and summarize their apparent purpose. Code shown in the overlay comes from the parsed GitHub diff, and invalid hunk references are dropped. A confident summary can still be wrong.
+
+Draft comments beside the code that created the question. You can keep reading before submission, edit drafts, and choose the overall outcome only after the walkthrough is complete.
+
+## A worked example: read what happens when the option is missing
+
+For the request-option example, I'd start with the type and builder. Is the option required? If it's omitted, does the builder apply a default or leave the request alone?
+
+Then read both callers. One might omit the option; the other might pass an empty value. Those aren't necessarily the same input.
+
+Read the tests next, as a separate unit. A test with an explicit value tells you very little about omission. Find the assertion that answers the question you're approving.
+
+The model can put these hunks next to each other. It can't decide what the default should be. That's still a product question.
+
+## Keep the comment attached to the question
+
+Draft a line comment beside the branch that chooses the default. Keep reading. You don't have to submit the moment you notice something.
+
+Connecting GitHub through device flow is optional. It enables [review submission](/docs/submit-review) from the overlay: Comment, Approve, or Request Changes. You choose the action. The extension never auto-approves.
+
+The displayed code comes from the parsed diff, even when the model gets its commentary wrong. Settings and keys stay in `chrome.storage.local`; active review state lives in `chrome.storage.session`. AI requests go to your provider, and the extension also talks to GitHub. There's no Guided Review product backend. The [data docs](/docs/privacy-and-data) cover storage and clearing it.
+
+Guided Review is free and Apache-2.0. Provider usage is billed to your account.
+
+A summary saying “adds an optional field” is a place to start reading. I'd still want to know what happens when nobody passes it.
+
+## When not to use this extension
+
+Guided Review is the worse choice if you need reviews on GitLab, Bitbucket, or a GitHub Enterprise custom host. It supports github.com PRs only. It is also the wrong tool if you want a self-hosted appliance, automated findings, or a model-selected merge decision.
+
+For a tiny PR with an obvious three-line change, GitHub's normal diff is likely faster. For local work before a PR exists, run the [CLI workflow](/guides/review-local-changes-before-pr) instead.
+
+## FAQ
+
+<JsonLd
+  data={{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map(({ question, answer }) => ({
+      "@type": "Question",
+      name: question,
+      acceptedAnswer: { "@type": "Answer", text: answer },
+    })),
+  }}
+/>
+
+{faqs.map(({ question, answer }) => (
+
+  <section key={question}>
+    <h3>{question}</h3>
+    <p>{answer}</p>
+  </section>
+))}
+
+Install [Guided Review from the Chrome Web Store](https://chromewebstore.google.com/detail/guided-review/pdnnimoajmnjpccboemeomoeomancodd), then follow the [first-review guide](/docs/first-review).

@@ -1,0 +1,111 @@
+import { JsonLd } from "@web/components/JsonLd";
+
+export const faqs = [
+  {
+    question: "What should I review before gh pr create?",
+    answer:
+      "Review the committed branch against its intended base, then inspect staged, unstaged, and untracked work so the PR contains the change you actually checked.",
+  },
+  {
+    question: "Does the CLI call an AI provider when it starts?",
+    answer:
+      "No. It starts with one review unit per file. Structure With AI is an explicit opt-in action that sends the diff prompt to your configured provider.",
+  },
+  {
+    question: "Can the CLI submit a GitHub review?",
+    answer:
+      "No. Local notes stay in the running session. Generate Prompt copies them for a coding agent; the Chrome extension handles optional GitHub submission.",
+  },
+];
+
+# Review local git changes before opening a PR
+
+Review local git changes before opening a PR by checking the committed branch against its real base and inspecting the working tree separately. The branch shows what you are about to publish; staged, unstaged, and untracked changes show what you may have forgotten to publish. Read production behavior before tests, record specific questions, run the checks the change needs, and only then run `gh pr create`.
+
+You review your branch. The retry loop looks right. You remember adding a test for zero retries, so you open the PR.
+
+Except the test is still in your working tree. You reviewed the committed diff and filled in the missing bit from memory.
+
+That's an easy mistake to make. A branch diff and a working-tree diff answer different questions. I'd check both before handing the change to someone else.
+
+## Who this is for
+
+This workflow is for an author reviewing their own branch before asking a teammate to spend attention on it. It also works when there will be no PR: you can inspect one commit, review uncommitted work, or hand precise notes back to a coding agent.
+
+The aim is not to recreate every GitHub feature locally. It is to make the patch you intend to publish match the patch you actually reviewed.
+
+## How local review works
+
+Guided Review's local CLI opens a browser walkthrough from a git repository. It needs Node.js 22 or newer:
+
+```bash
+npx @guided-review/cli
+```
+
+The package is `@guided-review/cli`; the binary is `guidedreview`. `npx guided-review` is a different tool.
+
+The scope matters more than the command:
+
+- **Branch vs base** shows committed work since the branches diverged.
+- **Uncommitted** shows staged and unstaged work against `HEAD`.
+- **A specific commit** shows that commit's patch.
+
+Use `--base` if you need a particular base branch. The [CLI docs](/docs/cli) cover the flags and the other scopes.
+
+The first walkthrough has one unit per file. It doesn't call a model. **Structure With AI** is an explicit action that groups related hunks and adds commentary using your configured provider.
+
+## What to include before the PR
+
+Check the branch diff, the working tree, production code, tests, and any generated or configuration files that belong in source control. Confirm that new files are tracked and that local-only files are excluded. If the PR depends on a migration or documentation update, make sure it is present rather than merely mentioned in a note.
+
+For every changed behavior, ask whether the test would fail for the likely mistake. Run the repository's relevant typecheck, tests, lint, or build after the final edit. A walkthrough helps you understand a diff; it does not execute those checks or prove the branch is ready.
+
+## A worked example: read the retry contract before the test
+
+Back to the retry example. Does `retries: 3` mean three attempts, or an initial attempt plus three retries?
+
+Read the option type, the loop, and the caller together. Then check zero. If the caller sets zero, does the request run once or not at all?
+
+Now switch to the uncommitted scope and read the test you remembered. Does its expected count match the contract? Is it even testing the same path?
+
+I want production changes and tests in separate review units for this reason. First work out what the code does. Then ask whether the test would catch the mistake you're worried about.
+
+## Carry the question back to the agent
+
+You can leave a line note in the local walkthrough. **Generate Prompt** formats those notes into a prompt you can copy into your coding agent. It runs locally and doesn't make another model call. You choose where to paste it.
+
+The notes live with the running server. Copy what you need before stopping it. There's no GitHub review submission in the CLI; that belongs to the [extension workflow](/guides/github-pr-review-extension).
+
+The server binds `127.0.0.1:7182` by default. AI structuring sends the diff prompt to your provider. There's no Guided Review backend receiving it. [Local review doesn't mean offline inference](/docs/privacy-and-data).
+
+After the agent edits the retry loop, read the new diff and run the checks the change needs. Before `gh pr create`, make sure the test you relied on is in the branch you're publishing.
+
+## When not to use this workflow
+
+If the PR already exists and you review only on GitHub, use the [Chrome extension workflow](/guides/github-pr-review-extension). It keeps the walkthrough and draft comments beside the PR and can submit the review after an optional GitHub connection.
+
+Guided Review is the worse choice when you need a hosted team dashboard, automated findings, or a merge gate. The CLI is a local reading tool. Its notes live with the running server, so copy anything you need before stopping it.
+
+## FAQ
+
+<JsonLd
+  data={{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map(({ question, answer }) => ({
+      "@type": "Question",
+      name: question,
+      acceptedAnswer: { "@type": "Answer", text: answer },
+    })),
+  }}
+/>
+
+{faqs.map(({ question, answer }) => (
+
+  <section key={question}>
+    <h3>{question}</h3>
+    <p>{answer}</p>
+  </section>
+))}
+
+Run `npx @guided-review/cli`, then keep the [CLI reference](/docs/cli) open for scopes and flags.

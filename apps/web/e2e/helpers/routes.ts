@@ -1,7 +1,18 @@
-import { DOCS_PAGES } from "@web/config/docs";
+import { DOCS_PAGES, docsPath } from "@web/config/docs";
+import { GUIDES } from "@web/config/guides";
+import { COMPARISONS } from "@web/config/compare";
+export { docsPath } from "@web/config/docs";
 
 /** Static marketing + legal routes (always present). */
-const STATIC_ROUTES = ["/", "/docs", "/privacy", "/terms", "/cookies"] as const;
+const STATIC_ROUTES = [
+  "/",
+  "/docs",
+  "/compare",
+  "/guides",
+  "/privacy",
+  "/terms",
+  "/cookies",
+] as const;
 
 const configuredProductionOrigin = process.env.NEXT_PUBLIC_SITE_URL;
 
@@ -20,12 +31,14 @@ export const PUBLIC_ASSETS = [
   "/opengraph-image",
 ] as const;
 
-/** Path for a docs slug (`""` → `/docs`). */
-export function docsPath(slug: string): string {
-  return slug === "" ? "/docs" : `/docs/${slug}`;
-}
-
 /** Union of static + docs routes (deduped, stable order). */
 export function allRoutes(): string[] {
-  return [...new Set([...STATIC_ROUTES, ...DOCS_PAGES.map((page) => docsPath(page.slug))])];
+  return [
+    ...new Set([
+      ...STATIC_ROUTES,
+      ...DOCS_PAGES.map((page) => docsPath(page.slug)),
+      ...GUIDES.map((article) => article.path),
+      ...COMPARISONS.map((article) => article.path),
+    ]),
+  ];
 }

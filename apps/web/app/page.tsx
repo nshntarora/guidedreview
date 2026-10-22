@@ -9,7 +9,7 @@ import { CHROME_WEB_STORE_URL, NPM_PACKAGE_URL } from "@web/lib/links";
 import { HOME_DESCRIPTION, openGraphSite, SITE_NAME, SITE_URL } from "@web/lib/site";
 
 export const metadata: Metadata = {
-  title: "Review AI-generated code with intent — Guided Review",
+  title: { absolute: "Review AI-generated code before you approve it | Guided Review" },
   description: HOME_DESCRIPTION,
   alternates: { canonical: "/" },
   openGraph: {
@@ -55,7 +55,7 @@ const homeSchema = [
     applicationCategory: "DeveloperApplication",
     operatingSystem: "macOS, Linux, Windows",
     description:
-      "CLI that reviews local git branch, commit, or working-tree diffs in the browser. Free, open source, bring your own LLM key.",
+      "CLI that shows a local branch, commit, or working-tree diff as review units in your browser. You read the code and decide. Free, open source, your provider key.",
     url: `${SITE_URL}/docs/cli`,
     installUrl: NPM_PACKAGE_URL,
     offers: {
