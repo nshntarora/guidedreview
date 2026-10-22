@@ -17,12 +17,31 @@
   X-Frame-Options: DENY
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
 
+# Agent and API discovery for the homepage. Cloudflare Pages applies these at
+# the edge, so the static Next export does not need to generate response
+# headers itself. RFC 8288 permits this comma-separated Link field value.
+/
+  Link: </.well-known/api-catalog>; rel="api-catalog", </openapi/cli-local-api.json>; rel="service-desc", </llms.txt>; rel="service-doc", </openapi/cli-local-api.json>; rel="describedby"
+
+/.well-known/api-catalog
+  Content-Type: application/linkset+json; profile="https://www.rfc-editor.org/info/rfc9727"
+  Link: </.well-known/api-catalog>; rel="api-catalog"
+  Cache-Control: public, max-age=3600
+
+/openapi/cli-local-api.json
+  Content-Type: application/vnd.oai.openapi+json;version=3.1
+  Cache-Control: public, max-age=3600
+
 /opengraph-image
   Content-Type: image/png
   Cache-Control: public, max-age=86400, immutable
 
 /llms.txt
   Content-Type: text/plain; charset=utf-8
+  Cache-Control: public, max-age=3600
+
+/auth.md
+  Content-Type: text/markdown; charset=utf-8
   Cache-Control: public, max-age=3600
 
 /_next/static/*

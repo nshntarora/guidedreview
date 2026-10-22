@@ -1,0 +1,438 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Guided Review CLI local API",
+    "version": "1.0.0",
+    "description": "The local-only API used by the Guided Review CLI browser interface. Run `npx @guided-review/cli` in the repository to review first; the default port is 7182. This API is available only on the machine running the CLI, not at guidedreview.dev. Use the port printed by the CLI if it differs from the default."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:7182",
+      "description": "Default CLI server; the port can be changed with --port."
+    }
+  ],
+  "paths": {
+    "/api/session": {
+      "get": {
+        "operationId": "getSession",
+        "summary": "Get the current local review session",
+        "description": "Rebuilds the selected diff scope and returns the session. If rebuilding fails, returns the last snapshot.",
+        "responses": {
+          "200": { "$ref": "#/components/responses/Session" }
+        }
+      }
+    },
+    "/api/diff-status": {
+      "get": {
+        "operationId": "getDiffStatus",
+        "summary": "Check whether the selected diff changed",
+        "responses": {
+          "200": {
+            "description": "Current diff hash and whether it differs from the served snapshot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["hash", "changed"],
+                  "properties": {
+                    "hash": { "type": "string" },
+                    "changed": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/diff": {
+      "put": {
+        "operationId": "selectDiffScope",
+        "summary": "Select a local diff scope",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["scope"],
+                "properties": {
+                  "scope": { "$ref": "#/components/schemas/DiffScopeId" }
+                }
+              },
+              "example": { "scope": "uncommitted" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/Session" },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/settings": {
+      "get": {
+        "operationId": "getSettings",
+        "summary": "Get public provider settings",
+        "responses": {
+          "200": { "$ref": "#/components/responses/Settings" }
+        }
+      },
+      "put": {
+        "operationId": "updateSettings",
+        "summary": "Update provider settings",
+        "description": "Applies the supplied fields to the active settings and persists configuration on the local machine. A non-empty API key switches from coding-agent credentials to that key.",
+        "requestBody": { "$ref": "#/components/requestBodies/Settings" },
+        "responses": {
+          "200": { "$ref": "#/components/responses/Settings" },
+          "400": { "$ref": "#/components/responses/Error" },
+          "500": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/settings/test": {
+      "post": {
+        "operationId": "testSettings",
+        "summary": "Test a provider connection",
+        "description": "Applies and persists the supplied settings before contacting the provider. This operation changes the active configuration even if the connection test fails. A provider failure or missing key returns HTTP 200 with ok=false.",
+        "requestBody": { "$ref": "#/components/requestBodies/Settings" },
+        "responses": {
+          "200": {
+            "description": "Connection result; inspect ok and error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "required": ["ok"],
+                      "properties": { "ok": { "const": true } }
+                    },
+                    {
+                      "type": "object",
+                      "required": ["ok", "error"],
+                      "properties": {
+                        "ok": { "const": false },
+                        "error": { "type": "string" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/Error" },
+          "500": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/agents": {
+      "get": {
+        "operationId": "listAgents",
+        "summary": "List locally detected coding agents",
+        "responses": {
+          "200": {
+            "description": "Supported coding agents, including installation and credential availability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["agents"],
+                  "properties": {
+                    "agents": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/CodingAgent" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/file": {
+      "get": {
+        "operationId": "getFilePreview",
+        "summary": "Get an image preview from the selected diff",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "description": "Repository-relative image path from session.diff.files[].path in the selected diff.",
+            "schema": { "type": "string", "minLength": 1 }
+          },
+          {
+            "name": "side",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "enum": ["old", "new"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Image bytes, up to 8 MiB. Content-Type identifies the image format.",
+            "content": { "image/*": {} }
+          },
+          "400": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/plan": {
+      "get": {
+        "operationId": "streamReviewPlan",
+        "summary": "Stream an AI-structured review plan",
+        "description": "Starts provider requests for the selected diff, using the configured credentials. Each SSE data field contains a JSON event: STATUS (phase=waiting_for_tokens|tokens_streaming), UNIT (unit), DONE (plan.units), or ERROR (error.message, optional error.code and error.statusCode). Units contain id, title, kind (change|tests), context, and files with fileId, hunkIds, and role. Code must be read from the session diff, never from model commentary. A missing provider key produces an ERROR event with code=no_api_key under HTTP 200. Close the connection to cancel; reconnecting starts a new plan.",
+        "responses": {
+          "200": {
+            "description": "Server-sent event stream.",
+            "content": {
+              "text/event-stream": {
+                "schema": { "type": "string" },
+                "example": "data: {\"type\":\"STATUS\",\"phase\":\"waiting_for_tokens\"}\n\ndata: {\"type\":\"ERROR\",\"error\":{\"message\":\"No API key configured.\",\"code\":\"no_api_key\"}}\n\n"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "requestBodies": {
+      "Settings": {
+        "required": true,
+        "description": "JSON object containing settings to apply; an empty object keeps existing values.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/SettingsInput" },
+            "example": { "codingAgent": "claude-code" }
+          }
+        }
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Request failed. The error describes what failed.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["error"],
+              "properties": { "error": { "type": "string" } }
+            }
+          }
+        }
+      },
+      "Settings": {
+        "description": "Current public settings; includes key availability and last four characters, never the full key.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/PublicSettings" }
+          }
+        }
+      },
+      "Session": {
+        "description": "Current local review session.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Session" }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ProviderId": {
+        "type": "string",
+        "enum": ["anthropic", "openai", "grok"]
+      },
+      "CodingAgentId": {
+        "type": "string",
+        "enum": ["claude-code", "codex", "grok"]
+      },
+      "DiffScopeId": {
+        "type": "string",
+        "description": "Use an id from session.scopes. Commit scope ids begin with commit: followed by a git commit revision.",
+        "pattern": "^(branch|uncommitted|unstaged|commit:.+)$"
+      },
+      "SettingsInput": {
+        "type": "object",
+        "properties": {
+          "provider": { "$ref": "#/components/schemas/ProviderId" },
+          "model": { "type": "string" },
+          "apiKey": {
+            "type": "string",
+            "writeOnly": true,
+            "description": "A non-empty key replaces the current key and is persisted locally. Omitted or empty keeps the current key."
+          },
+          "codingAgent": {
+            "anyOf": [{ "$ref": "#/components/schemas/CodingAgentId" }, { "type": "null" }],
+            "description": "Select credentials from an installed, usable coding agent. A supplied non-empty apiKey takes precedence. Null clears the agent selection while retaining the current in-memory key if no new key is supplied."
+          },
+          "baseUrl": {
+            "type": "string",
+            "description": "Provider API base URL override; an empty string clears it."
+          }
+        }
+      },
+      "PublicSettings": {
+        "type": "object",
+        "required": [
+          "provider",
+          "model",
+          "hasKey",
+          "last4",
+          "codingAgent",
+          "configPath",
+          "baseUrl"
+        ],
+        "properties": {
+          "provider": { "$ref": "#/components/schemas/ProviderId" },
+          "model": { "type": "string" },
+          "hasKey": { "type": "boolean" },
+          "last4": { "type": ["string", "null"] },
+          "codingAgent": {
+            "anyOf": [{ "$ref": "#/components/schemas/CodingAgentId" }, { "type": "null" }]
+          },
+          "configPath": { "type": "string" },
+          "baseUrl": { "type": ["string", "null"] }
+        }
+      },
+      "CodingAgent": {
+        "type": "object",
+        "required": ["id", "displayName", "provider", "installed", "usable", "reason"],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/CodingAgentId" },
+          "displayName": { "type": "string" },
+          "provider": { "$ref": "#/components/schemas/ProviderId" },
+          "installed": { "type": "boolean" },
+          "usable": { "type": "boolean" },
+          "reason": { "type": ["string", "null"] }
+        }
+      },
+      "Session": {
+        "type": "object",
+        "required": [
+          "context",
+          "diff",
+          "sessionKey",
+          "diffHash",
+          "settings",
+          "commits",
+          "scopes",
+          "selectedScope"
+        ],
+        "properties": {
+          "context": {
+            "type": "object",
+            "required": ["title", "description", "baseRef", "headRef"],
+            "properties": {
+              "title": { "type": "string" },
+              "description": { "type": "string" },
+              "descriptionHtml": { "type": "string" },
+              "baseRef": { "type": "string" },
+              "headRef": { "type": "string" },
+              "source": { "const": "local" }
+            }
+          },
+          "diff": {
+            "type": "object",
+            "required": ["files"],
+            "properties": {
+              "files": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/DiffFile" }
+              }
+            }
+          },
+          "sessionKey": { "type": "string" },
+          "diffHash": { "type": "string" },
+          "settings": { "$ref": "#/components/schemas/PublicSettings" },
+          "selectedScope": { "$ref": "#/components/schemas/DiffScopeId" },
+          "commits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["sha", "shortSha", "subject", "body", "author", "authoredAt"],
+              "properties": {
+                "sha": { "type": "string" },
+                "shortSha": { "type": "string" },
+                "subject": { "type": "string" },
+                "body": { "type": "string" },
+                "author": { "type": "string" },
+                "authoredAt": { "type": "string" },
+                "stat": { "$ref": "#/components/schemas/DiffStat" }
+              }
+            }
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "label", "description", "meta", "stat", "empty"],
+              "properties": {
+                "id": { "$ref": "#/components/schemas/DiffScopeId" },
+                "label": { "type": "string" },
+                "description": { "type": "string" },
+                "meta": { "type": "string" },
+                "metaPrefix": { "type": "string" },
+                "stat": { "$ref": "#/components/schemas/DiffStat" },
+                "empty": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      },
+      "DiffStat": {
+        "type": "object",
+        "required": ["files", "additions", "deletions"],
+        "properties": {
+          "files": { "type": "integer" },
+          "additions": { "type": "integer" },
+          "deletions": { "type": "integer" }
+        }
+      },
+      "DiffFile": {
+        "type": "object",
+        "required": ["path", "status", "hunks", "isBinaryOrElided"],
+        "properties": {
+          "path": { "type": "string" },
+          "previousPath": { "type": "string" },
+          "status": { "type": "string", "enum": ["added", "removed", "modified", "renamed"] },
+          "isBinaryOrElided": { "type": "boolean" },
+          "hunks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "header", "oldStart", "oldLines", "newStart", "newLines", "lines"],
+              "properties": {
+                "id": { "type": "string" },
+                "header": { "type": "string" },
+                "oldStart": { "type": "integer" },
+                "oldLines": { "type": "integer" },
+                "newStart": { "type": "integer" },
+                "newLines": { "type": "integer" },
+                "lines": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["type", "content"],
+                    "properties": {
+                      "type": { "type": "string", "enum": ["add", "del", "context"] },
+                      "content": { "type": "string" },
+                      "oldLine": { "type": "integer" },
+                      "newLine": { "type": "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

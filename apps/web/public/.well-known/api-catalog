@@ -1,0 +1,29 @@
+{
+  "linkset": [
+    {
+      "anchor": "https://guidedreview.dev/.well-known/api-catalog",
+      "item": [
+        {
+          "href": "http://127.0.0.1:7182",
+          "title": "Guided Review CLI local API",
+          "type": "text/html"
+        }
+      ]
+    },
+    {
+      "anchor": "http://127.0.0.1:7182",
+      "service-desc": [
+        {
+          "href": "https://guidedreview.dev/openapi/cli-local-api.json",
+          "type": "application/vnd.oai.openapi+json;version=3.1"
+        }
+      ],
+      "service-doc": [
+        {
+          "href": "https://guidedreview.dev/llms.txt",
+          "type": "text/plain"
+        }
+      ]
+    }
+  ]
+}
