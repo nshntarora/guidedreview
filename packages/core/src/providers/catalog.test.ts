@@ -22,6 +22,21 @@ describe("provider catalog", () => {
     }
   });
 
+  it("uses the new defaults for fresh settings across providers", () => {
+    for (const [provider, model] of [
+      ["anthropic", "claude-haiku-5-5"],
+      ["openai", "gpt-6-luna"],
+      ["grok", "grok-4.7"],
+    ] as const) {
+      expect(normalizeProviderSettings({ provider })).toEqual({ provider, model, apiKey: "" });
+    }
+  });
+
+  it.each(MODELS)("preserves saved $provider/$id settings", ({ provider, id }) => {
+    const settings = { provider, model: id, apiKey: "saved-key" };
+    expect(normalizeProviderSettings(settings)).toEqual(settings);
+  });
+
   it("returns only models for the requested provider", () => {
     const openai = modelsForProvider("openai");
     expect(openai.length).toBeGreaterThan(1);
