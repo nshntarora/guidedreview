@@ -134,6 +134,7 @@ test.describe("SEO and Open Graph", () => {
     const body = await response.text();
     expect(body).toMatch(/User-agent:\s*\*/i);
     expect(body).toMatch(/Allow:\s*\//i);
+    expect(body).toContain("Content-Signal: ai-train=no, search=yes, ai-input=yes");
     expect(body).toContain(`Sitemap: ${PRODUCTION_ORIGIN}/sitemap.xml`);
   });
 

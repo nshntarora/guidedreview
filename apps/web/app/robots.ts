@@ -8,6 +8,9 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
+      other: {
+        "Content-Signal": "ai-train=no, search=yes, ai-input=yes",
+      },
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
   };
