@@ -9,15 +9,8 @@ test.describe("landing page", () => {
     await expect(page.getByTestId("star-github-button-hero")).toBeVisible();
 
     const install = page.getByTestId("install-section");
-    await expect(install.getByTestId("install-tab-cli")).toHaveAttribute("aria-selected", "true");
-    await expect(install.getByTestId("install-panel-cli")).toBeVisible();
-    await install.getByTestId("install-tab-chrome").click();
-    await expect(page).toHaveURL(/#install-chrome$/);
-    await expect(install.getByTestId("install-tab-chrome")).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-    await expect(install.getByTestId("install-panel-chrome")).toBeVisible();
+    await expect(install.getByTestId("install-cli")).toBeVisible();
+    await expect(install.getByTestId("install-chrome")).toBeVisible();
     await expect(page.getByTestId("install-extension-button-install")).toHaveAttribute(
       "target",
       "_blank",
@@ -48,13 +41,11 @@ test.describe("landing page", () => {
     await expect(page).toHaveURL(/\/docs\/cli\/?$/);
   });
 
-  test("install deep links select their matching tabs", async ({ page }) => {
+  test("install deep links reach their matching sections", async ({ page }) => {
     await page.goto("/#install-chrome", { waitUntil: "domcontentloaded" });
-    await expect(page.getByTestId("install-tab-chrome")).toHaveAttribute("aria-selected", "true");
-    await expect(page.getByTestId("install-panel-chrome")).toBeVisible();
+    await expect(page.getByTestId("install-chrome")).toBeInViewport();
 
     await page.goto("/#install-cli", { waitUntil: "domcontentloaded" });
-    await expect(page.getByTestId("install-tab-cli")).toHaveAttribute("aria-selected", "true");
-    await expect(page.getByTestId("install-panel-cli")).toBeVisible();
+    await expect(page.getByTestId("install-cli")).toBeInViewport();
   });
 });
