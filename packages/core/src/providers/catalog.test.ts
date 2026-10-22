@@ -26,17 +26,24 @@ describe("provider catalog", () => {
     const openai = modelsForProvider("openai");
     expect(openai.length).toBeGreaterThan(1);
     expect(openai.every((m) => m.provider === "openai")).toBe(true);
-    expect(openai.some((m) => m.id === "gpt-6.1-sol")).toBe(true);
+    expect(openai.some((m) => m.id === "gpt-4.1")).toBe(true);
   });
 
   it("looks up providers by id", () => {
     expect(getProvider("grok").displayName).toContain("Grok");
   });
 
-  it("keeps a stored model that still exists for its provider", () => {
-    expect(normalizeProviderSettings({ provider: "openai", model: "gpt-6.1-sol" }).model).toBe(
-      "gpt-6.1-sol",
-    );
+  it("keeps older saved models selectable below the new models", () => {
+    for (const [provider, current, older] of [
+      ["anthropic", "claude-haiku-5-5", "claude-opus-4-8"],
+      ["openai", "gpt-6-luna", "gpt-4.1"],
+      ["grok", "grok-4.7", "grok-4"],
+    ] as const) {
+      const ids = modelsForProvider(provider).map((model) => model.id);
+      expect(ids).toContain(older);
+      expect(ids.indexOf(older)).toBeGreaterThan(ids.indexOf(current));
+      expect(normalizeProviderSettings({ provider, model: older }).model).toBe(older);
+    }
   });
 
   it("resolves stale, cross-provider and missing model ids to the provider default", () => {
@@ -44,7 +51,7 @@ describe("provider catalog", () => {
       defaultModelFor("openai"),
     );
     // A real model id, but belonging to a different provider.
-    expect(normalizeProviderSettings({ provider: "anthropic", model: "gpt-6.1-sol" }).model).toBe(
+    expect(normalizeProviderSettings({ provider: "anthropic", model: "gpt-4.1" }).model).toBe(
       defaultModelFor("anthropic"),
     );
     expect(normalizeProviderSettings({ provider: "grok" }).model).toBe(defaultModelFor("grok"));

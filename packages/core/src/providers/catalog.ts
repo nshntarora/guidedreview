@@ -66,7 +66,8 @@ export const PROVIDER_LIST: readonly ProviderDefinition[] = Object.values(PROVID
 
 /**
  * Text-generation models available for PR review annotation.
- * Keep in sync with known provider API model ids as they ship or retire.
+ * List new models first within each provider. Keep older models until the
+ * provider retires them so saved selections continue to work.
  */
 export const MODELS: readonly ModelDefinition[] = [
   // --- Anthropic ---
@@ -74,15 +75,35 @@ export const MODELS: readonly ModelDefinition[] = [
   { id: "claude-fable-5-1", displayName: "Claude Fable 5.1", provider: "anthropic" },
   { id: "claude-sonnet-5-5", displayName: "Claude Sonnet 5.5", provider: "anthropic" },
   { id: "claude-haiku-5-5", displayName: "Claude Haiku 5.5", provider: "anthropic" },
+  // Older models remain selectable while the provider supports them.
+  { id: "claude-opus-4-8", displayName: "Claude Opus 4.8", provider: "anthropic" },
+  { id: "claude-opus-4-7", displayName: "Claude Opus 4.7", provider: "anthropic" },
+  { id: "claude-sonnet-5", displayName: "Claude Sonnet 5", provider: "anthropic" },
+  { id: "claude-sonnet-4-6", displayName: "Claude Sonnet 4.6", provider: "anthropic" },
+  { id: "claude-haiku-4-5-20251001", displayName: "Claude Haiku 4.5", provider: "anthropic" },
 
   // --- OpenAI ---
   { id: "gpt-6-astra", displayName: "GPT-6 Astra", provider: "openai" },
   { id: "gpt-6.1-sol", displayName: "GPT-6.1 Sol", provider: "openai" },
   { id: "gpt-6-luna", displayName: "GPT-6 Luna", provider: "openai" },
+  // Older models remain selectable while the provider supports them.
+  { id: "gpt-5", displayName: "GPT-5", provider: "openai" },
+  { id: "gpt-5-mini", displayName: "GPT-5 Mini", provider: "openai" },
+  { id: "gpt-4.1", displayName: "GPT-4.1", provider: "openai" },
+  { id: "gpt-4.1-mini", displayName: "GPT-4.1 Mini", provider: "openai" },
+  { id: "gpt-4o", displayName: "GPT-4o", provider: "openai" },
+  { id: "o3", displayName: "o3", provider: "openai" },
+  { id: "o4-mini", displayName: "o4 Mini", provider: "openai" },
 
   // --- Grok (xAI) ---
   { id: "grok-4.7", displayName: "Grok 4.7", provider: "grok" },
   { id: "grok-4.3", displayName: "Grok 4.3", provider: "grok" },
+  // Older models remain selectable while the provider supports them.
+  { id: "grok-4.6", displayName: "Grok 4.6", provider: "grok" },
+  { id: "grok-4.5", displayName: "Grok 4.5", provider: "grok" },
+  { id: "grok-4", displayName: "Grok 4", provider: "grok" },
+  { id: "grok-3", displayName: "Grok 3", provider: "grok" },
+  { id: "grok-3-mini", displayName: "Grok 3 Mini", provider: "grok" },
 ] as const;
 
 export function getProvider(id: ProviderId): ProviderDefinition {

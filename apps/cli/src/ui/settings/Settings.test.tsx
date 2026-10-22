@@ -9,7 +9,7 @@ import type { PublicAgent, PublicSettings } from "./Settings";
 
 const settings: PublicSettings = {
   provider: "openai",
-  model: "gpt-6-luna",
+  model: "gpt-4.1",
   hasKey: true,
   last4: "key1",
   codingAgent: null,
@@ -105,7 +105,7 @@ describe("Settings", () => {
     render(<Settings />);
 
     expect(await screen.findByRole("combobox", { name: /provider/i })).toHaveTextContent("OpenAI");
-    expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent("GPT-6 Luna");
+    expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent("GPT-4.1");
     expect(screen.getByLabelText(/api key/i)).toHaveAttribute(
       "placeholder",
       expect.stringContaining("key1"),
@@ -174,7 +174,7 @@ describe("Settings", () => {
     expect(put).toBeDefined();
     expect(JSON.parse(String(put?.[1]?.body))).toMatchObject({
       provider: "openai",
-      model: defaultModelFor("openai"),
+      model: settings.model,
       apiKey: "sk-new-key",
       codingAgent: null,
     });
@@ -205,7 +205,7 @@ describe("Settings", () => {
     );
     expect(JSON.parse(String(put?.[1]?.body))).toEqual({
       provider: "openai",
-      model: defaultModelFor("openai"),
+      model: settings.model,
       baseUrl: "",
       codingAgent: "codex",
     });
