@@ -17,7 +17,7 @@ Free, open source, bring your own LLM key. Guided Review has no product backend:
 - **Chrome extension** — [Chrome Web Store](https://chromewebstore.google.com/detail/pdnnimoajmnjpccboemeomoeomancodd), or build from source below
 - **CLI** — `npx @guided-review/cli` ([npm](https://www.npmjs.com/package/@guided-review/cli))
 
-Site and docs: [guidedreview.dev](https://guidedreview.dev) · [docs](https://guidedreview.dev/docs).
+Site and docs: [guidedreview.dev](https://guidedreview.dev) · [docs](https://guidedreview.dev/docs) · [For LLMs / agents](https://guidedreview.dev/llms.txt).
 
 - [Demo](#demo)
 - [Why?](#why)

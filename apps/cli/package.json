@@ -1,6 +1,6 @@
 {
   "name": "@guided-review/cli",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "description": "Walk a local git branch, commit, or working tree in the browser. AI structures the review; you decide.",
   "license": "Apache-2.0",
   "type": "module",
@@ -21,7 +21,7 @@
     "url": "git+https://github.com/nshntarora/guidedreview.git",
     "directory": "apps/cli"
   },
-  "homepage": "https://guidedreview.dev/docs/local-review",
+  "homepage": "https://guidedreview.dev/docs/cli",
   "bugs": {
     "url": "https://github.com/nshntarora/guidedreview/issues"
   },
@@ -29,7 +29,10 @@
     "code-review",
     "git",
     "cli",
-    "diff"
+    "diff",
+    "ai-code-review",
+    "review-units",
+    "byok"
   ],
   "scripts": {
     "dev": "vite",

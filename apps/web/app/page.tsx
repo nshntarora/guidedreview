@@ -9,7 +9,7 @@ import { CHROME_WEB_STORE_URL, NPM_PACKAGE_URL } from "@web/lib/links";
 import { HOME_DESCRIPTION, openGraphSite, SITE_NAME, SITE_URL } from "@web/lib/site";
 
 export const metadata: Metadata = {
-  title: { absolute: "Review AI-generated code before you approve it | Guided Review" },
+  title: { absolute: "Guided Review | Review AI-generated code before you approve it" },
   description: HOME_DESCRIPTION,
   alternates: { canonical: "/" },
   openGraph: {
@@ -42,6 +42,12 @@ const homeSchema = [
       "Chrome extension that clusters GitHub PR diffs into review units with summaries. Free, open source, bring your own LLM key.",
     url: SITE_URL,
     downloadUrl: CHROME_WEB_STORE_URL,
+    featureList: [
+      "Ordered review units from GitHub PR diffs",
+      "Keyboard-first navigation and diff search",
+      "Bring your own AI provider key",
+      "Human-submitted GitHub reviews",
+    ],
     offers: {
       "@type": "Offer",
       price: "0",
@@ -58,6 +64,12 @@ const homeSchema = [
       "CLI that shows a local branch, commit, or working-tree diff as review units in your browser. You read the code and decide. Free, open source, your provider key.",
     url: `${SITE_URL}/docs/cli`,
     installUrl: NPM_PACKAGE_URL,
+    featureList: [
+      "Local branch, commit, and working-tree review",
+      "Optional AI structuring with your provider",
+      "Local line notes and coding-agent prompt export",
+      "File-by-file walkthrough without an API key",
+    ],
     offers: {
       "@type": "Offer",
       price: "0",

@@ -1,0 +1,35 @@
+# A keyboard-first code review workflow
+
+Keyboard-first review helps when the difficult part is following a change across files. Instead of repeatedly opening the file tree, move through related review units, search for the value you are tracing, and leave a note when the behavior is unclear.
+
+Guided Review uses the same review UI for its GitHub extension and local CLI. Most navigation keys work in both hosts. GitHub review submission belongs to the extension; local notes and Generate Prompt belong to the CLI.
+
+## Read one unit, then follow the next dependency
+
+With the walkthrough open and focus outside an editable field, use the right and left arrows to move between units. Up and down scroll the code pane. Read the real hunks before accepting the unit's commentary as an explanation.
+
+For a schema change, ask what reads and writes the affected field. The next unit may cover a caller, but the plan is guidance rather than a completeness guarantee. Check the repository when the diff alone cannot answer the question.
+
+## Search when the reading order is not enough
+
+Press Command/Ctrl + F to open diff search. Search a path fragment or code snippet, use up and down to choose a result, and press Enter to jump to its unit. Escape closes the search palette.
+
+Search covers paths and lines in the parsed diff, including units other than the one you are reading. It does not search every unchanged source file. Use your editor or repository search for dependencies outside the diff.
+
+## Change the view to match the question
+
+Type `v`, then `u` for unified view, or `v`, then `s` for split view, within about a second. Unified view can help follow a small edit in sequence. Split view makes it easier to compare the old condition with the replacement.
+
+These are two views of the same real diff. Switching views does not ask the model to generate code or make another structuring request.
+
+## Leave a precise comment
+
+Press `c` to enter comment mode when the unit has selectable lines. Use up and down to move the selection, hold Shift to extend it, and press Enter to open the composer. Command/Ctrl + Enter saves the draft while the composer is open. Escape closes the composer.
+
+Most navigation shortcuts do not run while you are typing in an editable field. This matters when a comment contains letters that are also shortcuts.
+
+On the extension, saving a draft does not send it to GitHub. Outside the composer, Command/Ctrl + Enter opens the review submission flow. Read the decision and drafts before submitting. The CLI keeps notes local and offers [Generate Prompt](/docs/generate-prompt) instead.
+
+## Keep the shortcut reference nearby
+
+The sidebar lists shortcuts, and the [full keyboard reference](/docs/keyboard-shortcuts) covers modal behavior and host-specific actions. Use [your first review](/docs/first-review) for the GitHub path or the [CLI manual](/docs/cli) for a local diff.

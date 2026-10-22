@@ -55,7 +55,7 @@ export const DOCS_PAGES: DocsPage[] = [
     title: "Install",
     description:
       "Install Guided Review for GitHub pull requests or local git diffs, then choose the Chrome extension or CLI workflow that fits your review.",
-    lastModified: "2026-09-06",
+    lastModified: "2026-10-22",
     blurb: "CLI or Chrome extension — same engine, pick a host",
     load: () => import("@web/content/help/install.mdx"),
   },
@@ -197,7 +197,7 @@ export const DOCS_PAGES: DocsPage[] = [
     title: "FAQ",
     description:
       "Answers about Guided Review setup, privacy, provider costs, GitHub access, the Chrome extension, local CLI, and what the AI does.",
-    lastModified: "2026-09-06",
+    lastModified: "2026-10-22",
     blurb: "free, cost, tracking, extension vs CLI, what the AI does",
     load: () => import("@web/content/help/faq.mdx"),
   },

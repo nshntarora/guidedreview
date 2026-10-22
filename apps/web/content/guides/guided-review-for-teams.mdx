@@ -1,0 +1,29 @@
+# Using Guided Review in a team review workflow
+
+An author uses an agent to update an API and its callers. Before asking a teammate to review it, the author should be able to explain the behavior change and its evidence. Guided Review can organize that reading for both people, using a local CLI before publication and a Chrome overlay once the PR exists.
+
+## Agree on the provider boundary
+
+Each developer configures their own provider or a supported local coding agent in the CLI. AI structuring sends a prompt built from the diff to that provider. Confirm that the repository's rules permit this request before enabling it.
+
+Bring your own key does not establish retention or training policy. Check the provider account's terms and your team's requirements. If sending the diff is not permitted, keep the file-by-file walkthrough without AI structuring. The [privacy and data documentation](/docs/privacy-and-data) describes storage and traffic separately for the two hosts.
+
+## Give authors a local reading pass
+
+Run `npx @guided-review/cli` from the repository with Node.js 22 or later. Choose the scope that contains the intended change: branch, commit, or working tree. Check whether uncommitted work belongs in the review; a branch comparison alone may miss it.
+
+Walk the real diff, leave local notes, and use [Generate Prompt](/docs/generate-prompt) if you want to copy those notes into a coding-agent task. That action formats a prompt; it does not run an agent or verify the resulting fix. Read the next diff after the agent changes the code.
+
+In the PR description, explain the outcome, constraints, tests run, and remaining uncertainty. A model-generated summary is useful orientation, but the author still owns those claims.
+
+## Let reviewers form their own view
+
+On the GitHub PR, a reviewer can choose **Start Guided Review** and follow related hunks as review units. The displayed code comes from the real diff. Review plans and reading progress are local to the user's session; do not treat them as shared team state.
+
+A reviewer can draft line comments and, after connecting GitHub, submit Comment, Approve, or Request Changes. The human chooses the decision. Guided Review does not auto-approve a PR.
+
+## Keep shared evidence in the repository
+
+Guided Review has no team administration dashboard, centralized provider policy, shared progress tracker, or product backend for review data. Keep durable decisions in PR comments, tests, and the repository's normal review process. Teams that need centrally enforced settings or review reporting should assess those requirements separately.
+
+The useful team habit is simple: authors read before handing off, reviewers check the evidence, and both can explain the change. Start with [local review before a PR](/guides/review-local-changes-before-pr) and the [extension workflow](/docs/first-review).

@@ -2,6 +2,34 @@ import type { Article } from "@web/config/articles";
 
 export const GUIDES: Article[] = [
   {
+    slug: "review-large-ai-generated-prs",
+    path: "/guides/review-large-ai-generated-prs",
+    title: "How to review a large AI-generated PR",
+    description:
+      "Trace a large AI-generated PR across contracts, callers, and tests. Use review units to organize the reading, then verify what the summary leaves out.",
+    lastModified: "2026-10-22",
+    load: () => import("@web/content/guides/review-large-ai-generated-prs.mdx"),
+  },
+  {
+    slug: "guided-review-for-teams",
+    path: "/guides/guided-review-for-teams",
+    title: "Using Guided Review in a team review workflow",
+    description:
+      "Use Guided Review for a local author pass and a GitHub reviewer pass. Keep provider policy, review evidence, and approval decisions explicit.",
+    lastModified: "2026-10-22",
+    load: () => import("@web/content/guides/guided-review-for-teams.mdx"),
+  },
+  {
+    slug: "keyboard-first-code-review",
+    path: "/guides/keyboard-first-code-review",
+    title: "A keyboard-first code review workflow",
+    description:
+      "Navigate review units, search the real diff, switch diff views, and draft comments with Guided Review keyboard shortcuts on GitHub or local git changes.",
+    lastModified: "2026-10-22",
+    load: () => import("@web/content/guides/keyboard-first-code-review.mdx"),
+  },
+
+  {
     slug: "review-ai-generated-pull-request",
     path: "/guides/review-ai-generated-pull-request",
     title: "How to review an AI-generated pull request",

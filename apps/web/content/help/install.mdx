@@ -1,3 +1,5 @@
+import { JsonLd } from "@web/components/JsonLd";
+import { SITE_URL } from "@web/lib/site";
 import { CHROME_WEB_STORE_URL } from "@web/lib/links";
 
 export const toc = [
@@ -48,3 +50,53 @@ Full install steps, Options, flags, and day-two workflows live on the app pages:
 Stuck on a missing button, provider error, or port conflict: [Troubleshooting](/docs/troubleshooting).
 
 **Next.** [Chrome Extension](/docs/chrome-extension) · [CLI](/docs/cli) · [Configure AI provider](/docs/configure-provider) · [Your first review](/docs/first-review)
+
+<JsonLd
+  data={[
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      name: "Install Guided Review CLI",
+      url: `${SITE_URL}/docs/install`,
+      step: [
+        { "@type": "HowToStep", name: "Check Node.js", text: "Use Node.js 22 or later." },
+        {
+          "@type": "HowToStep",
+          name: "Run the CLI",
+          text: "Run npx @guided-review/cli in a local git repository. The CLI opens the browser UI with a file-by-file walkthrough.",
+        },
+        {
+          "@type": "HowToStep",
+          name: "Configure AI if needed",
+          text: "Optionally configure a provider for AI clustering and summaries; a provider key is not required for file-by-file reading.",
+          url: `${SITE_URL}/docs/configure-provider`,
+        },
+      ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      name: "Install Guided Review for Chrome",
+      url: `${SITE_URL}/docs/install`,
+      step: [
+        {
+          "@type": "HowToStep",
+          name: "Install the extension",
+          text: "Install Guided Review from the Chrome Web Store.",
+          url: CHROME_WEB_STORE_URL,
+        },
+        {
+          "@type": "HowToStep",
+          name: "Start a review",
+          text: "Open a github.com pull request and choose Start Guided Review or use the toolbar icon.",
+        },
+        {
+          "@type": "HowToStep",
+          name: "Configure AI if needed",
+          text: "Optionally configure an AI provider in extension Options for clustering and summaries.",
+          url: `${SITE_URL}/docs/configure-provider`,
+        },
+      ],
+    },
+  ]}
+/>

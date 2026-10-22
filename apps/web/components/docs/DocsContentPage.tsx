@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import type { Metadata } from "next";
 import { docsPath, type DocsPage } from "@web/config/docs";
 import { DocsPageWrapper } from "@web/components/docs/DocsPageWrapper";
@@ -36,6 +38,29 @@ export async function DocsContentPage({ page }: { page: DocsPage }) {
     isPartOf: { "@type": "WebSite", url: SITE_URL, name: SITE_NAME },
   };
 
+  // Read the visible Markdown at build time so FAQ answers cannot drift from the page.
+  let faqSchema;
+  if (page.slug === "faq") {
+    const source = await readFile(path.join(process.cwd(), "content/help/faq.mdx"), "utf8");
+    const questions = [...source.matchAll(/^## ([^\n]+)\n\n([\s\S]*?)(?=^## |(?![\s\S]))/gm)];
+    faqSchema = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: questions.map(([, question, body]) => ({
+        "@type": "Question",
+        name: question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: body
+            .split("\n> **More setup help.**")[0]
+            .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+            .replace(/\*\*|`/g, "")
+            .trim(),
+        },
+      })),
+    };
+  }
+
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -49,6 +74,7 @@ export async function DocsContentPage({ page }: { page: DocsPage }) {
     <DocsPageWrapper slug={page.slug}>
       <JsonLd data={techArticleSchema} />
       <JsonLd data={breadcrumbSchema} />
+      {faqSchema && <JsonLd data={faqSchema} />}
       <Content />
     </DocsPageWrapper>
   );
