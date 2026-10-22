@@ -13,9 +13,9 @@ describe("settings", () => {
   });
 
   it("round-trips settings through chrome.storage.local", async () => {
-    await setProviderSettings({ provider: "openai", model: "gpt-4.1", apiKey: "sk-test" });
+    await setProviderSettings({ provider: "openai", model: "gpt-6.1-sol", apiKey: "sk-test" });
     const settings = await getProviderSettings();
-    expect(settings).toEqual({ provider: "openai", model: "gpt-4.1", apiKey: "sk-test" });
+    expect(settings).toEqual({ provider: "openai", model: "gpt-6.1-sol", apiKey: "sk-test" });
   });
 
   it("falls back to the provider's default model when only apiKey/provider are stored", async () => {
@@ -30,16 +30,16 @@ describe("settings", () => {
     const listener = vi.fn();
     const unsubscribe = onProviderSettingsChanged(listener);
 
-    await setProviderSettings({ provider: "openai", model: "gpt-4.1", apiKey: "sk-new" });
+    await setProviderSettings({ provider: "openai", model: "gpt-6.1-sol", apiKey: "sk-new" });
 
     expect(listener).toHaveBeenCalledWith({
       provider: "openai",
-      model: "gpt-4.1",
+      model: "gpt-6.1-sol",
       apiKey: "sk-new",
     });
 
     unsubscribe();
-    await setProviderSettings({ provider: "openai", model: "gpt-4.1", apiKey: "sk-later" });
+    await setProviderSettings({ provider: "openai", model: "gpt-6.1-sol", apiKey: "sk-later" });
     expect(listener).toHaveBeenCalledTimes(1);
   });
 

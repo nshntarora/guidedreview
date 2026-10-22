@@ -47,7 +47,7 @@ test.describe("Options page", () => {
     await page.getByTestId("settings-provider").press("End");
     await page.getByTestId("settings-provider").press("Enter");
 
-    await expect(page.getByTestId("settings-model")).toContainText("Grok 4");
+    await expect(page.getByTestId("settings-model")).toContainText("Grok 4.7");
   });
 
   test("navigates to About from Settings and back", async ({ context, extensionId }) => {

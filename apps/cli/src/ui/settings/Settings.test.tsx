@@ -9,7 +9,7 @@ import type { PublicAgent, PublicSettings } from "./Settings";
 
 const settings: PublicSettings = {
   provider: "openai",
-  model: "gpt-4.1",
+  model: "gpt-6-luna",
   hasKey: true,
   last4: "key1",
   codingAgent: null,
@@ -105,7 +105,7 @@ describe("Settings", () => {
     render(<Settings />);
 
     expect(await screen.findByRole("combobox", { name: /provider/i })).toHaveTextContent("OpenAI");
-    expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent("GPT-4.1");
+    expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent("GPT-6 Luna");
     expect(screen.getByLabelText(/api key/i)).toHaveAttribute(
       "placeholder",
       expect.stringContaining("key1"),
@@ -145,7 +145,7 @@ describe("Settings", () => {
     render(<Settings />);
     await screen.findByRole("combobox", { name: /provider/i });
     await chooseOption(user, /provider/i, /Grok/);
-    expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent("Grok 4");
+    expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent("Grok 4.7");
   });
 
   it("saves on-screen settings and shows Saved", async () => {

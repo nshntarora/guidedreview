@@ -102,7 +102,7 @@ export function createOpenAICompatibleProvider(
         headers(settings),
         {
           model: settings.model,
-          max_tokens: 8,
+          max_completion_tokens: 8,
           messages: [{ role: "user", content: "Reply with OK." }],
         },
         displayName,

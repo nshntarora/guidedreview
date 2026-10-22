@@ -19,7 +19,7 @@ describe("Options", () => {
     await chrome.storage.local.set({
       "guidedReview.providerSettings": {
         provider: "openai",
-        model: "gpt-4.1",
+        model: "gpt-6.1-sol",
         apiKey: "sk-existing",
       },
     });
@@ -27,7 +27,7 @@ describe("Options", () => {
     render(<Options />);
 
     expect(await screen.findByRole("combobox", { name: /provider/i })).toHaveTextContent("OpenAI");
-    expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent("GPT-4.1");
+    expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent("GPT-6.1 Sol");
     expect(screen.getByLabelText(/api key/i)).toHaveValue("sk-existing");
   });
 
@@ -37,7 +37,7 @@ describe("Options", () => {
     expect(await screen.findByRole("combobox", { name: /provider/i })).toHaveTextContent(
       "Claude (Anthropic)",
     );
-    expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent("Claude Opus 4.8");
+    expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent("Claude Haiku 5.5");
     expect(screen.getByLabelText(/api key/i)).toHaveValue("");
   });
 
@@ -48,7 +48,7 @@ describe("Options", () => {
     await screen.findByRole("combobox", { name: /provider/i });
     await chooseOption(user, /provider/i, /Grok/);
 
-    expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent("Grok 4");
+    expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent("Grok 4.7");
   });
 
   it("saves the on-screen settings to chrome.storage.local and shows Saved", async () => {
@@ -163,7 +163,7 @@ describe("Options", () => {
 
     const listbox = screen.getByRole("listbox");
     expect(within(listbox).getByRole("option", { name: /Claude Sonnet 5/i })).toBeInTheDocument();
-    expect(within(listbox).getByRole("option", { name: /Claude Haiku 4\.5/i })).toBeInTheDocument();
+    expect(within(listbox).getByRole("option", { name: /Claude Haiku 5\.5/i })).toBeInTheDocument();
   });
 
   it("links to about and docs via the shell nav when rendered in App", async () => {
