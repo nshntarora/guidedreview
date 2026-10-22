@@ -1,35 +1,47 @@
 # A keyboard-first code review workflow
 
-Keyboard-first review helps when the difficult part is following a change across files. Instead of repeatedly opening the file tree, move through related review units, search for the value you are tracing, and leave a note when the behavior is unclear.
+You're tracing a field from a schema to a caller. You open the file tree, find the next file, scroll to the hunk, then go back because you've forgotten the default.
 
-Guided Review uses the same review UI for its GitHub extension and local CLI. Most navigation keys work in both hosts. GitHub review submission belongs to the extension; local notes and Generate Prompt belong to the CLI.
+I want to spend that attention on the field. Guided Review's keyboard-first workflow lets you move through related review units, search the diff, switch views, and leave a comment without repeatedly returning to the file tree.
 
-## Read one unit, then follow the next dependency
+The GitHub extension and local CLI share the review UI and most navigation keys. GitHub submission belongs to the extension. Local notes and Generate Prompt belong to the CLI.
 
-With the walkthrough open and focus outside an editable field, use the right and left arrows to move between units. Up and down scroll the code pane. Read the real hunks before accepting the unit's commentary as an explanation.
+## Move between review units
 
-For a schema change, ask what reads and writes the affected field. The next unit may cover a caller, but the plan is guidance rather than a completeness guarantee. Check the repository when the diff alone cannot answer the question.
+With the walkthrough open and focus outside an editable field, use the right and left arrows to move between units. Up and down scroll the code pane.
 
-## Search when the reading order is not enough
+Read the hunks before accepting the commentary. For a schema change, I'd ask what reads and writes the field, then follow those dependencies.
 
-Press Command/Ctrl + F to open diff search. Search a path fragment or code snippet, use up and down to choose a result, and press Enter to jump to its unit. Escape closes the search palette.
+The next unit might contain the caller you need. If it doesn't, search. The plan isn't a guarantee that every dependency is covered.
 
-Search covers paths and lines in the parsed diff, including units other than the one you are reading. It does not search every unchanged source file. Use your editor or repository search for dependencies outside the diff.
+## Search the diff when the plan misses something
 
-## Change the view to match the question
+Press Command/Ctrl + F. Search a path fragment or code snippet, use up and down to select a result, and press Enter to jump to its unit. Escape closes the palette.
 
-Type `v`, then `u` for unified view, or `v`, then `s` for split view, within about a second. Unified view can help follow a small edit in sequence. Split view makes it easier to compare the old condition with the replacement.
+Search covers paths and lines across the parsed diff, including other units. It doesn't search unchanged source files. For those, use your editor or repository search.
 
-These are two views of the same real diff. Switching views does not ask the model to generate code or make another structuring request.
+That distinction matters when the schema changed but a caller didn't.
 
-## Leave a precise comment
+## Switch unified and split diff views
 
-Press `c` to enter comment mode when the unit has selectable lines. Use up and down to move the selection, hold Shift to extend it, and press Enter to open the composer. Command/Ctrl + Enter saves the draft while the composer is open. Escape closes the composer.
+Type `v`, then `u` within about a second for unified view. Type `v`, then `s` for split view.
 
-Most navigation shortcuts do not run while you are typing in an editable field. This matters when a comment contains letters that are also shortcuts.
+I'd use unified view to follow a small edit in sequence and split view to compare an old condition with its replacement. Both show the same real diff. Switching doesn't make another model request or generate code.
 
-On the extension, saving a draft does not send it to GitHub. Outside the composer, Command/Ctrl + Enter opens the review submission flow. Read the decision and drafts before submitting. The CLI keeps notes local and offers [Generate Prompt](/docs/generate-prompt) instead.
+## Draft a line comment from the keyboard
 
-## Keep the shortcut reference nearby
+Press `c` when the unit has selectable lines. Use up and down to move the selection, hold Shift to extend it, then press Enter to open the composer.
 
-The sidebar lists shortcuts, and the [full keyboard reference](/docs/keyboard-shortcuts) covers modal behavior and host-specific actions. Use [your first review](/docs/first-review) for the GitHub path or the [CLI manual](/docs/cli) for a local diff.
+I'd leave the question where it occurs: “Does this caller still send seconds?” That's easier to act on than a note saying the timeout needs another look.
+
+Command/Ctrl + Enter saves the draft while the composer is open. Escape closes the composer. Most navigation shortcuts pause while you're typing in an editable field, so letters in a comment don't move you around the review.
+
+## Saving a draft and submitting a review are separate actions
+
+In the extension, saving a draft doesn't send it to GitHub. Outside the composer, Command/Ctrl + Enter opens the review submission flow. Read the selected outcome and drafts before submitting.
+
+The CLI keeps notes local and offers [Generate Prompt](/docs/generate-prompt) for copying them into a coding-agent task instead.
+
+The sidebar lists shortcuts. The [keyboard reference](/docs/keyboard-shortcuts) covers modal behavior and host-specific actions; the [first-review walkthrough](/docs/first-review) and [CLI manual](/docs/cli) cover setup.
+
+The useful result is an answer about the caller. Fewer trips to the file tree just make it easier to stay with that question.

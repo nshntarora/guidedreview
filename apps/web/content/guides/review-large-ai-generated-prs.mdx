@@ -1,33 +1,45 @@
 # How to review a large AI-generated PR
 
-A 40-file PR changes a request schema, updates its callers, and replaces several tests. Reading it alphabetically makes you hold half the change in your head before you reach the implementation. Start by writing down the behavior that is supposed to change, then follow one value through the diff.
+A 40-file PR changes a request schema, updates its callers, and replaces several tests. You start at the top of the file list. By the time you reach the implementation, you're holding half the patch in your head.
 
-## Establish a boundary before reading
+I'd start with one behavior instead. Write down what's supposed to change, then follow a value through the contract, callers, and tests. File order can wait.
 
-Read the PR description and identify the intended outcome, compatibility constraints, and evidence the author provides. Separate generated files, dependency updates, and mechanical moves from behavior changes. They still need checking, but they answer different questions.
+## Decide what belongs in the PR
 
-If the author cannot explain which behavior belongs in this PR, ask for a smaller change. A walkthrough can order a diff; it cannot supply a missing requirement.
+Read the description for the intended outcome, compatibility constraints, and evidence. Separate generated files, dependency updates, and mechanical moves from behavior changes. They still need checking, but they answer different questions.
 
-## Follow a contract across files
+If the author can't explain which behavior belongs in this PR, ask for a smaller change. Ordering 40 files won't produce a missing requirement.
 
-Suppose a request field changes from `timeout` to `timeoutMs`. Find its definition, its default, the caller that sends it, and the code that uses it. Check whether the change is a rename, a unit conversion, or both. A test that merely copies the new field name does not prove that old clients still work.
+## Trace a contract across the diff
 
-[Guided Review](/docs/how-it-works) groups related hunks into review units and orders them with short commentary. Use that plan to orient yourself, then check the real diff. If a caller seems absent, search the diff and inspect the repository outside the walkthrough. Unchanged code can still depend on a changed contract.
+Suppose the request field `timeout` becomes `timeoutMs`. Find the definition, default, caller that sends it, and code that uses it.
 
-## Treat model limits as reading limits
+Is this a rename or a conversion? Does an old client still work? A test that copies the new field name doesn't answer either question. The [AI-generated PR guide](/guides/review-ai-generated-pull-request) walks through this example in detail.
 
-Large diffs are chunked by file for AI structuring. A file is never split, so a single large file can exceed the usual chunk target. Provider limits can still reject the request. Separate chunks also limit the context available to each request; do not assume the model has connected every dependency across the PR.
+[Guided Review](/docs/how-it-works) groups related hunks into review units with short commentary. I want that reading order to reduce the file-hopping. I still need to check the real diff.
 
-Read the [chunking details](/docs/how-it-works#chunking-large-diffs). If structuring fails, use the file-by-file walkthrough or reduce the scope. Repeatedly requesting a plan adds provider usage without making the underlying change smaller.
+If a caller seems absent, search the repository. Unchanged code can depend on a contract you've just changed.
 
-## Check tests against a concrete failure
+## Know what the model saw
 
-For each behavior change, name an input that should now behave differently. Read the relevant assertion and the production condition together. Run the focused tests using the repository's own commands; the walkthrough does not execute tests or prove correctness.
+Large diffs are chunked by file for AI structuring. A file is never split, so one large file can exceed the usual chunk target. A provider can still reject the request for exceeding its limits.
 
-Leave comments where the evidence is missing. Distinguish a blocking compatibility concern from a question about intent. On GitHub, drafts remain local until you choose to submit them.
+Separate requests also mean separate context. Don't assume the model connected a caller in one chunk with a schema in another.
 
-## Decide whether the PR is reviewable
+The [chunking documentation](/docs/how-it-works#chunking-large-diffs) covers the details. If structuring fails, use the file-by-file walkthrough or reduce the scope. Requesting another plan adds provider usage. It doesn't make the PR smaller.
 
-A large PR may be coherent and still exceed the time you have to understand it. Ask for a split along behavior boundaries when necessary. Marking every unit read is navigation progress, not evidence of correctness.
+## Test a failure you can name
 
-Start with the [GitHub extension](/docs/chrome-extension), or [review local changes before a PR](/guides/review-local-changes-before-pr). You read the code and make the review decision.
+For each behavior change, pick an input that should now behave differently. Read the assertion beside the production condition. Run the focused tests using the repository's commands; the walkthrough doesn't execute them.
+
+For `timeoutMs`, I'd want a value that exposes a unit error. Five seconds and five milliseconds are different enough to be useful.
+
+Leave the question beside the relevant lines. Make it clear whether you're asking about intent or blocking on compatibility. On GitHub, drafts stay local until you choose to submit them through the [extension](/docs/chrome-extension). The [CLI workflow](/guides/review-local-changes-before-pr) covers work that hasn't become a PR.
+
+## Ask for a split when you can't review the change
+
+A PR can be coherent and still take more time than you have to understand it. Ask for a split along behavior boundaries.
+
+Marking every review unit read means you've visited every unit.
+
+It doesn't mean the timeout is correct.

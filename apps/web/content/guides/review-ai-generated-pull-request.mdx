@@ -20,49 +20,57 @@ export const faqs = [
 
 # How to review an AI-generated pull request
 
-To review an AI-generated pull request, establish the intended contract before trusting the implementation, follow each changed value through related files, read production code before its tests, and check every summary against the real diff. Leave specific questions beside the relevant lines, then approve only when you can explain what changed and why. A structured walkthrough can reduce the file-order puzzle, but the reviewer still makes every judgment.
+I start an AI-generated PR review with the contract. What was supposed to change? Then I follow that behavior through the production code and read the tests after it.
 
-## Who this is for
+An agent can update a type, parser, two callers, and a test in one pass. All five files agree. That still leaves a question: do they agree on the right thing?
 
-This workflow is for the engineer whose name will appear on the review: a teammate reviewing an agent's PR, or an author checking agent-written work before requesting review. It is most useful when a change crosses types, callers, implementation, and tests.
+## Start with intent, not the PR summary
 
-It is not a special standard for machine-written code. The standard stays the same. The practical difference is that an agent can produce a large, consistent patch quickly, so surface consistency is weak evidence that the change matches the request.
+Suppose you ask an agent to rename `timeout` to `timeoutMs`. It updates the references. CI passes. The description says “updated callers.”
 
-## How to review the pull request
+You could approve this as a mechanical rename. But did you want a new name, a conversion from seconds to milliseconds, or a compatibility period that accepts both fields?
 
-1. **Write down the intent.** Reduce the request to a behavior you can test or explain. Separate the stated outcome from the PR description's summary of the implementation.
-2. **Find the contract.** Start with the type, interface, schema, or boundary where the change becomes observable.
-3. **Follow related hunks together.** Trace the value through parsing, business logic, callers, error handling, and output. Do not let alphabetical file order define the investigation.
-4. **Read production changes before tests.** Decide what the code does, then ask whether the test would fail for the mistake you are considering.
-5. **Verify summaries against code.** A plausible explanation is a navigation hint, not evidence.
-6. **Leave concrete questions.** Point to the branch, unit, default, or compatibility rule that needs an answer.
-7. **Choose the review outcome yourself.** Submit only after unresolved questions are answered or explicitly accepted.
+Those are three different changes. The patch can look consistent for any of them.
 
-Guided Review is one way to get that sequence on a github.com PR. It groups related hunks into **review units** and keeps the real parsed diff on screen. The [Chrome extension docs](/docs/chrome-extension) cover installation and review submission. For work that has not become a PR, use the [local review guide](/guides/review-local-changes-before-pr).
+I'd write down the expected behavior before reading the implementation. For an author checking agent-written work, this is also a useful point to compare the patch with the original request.
 
-## What to include in the review
+## Follow the value across files
 
-Check the input and output contract, defaults, failure paths, callers, compatibility behavior, and tests. For a renamed value, ask whether only the name changed or the unit and meaning changed too. For a new option, check omission, empty values, and invalid values rather than only the happy path.
+Start with the type and parser. Does the old name still work? If both names are present, which wins? If neither is present, what default reaches the caller?
 
-Keep tests and production changes conceptually separate. A test name may repeat the intended behavior while its assertion proves something narrower. Also scan files that consume the changed interface even if the agent did not mention them in its summary.
+Then read both callers. A variable called `timeoutMs` can still contain seconds. Renaming it doesn't multiply anything by 1,000.
 
-The model in Guided Review supplies structure and commentary only. Code shown in the overlay comes from the real diff, and [hallucinated hunk references are dropped](/docs/how-it-works). Commentary can still be wrong. Treat it like a map with fallible labels.
+Check the failure paths and output too. Search the repository for consumers the PR didn't change. The agent's summary won't necessarily mention an unchanged caller that now has the wrong contract.
 
-## A worked example: `timeout` becomes `timeoutMs`
+## Read production code before tests
 
-Suppose an agent renames `timeout` to `timeoutMs`, updating a type, parser, two callers, and a test. The PR description says “updated callers,” and CI passes. That leaves three possible intents: a spelling change, a conversion from seconds to milliseconds, or a compatibility period supporting both names.
+A test that passes `1000` and expects `1000` proves that the value survived. It doesn't establish a unit conversion or backward compatibility.
 
-Start with the type and parser. Does the parser accept the old name? If both names are present, which wins? If neither is present, what default reaches the caller? Then follow both callers. A variable named `timeoutMs` can still contain seconds; a rename does not perform a conversion.
+Pick an input that separates the possible behaviors. Five seconds. The old field name. No field at all.
 
-Read the test last. Passing `1000` and expecting `1000` might prove that a value survives the rename, but it does not prove a conversion or compatibility. Use an input that separates those behaviors: the old spelling for compatibility, five seconds for units, or an omitted value for the default.
+Then ask whether the assertion would catch the mistake you're considering. A test name can say “supports timeouts” while proving much less.
 
-A useful comment is specific: “This caller still passes seconds. Should the value be converted, or is the new name wrong?” The question identifies the contract and gives the author something concrete to answer.
+I want to understand the implementation before I read the test's explanation of it.
 
-## When not to use this workflow
+## Use review units to keep related hunks together
 
-For a three-line change whose behavior you already understand, the normal diff is usually enough. A structured walkthrough adds little when there are no relationships to reconstruct.
+[Guided Review](/docs/how-it-works) groups real diff hunks into ordered review units with commentary. Production changes and tests appear as separate units. On a github.com PR, the [Chrome extension](/docs/chrome-extension) puts that walkthrough in an overlay. Before a PR exists, there's the [local CLI workflow](/guides/review-local-changes-before-pr).
 
-Guided Review is also the worse choice when you want a bot to produce findings, approve a PR, or act as a merge gate without you reading the change. It deliberately does none of those jobs. The extension can draft line comments and [submit a review you choose](/docs/submit-review), but it never chooses the outcome.
+Yes, I'm describing my own tool. The part I care about is getting the contract and its callers in front of me without reconstructing the reading order from file names.
+
+The model supplies structure and commentary. Displayed code comes from the parsed diff; invalid hunk references are dropped. That check can reject an invented reference. It can't tell me whether the timeout should be five seconds.
+
+## Leave a question someone can answer
+
+“This caller still passes seconds. Should the value be converted, or is the new name wrong?”
+
+That's a review comment with a decision attached. “Please check the timeout logic” leaves the author to repeat the investigation.
+
+The extension can draft line comments and [submit Comment, Approve, or Request Changes](/docs/submit-review). You choose the outcome. Guided Review doesn't produce an automated findings verdict or act as a merge gate.
+
+For a three-line patch whose behavior is obvious, I'd just read the normal diff.
+
+For this patch, I'd want an answer about the units before approving.
 
 ## FAQ
 
@@ -85,5 +93,3 @@ Guided Review is also the worse choice when you want a bot to produce findings, 
     <p>{answer}</p>
   </section>
 ))}
-
-Install [Guided Review from the Chrome Web Store](https://chromewebstore.google.com/detail/guided-review/pdnnimoajmnjpccboemeomoeomancodd), then use the [first-review walkthrough](/docs/first-review) for the controls.
