@@ -19,7 +19,7 @@ describe("Options", () => {
     await chrome.storage.local.set({
       "guidedReview.providerSettings": {
         provider: "openai",
-        model: "gpt-6.1-sol",
+        model: "gpt-4.1",
         apiKey: "sk-existing",
       },
     });
@@ -27,7 +27,7 @@ describe("Options", () => {
     render(<Options />);
 
     expect(await screen.findByRole("combobox", { name: /provider/i })).toHaveTextContent("OpenAI");
-    expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent("GPT-6.1 Sol");
+    expect(screen.getByRole("combobox", { name: /model/i })).toHaveTextContent("GPT-4.1");
     expect(screen.getByLabelText(/api key/i)).toHaveValue("sk-existing");
   });
 
@@ -162,7 +162,7 @@ describe("Options", () => {
     await user.click(screen.getByRole("combobox", { name: /model/i }));
 
     const listbox = screen.getByRole("listbox");
-    expect(within(listbox).getByRole("option", { name: /Claude Sonnet 5/i })).toBeInTheDocument();
+    expect(within(listbox).getByRole("option", { name: /^Claude Sonnet 5$/i })).toBeInTheDocument();
     expect(within(listbox).getByRole("option", { name: /Claude Haiku 5\.5/i })).toBeInTheDocument();
   });
 

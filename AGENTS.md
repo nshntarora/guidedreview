@@ -40,6 +40,12 @@ Contexts talk only via `chrome.runtime.sendMessage`: **content** (DOM/overlay), 
 
 Sessions: `chrome.storage.session`, key `owner/repo#number` (`buildSessionKey`). Providers: `@guided-review/core` (`ProviderClient`).
 
+## Models and saved settings
+
+- Adding models or changing defaults must preserve existing user configuration in both the extension and CLI. Apply defaults only when a setting is absent; never overwrite a saved model, provider, API key, endpoint, or other preference during loading, upgrading, or saving unrelated settings.
+- A saved model remains the user's choice even if it was the previous default or is no longer in the model catalog. Preserve custom model IDs. If a model becomes unavailable, explain the failure and let the user choose a replacement; do not silently switch models or reset settings.
+- When changing the model catalog, defaults, or configuration migrations, verify that existing saved settings survive loading and a settings save unchanged, while fresh configurations receive the new defaults. Prefer extending existing regression tests for these paths.
+
 ## packages/ui · apps/web
 
 - **ui:** transpile via `transpilePackages`. Tokens `@guided-review/ui/theme.css`. Tailwind v4 that uses ui must `@source packages/ui/src/**/*.{ts,tsx}`.
