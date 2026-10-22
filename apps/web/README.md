@@ -113,6 +113,19 @@ Every CTA event includes at least `{ location, method, href, … }`. Known locat
 
 The site is a pure static export. `pnpm build` writes to `apps/web/out/`, which Wrangler uploads with `wrangler pages deploy`. Production lives on `*.pages.dev` (and any custom domain on the Pages project).
 
+`functions/[[path]].ts` provides content negotiation for static exports: requests with
+`Accept: text/markdown` receive Markdown converted from the exported page's main
+content, including its title, description, links, code blocks, and tables.
+Browsers receive HTML by default. Both page representations include `Vary: Accept`;
+static assets, redirects, and error responses retain their original bodies and status.
+The existing deploy commands upload the Function alongside `out/`. Next.js request
+rewrites cannot provide this negotiation in a static export.
+
+To exercise content negotiation locally, build the site and run
+`pnpm --filter @guided-review/web exec wrangler pages dev out`, then request a page
+with `curl -H 'Accept: text/markdown' http://localhost:8788/docs/cli`.
+`next dev` and the static E2E server do not run Pages Functions.
+
 ### CI deploy
 
 Deploy runs only after **Tests** succeeds on a **push to `main`** when web-related paths change (or via manual `workflow_dispatch`). PRs and non-main branches never deploy. Workflow: [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml).

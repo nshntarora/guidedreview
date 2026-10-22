@@ -8,6 +8,7 @@ dist_chrome/
 .vite/
 *.tsbuildinfo
 .next/
+.wrangler/
 out/
 .grok/
 
