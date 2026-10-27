@@ -1,10 +1,9 @@
 import { GITHUB_REPO_URL } from "@web/lib/links";
-import { NoBackendIllustration } from "./FeatureIllustrations";
 import { GitHubIcon } from "./icons";
 
 export function TrustBand() {
   return (
-    <section className="relative px-4 py-16 sm:px-6 sm:py-28">
+    <section data-testid="trust-band" className="relative px-4 py-16 sm:px-6 sm:py-28">
       <div className="mx-auto max-w-5xl text-center">
         <h2 className="m-0 text-2xl font-bold tracking-tight sm:text-3xl font-brand">
           Your code never touches our infrastructure
@@ -15,8 +14,16 @@ export function TrustBand() {
           with.
         </p>
 
-        <div className="mx-auto mt-10 flex items-center justify-center rounded-lg bg-background/60 p-6">
-          <NoBackendIllustration className="h-auto w-full max-w-[480px]" />
+        <div className="mx-auto mt-10 max-w-4xl overflow-hidden rounded-lg">
+          <img
+            src="/assets/landing/direct-provider-connection.webp"
+            alt="Guided Review's extension and CLI run on your machine, keeping your key local and sending diffs directly to your AI provider without a Guided Review server."
+            width={1536}
+            height={1024}
+            loading="lazy"
+            decoding="async"
+            className="h-auto w-full"
+          />
         </div>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">

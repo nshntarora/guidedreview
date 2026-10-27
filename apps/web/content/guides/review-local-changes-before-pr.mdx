@@ -20,6 +20,16 @@ export const faqs = [
 
 # Review local git changes before opening a PR
 
+<img
+  src="/assets/guides/review-local-changes-before-pr/cover.webp"
+  alt="Committed branch changes and uncommitted work both feed a deliberate review before publishing."
+  width="1536"
+  height="1024"
+  loading="eager"
+  decoding="async"
+  className="my-6 h-auto w-full rounded-xl border border-border"
+/>
+
 Before `gh pr create`, I want to check two things: the committed branch against its intended base, and the working tree. They answer different questions.
 
 You review the retry loop. It looks right. You remember adding a test for zero retries, so you open the PR.
@@ -40,9 +50,12 @@ Choose the scope before reading:
 
 - **Branch vs base** shows committed work since the branches diverged. Use `--base` to select a particular base branch.
 - **Uncommitted** shows staged and unstaged work against `HEAD`.
+- **Unstaged** shows the working tree against the index, so you can inspect edits made after staging.
 - **A specific commit** shows that commit's patch.
 
 The [CLI reference](/docs/cli) covers the flags. Check untracked files too. A new test on disk isn't evidence that the PR contains it.
+
+Uncommitted scope includes untracked files by default; `--no-untracked` excludes them. Branch scope contains committed work only. `--staged` starts an index-only review, which is useful when one file contains both changes you intend to commit and unfinished edits you want to keep local.
 
 The initial walkthrough has one review unit per file and makes no model call. **Structure With AI** is an explicit action that sends a diff prompt to your configured provider for grouping and commentary.
 
@@ -56,11 +69,41 @@ Now read the test. Does its expected count match that contract? Is it exercising
 
 I prefer production changes and tests in separate review units. First work out what the loop does. Then decide whether the test would catch the off-by-one error.
 
+## Establish the base and the snapshot
+
+Start by checking the branch you are on and the branch the PR will target. If the intended target is `main`, make that explicit with `npx @guided-review/cli --base main`. For a stacked change, choose the parent branch that actually represents the comparison you want. Reviewing against the wrong base can include work the reviewer already accepted or hide a dependency you have not explained.
+
+The branch comparison uses the merge base and the current committed `HEAD`. It does not mean “everything visible in my editor.” Before reading, inspect `git status --short` and note whether the working tree contains additional production code, tests, or configuration. That small inventory prevents you from mentally importing unfinished work into the committed patch.
+
+Use the scope dropdown deliberately. Read the branch to understand the proposed published change, then inspect uncommitted work to decide what belongs with it. A specific-commit review answers what that commit changed; it is not a substitute for the full branch review when later commits alter the same behavior.
+
+<img
+  src="/assets/guides/review-local-changes-before-pr/scope-check.webp"
+  alt="Branch, uncommitted, and staged-only scopes contain different work; check whether the test is actually in the commit."
+  width="1536"
+  height="1024"
+  loading="lazy"
+  decoding="async"
+  className="my-6 h-auto w-full rounded-xl border border-border"
+/>
+
+## Check the staged version when a file has mixed work
+
+Suppose you stage the retry implementation, then edit the same file to add logging. The file on disk and the version in the index now differ. A passing test against the working tree may exercise logging or error handling that will not be in your next commit.
+
+Inspect `git diff --cached` for the staged patch and `git diff` for the remaining edits. These commands answer different questions. Use an index-only walkthrough when that is the boundary you plan to publish. Avoid assuming a file is entirely staged because its path appears in the staging area.
+
+For new files, confirm that they are tracked before relying on them as part of the PR. A test may appear in an uncommitted walkthrough and pass locally while still being absent from the branch. The final check is the committed change after you have staged and committed the intended files. Inspect that resulting scope again if the composition changed during review.
+
 ## Send specific notes back to a coding agent
 
 Leave a line note where the behavior is unclear. [Generate Prompt](/docs/generate-prompt) formats your notes into a prompt you can copy into a coding agent. It runs locally and doesn't make another model call. You choose where to paste it.
 
 It doesn't run the agent or verify the fix. After the edit, read the new diff and run the repository's relevant tests, typecheck, lint, or build.
+
+Give each note enough context to preserve the decision. For the retry loop, write the input, observed count, and expected contract: “With zero retries, the initial attempt should still run once; this condition appears to skip it.” Keep separate questions separate, so an agent does not have to infer which requirement governs a broad cleanup request.
+
+After applying the generated task, check the changed implementation and the test independently. A new test that expects zero attempts would make the suite green without addressing the requested contract. Also inspect adjacent edits introduced during the fix. A local agent pass can widen the patch just as easily as the original implementation did.
 
 Notes live with the running server. Copy what you need before stopping it. The CLI doesn't submit GitHub reviews; the [extension](/guides/github-pr-review-extension) handles that once a PR exists.
 
@@ -73,6 +116,14 @@ The local server binds `127.0.0.1:7182` by default. AI structuring still sends c
 This is a local reading tool. There's no hosted team dashboard, automated findings, or merge gate. For an existing GitHub PR, I'd use the extension instead.
 
 Before publishing the retry change, I'd check that the zero-retries test made it into the branch.
+
+## Write a handoff someone else can verify
+
+Turn the completed local pass into a short PR description: intended behavior, important compatibility choices, checks run, and unresolved questions. For the retry change, state whether the configured number counts retries or total attempts. Mention the zero case explicitly if that was the source of uncertainty. The next reviewer should not have to recover that decision from your private agent conversation.
+
+Record the actual check commands and their results after the last relevant edit. If an integration test requires a service you did not start, distinguish that gap from the focused tests you did run. Do not describe the whole change as tested because a narrow helper test passed.
+
+Before stopping the local server, copy any notes you still need. Session notes are held in memory; they are not a durable PR record. Once the PR exists, a teammate can use the [GitHub extension workflow](/guides/github-pr-review-extension) for an independent reading pass. Your local progress helps you prepare the change, but the handoff evidence is what lets someone else assess it.
 
 ## FAQ
 

@@ -20,6 +20,16 @@ export const faqs = [
 
 # How to review an AI-generated pull request
 
+<img
+  src="/assets/guides/review-ai-generated-pull-request/cover.webp"
+  alt="A reading path connecting the requested intent, implementation, and evidence in an AI-generated change."
+  width="1536"
+  height="1024"
+  loading="eager"
+  decoding="async"
+  className="my-6 h-auto w-full rounded-xl border border-border"
+/>
+
 I start an AI-generated PR review with the contract. What was supposed to change? Then I follow that behavior through the production code and read the tests after it.
 
 An agent can update a type, parser, two callers, and a test in one pass. All five files agree. That still leaves a question: do they agree on the right thing?
@@ -42,6 +52,32 @@ Then read both callers. A variable called `timeoutMs` can still contain seconds.
 
 Check the failure paths and output too. Search the repository for consumers the PR didn't change. The agent's summary won't necessarily mention an unchanged caller that now has the wrong contract.
 
+## Turn the request into observable examples
+
+Before opening more files, write two or three examples in plain language. For the timeout migration, an old client sending five seconds might still need a five-second timeout. A new client sending 5,000 milliseconds should reach the same duration. An omitted value should use the agreed default. These examples make the requirement precise enough to compare with code.
+
+Choose examples that expose different interpretations. If both the old and new contract accept the number 1,000, testing only that number can hide a conversion mistake. Include the name and unit of the input, the expected internal value, and the externally visible result. You now have a trace to follow through the parser and outbound request.
+
+If you cannot write the expected result, stop treating the patch as a straightforward rename. Ask the author or product owner to choose the behavior. Neither the agent's confidence nor a clean typecheck can supply a missing compatibility decision.
+
+<img
+  src="/assets/guides/review-ai-generated-pull-request/contract-check.webp"
+  alt="A timeout change can rename the field, convert its units, or support old clients; the requested behavior determines the review."
+  width="1536"
+  height="1024"
+  loading="lazy"
+  decoding="async"
+  className="my-6 h-auto w-full rounded-xl border border-border"
+/>
+
+## Inspect the boundaries the patch did not change
+
+Start with one real entry point: a request handler, command-line option, configuration loader, or public function. Follow the input until it reaches an effect. Types inside the changed files may agree while an older configuration file or external caller still uses the previous representation.
+
+Search for the old field name and for functions that receive the value. Read unchanged callers where necessary. Check whether a default is applied before or after conversion, and whether validation rejects zero, negative values, or unsupported combinations. The important question is what a real input does, not whether every reference was renamed.
+
+Look at outputs as well. Error messages and logs can retain the old unit and mislead the next person diagnosing a failure. A public response may expose the changed field to another service. When a dependency sits outside the repository, ask for an explicit compatibility assumption and evidence from the author rather than assuming repository search covered it.
+
 ## Read production code before tests
 
 A test that passes `1000` and expects `1000` proves that the value survived. It doesn't establish a unit conversion or backward compatibility.
@@ -51,6 +87,22 @@ Pick an input that separates the possible behaviors. Five seconds. The old field
 Then ask whether the assertion would catch the mistake you're considering. A test name can say “supports timeouts” while proving much less.
 
 I want to understand the implementation before I read the test's explanation of it.
+
+## Check whether the test could disagree with the implementation
+
+A test loses value when its expected result is computed through the same helper as the production path. If both use the same incorrect conversion, they can agree while the behavior is wrong. Inspect the expected value and ask whether it comes from the requirement or merely mirrors the implementation.
+
+Prefer a small example with a result you can explain independently. For a five-second input, you should be able to state the expected outbound duration without running the conversion helper yourself. For compatibility, send the old request shape through the actual parser. For a rejected input, verify the observable error or absence of a side effect, rather than only a private helper's return value.
+
+Run the focused repository check after reading the test. Record the command and result accurately. If you cannot execute it because a service or credential is missing, say so and identify which behavior remains unverified. Reading an assertion and observing it pass are different pieces of evidence.
+
+## Review the agent's extra changes on their own merits
+
+Agents sometimes tidy adjacent code while implementing the request. Inventory those edits: dependency changes, new helpers, renamed files, altered error handling, and removed tests. Ask how each supports the stated behavior. A cleanup can be sensible and still increase the amount of code you must understand before approving.
+
+Pay particular attention to deleted assertions. A shorter test suite might remove duplication, or it might remove the only compatibility example. Compare the old behavior being checked with the new evidence. Do not infer the purpose of a deleted test solely from its replacement's title.
+
+When an unrelated change creates a separate decision, ask to move it to another PR. If it must stay, request an explanation of the dependency and review it explicitly. The goal is to leave no behavior approved accidentally because it appeared beside the change you intended to read.
 
 ## Use review units to keep related hunks together
 
@@ -71,6 +123,8 @@ The extension can draft line comments and [submit Comment, Approve, or Request C
 For a three-line patch whose behavior is obvious, I'd just read the normal diff.
 
 For this patch, I'd want an answer about the units before approving.
+
+After the author answers, check the updated diff rather than approving the explanation alone. Confirm that the chosen contract appears in production code, that a meaningful test distinguishes it from the original mistake, and that any rollout constraint is recorded in the PR. That gives the next reviewer a durable account of why the change is acceptable.
 
 ## FAQ
 

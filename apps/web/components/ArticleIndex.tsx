@@ -79,15 +79,19 @@ export function ArticleIndex({
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="mb-3 font-mono text-xs text-muted">
-                      {article.tool ? (
-                        "Tool comparison"
+                      {article.toolLogo ? (
+                        <img
+                          src={article.toolLogo}
+                          alt={article.tool}
+                          width="180"
+                          height="32"
+                          className="h-6 w-36 object-contain object-left"
+                        />
                       ) : (
                         <>
                           Updated{" "}
                           <time dateTime={article.lastModified}>
-                            {path === "/guides"
-                              ? formatArticleMonthYear(article.lastModified)
-                              : article.lastModified}
+                            {formatArticleMonthYear(article.lastModified)}
                           </time>
                         </>
                       )}

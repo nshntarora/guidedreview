@@ -34,8 +34,7 @@ export async function ArticlePage({
     (item) => item.slug !== article.slug,
   );
   const organization = { "@type": "Organization", name: SITE_NAME, url: SITE_URL };
-  const displayLastModified =
-    sectionPath === "/guides" ? formatArticleMonthYear(article.lastModified) : article.lastModified;
+  const displayLastModified = formatArticleMonthYear(article.lastModified);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-16">
@@ -89,6 +88,25 @@ export async function ArticlePage({
               ],
             }}
           />
+          {article.toolLogo && (
+            <div className="mb-8 flex flex-wrap items-center gap-4 rounded-xl border border-border bg-surface px-5 py-6 sm:gap-6">
+              <img
+                src="/assets/logo.svg"
+                alt="Guided Review"
+                width="350"
+                height="49"
+                className="h-7 w-28 object-contain sm:w-36"
+              />
+              <span className="font-mono text-xs text-muted">vs</span>
+              <img
+                src={article.toolLogo}
+                alt={article.tool}
+                width="180"
+                height="32"
+                className="h-7 w-28 object-contain sm:w-36"
+              />
+            </div>
+          )}
           <Content />
         </article>
         <aside className="min-w-0">

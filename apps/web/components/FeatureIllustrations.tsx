@@ -5,8 +5,8 @@ type IllustProps = SVGProps<SVGSVGElement>;
 /**
  * Feature illustrations.
  *
- * All five share one canvas, one set of primitives, and one palette so the
- * section reads as a single system rather than five unrelated drawings. The
+ * All four share one canvas, one set of primitives, and one palette so the
+ * section reads as a single system rather than four unrelated drawings. The
  * vocabulary is deliberately the product's own — review-unit rows, kbd chips,
  * provider fields, window chrome — drawn in the site's mono/lime/warm-black
  * language. Lime is the only decorative hue; green and red appear solely where
@@ -546,115 +546,6 @@ export function ApprovedToolsIllustration(props: IllustProps) {
       >
         open source
       </Txt>
-    </svg>
-  );
-}
-
-/* ------------------------------------------------------------------ *
- * 5 — No backend
- * Two direct paths out of your browser, and a server-shaped hole where a
- * middleman would be. The break in the path does the work — no red X.
- * ------------------------------------------------------------------ */
-
-export function NoBackendIllustration(props: IllustProps) {
-  return (
-    <svg {...frame(props)}>
-      <Txt x={160} y={28} size={7.5} anchor="middle">
-        your browser
-      </Txt>
-
-      {/* Endpoints you already trust */}
-      <Panel x={8} y={64} w={68} h={28} r={8} className={INSET} />
-      <Txt x={42} y={82} size={8.5} anchor="middle" className="fill-[var(--color-foreground)]">
-        GitHub
-      </Txt>
-
-      <Panel x={244} y={64} w={68} h={28} r={8} className={INSET} />
-      <Txt x={278} y={82} size={8.5} anchor="middle" className="fill-[var(--color-foreground)]">
-        LLM API
-      </Txt>
-
-      {/* Direct, two-way */}
-      <path
-        d="M80 78h24m-24 0 4-4m-4 4 4 4m20-4-4-4m4 4-4 4"
-        className="stroke-[var(--color-foreground)]"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M216 78h24m-24 0 4-4m-4 4 4 4m20-4-4-4m4 4-4 4"
-        className="stroke-[var(--color-foreground)]"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      {/* The browser window itself */}
-      <rect
-        x={112}
-        y={40}
-        width={96}
-        height={76}
-        rx={10}
-        className="fill-[var(--color-background)]"
-      />
-      <path
-        d="M112 50a10 10 0 0 1 10-10h76a10 10 0 0 1 10 10v10h-96V50Z"
-        className="fill-[var(--color-surface-raised)]"
-      />
-      <circle cx={124} cy={50} r={2.5} className="fill-[var(--color-border)]" />
-      <circle cx={132} cy={50} r={2.5} className="fill-[var(--color-border)]" />
-      <circle cx={140} cy={50} r={2.5} className="fill-[var(--color-border)]" />
-      <rect x={126} y={74} width={68} height={24} rx={6} className="fill-[var(--color-primary)]" />
-      <Txt
-        x={160}
-        y={90}
-        size={8.5}
-        weight={600}
-        anchor="middle"
-        className="fill-[var(--color-primary-foreground)]"
-      >
-        extension
-      </Txt>
-      <Panel
-        x={112}
-        y={40}
-        w={96}
-        h={76}
-        className="fill-none stroke-[var(--color-primary)]"
-        strokeWidth={1.75}
-      />
-
-      {/* …and the path that does not exist */}
-      <path
-        d="M160 116v16"
-        className="stroke-[var(--color-muted)]"
-        strokeWidth="1.4"
-        strokeDasharray="3 3"
-        opacity="0.6"
-      />
-      <path
-        d="M156 136l8 8m0-8-8 8"
-        className="stroke-[var(--color-muted)]"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        opacity="0.8"
-      />
-      <g opacity="0.55">
-        <Panel
-          x={110}
-          y={152}
-          w={100}
-          h={30}
-          r={8}
-          className="fill-none stroke-[var(--color-border)]"
-          strokeDasharray="4 3"
-        />
-        <Txt x={160} y={171} size={8} anchor="middle">
-          our servers
-        </Txt>
-      </g>
     </svg>
   );
 }

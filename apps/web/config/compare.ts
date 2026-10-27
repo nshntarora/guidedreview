@@ -4,6 +4,7 @@ export const COMPARISONS: Article[] = [
   {
     slug: "coderabbit-alternative",
     tool: "CodeRabbit",
+    toolLogo: "/assets/compare/coderabbit.svg",
     path: "/compare/coderabbit-alternative",
     title: "CodeRabbit alternative for reading the diff yourself",
     seoTitle: "CodeRabbit alternative for reading the diff yourself | Guided Review",
@@ -15,6 +16,7 @@ export const COMPARISONS: Article[] = [
   {
     slug: "graphite-diamond-alternative",
     tool: "Graphite Diamond",
+    toolLogo: "/assets/compare/graphite.svg",
     path: "/compare/graphite-diamond-alternative",
     title: "Graphite Diamond alternative for a human-driven walkthrough",
     seoTitle: "Graphite Diamond alternative | Guided Review",
@@ -26,6 +28,7 @@ export const COMPARISONS: Article[] = [
   {
     slug: "copilot-code-review-alternative",
     tool: "GitHub Copilot",
+    toolLogo: "/assets/compare/github-copilot.svg",
     path: "/compare/copilot-code-review-alternative",
     title: "Copilot code review alternative for a reviewer-driven walkthrough",
     seoTitle: "Copilot code review alternative | Guided Review",

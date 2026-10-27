@@ -1,0 +1,16 @@
+Comparison logos identify the products discussed. Trademarks belong to their respective owners.
+
+CodeRabbit wordmark
+Source: https://www.coderabbit.ai/redesign/cr-logo-name.svg
+Brand resources: https://www.coderabbit.ai/newsroom
+
+Graphite logo
+Source: inline header logo at https://graphite.com/
+The currentColor fill is set to white for use on the site's dark surface.
+
+GitHub Copilot lockup (white)
+Source: GitHub Logos/SVG/GitHub_Copilot_Lockup_White.svg in
+https://brand.github.com/GitHub_Logos.zip
+Brand guidance: https://brand.github.com/brand-identity/copilot
+
+Retrieved October, 2026.

@@ -1,5 +1,15 @@
 # Using Guided Review in a team review workflow
 
+<img
+  src="/assets/guides/guided-review-for-teams/cover.webp"
+  alt="Independent author and reviewer walkthroughs connected by evidence recorded in the pull request."
+  width="1536"
+  height="1024"
+  loading="eager"
+  decoding="async"
+  className="my-6 h-auto w-full rounded-xl border border-border"
+/>
+
 You ask an agent to update an API and its callers. It finishes the patch and writes a PR description. You send it to a teammate.
 
 Who has checked that the description matches the code?
@@ -24,6 +34,24 @@ The [local review guide](/guides/review-local-changes-before-pr) covers that pas
 
 Then write the PR description: what changed, the constraints, checks run, and remaining uncertainty. An agent can draft it. The author still owns the claims.
 
+## Make the handoff specific enough to review independently
+
+For an API update, the description should state the old behavior, the new behavior, and whether existing callers must keep working. “Updated the API and tests” gives a reviewer little to verify. “Accept the new millisecond field while preserving the old seconds field during migration” identifies a contract and the compatibility path to inspect.
+
+Include the checks that support the change, with the actual commands and results. Distinguish a focused parser test from an integration check against a running service. If the author could not run a relevant check, record what prevented it and which behavior remains uncertain. That lets the reviewer decide where to spend attention without treating an unqualified “tested” as complete evidence.
+
+List deliberate exclusions too. If removing the old field belongs in a later PR, say so and explain the transition condition. Keep this short enough to read before opening the code. The useful description carries decisions that would otherwise live only in the author's memory or agent conversation.
+
+<img
+  src="/assets/guides/guided-review-for-teams/review-handoff.webp"
+  alt="A useful handoff records intent, evidence, and open questions, with durable decisions kept in the PR."
+  width="1536"
+  height="1024"
+  loading="lazy"
+  decoding="async"
+  className="my-6 h-auto w-full rounded-xl border border-border"
+/>
+
 ## Let the reviewer form a separate view
 
 On the github.com PR, the reviewer chooses **Start Guided Review** and follows related hunks as review units. The code comes from the real diff; model commentary can still be wrong.
@@ -32,6 +60,30 @@ The author's plan and reading progress aren't shared team state. Review plans an
 
 The reviewer can draft line comments and, after connecting GitHub, submit Comment, Approve, or Request Changes. The [first-review walkthrough](/docs/first-review) covers the controls. The person chooses the outcome; Guided Review doesn't auto-approve.
 
+## Divide a large review by behavior and ownership
+
+When two reviewers are involved, agree on questions each person will answer. One might own the API contract and compatibility path; another might own the persistence change and rollout. Splitting an alphabetical file list in half can leave the most important dependency between the two assignments.
+
+Name the boundary explicitly. If the parser changes the units before the storage layer receives the value, both reviewers should know which representation crosses that boundary. Record the agreed expectation in the PR so each person can check their side without guessing what the other person established.
+
+Do not use a completed private walkthrough as shared coverage. Guided Review does not synchronize team progress or certify that another person checked a behavior. Use the repository's existing review assignment and approval process to record ownership. If nobody can explain a path end to end, ask for another pass or a smaller PR rather than allowing several partial reads to imply a complete review.
+
+## Turn comments into decisions the author can act on
+
+A useful review question describes the input, the observed code path, and the expected behavior when known. “The legacy client still sends seconds; where is that converted before the new timeout handler?” is actionable. “Please check backward compatibility” gives the author another broad investigation without preserving yours.
+
+Mark required corrections clearly and separate them from preferences. When the author replies, carry the answer into code, a test, or the PR description as appropriate. If the team chooses a breaking change, a comment saying “intentional” is weaker than a description that names the affected clients and migration plan.
+
+For an agent-assisted fix, keep the reviewer question intact in the task given to the agent. After the edit, the author should read the new diff and explain how it addresses the requirement. The reviewer then checks the updated behavior independently. A second model's reassuring account does not substitute for that exchange.
+
+## Recheck the assumptions after an update
+
+Start the next pass with what changed since your earlier reading. If the author modifies defaulting logic to fix compatibility, revisit the callers and tests that rely on the default. A narrow fix can change a contract that looked settled in the first version.
+
+Read the current patch rather than relying on the order or progress of an earlier plan. Confirm that a new test distinguishes the reported mistake from the desired behavior. When you rerun a focused check, record the result against the updated code. If the change affects another reviewer's area, mention the boundary so their earlier conclusion can be reassessed.
+
+Keep unresolved questions visible until there is evidence or an explicit decision. A resolved conversation thread is a workflow event, not proof that the implementation changed correctly. The person choosing the review outcome still needs to understand the resulting behavior and the remaining uncertainty.
+
 ## Keep decisions where the team can find them
 
 Guided Review has no team administration dashboard, centralized provider policy, shared progress tracker, or product backend for review data. If you need enforced settings or review reporting, assess those requirements separately.
@@ -39,3 +91,5 @@ Guided Review has no team administration dashboard, centralized provider policy,
 Put durable decisions in PR comments, tests, and the repository's normal review process. Local notes and a private walkthrough aren't a record the next engineer can rely on.
 
 For the API change, I'd want the compatibility decision in the PR. Not just in the author's conversation with an agent.
+
+For a new team adopting the tool, start with one ordinary PR and compare the author handoff with the reviewer's actual questions. Improve the description template around missing decisions rather than adding a required ritual for every unit. The useful result is less repeated investigation and a record the next engineer can understand.

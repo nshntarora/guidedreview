@@ -1,5 +1,15 @@
 # How to review a large AI-generated PR
 
+<img
+  src="/assets/guides/review-large-ai-generated-prs/cover.webp"
+  alt="A large set of changed files organized into contract, callers, and tests review units."
+  width="1536"
+  height="1024"
+  loading="eager"
+  decoding="async"
+  className="my-6 h-auto w-full rounded-xl border border-border"
+/>
+
 A 40-file PR changes a request schema, updates its callers, and replaces several tests. You start at the top of the file list. By the time you reach the implementation, you're holding half the patch in your head.
 
 I'd start with one behavior instead. Write down what's supposed to change, then follow a value through the contract, callers, and tests. File order can wait.
@@ -28,6 +38,48 @@ Separate requests also mean separate context. Don't assume the model connected a
 
 The [chunking documentation](/docs/how-it-works#chunking-large-diffs) covers the details. If structuring fails, use the file-by-file walkthrough or reduce the scope. Requesting another plan adds provider usage. It doesn't make the PR smaller.
 
+## Make a behavior map before reading every hunk
+
+Take the timeout migration as a concrete example. Suppose the current API accepts seconds and defaults to five seconds. The proposed API accepts milliseconds and should default to 5,000. That is a hypothetical contract for this review, not a Guided Review setting.
+
+Write a short map: request parser, defaulting logic, internal representation, outbound call, and observable failure. Put the relevant paths beside those steps. The map gives you somewhere to return when a helper or generated file interrupts the reading. It also exposes missing evidence: if nobody can identify where the conversion occurs, a renamed field is insufficient.
+
+Keep unrelated behaviors on separate lines. A PR that also changes retry policy needs another map because timeout and retries can fail independently. You can review the two paths in sequence without assuming a single summary explains both. If they cannot ship independently, ask the author to explain the dependency in the description.
+
+<img
+  src="/assets/guides/review-large-ai-generated-prs/trace-one-value.webp"
+  alt="Trace timeoutMs through the contract, old and new callers, and tests that distinguish five seconds from five milliseconds."
+  width="1536"
+  height="1024"
+  loading="lazy"
+  decoding="async"
+  className="my-6 h-auto w-full rounded-xl border border-border"
+/>
+
+## Review compatibility in deployment order
+
+An internally consistent patch can still break a mixed deployment. Imagine the server ships before every client. Does it continue accepting the old field? If a client sends both names during the transition, does the parser reject the request, prefer one value, or silently choose whichever assignment runs last?
+
+Read the code that makes those choices and compare it with the intended rollout. Check whether responses, stored configuration, queued jobs, or cached values also contain the old representation. A repository search for the old name helps, but serialized values may cross a boundary that a type rename cannot update.
+
+Ask for compatibility evidence at that boundary. An old-format request reaching the new parser is more informative than another test of a newly constructed internal object. For a deliberate breaking change, verify that the migration instructions identify who must act and when. The author should be able to explain how the system behaves while versions overlap.
+
+## Give generated and mechanical changes a separate pass
+
+Group lockfile updates, generated clients, snapshots, and formatting changes so they do not hide behavioral edits. For generated output, identify the source and the generation command. Read the source change first, then check that the output corresponds to it. A generated label does not establish that a file is reproducible or safe to ignore.
+
+For a mechanical move, compare the old and new location closely enough to establish that behavior stayed the same. Check imports and exports around the move; a moved function can gain a different caller even if its body is unchanged. Watch for changed defaults tucked inside broad formatting edits.
+
+If generated output dominates the patch, ask the author to explain how they verified it. A reproducible generation step and a focused contract test can give stronger evidence than reading thousands of repetitive lines with equal attention. Record any part you could not verify instead of letting the file count imply completeness.
+
+## Keep an uncertainty list as you read
+
+Maintain a small list of unresolved questions with a path and a consequence. For example: “The legacy caller still sends seconds; new parser may interpret the value as milliseconds.” That note tells you where to return and why it matters. “Check compatibility” is too broad to preserve the investigation.
+
+Resolve each question with code, an explicit requirement, or a result you can reproduce. A model explanation can suggest where to look, but does not close the question. If you pause the review, leave the list in a place you can recover, rather than relying on memory of which units you visited.
+
+After an author update, revisit the changed path and the assumptions that depended on it. A fix to the parser may change what the caller test should expect. Recheck the relevant evidence against the latest diff; progress through an earlier plan describes earlier reading, not the new patch.
+
 ## Test a failure you can name
 
 For each behavior change, pick an input that should now behave differently. Read the assertion beside the production condition. Run the focused tests using the repository's commands; the walkthrough doesn't execute them.
@@ -39,6 +91,10 @@ Leave the question beside the relevant lines. Make it clear whether you're askin
 ## Ask for a split when you can't review the change
 
 A PR can be coherent and still take more time than you have to understand it. Ask for a split along behavior boundaries.
+
+Make the request concrete. “Land the compatible parser first, migrate callers next, then remove the old field after the supported transition” gives the author a reviewable sequence. Verify that each intermediate state can run and that the tests describe that state. Splitting only by directory can leave every PR depending on code that has not landed.
+
+At the end of the review, state which behavior you traced, which checks you ran, and what remains unresolved. A useful review record might say that the default and new client are verified, but the legacy request path still needs an answer. The author can act on that without reconstructing your reading session.
 
 Marking every review unit read means you've visited every unit.
 

@@ -27,7 +27,7 @@ export const faqs = [
 
 Pick Guided Review if you're an engineer who wants to read a GitHub PR or local diff with your own AI provider. Pick Graphite if you need automated review comments and suggested changes as part of a broader team workflow. The deciding difference is the work you want the tool to do: organize your reading, or provide review feedback and team tools. Guided Review won't replace a merge queue or review rules. If those are why you use Graphite, keep it. The choice flips toward Guided Review when your unmet need is a reading session you control.
 
-I built Guided Review, and Guided Review publishes this page. Yes, it's biased. Product claims below link to sources checked on **2026-10-21**; features can change.
+I built Guided Review, and Guided Review publishes this page. Yes, it's biased. Product claims below link to sources checked in **October, 2026**; features can change.
 
 Graphite's old Diamond URL now redirects to its **AI Reviews** page, which also uses the **Graphite Chat** name. This comparison follows that current page rather than pretending Diamond remains a separate product.
 
@@ -39,7 +39,7 @@ You need automated comments and suggested changes, or use Graphite for team revi
 
 ## At a glance
 
-Checked 2026-10-21. Prices are in USD. Source IDs link to the dated list below. A winner is named only where the requested output has a clear match.
+Checked October, 2026. Prices are in USD. Superscript references link to the sources below. A winner is named only where the requested output has a clear match.
 
 |                     | Guided Review                                                         | Graphite AI Reviews                                                                                                             |
 | ------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -47,7 +47,7 @@ Checked 2026-10-21. Prices are in USD. Source IDs link to the dated list below. 
 | Where the diff goes | Your AI provider. No Guided Review backend [G4](#source-g4).          | Connects to GitHub; further processing detail is omitted because the fetched feature page does not publish it [C1](#source-c1). |
 | Host                | github.com extension or local CLI [G2](#source-g2), [G3](#source-g3). | GitHub integration; Graphite also has a CLI for stacked PRs [C1](#source-c1), [C2](#source-c2).                                 |
 | Key                 | Yours: Anthropic, OpenAI, or Grok.                                    | —                                                                                                                               |
-| Price               | Free, Apache-2.0. Provider usage is yours [G5](#source-g5).           | Hobby is free with limited AI Reviews; Team is $40/user/month billed annually on 2026-10-21 [C2](#source-c2).                   |
+| Price               | Free, Apache-2.0. Provider usage is yours [G5](#source-g5).           | Hobby is free with limited AI Reviews; Team is $40/user/month billed annually in October, 2026 [C2](#source-c2).                |
 | Worse fit           | You wanted automated feedback, review rules, or a merge queue.        | You wanted an individual walkthrough using your own provider.                                                                   |
 
 ## Workflow: a reading tool will not replace a team process
@@ -59,6 +59,22 @@ Graphite's AI Reviews provides comments and suggested changes [C1](#source-c1). 
 Consider a new default page size. You need to follow the value from the API type through validation to the query builder. A test for an explicit page size doesn't answer what happens when the caller omits it. A reading path can help you keep that question in view.
 
 But if your team also relies on a merge queue or review automations, that reading path doesn't replace them. Graphite lists those tools in its Team plan [C2](#source-c2). Keep the comparison tied to the work you need. You can prefer one diff view without wanting to replace the rest of your process.
+
+<figure className="my-8">
+  <img
+    src="/assets/guides/guided-review-for-teams/review-handoff.webp"
+    alt="Intent, evidence, and open questions feed into a review record kept in the PR."
+    width="1536"
+    height="1024"
+    loading="lazy"
+    decoding="async"
+    className="h-auto w-full rounded-xl border border-border"
+  />
+  <figcaption className="mt-3 text-sm leading-relaxed text-muted">
+    A reading session feeds the team handoff: intent, evidence, and unresolved questions stay with
+    the PR.
+  </figcaption>
+</figure>
 
 ## Pricing: identify the plan you would actually use
 
@@ -82,7 +98,38 @@ For Guided Review, the same check includes your model provider. A local server a
 
 ## Sources
 
-Checked 2026-10-21: <span id="source-g1" />[plan docs](https://guidedreview.dev/docs/how-it-works) · <span id="source-g2" />[extension docs](https://guidedreview.dev/docs/chrome-extension) · <span id="source-g3" />[CLI docs](https://guidedreview.dev/docs/cli) · <span id="source-g4" />[data docs](https://guidedreview.dev/docs/privacy-and-data) · <span id="source-g5" />[price and usage](https://guidedreview.dev/docs/faq#is-it-free-forever) · <span id="source-c1" />[Graphite AI Reviews](https://graphite.com/features/ai-reviews) · <span id="source-c2" />[Graphite pricing](https://graphite.com/pricing).
+Checked October, 2026.
+
+<ul className="list-none space-y-3 pl-0">
+  <li id="source-g1" className="scroll-mt-28">
+    <span className="mr-2 font-mono text-xs text-muted">[G1]</span>
+    <a href="https://guidedreview.dev/docs/how-it-works">plan docs</a>
+  </li>
+  <li id="source-g2" className="scroll-mt-28">
+    <span className="mr-2 font-mono text-xs text-muted">[G2]</span>
+    <a href="https://guidedreview.dev/docs/chrome-extension">extension docs</a>
+  </li>
+  <li id="source-g3" className="scroll-mt-28">
+    <span className="mr-2 font-mono text-xs text-muted">[G3]</span>
+    <a href="https://guidedreview.dev/docs/cli">CLI docs</a>
+  </li>
+  <li id="source-g4" className="scroll-mt-28">
+    <span className="mr-2 font-mono text-xs text-muted">[G4]</span>
+    <a href="https://guidedreview.dev/docs/privacy-and-data">data docs</a>
+  </li>
+  <li id="source-g5" className="scroll-mt-28">
+    <span className="mr-2 font-mono text-xs text-muted">[G5]</span>
+    <a href="https://guidedreview.dev/docs/faq#is-it-free-forever">price and usage</a>
+  </li>
+  <li id="source-c1" className="scroll-mt-28">
+    <span className="mr-2 font-mono text-xs text-muted">[C1]</span>
+    <a href="https://graphite.com/features/ai-reviews">Graphite AI Reviews</a>
+  </li>
+  <li id="source-c2" className="scroll-mt-28">
+    <span className="mr-2 font-mono text-xs text-muted">[C2]</span>
+    <a href="https://graphite.com/pricing">Graphite pricing</a>
+  </li>
+</ul>
 
 ## FAQ
 

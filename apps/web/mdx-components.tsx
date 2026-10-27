@@ -1,6 +1,6 @@
 import type { MDXComponents } from "mdx/types";
 import { Children, isValidElement, type HTMLAttributes, type ReactNode } from "react";
-import type { TdHTMLAttributes, ThHTMLAttributes } from "react";
+import type { AnchorHTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from "react";
 import { Callout } from "@web/components/docs/Callout";
 import { DocsIndex } from "@web/components/docs/DocsIndex";
 import { InstallAppCards } from "@web/components/docs/InstallAppCards";
@@ -64,6 +64,30 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     h2: (props: HTMLAttributes<HTMLHeadingElement>) => <Heading as="h2" {...props} />,
     h3: (props: HTMLAttributes<HTMLHeadingElement>) => <Heading as="h3" {...props} />,
     h4: (props: HTMLAttributes<HTMLHeadingElement>) => <Heading as="h4" {...props} />,
+
+    a: ({ href, children, ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) => {
+      if (href?.startsWith("#source-")) {
+        const sourceId = href.slice("#source-".length).toUpperCase();
+        return (
+          <sup className="ml-0.5 align-super font-mono text-xs leading-none">
+            <a
+              {...props}
+              href={href}
+              aria-label={`Source ${sourceId}`}
+              data-testid={`source-reference-${sourceId.toLowerCase()}`}
+              className="rounded-sm px-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              [{children}]
+            </a>
+          </sup>
+        );
+      }
+      return (
+        <a href={href} {...props}>
+          {children}
+        </a>
+      );
+    },
 
     // Blockquotes become Note callouts by default
     blockquote: ({ children }: { children?: ReactNode }) => (
