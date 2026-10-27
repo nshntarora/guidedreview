@@ -1,5 +1,0 @@
-Tool: built-in image_gen
-Output: apps/web/public/assets/landing/direct-provider-connection.webp
-Transparent background: true
-
-Use case: background-extraction. Edit the provided direct-provider-connection illustration ONLY to remove its warm black background and replace it with genuine alpha transparency. Preserve the exact 1536x1024 canvas, all object positions, the laptop and server outlines, interior panels, code diff lines, lime arrow and local key, cream document, and all existing labels verbatim with their current typography, colors, and placement. Remove the backdrop in the negative space outside the objects and around all text and connections. Keep dark fills belonging to the laptop and provider equipment intact. Preserve fine gray lines and antialiasing. Do not redraw, redesign, crop, add objects, change text, or add any checkerboard, solid backdrop, shadow, glow, or border. Output a true transparent image.
