@@ -20,7 +20,8 @@
  *  6. Comment composer / any editable (Esc, ⌘Enter save)
  *  7. ⌘/Ctrl+Enter open Submit Review
  *  8. View chords (`v` then `u`/`s`)
- *  9. Comment mode keys, else navigate mode keys (`d` scope picker, ⌘/Ctrl+I structure)
+ *  9. Comment mode keys, else navigate mode keys (`d` scope picker)
+ * Sidebar tabs (1/2) and generation (⌘/Ctrl+I) also work from sidebar controls.
  *
  * Do not redesign this as a generic keyboard framework. The ref pattern exists
  * only because capture ownership and React synthetic handlers cannot both win.
@@ -111,6 +112,9 @@ interface UseOverlayKeyboardOptions {
   isOpen: boolean;
   /** CLI settings (or similar) is on top — leave keys alone. */
   suspended?: boolean;
+  navigationDrawerRef?: RefObject<HTMLDivElement | null>;
+  navigationOpen?: boolean;
+  closeNavigation?: () => void;
   overlayRef: RefObject<HTMLDivElement | null>;
   submitModalDialogRef: RefObject<HTMLDivElement | null>;
   generatePromptDialogRef: RefObject<HTMLDivElement | null>;
@@ -146,7 +150,7 @@ interface UseOverlayKeyboardOptions {
   diffSearchKeyRef: MutableRefObject<((e: KeyboardEvent) => boolean) | null>;
   /** Local: focus and open the diff-scope picker. */
   openScopePicker?: () => void;
-  /** Local: start Structure with AI when the CTA is still available. */
+  /** Generate a review plan (or connect a provider) while the CTA is available. */
   structureReview?: () => void;
   /** Local: open the settings view (⌘/Ctrl+,). */
   openSettings?: () => void;
@@ -159,6 +163,9 @@ interface UseOverlayKeyboardOptions {
 export function useOverlayKeyboard({
   isOpen,
   suspended = false,
+  navigationDrawerRef,
+  navigationOpen = false,
+  closeNavigation,
   overlayRef,
   submitModalDialogRef,
   generatePromptDialogRef,
@@ -193,6 +200,10 @@ export function useOverlayKeyboard({
   // sees a stale open state between React commit (modal paints) and this
   // effect re-running. Without this, Esc right after open can fall through to
   // requestExit while the modal is already visible.
+  const navigationOpenRef = useRef(navigationOpen);
+  navigationOpenRef.current = navigationOpen;
+  const closeNavigationRef = useRef(closeNavigation);
+  closeNavigationRef.current = closeNavigation;
   const submitReviewOpenRef = useRef(submitReviewOpen);
   submitReviewOpenRef.current = submitReviewOpen;
   const generatePromptOpenRef = useRef(generatePromptOpen);
@@ -254,7 +265,9 @@ export function useOverlayKeyboard({
           ? submitModalDialogRef.current
           : generatePromptOpenRef.current
             ? generatePromptDialogRef.current
-            : overlayRef.current;
+            : navigationOpenRef.current
+              ? navigationDrawerRef?.current
+              : overlayRef.current;
       if (trapRoot) trapTabKey(event, trapRoot);
       return true;
     }
@@ -456,10 +469,6 @@ export function useOverlayKeyboard({
           openScopePickerRef.current();
           return;
         default:
-          if (isStructureShortcut(event) && structureReviewRef.current) {
-            event.preventDefault();
-            structureReviewRef.current();
-          }
           return;
       }
     }
@@ -567,7 +576,109 @@ export function useOverlayKeyboard({
         return;
       }
 
+      if (navigationOpenRef.current && event.key === "Escape") {
+        event.preventDefault();
+        closeNavigationRef.current?.();
+        return;
+      }
+
       const store = useReviewStore.getState();
+      if (!isEditableEvent(event)) {
+        if (
+          !event.metaKey &&
+          !event.ctrlKey &&
+          !event.altKey &&
+          !event.shiftKey &&
+          (event.key === "1" || event.key === "2")
+        ) {
+          event.preventDefault();
+          clearViewChord();
+          store.setNavigationMode(event.key === "1" ? "files" : "units");
+          const focusTarget = navigationOpenRef.current
+            ? navigationDrawerRef?.current
+            : overlayRef.current;
+          focusTarget?.focus({ preventScroll: true });
+          return;
+        }
+        if (isStructureShortcut(event) && structureReviewRef.current) {
+          event.preventDefault();
+          clearViewChord();
+          structureReviewRef.current();
+          return;
+        }
+      }
+
+      // Native events are retargeted across the shadow root. Handle sidebar
+      // controls here because capture ownership prevents React key handlers.
+      const path = event.composedPath();
+      const navigation = path.find(
+        (node): node is HTMLElement =>
+          node instanceof HTMLElement && node.hasAttribute("data-review-navigation"),
+      );
+      const control = path.find(
+        (node): node is HTMLButtonElement => node instanceof HTMLButtonElement,
+      );
+      if (
+        navigation &&
+        control &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        ["Enter", " ", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(
+          event.key,
+        )
+      ) {
+        clearViewChord();
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          control.click();
+        } else if (
+          control.hasAttribute("data-file-path") &&
+          ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)
+        ) {
+          event.preventDefault();
+          const tree = control.closest("[data-review-file-tree]");
+          const rows = Array.from(
+            tree?.querySelectorAll<HTMLButtonElement>("button[data-file-path]") ?? [],
+          );
+          const index = rows.indexOf(control);
+          const expanded = control.getAttribute("aria-expanded");
+          let next: HTMLButtonElement | undefined;
+          if (event.key === "Home") next = rows[0];
+          else if (event.key === "End") next = rows[rows.length - 1];
+          else if (event.key === "ArrowDown") next = rows[index + 1];
+          else if (event.key === "ArrowUp") next = rows[index - 1];
+          else if (event.key === "ArrowRight") {
+            if (expanded === "false") control.click();
+            else if (expanded === "true") next = rows[index + 1];
+          } else if (expanded === "true") control.click();
+          else {
+            next = rows.find((row) => row.dataset.filePath === control.dataset.fileParent);
+          }
+          next?.focus();
+          next?.scrollIntoView({ block: "nearest" });
+        } else if (
+          control.getAttribute("role") === "tab" &&
+          ["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)
+        ) {
+          event.preventDefault();
+          const tabs = Array.from(navigation.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+          const index = tabs.indexOf(control);
+          const next =
+            event.key === "Home"
+              ? tabs[0]
+              : event.key === "End"
+                ? tabs[tabs.length - 1]
+                : tabs[(index + 1) % tabs.length];
+          next?.click();
+          next?.focus();
+        } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+          event.preventDefault();
+          const controls = Array.from(navigation.querySelectorAll<HTMLButtonElement>("button"));
+          controls[controls.indexOf(control) + (event.key === "ArrowDown" ? 1 : -1)]?.focus();
+        }
+        return;
+      }
 
       if (handleComposerKeys(event, store)) {
         clearViewChord();
@@ -597,6 +708,7 @@ export function useOverlayKeyboard({
   }, [
     isOpen,
     suspended,
+    navigationDrawerRef,
     selectableForUnit,
     currentUnitId,
     // Modal open flags / callbacks are read from refs (updated each render) so

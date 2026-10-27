@@ -1,14 +1,10 @@
 import type { ReviewErrorInfo, ReviewUnit } from "@guided-review/ui/review/types";
-import { getProvider, type ProviderId } from "@guided-review/core";
-import { ConnectProviderPrompt } from "./ConnectProviderPrompt";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { Button, Spinner } from "@guided-review/ui";
-import { ShortcutKeys } from "./ShortcutKeys";
 import {
   BUILD_PLAN_PRIMARY,
   missingMetadataHint,
   PR_DESCRIPTION_HINT,
-  STRUCTURE_REVIEW_HINT,
 } from "@guided-review/ui/review/overlayCopy";
 import { useReviewHost } from "@guided-review/ui/review/host";
 
@@ -20,19 +16,11 @@ interface ContextPanelProps {
   /** Whether the PR has a non-empty description. Used when the description unit is active. */
   hasDescription?: boolean;
   error?: ReviewErrorInfo | null;
-  /** No AI provider configured — prompt to connect one instead of erroring. */
-  needsProvider?: boolean;
   loading?: boolean;
   /** Pipeline phase detail shown under the primary loading line. */
   loadingDetail?: string | null;
   /** Retry the failed API / review build step. */
   onRetry?: () => void;
-  /** Local: start the opt-in annotation stream from the Change summary card. */
-  onStructureReview?: () => void;
-  /** Local: an AI plan is already in place for the current scope. */
-  structured?: boolean;
-  /** Local: selected coding agent / provider shown under Structure with AI. */
-  structureWith?: { provider: ProviderId; label: string };
 }
 
 function ContextError({ error, onRetry }: { error: ReviewErrorInfo; onRetry?: () => void }) {
@@ -85,46 +73,23 @@ function SummaryUnitPanel({
   hasDescription,
   loading,
   loadingDetail,
-  onStructureReview,
-  structured,
-  structureWith,
 }: {
   hasTitle: boolean;
   hasDescription: boolean;
   loading?: boolean;
   loadingDetail?: string | null;
-  onStructureReview?: () => void;
-  structured: boolean;
-  structureWith?: { provider: ProviderId; label: string };
 }) {
   const host = useReviewHost();
   const hint =
     hasTitle && hasDescription && host.kind === "github"
       ? PR_DESCRIPTION_HINT
       : missingMetadataHint(hasTitle, hasDescription, host.kind);
-  const showStructure = Boolean(onStructureReview && !structured);
 
   return (
     <div className="rounded-none border-0 bg-transparent px-0 py-0.5 pb-1">
       <div className="text-lg leading-[1.7] text-foreground" data-testid="context-panel-body">
-        {showStructure ? STRUCTURE_REVIEW_HINT : hint}
+        {hint}
       </div>
-      {showStructure && !loading ? (
-        <div className="mt-4">
-          <Button
-            size="sm"
-            onClick={onStructureReview}
-            data-testid="structure-review"
-            aria-keyshortcuts="Meta+I Control+I"
-          >
-            Structure With AI
-            <ShortcutKeys keys={["mod", "I"]} join="chord" />
-          </Button>
-          {structureWith ? (
-            <StructureWithCaption provider={structureWith.provider} label={structureWith.label} />
-          ) : null}
-        </div>
-      ) : null}
       {loading ? (
         <div
           className="mt-4 flex items-center gap-2.5 border-t border-border-strong pt-3"
@@ -150,68 +115,27 @@ function SummaryUnitPanel({
           allowExit={host.kind !== "local"}
           showSettings={host.kind === "local"}
           showScopePicker={host.kind === "local"}
-          showStructureReview={showStructure}
         />
       )}
     </div>
   );
 }
 
-/** Quiet attribution under the CTA. OpenAI's mark is inverted on the dark pane. */
-function StructureWithCaption({ provider, label }: { provider: ProviderId; label: string }) {
-  const host = useReviewHost();
-  const def = getProvider(provider);
-  return (
-    <p
-      className="mt-2 mb-0 flex items-center gap-1.5 text-sm text-muted"
-      data-testid="structure-review-provider"
-    >
-      <img
-        src={host.assetUrl(def.iconSrc)}
-        alt=""
-        width={14}
-        height={14}
-        draggable={false}
-        aria-hidden="true"
-        className={`size-3.5 shrink-0 object-contain ${provider === "openai" ? "invert" : ""}`}
-      />
-      using {label}
-    </p>
-  );
-}
-
-/**
- * Right-pane copy for the active unit. Branch precedence:
- * needsProvider (no AI context yet) → error → summary chrome (description or
- * empty-context file units) → unit context.
- */
 export function ContextPanel({
   unit,
   hasTitle = true,
   hasDescription = true,
   error,
-  needsProvider,
   loading,
   loadingDetail,
   onRetry,
-  onStructureReview,
-  structured = false,
-  structureWith,
 }: ContextPanelProps) {
-  // Takes precedence over `error`: a missing key is a setup step, not a failure.
-  // Units built locally have no context to show; a restored AI unit still does,
-  // so never cover real commentary with the prompt.
-  if (needsProvider && !unit?.context.trim()) {
-    return <ConnectProviderPrompt />;
-  }
-
   if (error) {
     return <ContextError error={error} onRetry={onRetry} />;
   }
 
-  // Change summary (null unit) and file-mode units (empty context) share the
-  // same chrome: structure CTA when available, otherwise the summary hint,
-  // plus keyboard shortcuts. AI units always have real commentary.
+  // Summary and full-file selections share guidance and keyboard help.
+  // Commentary belongs only to the selected AI unit.
   if (!unit || !unit.context.trim()) {
     return (
       <SummaryUnitPanel
@@ -219,9 +143,6 @@ export function ContextPanel({
         hasDescription={hasDescription}
         loading={loading}
         loadingDetail={loadingDetail}
-        onStructureReview={onStructureReview}
-        structured={structured}
-        structureWith={structureWith}
       />
     );
   }

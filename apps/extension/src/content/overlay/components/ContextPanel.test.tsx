@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createGitHubReviewHost } from "@extension/content/githubHost";
-import { createMemoryReviewHost, setActiveReviewHost } from "@guided-review/ui/review/host";
+import { setActiveReviewHost } from "@guided-review/ui/review/host";
 import { ContextPanel } from "@guided-review/ui/review/components/ContextPanel";
 
 beforeEach(() => {
@@ -64,132 +64,11 @@ describe("ContextPanel loading state", () => {
   });
 });
 
-describe("ContextPanel needs-provider state", () => {
-  it("renders the connect-provider prompt with its illustration", () => {
-    render(<ContextPanel unit={null} needsProvider />);
-
-    expect(screen.getByTestId("connect-provider-prompt")).toBeInTheDocument();
-    expect(screen.getByTestId("connect-provider-art")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /connect an ai provider/i })).toBeInTheDocument();
-  });
-
-  it("opens the options page from the CTA", async () => {
-    render(<ContextPanel unit={null} needsProvider />);
-
-    screen.getByTestId("connect-provider-open-settings").click();
-
-    await vi.waitFor(() => {
-      expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({ type: "OPEN_OPTIONS" });
-    });
-  });
-
-  it("links Setup docs to the configure-provider docs", () => {
-    render(<ContextPanel unit={null} needsProvider />);
-
-    const setupDocs = screen.getByTestId("connect-provider-learn-more");
-    expect(setupDocs).toHaveAttribute("href", "https://guidedreview.dev/docs/configure-provider");
-    expect(setupDocs).toHaveAttribute("target", "_blank");
-    expect(setupDocs).toHaveAttribute("rel", "noopener noreferrer");
-    expect(setupDocs).toHaveTextContent(/setup docs/i);
-  });
-
-  it("takes precedence over an error so no red error box is shown", () => {
-    render(
-      <ContextPanel unit={null} needsProvider error={{ message: "boom" }} onRetry={vi.fn()} />,
-    );
-
-    expect(screen.getByTestId("connect-provider-prompt")).toBeInTheDocument();
-    expect(screen.queryByTestId("context-panel-error")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^retry$/i })).not.toBeInTheDocument();
-  });
-});
-
-describe("ContextPanel structure trigger", () => {
-  it("offers Structure with AI on the local summary card", () => {
-    setActiveReviewHost(
-      createMemoryReviewHost({
-        kind: "local",
-        exportNotes: vi.fn(),
-        submit: undefined,
-      }),
-    );
-    const onStructureReview = vi.fn();
-    render(
-      <ContextPanel unit={null} hasTitle hasDescription onStructureReview={onStructureReview} />,
-    );
-
-    expect(screen.getByText(/one unit per file until you structure it/i)).toBeInTheDocument();
-    screen.getByTestId("structure-review").click();
-    expect(onStructureReview).toHaveBeenCalledTimes(1);
-  });
-
-  it("shows using <agent> with the logo under Structure with AI", () => {
-    setActiveReviewHost(
-      createMemoryReviewHost({
-        kind: "local",
-        exportNotes: vi.fn(),
-        submit: undefined,
-      }),
-    );
-    render(
-      <ContextPanel
-        unit={null}
-        hasTitle
-        hasDescription
-        onStructureReview={vi.fn()}
-        structureWith={{ provider: "grok", label: "Grok" }}
-      />,
-    );
-
-    const caption = screen.getByTestId("structure-review-provider");
-    expect(caption).toHaveTextContent("using Grok");
-    const logo = caption.querySelector("img");
-    expect(logo).toBeTruthy();
-    expect(logo).toHaveAttribute("src", "providers/grok.svg");
-    expect(logo).toHaveAttribute("aria-hidden", "true");
-  });
-
-  it("hides the trigger after the review is structured", () => {
-    setActiveReviewHost(
-      createMemoryReviewHost({
-        kind: "local",
-        exportNotes: vi.fn(),
-        submit: undefined,
-      }),
-    );
-    render(
-      <ContextPanel unit={null} hasTitle hasDescription onStructureReview={vi.fn()} structured />,
-    );
-    expect(screen.queryByTestId("structure-review")).not.toBeInTheDocument();
-  });
-
-  it("shows structure prompt and shortcuts on empty-context file units", () => {
-    setActiveReviewHost(
-      createMemoryReviewHost({
-        kind: "local",
-        exportNotes: vi.fn(),
-        submit: undefined,
-      }),
-    );
-    const onStructureReview = vi.fn();
-    render(
-      <ContextPanel
-        unit={{
-          id: "file-0-src/foo.ts",
-          title: "src/foo.ts",
-          kind: "change",
-          context: "",
-          files: [{ fileId: "src/foo.ts", hunkIds: [], role: "core_logic" }],
-        }}
-        hasTitle
-        hasDescription
-        onStructureReview={onStructureReview}
-      />,
-    );
-
-    expect(screen.getByText(/one unit per file until you structure it/i)).toBeInTheDocument();
+describe("ContextPanel commentary", () => {
+  it("retains guidance without setup or generation actions", () => {
+    render(<ContextPanel unit={null} />);
     expect(screen.getByLabelText(/keyboard shortcuts/i)).toBeInTheDocument();
-    screen.getByTestId("structure-review").click();
-    expect(onStructureReview).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId("connect-provider-prompt")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("generate-review-plan")).not.toBeInTheDocument();
   });
 });

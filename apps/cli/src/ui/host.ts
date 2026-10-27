@@ -2,11 +2,15 @@ import type { AnnotateReviewStreamEvent, ParsedDiff, ReviewContext } from "@guid
 import type { ReviewHost, StreamPlanHandlers } from "@guided-review/ui/review/host";
 import type { DiffViewMode } from "@guided-review/ui/review/diffView";
 
-export function createLocalReviewHost(options: { onConnectProvider: () => void }): ReviewHost {
+export function createLocalReviewHost(options: {
+  onConnectProvider: () => void;
+  onGeneratePlan?: () => void;
+}): ReviewHost {
   const { onConnectProvider } = options;
 
   return {
     kind: "local",
+    generatePlan: options.onGeneratePlan,
     assetUrl: (path) => `/${path.replace(/^\/+/, "")}`,
     persistSession: async (key, data) => {
       sessionStorage.setItem(`guidedReview.session.${key}`, JSON.stringify(data));

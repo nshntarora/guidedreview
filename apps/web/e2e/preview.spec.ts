@@ -17,9 +17,12 @@ test("sample review switches between the CLI and extension flows", async ({ page
   await expect(page.getByTestId("preview-mode-notice")).toContainText("Live preview");
   await expect(page.getByTestId("preview-mode-cli")).toHaveAttribute("aria-pressed", "true");
   const units = page.getByTestId("review-units");
-  await expect(units.getByTestId(/review-unit-/)).toHaveCount(6);
+  await expect(page.getByTestId("navigation-tab-files")).toHaveAttribute("aria-selected", "true");
+  await page.getByTestId("navigation-tab-units").click();
+  await page.getByTestId("generate-review-plan").click();
+  await expect(units.getByTestId(/review-unit-/)).toHaveCount(5);
   await expect(page.getByTestId("submit-review-button")).toContainText("Generate Prompt");
-  await expect(units.getByTestId("review-unit-0")).toHaveAttribute("aria-current", "true");
+  await expect(page.getByTestId("review-summary")).toHaveAttribute("aria-current", "true");
 
   await page.getByTestId("open-settings").click();
   await expect(page.getByTestId("preview-unsupported-notice")).toContainText(
@@ -30,7 +33,12 @@ test("sample review switches between the CLI and extension flows", async ({ page
   await page.getByTestId("preview-mode-chrome").click();
   await expect(page.getByTestId("preview-mode-chrome")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("submit-review-button")).toContainText("Submit Review");
-  await expect(units.getByTestId("review-unit-0")).toHaveAttribute("aria-current", "true");
+  await expect(page.getByTestId("review-summary")).toHaveAttribute("aria-current", "true");
+
+  await page.getByTestId("navigation-tab-units").click();
+  await page.getByTestId("generate-review-plan").click();
+  await expect(units.getByTestId(/review-unit-/)).toHaveCount(5);
+  await overlay.focus();
 
   // Every fixture file and hunk must be represented by the prepared structure.
   expect(samplePlan.units).toHaveLength(5);

@@ -80,6 +80,8 @@ export interface ReviewHost {
     handlers: StreamPlanHandlers,
   ): { cancel(): void };
   connectProvider(): void;
+  /** Explicit user action; readiness is independent of any saved plan. */
+  generatePlan?(): void;
   persistDiffViewMode?(mode: DiffViewMode): Promise<void>;
   readDiffViewMode?(): Promise<DiffViewMode>;
   fileDiffUrl?(filePath: string, context: ReviewContext): Promise<string | null>;

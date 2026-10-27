@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { buildFileReviewPlan } from "@guided-review/core";
 import { Button } from "@guided-review/ui";
 import {
   Overlay,
@@ -43,12 +44,15 @@ export default function Preview({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     setActiveReviewHost(host);
-    const { context, diff, plan } = loadPreviewReview(mode);
+    const { context, diff } = loadPreviewReview(mode);
     const state = useReviewStore.getState();
-    const generation = state.startLoading("preview:parcel-http");
+    const generation = state.bootReady({
+      sessionKey: "preview:parcel-http",
+      diff,
+      plan: buildFileReviewPlan(diff),
+    });
     state.setPRContext(context);
     state.setDiffViewMode(window.matchMedia("(min-width: 768px)").matches ? "split" : "unified");
-    state.setReady(diff, plan, generation);
     state.open();
     return () => {
       useReviewStore.setState({
@@ -59,6 +63,7 @@ export default function Preview({ onClose }: { onClose: () => void }) {
     };
   }, [host, mode]);
 
+  const planComplete = useReviewStore((s) => s.planComplete);
   const localDiff: LocalDiffControls | undefined =
     mode === "cli"
       ? {
@@ -97,7 +102,7 @@ export default function Preview({ onClose }: { onClose: () => void }) {
           onSelectScope: () => showUnsupported("Changing the diff scope"),
           onStructureReview: () => showUnsupported("Structuring a new review"),
           structuring: false,
-          structured: true,
+          structured: planComplete,
         }
       : undefined;
 

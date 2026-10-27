@@ -16,7 +16,7 @@ import { isPrFilesChangedPath } from "@extension/lib/github/prUrls";
 import overlayStyles from "@guided-review/ui/review/styles/overlay.css?inline";
 import { useReviewStore, restoreSession, buildSessionKey } from "@guided-review/ui/review/store";
 
-const reviewHost = createGitHubReviewHost();
+const reviewHost = createGitHubReviewHost({ onGeneratePlan: retryAnnotation });
 setActiveReviewHost(reviewHost);
 
 const BUTTON_ID = "guided-review-start-btn";
@@ -74,12 +74,10 @@ function init(): void {
     }
   });
 
-  // The connect-provider prompt sends the user to the options tab; when they
-  // save a key there, start the review they were already waiting on.
+  // Saving provider settings updates readiness without generating or refetching.
   onProviderSettingsChanged((settings) => {
-    if (!settings.apiKey) return;
-    if (!useReviewStore.getState().needsProvider) return;
-    void onStartReview();
+    useReviewStore.getState().setProviderReady(Boolean(settings.apiKey));
+    useReviewStore.getState().setProviderLabel(getProvider(settings.provider).displayName);
   });
 
   onAutoOpenOnFilesTabChanged((enabled) => {
@@ -246,10 +244,12 @@ function startAnnotationStream(
     onStatus: (phase) => useReviewStore.getState().setBuildPhase(phase, streamGeneration),
     onUnit: (unit) => useReviewStore.getState().appendUnit(unit, streamGeneration),
     onDone: (plan) => {
+      if (useReviewStore.getState().streamGeneration !== streamGeneration) return;
       activeStreamCancel = null;
       useReviewStore.getState().setReady(diff, plan, streamGeneration);
     },
     onError: (error) => {
+      if (useReviewStore.getState().streamGeneration !== streamGeneration) return;
       activeStreamCancel = null;
       useReviewStore.getState().setError(error, streamGeneration);
     },
@@ -263,7 +263,7 @@ function startAnnotationStream(
  */
 function retryAnnotation(): void {
   const { diff, prContext } = useReviewStore.getState();
-  if (diff && prContext) {
+  if (diff && prContext && diff.files.length > 0) {
     cancelActiveStream();
     const generation = useReviewStore.getState().beginRetry();
     startAnnotationStream(diff, prContext, generation);
@@ -292,7 +292,13 @@ async function onStartReview(): Promise<void> {
   const streamGeneration = useReviewStore.getState().startLoading(sessionKey);
 
   try {
-    const restored = await restoreSession(sessionKey);
+    const [restored, settings] = await Promise.all([
+      restoreSession(sessionKey),
+      getProviderSettings(),
+    ]);
+    if (useReviewStore.getState().streamGeneration !== streamGeneration) return;
+    useReviewStore.getState().setProviderReady(Boolean(settings.apiKey));
+    useReviewStore.getState().setProviderLabel(getProvider(settings.provider).displayName);
     if (restored) return;
 
     // The description only exists in the DOM on GitHub's "Conversation" tab
@@ -301,7 +307,7 @@ async function onStartReview(): Promise<void> {
     if (!prContext.description) {
       fetchConversationDescription(pr)
         .then(({ text, html }) => {
-          if (!text) return;
+          if (!text || useReviewStore.getState().sessionKey !== sessionKey) return;
           const current = useReviewStore.getState().prContext ?? prContext;
           useReviewStore
             .getState()
@@ -312,31 +318,15 @@ async function onStartReview(): Promise<void> {
         });
     }
 
-    // Neither depends on the other, and the provider check only matters once
-    // the diff has landed — so pay for one round-trip, not two.
-    const [diffResponse, settings] = await Promise.all([requestPRDiff(pr), getProviderSettings()]);
+    const diffResponse = await requestPRDiff(pr);
+    if (useReviewStore.getState().streamGeneration !== streamGeneration) return;
     if (!diffResponse.ok) {
       useReviewStore.getState().setError(diffResponse.error, streamGeneration);
       return;
     }
     const diff = diffResponse.diff;
 
-    // Store the diff early so header stats and unit resolution work while the
-    // plan is still streaming in.
-    useReviewStore.getState().setDiff(diff);
-
-    // Without a provider there's no plan to stream: fall back to one unit per
-    // changed file so the diff, comments and submit flow all still work.
-    if (!settings.apiKey) {
-      useReviewStore.getState().setNeedsProvider();
-      return;
-    }
-
-    useReviewStore.getState().setProviderLabel(getProvider(settings.provider).displayName);
-    useReviewStore.getState().beginStreaming(streamGeneration);
-
-    const latestContext = useReviewStore.getState().prContext ?? prContext;
-    startAnnotationStream(diff, latestContext, streamGeneration);
+    useReviewStore.getState().setFileReady(diff, streamGeneration);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to build the review.";
     useReviewStore.getState().setError(message, streamGeneration);

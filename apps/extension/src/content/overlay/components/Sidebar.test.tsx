@@ -1,125 +1,39 @@
-import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ReviewPlan } from "@extension/lib/types";
-import { createGitHubReviewHost } from "@extension/content/githubHost";
-import { setActiveReviewHost } from "@guided-review/ui/review/host";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, expect, it, vi } from "vitest";
+import { createMemoryReviewHost, setActiveReviewHost } from "@guided-review/ui/review/host";
+import { useReviewStore } from "@guided-review/ui/review/store";
 import { Sidebar } from "@guided-review/ui/review/components/Sidebar";
 
-function planWithUnits(count: number): ReviewPlan {
-  return {
-    units: Array.from({ length: count }, (_, i) => ({
-      id: `u${i + 1}`,
-      title: `Unit ${i + 1}`,
-      kind: "change" as const,
-      context: `Context for unit ${i + 1}`,
-      files: [],
-    })),
-  };
-}
+beforeEach(() => {
+  useReviewStore.setState(useReviewStore.getInitialState());
+  Element.prototype.scrollIntoView = vi.fn();
+});
 
-describe("Sidebar", () => {
-  beforeEach(() => {
-    setActiveReviewHost(createGitHubReviewHost());
-    // jsdom doesn't implement layout/scroll; stub scrollIntoView so we can
-    // assert the active unit is kept in view on navigation.
-    Element.prototype.scrollIntoView = vi.fn();
+it("opens provider setup from Review units, then offers explicit generation when settings are saved", () => {
+  const connectProvider = vi.fn();
+  const generatePlan = vi.fn();
+  setActiveReviewHost(createMemoryReviewHost({ connectProvider }));
+  useReviewStore.setState({
+    diff: { files: [{ path: "src/a.ts", status: "added", hunks: [], isBinaryOrElided: false }] },
+    status: "ready",
+    needsProvider: true,
   });
-
-  it("scrolls the active unit into view when currentUnitIndex changes", () => {
-    const plan = planWithUnits(3);
-    const { rerender } = render(
-      <Sidebar plan={plan} currentUnitIndex={0} stillBuilding={false} onSelectUnit={() => {}} />,
-    );
-
-    // Initial mount scrolls the description unit into view.
-    expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
-    const firstCallCount = (Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>).mock.calls
-      .length;
-
-    rerender(
-      <Sidebar plan={plan} currentUnitIndex={2} stillBuilding={false} onSelectUnit={() => {}} />,
-    );
-
-    expect(Element.prototype.scrollIntoView).toHaveBeenCalledTimes(firstCallCount + 1);
-    const lastCall = (Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>).mock.calls.at(
-      -1,
-    );
-    expect(lastCall?.[0]).toEqual({ block: "nearest", behavior: "smooth" });
-
-    // The active item after the jump is unit 2 (display index 2 → "3. Unit 2").
-    const active = screen.getByRole("button", { current: true });
-    expect(active).not.toBeNull();
-    expect(active.textContent).toMatch(/Unit 2/);
-  });
-
-  it("marks the PR description unit active at index 0", () => {
-    render(
-      <Sidebar
-        plan={planWithUnits(1)}
-        currentUnitIndex={0}
-        stillBuilding={false}
-        onSelectUnit={() => {}}
-      />,
-    );
-    const active = screen.getByRole("button", { current: true });
-    expect(active.textContent).toMatch(/PR description/i);
-    expect(screen.getByRole("navigation", { name: /review units/i })).toBeInTheDocument();
-  });
-
-  it("shows completed units and trailing skeletons while still building", () => {
-    render(
-      <Sidebar
-        plan={planWithUnits(2)}
-        currentUnitIndex={1}
-        stillBuilding={true}
-        onSelectUnit={() => {}}
-      />,
-    );
-
-    expect(screen.getByText("Unit 1")).toBeInTheDocument();
-    expect(screen.getByText("Unit 2")).toBeInTheDocument();
-    expect(screen.getAllByTestId("unit-skeleton")).toHaveLength(4);
-  });
-
-  it("hides skeletons when not still building", () => {
-    render(
-      <Sidebar
-        plan={planWithUnits(1)}
-        currentUnitIndex={0}
-        stillBuilding={false}
-        onSelectUnit={() => {}}
-      />,
-    );
-
-    expect(screen.queryAllByTestId("unit-skeleton")).toHaveLength(0);
-  });
-
-  it("shows a flask icon only on tests units", () => {
-    const plan: ReviewPlan = {
-      units: [
-        {
-          id: "c1",
-          title: "Add feature",
-          kind: "change",
-          context: "why",
-          files: [],
-        },
-        {
-          id: "t1",
-          title: "Tests for Add feature",
-          kind: "tests",
-          context: "why",
-          files: [],
-        },
-      ],
-    };
-
-    render(
-      <Sidebar plan={plan} currentUnitIndex={1} stillBuilding={false} onSelectUnit={() => {}} />,
-    );
-
-    expect(screen.getAllByTestId("unit-tests-icon")).toHaveLength(1);
-    expect(screen.getByText("Tests for Add feature")).toBeInTheDocument();
-    expect(screen.getByText("Add feature")).toBeInTheDocument();
+  render(<Sidebar onGenerate={generatePlan} />);
+  fireEvent.click(screen.getByTestId("review-plan-invitation-action"));
+  expect(generatePlan).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByTestId("connect-provider-open-settings"));
+  expect(connectProvider).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByTestId("navigation-tab-files"));
+  fireEvent.click(screen.getByTestId("review-file-src/a.ts"));
+  expect(screen.queryByTestId("connect-provider-prompt")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByTestId("navigation-tab-units"));
+  // Simulate the settings screen publishing readiness, without invoking a provider.
+  fireEvent.click(screen.getByTestId("connect-provider-open-settings"));
+  useReviewStore.getState().setProviderReady(true);
+  // The async assertion flushes the store subscription update.
+  return screen.findByTestId("generate-review-plan").then((button) => {
+    expect(generatePlan).not.toHaveBeenCalled();
+    fireEvent.click(button);
+    expect(generatePlan).toHaveBeenCalledTimes(1);
   });
 });

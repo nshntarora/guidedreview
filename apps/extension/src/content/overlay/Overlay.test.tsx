@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Overlay } from "@guided-review/ui/review/Overlay";
 import { resetConfirmationQueueForTests } from "@guided-review/ui";
@@ -8,7 +8,6 @@ import {
   shouldLetComboboxHandleKey,
   VIEW_CHORD_WINDOW_MS,
 } from "@guided-review/ui/review/useOverlayKeyboard";
-import { buildFileReviewPlan } from "@guided-review/core";
 import type { ParsedDiff, PRContext, ReviewPlan } from "@extension/lib/types";
 import * as messaging from "@extension/lib/messaging";
 import * as oauthConfig from "@extension/lib/github/oauthConfig";
@@ -92,6 +91,7 @@ function prContextFixture(overrides: Partial<PRContext> = {}): PRContext {
 
 function resetStore(): void {
   useReviewStore.setState({
+    ...useReviewStore.getInitialState(),
     isOpen: false,
     status: "idle",
     error: null,
@@ -101,7 +101,7 @@ function resetStore(): void {
     diff: null,
     plan: null,
     prContext: null,
-    currentUnitIndex: 0,
+    selection: { kind: "summary" },
     streamGeneration: 0,
     sessionKey: null,
     diffViewMode: DEFAULT_DIFF_VIEW_MODE,
@@ -116,12 +116,16 @@ function resetStore(): void {
 
 function seedReadyReview(unitIndex = 1): void {
   useReviewStore.setState({
+    ...useReviewStore.getInitialState(),
     isOpen: true,
     status: "ready",
     diff: diffFixture(),
     plan: planFixture(),
     prContext: prContextFixture(),
-    currentUnitIndex: unitIndex,
+    selection: unitIndex === 0 ? { kind: "summary" } : { kind: "unit", id: "u1" },
+    navigationMode: "units",
+    planSource: "ai",
+    planComplete: true,
   });
 }
 
@@ -242,7 +246,7 @@ describe("Overlay", () => {
 
     expect(screen.getByTestId("submit-review-button")).toHaveTextContent("Generate Prompt");
     expect(screen.getByTestId("submit-review-button")).toBeDisabled();
-    expect(screen.getAllByText("Change summary").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Commits").length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText("#1")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^exit$/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /settings/i })).toBeInTheDocument();
@@ -442,7 +446,7 @@ describe("Overlay", () => {
     expect(screen.getByRole("heading", { level: 1, name: "feat" })).toHaveClass("gr-sr-only");
     expect(screen.getByTestId("uncommitted-card")).toHaveTextContent("Uncommitted changes");
     expect(screen.getByTestId("commit-card")).toHaveTextContent("Add header");
-    expect(screen.getByTestId("structure-review")).toBeInTheDocument();
+    expect(screen.queryByTestId("structure-review")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^exit$/i })).not.toBeInTheDocument();
 
     fireEvent.click(picker);
@@ -471,8 +475,15 @@ describe("Overlay", () => {
       const picker = screen.getByRole("combobox", { name: /diff to review/i });
       expect(picker).toHaveAttribute("aria-expanded", "false");
 
+      act(() => useReviewStore.setState({ planComplete: false }));
+
       fireEvent.keyDown(window, { key: "i", metaKey: true });
       expect(onStructureReview).toHaveBeenCalledTimes(1);
+      expect(useReviewStore.getState().navigationMode).toBe("units");
+      fireEvent.keyDown(window, { key: "i", ctrlKey: true });
+      expect(onStructureReview).toHaveBeenCalledTimes(2);
+
+      act(() => useReviewStore.setState({ status: "streaming" }));
       fireEvent.keyDown(window, { key: "i", ctrlKey: true });
       expect(onStructureReview).toHaveBeenCalledTimes(2);
 
@@ -539,96 +550,34 @@ describe("Overlay", () => {
     });
   });
 
-  it("shows the full layout with the PR description unit while loading", () => {
-    useReviewStore.setState({
-      isOpen: true,
-      status: "loading",
-      buildPhase: "extracting_diff",
-      prContext: prContextFixture(),
-      currentUnitIndex: 0,
-    });
+  it("switches sidebar tabs and generates a plan without taking shortcuts from text fields", () => {
+    const generatePlan = vi.fn();
+    const connectProvider = vi.fn();
+    setActiveReviewHost(createMemoryReviewHost({ generatePlan, connectProvider }));
+    seedReadyReview();
+    useReviewStore.setState({ planComplete: false, needsProvider: true });
     render(<Overlay />);
 
-    // Title in left pane + entry in the unit list.
-    expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
-    const loading = screen.getByTestId("context-panel-loading");
-    expect(loading).toHaveTextContent(/building the walkthrough/i);
-    expect(screen.getByTestId("context-panel-loading-detail")).toHaveTextContent(
-      /extracting the diff/i,
-    );
-    expect(screen.getByRole("status", { name: /building the walkthrough/i })).toBeInTheDocument();
-    // Skeleton placeholders are present (non-interactive bars in the unit list).
-    expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
-    // Shortcuts are reserved for the ready state; spinner occupies that slot while loading.
-    expect(screen.queryByLabelText(/keyboard shortcuts/i)).not.toBeInTheDocument();
-    // No full-page loading spinner copy.
-    expect(screen.queryByText(/reading the diff/i)).not.toBeInTheDocument();
-    // Diff has not arrived yet — no Changes summary.
-    expect(screen.queryByLabelText(/diff summary/i)).not.toBeInTheDocument();
-  });
+    fireEvent.keyDown(screen.getByTestId("navigation-tab-units"), { key: "1" });
+    expect(useReviewStore.getState().navigationMode).toBe("files");
+    fireEvent.keyDown(screen.getByTestId("review-file-src/foo.ts"), { key: "2" });
+    expect(useReviewStore.getState().navigationMode).toBe("units");
+    expect(generatePlan).not.toHaveBeenCalled();
+    fireEvent.keyDown(screen.getByTestId("navigation-tab-units"), { key: "i", ctrlKey: true });
+    expect(connectProvider).toHaveBeenCalledTimes(1);
+    expect(generatePlan).not.toHaveBeenCalled();
 
-  it("shows the diff summary while the plan is still loading once the diff is fetched", () => {
-    useReviewStore.setState({
-      isOpen: true,
-      status: "loading",
-      buildPhase: "processing_diff",
-      diff: diffFixture(),
-      prContext: prContextFixture(),
-      currentUnitIndex: 0,
-    });
-    render(<Overlay />);
+    act(() => useReviewStore.getState().setProviderReady(true));
+    fireEvent.keyDown(screen.getByTestId("generate-review-plan"), { key: "i", metaKey: true });
+    expect(generatePlan).toHaveBeenCalledTimes(1);
 
-    expect(screen.getByLabelText(/diff summary/i)).toBeInTheDocument();
-    expect(screen.getByText("src/foo.ts")).toBeInTheDocument();
-    // Plan still loading — skeleton + status copy remain.
-    expect(screen.getByTestId("context-panel-loading")).toHaveTextContent(
-      /building the walkthrough/i,
-    );
-    expect(screen.getByTestId("context-panel-loading-detail")).toHaveTextContent(
-      /processing the diff/i,
-    );
-    expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
-  });
-
-  it("shows completed units alongside skeletons while streaming", () => {
-    useReviewStore.setState({
-      isOpen: true,
-      status: "streaming",
-      buildPhase: "tokens_streaming",
-      diff: diffFixture(),
-      plan: planFixture(),
-      prContext: prContextFixture(),
-      currentUnitIndex: 0,
-    });
-    render(<Overlay />);
-
-    expect(screen.getByText("Update foo")).toBeInTheDocument();
-    expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
-    expect(screen.getByTestId("context-panel-loading")).toHaveTextContent(
-      /building the walkthrough/i,
-    );
-    expect(screen.getByTestId("context-panel-loading-detail")).toHaveTextContent(
-      /tokens are streaming/i,
-    );
-  });
-
-  it("names the configured provider in the loading detail when the request is sent", () => {
-    useReviewStore.setState({
-      isOpen: true,
-      status: "streaming",
-      buildPhase: "sent_to_provider",
-      providerLabel: "Claude (Anthropic)",
-      diff: diffFixture(),
-      plan: { units: [] },
-      prContext: prContextFixture(),
-      currentUnitIndex: 0,
-    });
-    render(<Overlay />);
-
-    expect(screen.getByTestId("context-panel-loading-detail")).toHaveTextContent(
-      /sent it to claude \(anthropic\)/i,
-    );
+    fireEvent.keyDown(window, { key: "c" });
+    fireEvent.keyDown(window, { key: "Enter" });
+    const input = screen.getByTestId("comment-composer-input");
+    fireEvent.keyDown(input, { key: "1" });
+    fireEvent.keyDown(input, { key: "i", ctrlKey: true });
+    expect(useReviewStore.getState().navigationMode).toBe("units");
+    expect(generatePlan).toHaveBeenCalledTimes(1);
   });
 
   it("shows unit context without the building spinner when viewing a streamed unit", () => {
@@ -639,7 +588,9 @@ describe("Overlay", () => {
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture(),
-      currentUnitIndex: 1,
+      selection: { kind: "unit", id: "u1" },
+      navigationMode: "units",
+      planSource: "ai",
     });
     render(<Overlay />);
 
@@ -655,7 +606,7 @@ describe("Overlay", () => {
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture(),
-      currentUnitIndex: 0,
+      selection: { kind: "summary" },
     });
     render(<Overlay />);
 
@@ -679,7 +630,7 @@ describe("Overlay", () => {
         code: "authentication_error",
       },
       prContext: prContextFixture(),
-      currentUnitIndex: 0,
+      selection: { kind: "summary" },
     });
     const onRetry = vi.fn();
     render(<Overlay onRetry={onRetry} />);
@@ -694,55 +645,6 @@ describe("Overlay", () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
-  it("walks the diff with file-per-unit steps and prompts to connect a provider", () => {
-    const diff = diffFixture();
-    useReviewStore.setState({
-      isOpen: true,
-      status: "ready",
-      needsProvider: true,
-      diff,
-      plan: buildFileReviewPlan(diff),
-      prContext: prContextFixture(),
-      currentUnitIndex: 0,
-    });
-    const onRetry = vi.fn();
-    render(<Overlay onRetry={onRetry} />);
-
-    expect(screen.getByTestId("connect-provider-prompt")).toBeInTheDocument();
-    expect(screen.queryByTestId("context-panel-error")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^retry$/i })).not.toBeInTheDocument();
-    expect(screen.queryAllByTestId("unit-skeleton")).toHaveLength(0);
-
-    // Description unit still shows the PR body and the Changes summary.
-    expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
-    expect(screen.getByLabelText(/diff summary/i)).toBeInTheDocument();
-
-    // One navigable step per changed file, after the description.
-    expect(screen.getByText(/2 of 2|1 of 2/i)).toBeInTheDocument();
-    const live = screen.getByTestId("overlay-status-live");
-    expect(live).toHaveTextContent(/one per changed file/i);
-    expect(live).not.toHaveTextContent(/^Error:/);
-  });
-
-  it("shows the file diff on a locally built unit, with the prompt still in the context panel", () => {
-    const diff = diffFixture();
-    useReviewStore.setState({
-      isOpen: true,
-      status: "ready",
-      needsProvider: true,
-      diff,
-      plan: buildFileReviewPlan(diff),
-      prContext: prContextFixture(),
-      currentUnitIndex: 1,
-    });
-    render(<Overlay />);
-
-    // The unit is the file itself: its diff renders, titled by path.
-    expect(screen.getByTestId("diff-unit-title")).toHaveTextContent("src/foo.ts");
-    expect(screen.getByTestId("connect-provider-prompt")).toBeInTheDocument();
-  });
-
   it("keeps restored AI context visible even when the provider key is gone", () => {
     useReviewStore.setState({
       isOpen: true,
@@ -751,7 +653,10 @@ describe("Overlay", () => {
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture(),
-      currentUnitIndex: 1,
+      selection: { kind: "unit", id: "u1" },
+      navigationMode: "units",
+      planSource: "ai",
+      planComplete: true,
     });
     render(<Overlay />);
 
@@ -766,7 +671,7 @@ describe("Overlay", () => {
       diff: diffFixture(),
       plan: { units: [] },
       prContext: prContextFixture(),
-      currentUnitIndex: 0,
+      selection: { kind: "summary" },
     });
     render(<Overlay />);
     expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
@@ -780,7 +685,9 @@ describe("Overlay", () => {
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture(),
-      currentUnitIndex: 1,
+      selection: { kind: "unit", id: "u1" },
+      navigationMode: "units",
+      planSource: "ai",
     });
     render(<Overlay />);
     expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
@@ -795,7 +702,7 @@ describe("Overlay", () => {
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture(),
-      currentUnitIndex: 0,
+      selection: { kind: "summary" },
     });
     render(<Overlay />);
     // Description lives in the left pane, not a header <details>.
@@ -810,7 +717,7 @@ describe("Overlay", () => {
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture(),
-      currentUnitIndex: 0,
+      selection: { kind: "summary" },
     });
     render(<Overlay />);
     expect(screen.getByText(/author's summary of intent/i)).toBeInTheDocument();
@@ -823,7 +730,7 @@ describe("Overlay", () => {
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture({ description: "", descriptionHtml: "" }),
-      currentUnitIndex: 0,
+      selection: { kind: "summary" },
     });
     render(<Overlay />);
 
@@ -840,7 +747,7 @@ describe("Overlay", () => {
       isOpen: true,
       status: "loading",
       prContext: prContextFixture({ title: "", description: "", descriptionHtml: "" }),
-      currentUnitIndex: 0,
+      selection: { kind: "summary" },
     });
     render(<Overlay />);
 
@@ -862,7 +769,7 @@ describe("Overlay", () => {
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture(),
-      currentUnitIndex: 0,
+      selection: { kind: "summary" },
     });
     render(<Overlay />);
 
@@ -876,10 +783,10 @@ describe("Overlay", () => {
 
     fireEvent.keyDown(window, { key: "ArrowRight" });
 
-    expect(useReviewStore.getState().currentUnitIndex).toBe(1);
+    expect(useReviewStore.getState().selection).toEqual({ kind: "file", path: "src/foo.ts" });
     expect(scrollToMock).toHaveBeenCalledWith({ top: 0 });
-    expect(scrollIntoViewMock).toHaveBeenCalledWith({ block: "nearest", behavior: "smooth" });
-    expect(screen.getByRole("button", { current: true }).textContent).toMatch(/Update foo/);
+    expect(scrollIntoViewMock).toHaveBeenCalledWith({ block: "nearest" });
+    expect(screen.getByRole("button", { current: true }).textContent).toMatch(/foo.ts/);
   });
 
   describe("comment mode keyboard", () => {

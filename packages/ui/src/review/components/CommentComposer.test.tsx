@@ -1,8 +1,10 @@
+import { useReviewStore } from "@guided-review/ui/review/store";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CommentComposer } from "./CommentComposer";
 
 describe("CommentComposer", () => {
+  beforeEach(() => useReviewStore.setState(useReviewStore.getInitialState()));
   it("renders the line range label and autofocuses the textarea", () => {
     render(
       <CommentComposer

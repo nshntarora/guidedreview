@@ -59,11 +59,11 @@
  * still suppress the ring on widgets that use a custom focus style (e.g.
  * listbox + option highlight, textareas with focus:border).
  */
-.gr-review :focus-visible {
-  outline: none;
-}
-
 @layer base {
+  .gr-review :focus-visible {
+    outline: none;
+  }
+
   .gr-review
     :is(
       a,

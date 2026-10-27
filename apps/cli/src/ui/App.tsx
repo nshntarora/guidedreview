@@ -47,12 +47,14 @@ export function App() {
   } | null>(null);
   const cancelStreamRef = useRef<(() => void) | undefined>(undefined);
   const hasKeyRef = useRef(false);
+  const startStructureRef = useRef<() => void>(() => {});
   const providerIdRef = useRef<ProviderId>("anthropic");
   const codingAgentRef = useRef<string | null>(null);
 
   const host = useMemo(
     () =>
       createLocalReviewHost({
+        onGeneratePlan: () => startStructureRef.current(),
         onConnectProvider: () => {
           window.location.hash = "settings";
         },
@@ -61,14 +63,15 @@ export function App() {
   );
 
   const applyPublishedSettings = useCallback((published: PublicSettings) => {
-    hasKeyRef.current = published.hasKey;
+    hasKeyRef.current = published.hasKey || Boolean(published.codingAgent);
+    useReviewStore.getState().setProviderReady(hasKeyRef.current);
     providerIdRef.current = published.provider;
     codingAgentRef.current = published.codingAgent ?? null;
     setStructureWith({
       provider: published.provider,
       label: structureWithLabel(published.codingAgent, published.provider),
     });
-    if (published.hasKey) {
+    if (hasKeyRef.current) {
       const agentLabel = codingAgentLabel(published.codingAgent);
       useReviewStore
         .getState()
@@ -92,6 +95,7 @@ export function App() {
         diff: session.diff,
         plan: buildFileReviewPlan(session.diff),
       });
+      useReviewStore.getState().setProviderReady(hasKeyRef.current);
       setStructured(false);
     },
     [applyMeta],
@@ -99,7 +103,7 @@ export function App() {
 
   const startStructure = useCallback(() => {
     const { diff, prContext } = useReviewStore.getState();
-    if (!diff || !prContext) return;
+    if (!diff?.files.length || !prContext) return;
     if (!hasKeyRef.current) {
       host.connectProvider();
       return;
@@ -118,21 +122,12 @@ export function App() {
         setStructured(true);
       },
       onError: (error) => {
-        if (error.code === "no_api_key") {
-          host.connectProvider();
-          const sessionKey = useReviewStore.getState().sessionKey ?? "local";
-          useReviewStore.getState().bootReady({
-            sessionKey,
-            diff,
-            plan: buildFileReviewPlan(diff),
-          });
-          return;
-        }
         useReviewStore.getState().setError(error, generation);
       },
     });
     cancelStreamRef.current = cancel;
   }, [host]);
+  startStructureRef.current = startStructure;
 
   useEffect(() => {
     let cancelled = false;
@@ -152,7 +147,7 @@ export function App() {
       const restored = await restoreSession(session.sessionKey);
       if (cancelled) return;
       if (restored) {
-        setStructured(true);
+        setStructured(useReviewStore.getState().planComplete);
         return;
       }
       installFilePlan(session);
@@ -177,6 +172,7 @@ export function App() {
     setScopeBusy(true);
     cancelStreamRef.current?.();
     cancelStreamRef.current = undefined;
+    useReviewStore.setState((state) => ({ streamGeneration: state.streamGeneration + 1 }));
     try {
       const res = await fetch("/api/diff", {
         method: "PUT",

@@ -1,15 +1,16 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useId, useMemo, useRef, useState } from "react";
 import type { SelectHandle } from "@guided-review/ui";
 import { formatAgentPrompt, resolveUnitFiles } from "@guided-review/core";
 import type { ReviewErrorInfo, ReviewPlan } from "@guided-review/ui/review/types";
 import {
-  buildDisplayUnits,
-  displayUnitCount,
+  selectionKey,
+  summaryUnitTitle,
   useReviewStore,
   persistSession,
   type BuildPhase,
   type ReviewStatus,
 } from "./store";
+import { orderedFiles } from "./fileNavigation";
 import { buildSelectableLines } from "./buildSelectableLines";
 import { restoreFocusAfterOverlay } from "./focusTrap";
 import { useOverlayKeyboard, type ViewChordPending } from "./useOverlayKeyboard";
@@ -22,7 +23,7 @@ import { DescriptionPane } from "@guided-review/ui/review/components/Description
 import { ContextPanel } from "@guided-review/ui/review/components/ContextPanel";
 import { FooterNav } from "@guided-review/ui/review/components/FooterNav";
 import { DiffSearch } from "@guided-review/ui/review/components/DiffSearch";
-import { confirm, ConfirmationHost, useConfirmationOpen } from "@guided-review/ui";
+import { Button, confirm, ConfirmationHost, useConfirmationOpen } from "@guided-review/ui";
 import { GeneratePromptModal } from "@guided-review/ui/review/components/GeneratePromptModal";
 import { SubmitReviewModal } from "@guided-review/ui/review/components/SubmitReviewModal";
 import { ReviewSubmittedModal } from "@guided-review/ui/review/components/ReviewSubmittedModal";
@@ -54,17 +55,19 @@ function statusAnnouncementText(
   needsProvider: boolean,
   buildPhase: BuildPhase | null,
   providerLabel: string | null,
+  planSource: "ai" | "files" | null,
 ): string {
   if (status === "error" && error) {
     return `Error: ${error.message}`;
   }
   if (needsProvider && status === "ready" && plan) {
-    return `${displayUnitCount(plan)} steps, one per changed file. Connect an AI Provider for guided ordering and context.`;
+    return "Files ready to review. AI review plans are optional.";
   }
   if (needsProvider) {
     return "Connect an AI Provider to enable the AI features.";
   }
   if (status === "loading" || status === "streaming") {
+    if (status === "loading") return "Loading changed files…";
     const detail = buildPhase != null ? buildPhaseDetail(buildPhase, providerLabel) : null;
     const n = plan?.units.length ?? 0;
     if (status === "streaming" && n > 0) {
@@ -73,7 +76,9 @@ function statusAnnouncementText(
     return detail ? `${BUILD_PLAN_PRIMARY}. ${detail}` : `${BUILD_PLAN_PRIMARY}…`;
   }
   if (status === "ready" && plan) {
-    return `Walkthrough ready. ${displayUnitCount(plan)} steps.`;
+    return planSource === "ai"
+      ? `Review plan ready. ${plan.units.length} review units available.`
+      : "Files ready to review.";
   }
   return "";
 }
@@ -96,12 +101,18 @@ export function Overlay({
   const diff = useReviewStore((s) => s.diff);
   const plan = useReviewStore((s) => s.plan);
   const prContext = useReviewStore((s) => s.prContext);
-  const currentUnitIndex = useReviewStore((s) => s.currentUnitIndex);
+  const selection = useReviewStore((s) => s.selection);
+  const navigationMode = useReviewStore((s) => s.navigationMode);
+  const planSource = useReviewStore((s) => s.planSource);
+  const planComplete = useReviewStore((s) => s.planComplete);
+  const pendingComposers = useReviewStore((s) => s.pendingComposers);
+  const collapsedDirectories = useReviewStore((s) => s.collapsedDirectories);
+  const scrollPositions = useReviewStore((s) => s.scrollPositions);
   const sessionKey = useReviewStore((s) => s.sessionKey);
-  const uiMode = useReviewStore((s) => s.uiMode);
   const diffViewMode = useReviewStore((s) => s.diffViewMode);
   const close = useReviewStore((s) => s.close);
   const goToUnit = useReviewStore((s) => s.goToUnit);
+  const goToFile = useReviewStore((s) => s.goToFile);
   const goNext = useReviewStore((s) => s.goNext);
   const goPrev = useReviewStore((s) => s.goPrev);
   const draftComments = useReviewStore((s) => s.draftComments);
@@ -119,6 +130,35 @@ export function Overlay({
   const scopeSelectRef = useRef<SelectHandle | null>(null);
   const confirmationOpen = useConfirmationOpen();
   const titleId = useId();
+  const drawerId = useId();
+  const [navigationOpen, setNavigationOpen] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const browseButtonRef = useRef<HTMLButtonElement>(null);
+  const generatePlan = host.generatePlan ?? localDiff?.onStructureReview;
+
+  function closeNavigation() {
+    setNavigationOpen(false);
+    browseButtonRef.current?.focus();
+  }
+
+  function focusReviewContent() {
+    setNavigationOpen(false);
+    codeColRef.current?.focus({ preventScroll: true });
+  }
+
+  useEffect(() => {
+    if (!navigationOpen) return;
+    drawerRef.current?.focus();
+    const wide = window.matchMedia("(min-width: 1024px)");
+    const onResize = () => {
+      if (wide.matches) {
+        setNavigationOpen(false);
+        overlayRef.current?.focus();
+      }
+    };
+    wide.addEventListener("change", onResize);
+    return () => wide.removeEventListener("change", onResize);
+  }, [navigationOpen]);
 
   const [generatePromptOpen, setGeneratePromptOpen] = useState(false);
   const [generatedPrompt, setGeneratedPrompt] = useState("");
@@ -131,6 +171,7 @@ export function Overlay({
   const skipCodeScrollOnUnitChange = useRef(false);
 
   function openDiffSearch() {
+    setNavigationOpen(false);
     setDiffSearchOpen(true);
     setDiffSearchFocusId((n) => n + 1);
   }
@@ -141,11 +182,14 @@ export function Overlay({
 
   function handleDiffSearchSelect(result: DiffSearchResult) {
     const hunkId = result.kind === "line" ? result.hunkId : undefined;
-    const unitIndex = findUnitForFile(plan, result.filePath, hunkId);
-    if (unitIndex !== null && unitIndex !== currentUnitIndex) {
-      skipCodeScrollOnUnitChange.current = true;
-      goToUnit(unitIndex);
-    }
+    const unitIndex =
+      navigationMode === "units" && planSource === "ai"
+        ? findUnitForFile(plan, result.filePath, hunkId)
+        : null;
+    skipCodeScrollOnUnitChange.current = true;
+    if (unitIndex !== null) goToUnit(unitIndex);
+    else goToFile(result.filePath);
+    codeColRef.current?.focus();
     setSearchScrollTarget({
       filePath: result.filePath,
       lineId: result.kind === "line" ? result.id : undefined,
@@ -188,6 +232,7 @@ export function Overlay({
   }
 
   function handleExit() {
+    void persistSession();
     onRequestClose?.();
     close();
   }
@@ -243,8 +288,35 @@ export function Overlay({
   }
 
   useEffect(() => {
-    if (status === "ready") void persistSession();
-  }, [status, currentUnitIndex, sessionKey, draftComments]);
+    // Coalesce typing and scrolling; persist file reviews and partial plans too.
+    const timer = window.setTimeout(() => {
+      void persistSession();
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [
+    status,
+    selection,
+    navigationMode,
+    sessionKey,
+    draftComments,
+    pendingComposers,
+    collapsedDirectories,
+    scrollPositions,
+    plan,
+    planComplete,
+  ]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const save = () => {
+      void persistSession();
+    };
+    window.addEventListener("pagehide", save);
+    return () => {
+      window.removeEventListener("pagehide", save);
+      save();
+    };
+  }, [isOpen]);
 
   // Drop search UI when the overlay closes so the next open starts clean.
   useEffect(() => {
@@ -254,19 +326,16 @@ export function Overlay({
     }
   }, [isOpen]);
 
-  // When the active unit changes (keyboard ←/→, footer nav, or sidebar click),
-  // reset the code and context panes so the new step starts at the top rather
-  // than inheriting scroll position from the previous unit. Search jumps set
-  // skipCodeScrollOnUnitChange so DiffPane can scroll the match into view instead.
-  useEffect(() => {
+  const contentKey = selectionKey(selection);
+  useLayoutEffect(() => {
     if (!isOpen) return;
-    if (skipCodeScrollOnUnitChange.current) {
-      skipCodeScrollOnUnitChange.current = false;
-    } else {
-      codeColRef.current?.scrollTo({ top: 0 });
-    }
+    if (skipCodeScrollOnUnitChange.current) skipCodeScrollOnUnitChange.current = false;
+    else
+      codeColRef.current?.scrollTo({
+        top: useReviewStore.getState().scrollPositions[contentKey] ?? 0,
+      });
     contextPaneRef.current?.scrollTo({ top: 0 });
-  }, [isOpen, currentUnitIndex]);
+  }, [isOpen, contentKey]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -293,19 +362,34 @@ export function Overlay({
     };
   }, [isOpen]);
 
-  const planStillBuilding = status === "loading" || status === "streaming";
-  // Spinner on the description unit only while the plan is still being built.
-  const showBuildingSpinner = planStillBuilding && (!plan || currentUnitIndex === 0);
-  const loadingDetail = buildPhase != null ? buildPhaseDetail(buildPhase, providerLabel) : null;
-  const displayUnits = buildDisplayUnits(plan, host.kind);
-  const total = displayUnitCount(plan);
-  const currentDisplay = displayUnits[currentUnitIndex] ?? displayUnits[0];
-  const isDescriptionUnit = !currentDisplay || currentDisplay.kind === "pr_description";
-  const currentReviewUnit = currentDisplay?.kind === "review" ? currentDisplay.unit : null;
-
+  const files = useMemo(() => orderedFiles(diff), [diff]);
+  const total =
+    navigationMode === "files" ? files.length : planSource === "ai" ? (plan?.units.length ?? 0) : 0;
+  const currentIndex =
+    selection.kind === "summary"
+      ? 0
+      : selection.kind === "file"
+        ? files.findIndex((file) => file.path === selection.path) + 1
+        : (plan?.units.findIndex((unit) => unit.id === selection.id) ?? -1) + 1;
+  const footerLabel =
+    selection.kind === "summary"
+      ? summaryUnitTitle(host.kind)
+      : `${navigationMode === "files" ? "File" : "Review unit"} ${currentIndex} of ${total}`;
+  const isDescriptionUnit = selection.kind === "summary";
+  const currentReviewUnit =
+    selection.kind === "unit" && planSource === "ai"
+      ? (plan?.units.find((unit) => unit.id === selection.id) ?? null)
+      : null;
+  const selectedFile =
+    selection.kind === "file" ? diff?.files.find((file) => file.path === selection.path) : null;
   const resolvedFiles = useMemo(
-    () => (currentReviewUnit && diff ? resolveUnitFiles(currentReviewUnit, diff) : []),
-    [currentReviewUnit, diff],
+    () =>
+      selectedFile
+        ? [{ file: selectedFile, hunks: selectedFile.hunks }]
+        : currentReviewUnit && diff
+          ? resolveUnitFiles(currentReviewUnit, diff)
+          : [],
+    [selectedFile, currentReviewUnit, diff],
   );
 
   const selectableForUnit = useMemo(
@@ -315,15 +399,17 @@ export function Overlay({
 
   // Keep store selectable lines in sync while in comment mode (e.g. view toggle).
   useEffect(() => {
-    if (uiMode !== "comment") return;
     useReviewStore.getState().setSelectableLines(selectableForUnit);
-  }, [uiMode, selectableForUnit]);
+  }, [selectableForUnit]);
 
   const currentUnitId = currentReviewUnit?.id;
 
   useOverlayKeyboard({
     isOpen,
     suspended: inert,
+    navigationDrawerRef: drawerRef,
+    navigationOpen,
+    closeNavigation,
     overlayRef,
     submitModalDialogRef,
     generatePromptDialogRef,
@@ -355,8 +441,12 @@ export function Overlay({
         ? () => scopeSelectRef.current?.focusAndOpen()
         : undefined,
     structureReview:
-      localDiff && !localDiff.structured && !localDiff.structuring
-        ? localDiff.onStructureReview
+      !planComplete && diff?.files.length && status !== "streaming" && status !== "loading"
+        ? () => {
+            useReviewStore.getState().setNavigationMode("units");
+            if (needsProvider) host.connectProvider();
+            else generatePlan?.();
+          }
         : undefined,
     openSettings: host.kind === "local" ? () => host.connectProvider() : undefined,
   });
@@ -368,6 +458,7 @@ export function Overlay({
     needsProvider,
     buildPhase,
     providerLabel,
+    planSource,
   );
 
   if (!isOpen) return null;
@@ -411,13 +502,32 @@ export function Overlay({
         onGeneratePrompt={openGeneratePrompt}
       />
 
+      <div className="border-b border-border px-3 py-2 lg:hidden">
+        <Button
+          ref={browseButtonRef}
+          variant="secondary"
+          size="sm"
+          aria-expanded={navigationOpen}
+          aria-controls={navigationOpen ? drawerId : undefined}
+          data-testid="browse-changes"
+          onClick={() => setNavigationOpen(true)}
+        >
+          Browse changes
+        </Button>
+      </div>
       <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+        <aside className="hidden min-h-0 w-72 shrink-0 border-r border-border bg-background lg:flex">
+          <Sidebar onGenerate={generatePlan} onSelect={focusReviewContent} />
+        </aside>
         <main
           id="main-content"
-          className="min-h-0 min-w-0 flex-[1_1_68%] overflow-y-auto scroll-pt-10 border-r border-border bg-surface"
+          className="min-h-0 min-w-0 flex-1 overflow-y-auto scroll-pt-10 border-r border-border bg-surface"
           ref={codeColRef}
           data-testid="code-col"
           tabIndex={-1}
+          onScroll={(event) =>
+            useReviewStore.getState().saveScrollPosition(contentKey, event.currentTarget.scrollTop)
+          }
         >
           <div className="px-4 py-4 md:px-8 md:py-6">
             {isDescriptionUnit ? (
@@ -432,11 +542,7 @@ export function Overlay({
             ) : (
               <DiffPane
                 files={resolvedFiles}
-                unitTitle={
-                  currentReviewUnit
-                    ? (currentReviewUnit.displayTitle ?? currentReviewUnit.title)
-                    : ""
-                }
+                unitTitle={selectedFile?.path ?? currentReviewUnit?.title ?? ""}
                 unitTitleTooltip={currentReviewUnit?.title}
                 isTestsUnit={currentReviewUnit?.kind === "tests"}
                 unitId={currentReviewUnit?.id}
@@ -450,10 +556,10 @@ export function Overlay({
 
         <aside
           className="flex min-h-0 flex-[1_1_32%] flex-col overflow-hidden border-t border-border bg-background md:max-w-[420px] md:min-w-[300px] md:border-t-0"
-          aria-label="Review context and plan"
+          aria-label="Review context"
         >
           <div
-            className="min-h-0 flex-[1_1_50%] overflow-y-auto"
+            className="min-h-0 flex-1 overflow-y-auto"
             ref={contextPaneRef}
             data-testid="context-pane"
           >
@@ -465,28 +571,52 @@ export function Overlay({
                   prContext?.description?.trim() || prContext?.descriptionHtml?.trim(),
                 )}
                 error={status === "error" ? error : null}
-                needsProvider={needsProvider}
-                loading={showBuildingSpinner && isDescriptionUnit}
-                loadingDetail={showBuildingSpinner && isDescriptionUnit ? loadingDetail : null}
                 onRetry={status === "error" ? onRetry : undefined}
-                onStructureReview={
-                  localDiff && !localDiff.structured ? localDiff.onStructureReview : undefined
-                }
-                structured={localDiff?.structured}
-                structureWith={localDiff?.structureWith}
               />
             </div>
           </div>
-          <Sidebar
-            plan={plan}
-            currentUnitIndex={currentUnitIndex}
-            stillBuilding={planStillBuilding}
-            onSelectUnit={goToUnit}
-          />
         </aside>
       </div>
 
-      <FooterNav currentIndex={currentUnitIndex} total={total} onPrev={goPrev} onNext={goNext} />
+      <FooterNav
+        currentIndex={currentIndex}
+        total={total}
+        label={footerLabel}
+        onPrev={goPrev}
+        onNext={goNext}
+      />
+
+      {navigationOpen && (
+        <div
+          className="absolute inset-0 z-30 bg-background/80 lg:hidden"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) closeNavigation();
+          }}
+        >
+          <div
+            ref={drawerRef}
+            id={drawerId}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Browse changes"
+            tabIndex={-1}
+            className="flex h-full w-80 max-w-full flex-col border-r border-border bg-background outline-none"
+            data-testid="navigation-drawer"
+          >
+            <div className="flex justify-end p-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={closeNavigation}
+                data-testid="navigation-drawer-close"
+              >
+                Close
+              </Button>
+            </div>
+            <Sidebar onGenerate={generatePlan} onSelect={focusReviewContent} />
+          </div>
+        </div>
+      )}
 
       <DiffSearch
         open={diffSearchOpen}

@@ -1,102 +1,299 @@
-import { useEffect, useRef } from "react";
-import type { ReviewPlan } from "@guided-review/ui/review/types";
-import { cn } from "@guided-review/ui";
-import { buildDisplayUnits } from "@guided-review/ui/review/store";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { Button, cn, Spinner } from "@guided-review/ui";
+import { summaryUnitTitle, useReviewStore } from "@guided-review/ui/review/store";
 import { useReviewHost } from "@guided-review/ui/review/host";
+import { buildFileTree } from "@guided-review/ui/review/fileNavigation";
+import { buildPhaseDetail } from "@guided-review/ui/review/overlayCopy";
 import { TestsUnitIcon } from "./TestsUnitIcon";
-
-const SKELETON_COUNT = 4;
+import { ReviewUnitsEmptyState } from "./ReviewUnitsEmptyState";
+import { FileNavigation } from "./FileNavigation";
+import { ShortcutKeys } from "./ShortcutKeys";
 
 interface SidebarProps {
-  plan: ReviewPlan | null;
-  currentUnitIndex: number;
-  /** When true, show trailing skeleton rows after any completed units. */
-  stillBuilding: boolean;
-  onSelectUnit: (index: number) => void;
+  onGenerate?: () => void;
+  onSelect?: () => void;
 }
 
-export function Sidebar({ plan, currentUnitIndex, stillBuilding, onSelectUnit }: SidebarProps) {
+export function Sidebar({ onGenerate, onSelect }: SidebarProps) {
   const host = useReviewHost();
-  const displayUnits = buildDisplayUnits(plan, host.kind);
-  const activeItemRef = useRef<HTMLButtonElement>(null);
+  const state = useReviewStore();
+  const { diff, plan, planSource, planComplete, navigationMode, selection, status, needsProvider } =
+    state;
+  const units = planSource === "ai" ? (plan?.units ?? []) : [];
+  const tree = useMemo(() => buildFileTree(diff), [diff]);
+  const id = useId();
+  const navRef = useRef<HTMLElement>(null);
+  const [invitationDismissed, setInvitationDismissed] = useState(false);
+  const stillBuilding = status === "streaming" || (status === "loading" && !!diff);
+  const hasFiles = !!diff?.files.length;
+  const selectionId =
+    selection.kind === "file"
+      ? selection.path
+      : selection.kind === "unit"
+        ? selection.id
+        : "summary";
 
-  // Keep the active unit visible when navigating via keyboard (←/→) or footer
-  // buttons — the sidebar is independently scrollable and can leave the
-  // current step off-screen on long plans.
   useEffect(() => {
-    activeItemRef.current?.scrollIntoView({
-      block: "nearest",
-      behavior: "smooth",
-    });
-  }, [currentUnitIndex]);
+    navRef.current
+      ?.querySelector<HTMLElement>('[aria-current="true"]')
+      ?.scrollIntoView({ block: "nearest" });
+  }, [selectionId, navigationMode]);
 
   return (
     <nav
-      className="min-h-0 flex-[1_1_50%] overflow-y-auto border-t border-border-strong"
-      aria-label="Review Units"
-      data-testid="review-units"
+      ref={navRef}
+      className="flex min-h-0 min-w-0 flex-1 flex-col bg-background"
+      aria-label="Browse changes"
+      data-review-navigation
+      data-testid="review-navigation"
     >
-      <div className="px-5 pt-4 pb-6">
-        <div className="px-2 pb-1 pt-2.5 text-xs tracking-[0.04em] text-muted uppercase">
-          Review Units
-        </div>
-
-        {displayUnits.map((unit, displayIndex) => {
-          const isActive = displayIndex === currentUnitIndex;
-          const isTestsUnit = unit.kind === "review" && unit.unit.kind === "tests";
-          // displayTitle is pre-truncated in buildFileReviewPlan for path labels;
-          // AI units omit it and show title. Render as plain text either way.
-          const label =
-            unit.kind === "review" ? (unit.unit.displayTitle ?? unit.unit.title) : unit.title;
-          const tooltip = unit.kind === "review" ? unit.unit.title : unit.title;
-          return (
-            <button
-              key={unit.id}
-              type="button"
-              ref={isActive ? activeItemRef : undefined}
-              aria-current={isActive ? "true" : undefined}
-              title={tooltip}
+      <div className="shrink-0 border-b border-border p-3">
+        <p className="m-0 mb-2 px-2 text-xs font-semibold uppercase tracking-widest text-faint">
+          Browse changes
+        </p>
+        <Button
+          variant="ghost"
+          className={cn(
+            "mb-3 min-h-10 w-full justify-start! gap-2.5! px-2.5! text-left",
+            selection.kind === "summary" && "border-primary/30! bg-primary-muted! text-primary!",
+          )}
+          aria-current={selection.kind === "summary" ? "true" : undefined}
+          data-testid="review-summary"
+          onClick={() => {
+            state.selectContent({ kind: "summary" });
+            onSelect?.();
+          }}
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.35"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="shrink-0"
+            aria-hidden="true"
+          >
+            <rect x="3" y="2.5" width="14" height="15" rx="2" />
+            <path d="M6.5 6.5h7m-7 3.5h7m-7 3.5h4" />
+          </svg>
+          {summaryUnitTitle(host.kind)}
+        </Button>
+        <div
+          role="tablist"
+          aria-label="Navigate changes"
+          className="flex gap-1 rounded-lg border border-border bg-surface p-1"
+        >
+          {(["files", "units"] as const).map((mode) => (
+            <Button
+              key={mode}
+              variant="ghost"
+              size="sm"
+              role="tab"
+              id={`${id}-${mode}`}
+              aria-controls={`${id}-${mode}-panel`}
+              aria-selected={navigationMode === mode}
+              aria-keyshortcuts={mode === "files" ? "1" : "2"}
+              title={`${mode === "files" ? "Files" : "Review units"} (${mode === "files" ? "1" : "2"})`}
+              tabIndex={navigationMode === mode ? 0 : -1}
               className={cn(
-                "mb-0.5 flex w-full cursor-pointer items-start rounded-md border-none bg-transparent p-2 text-left text-base leading-snug text-foreground",
-                "hover:bg-primary-muted",
-                isActive && "bg-primary-muted text-primary!",
+                "min-w-0 flex-auto gap-1! whitespace-nowrap px-1.5! py-1.5! text-sm!",
+                navigationMode === mode
+                  ? "border-border-strong! bg-surface-muted! text-foreground! shadow-sm"
+                  : "text-muted",
               )}
-              onClick={() => onSelectUnit(displayIndex)}
-              data-testid={`review-unit-${displayIndex}`}
+              data-testid={`navigation-tab-${mode}`}
+              onClick={() => state.setNavigationMode(mode)}
+              onKeyDown={(event) => {
+                if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+                event.preventDefault();
+                const next =
+                  event.key === "Home"
+                    ? "files"
+                    : event.key === "End"
+                      ? "units"
+                      : mode === "files"
+                        ? "units"
+                        : "files";
+                state.setNavigationMode(next);
+                navRef.current?.querySelector<HTMLElement>(`[id="${id}-${next}"]`)?.focus();
+              }}
             >
-              <span className={cn("mr-1.5 shrink-0", isActive ? "text-primary" : "text-muted")}>
-                {displayIndex + 1}.
-              </span>
-              <span className="min-w-0 break-words">
-                {isTestsUnit && (
-                  <TestsUnitIcon
-                    className={cn(
-                      "mr-1.5 inline-block align-[-0.125em]",
-                      isActive ? "text-primary" : "text-muted",
-                    )}
-                  />
-                )}
-                {label}
-              </span>
-            </button>
-          );
-        })}
-
-        {stillBuilding &&
-          Array.from({ length: SKELETON_COUNT }, (_, i) => (
-            <div
-              key={`skeleton-${i}`}
-              className="pointer-events-none mb-0.5 flex items-center px-2 py-2.5"
-              aria-hidden="true"
-              data-testid="unit-skeleton"
-            >
-              <span
-                data-skeleton-index={i}
-                className="block h-3 animate-gr-skeleton rounded bg-[linear-gradient(90deg,var(--color-surface-muted)_0%,var(--color-border-strong)_50%,var(--color-surface-muted)_100%)] bg-size-[200%_100%]"
-              />
-            </div>
+              <span className="truncate">{mode === "files" ? "Files" : "Review units"}</span>
+              <ShortcutKeys keys={[mode === "files" ? "1" : "2"]} className="shrink-0" />
+            </Button>
           ))}
+        </div>
       </div>
+      <div
+        className="min-h-0 flex-1 overflow-y-auto p-3"
+        role="tabpanel"
+        id={`${id}-${navigationMode}-panel`}
+        aria-labelledby={`${id}-${navigationMode}`}
+        data-testid={navigationMode === "files" ? "review-files" : "review-units"}
+      >
+        {navigationMode === "files" ? (
+          <>
+            {!diff ? (
+              <p className="p-2 text-muted">
+                {status === "error" ? "Diff unavailable. Try again." : "Loading changed files…"}
+              </p>
+            ) : !hasFiles ? (
+              <p className="p-2 text-muted">No changed files in this scope.</p>
+            ) : (
+              <FileNavigation directory={tree} onSelect={onSelect} />
+            )}
+          </>
+        ) : (
+          <>
+            {units.map((unit, index) => {
+              const active = selection.kind === "unit" && selection.id === unit.id;
+              return (
+                <Button
+                  key={unit.id}
+                  variant="ghost"
+                  size="sm"
+                  title={unit.title}
+                  aria-current={active ? "true" : undefined}
+                  className={cn(
+                    "mb-1.5 min-h-10 w-full items-start! justify-start! gap-2.5! px-2! py-2! text-left text-sm!",
+                    active && "border-primary/30! bg-primary-muted! text-primary!",
+                  )}
+                  data-testid={`review-unit-${index + 1}`}
+                  onClick={() => {
+                    state.selectContent({ kind: "unit", id: unit.id });
+                    onSelect?.();
+                  }}
+                >
+                  <span
+                    className={cn(
+                      "flex size-5 shrink-0 items-center justify-center rounded border font-mono text-xs tabular-nums",
+                      active
+                        ? "border-primary/30 bg-primary-muted text-primary"
+                        : "border-border bg-surface-raised text-muted",
+                    )}
+                  >
+                    {index + 1}
+                  </span>
+                  <span className="min-w-0 self-center break-words leading-relaxed">
+                    {unit.kind === "tests" && <TestsUnitIcon className="mr-1.5 inline-block" />}
+                    {unit.title}
+                  </span>
+                </Button>
+              );
+            })}
+            {stillBuilding ? (
+              <div
+                role="status"
+                className="flex items-center gap-2 p-3 text-muted"
+                data-testid="review-plan-progress"
+              >
+                <Spinner label="Generating review plan" />
+                <span>
+                  {state.buildPhase
+                    ? buildPhaseDetail(state.buildPhase, state.providerLabel)
+                    : "Generating review plan…"}
+                </span>
+              </div>
+            ) : !hasFiles ? (
+              <p className="p-2 text-muted">
+                {diff
+                  ? "No changed files in this scope."
+                  : "Load the diff to generate a review plan."}
+              </p>
+            ) : !planComplete && units.length === 0 ? (
+              <ReviewUnitsEmptyState
+                needsProvider={needsProvider}
+                retry={status === "error" && !needsProvider}
+                onGenerate={onGenerate}
+              />
+            ) : !planComplete ? (
+              <div className="p-2">
+                <p className="text-sm text-muted">
+                  {units.length
+                    ? "This review plan is incomplete. Retry to finish it; files remain available."
+                    : "Group related changes into an ordered review. You still read the code."}
+                </p>
+                {onGenerate && (
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    data-testid="generate-review-plan"
+                    aria-keyshortcuts="Meta+i Control+i"
+                    title="Generate review plan (⌘/Ctrl+I)"
+                    onClick={onGenerate}
+                  >
+                    {status === "error" || units.length
+                      ? "Retry review plan"
+                      : "Generate review plan"}
+                    <ShortcutKeys keys={["mod", "I"]} join="chord" />
+                  </Button>
+                )}
+              </div>
+            ) : units.length === 0 ? (
+              <p className="p-2 text-muted">
+                No review units were generated. Browse Files to review the changes.
+              </p>
+            ) : null}
+          </>
+        )}
+      </div>
+      {navigationMode === "files" && hasFiles && !planComplete && !invitationDismissed && (
+        <div
+          className="relative shrink-0 border-t border-border p-3"
+          data-testid="review-plan-invitation"
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute right-1 top-1 size-7 p-0!"
+            aria-label="Dismiss review units prompt"
+            data-testid="review-plan-invitation-dismiss"
+            onClick={() => {
+              setInvitationDismissed(true);
+              navRef.current?.querySelector<HTMLElement>(`[id="${id}-files"]`)?.focus();
+            }}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="m4 4 8 8M12 4l-8 8" />
+            </svg>
+          </Button>
+          <p className="m-0 mb-1 pr-5 text-sm font-medium text-foreground">
+            Follow the change, step by step
+          </p>
+          <p className="m-0 mb-3 text-sm leading-relaxed text-muted">
+            Use AI to group related changes into ordered review units.
+          </p>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="w-full"
+            data-testid="review-plan-invitation-action"
+            aria-keyshortcuts="2"
+            onClick={() => state.setNavigationMode("units")}
+          >
+            Explore review units
+            <ShortcutKeys keys={["2"]} />
+          </Button>
+        </div>
+      )}
+      <div
+        role="tabpanel"
+        id={`${id}-${navigationMode === "files" ? "units" : "files"}-panel`}
+        aria-labelledby={`${id}-${navigationMode === "files" ? "units" : "files"}`}
+        hidden
+      />
     </nav>
   );
 }
