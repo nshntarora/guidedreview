@@ -170,6 +170,7 @@ function DiffFileCard({
                   key={item.key}
                   filePath={file.path}
                   afterLine={item.afterLine}
+                  lineCount={item.lineCount}
                 />
               );
             }
