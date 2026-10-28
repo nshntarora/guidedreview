@@ -41,7 +41,7 @@ Extension keys live in `chrome.storage.local`. CLI keys live in env, flags, or `
 - **Mid-stream error** — Check the overlay or CLI message. Common causes: rate limits, insufficient quota, model unavailable, or a network blip. Wait and retry, or [switch model/provider](/docs/configure-provider).
 - **Empty or thin plan** — Very large or mostly binary diffs produce less useful structure. [Chunking](/docs/how-it-works#chunking-large-diffs) still runs by file; [binary/elided files](/docs/images-and-binaries) won’t get textual units.
 - **Lost connection to the worker** (extension) — Reload the extension and the PR tab, then start again ([first review](/docs/first-review#start-guided-review)).
-- **Structure With AI does nothing** (CLI) — Confirm a key is available ([Configure AI provider → CLI](/docs/configure-provider#cli)), then retry. Check the terminal log below the banner for the error.
+- **Generate review units does nothing** (CLI) — Confirm a key is available ([Configure AI provider → CLI](/docs/configure-provider#cli)), then retry. Check the terminal log below the banner for the error.
 
 The model only supplies order and commentary ([How a review plan works](/docs/how-it-works#what-the-model-must-not-invent)). If hunks don’t match the real diff, those refs are dropped rather than shown as broken code.
 
@@ -73,12 +73,14 @@ Narrative version: [Connect GitHub → Private repos and org SSO](/docs/connect-
 ## Session and resume
 
 - **Extension:** Active plans live in `chrome.storage.session`, keyed by `owner/repo#number`. Switching Conversation ↔ Files changed should resume the same step ([Your first review → Resume later](/docs/first-review#resume-later)). Closing the browser (or ending the session) clears the plan. Settings and API keys in local storage remain ([Privacy & data](/docs/privacy-and-data#what-stays-local)).
-- **CLI:** The session lives with the running local server. Stopping the process (Ctrl+C) ends it. Restarting `npx @guided-review/cli` starts a fresh walk for the current scope.
+- **CLI:** The browser tab saves the walkthrough and notes in `sessionStorage`. Restarting the CLI at the same local URL can restore them when the repo, base, branch, scope, and diff match. Ctrl+C stops the server but does not clear that browser data. A changed diff uses a new session key. Copy notes before refreshing a changed diff or switching scope — [CLI → Session and refresh](/docs/cli#session-and-refresh).
 - Starting Guided Review again after a clear rebuilds a **new** plan for the current diff ([How a review plan works](/docs/how-it-works)).
 
-Draft comments (extension) and notes (CLI) are part of that session until you submit, Generate Prompt, discard them, or stop the host.
+Successful GitHub submission clears the submitted extension drafts. In the CLI, Generate Prompt copies notes without clearing them. To explicitly clear saved local review data, clear the local URL’s session storage — [Privacy & data](/docs/privacy-and-data#clear-data-and-disconnect).
 
 ## CLI
+
+**The diff on disk has changed:** Copy notes you need with Generate Prompt, then use the banner’s refresh control. Refresh loads the latest diff; a changed diff starts a fresh walkthrough. AI structuring remains opt-in.
 
 | Symptom                                  | What to try                                                                                                           |
 | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |

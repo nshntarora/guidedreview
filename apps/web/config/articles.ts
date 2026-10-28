@@ -7,9 +7,13 @@ export type Article = {
   seoTitle?: string;
   tool?: string;
   toolLogo?: string;
+  coverImage?: string;
   description: string;
   lastModified: string;
-  load: () => Promise<{ default: ComponentType }>;
+  load: () => Promise<{
+    default: ComponentType;
+    toc?: Array<{ id: string; label: string; level: 2 | 3 }>;
+  }>;
 };
 
 /** Formats an ISO calendar date for article bylines without a day. */

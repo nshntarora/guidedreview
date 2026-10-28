@@ -12,7 +12,7 @@ export const toc = [
 
 Guided Review calls **your** LLM account. There is no Guided Review cloud that holds your key or rewrites diffs for you. That design is spelled out in [Privacy & data](/docs/privacy-and-data).
 
-A provider unlocks AI clustering and unit summaries on both the [Chrome extension](/docs/chrome-extension) and the [CLI](/docs/cli). You can still [open a review without a key](/docs/how-it-works#without-a-provider) (file-by-file walk). GitHub auth is separate and only required to [submit a review](/docs/submit-review) from the extension — see [Connect GitHub](/docs/connect-github).
+A provider unlocks AI clustering and unit summaries on both the [Chrome extension](/docs/chrome-extension) and the [CLI](/docs/cli). You can still [browse changed files without a key](/docs/reading-the-overlay#files-sidebar). GitHub auth is separate and only required to [submit a review](/docs/submit-review) from the extension — see [Connect GitHub](/docs/connect-github).
 
 <TocCard toc={toc} />
 
@@ -63,19 +63,21 @@ Models currently listed in the extension Options (ids can change as providers sh
 | OpenAI    | GPT-6 Astra, GPT-6.1 Sol, GPT-6 Luna; GPT-5, GPT-5 Mini, GPT-4.1, GPT-4.1 Mini, GPT-4o, o3, o4 Mini    |
 | Grok      | Grok 4.7, Grok 4.3; Grok 4.6, Grok 4.5, Grok 4, Grok 3, Grok 3 Mini                                    |
 
-Newer models appear first. Older models remain available while their provider supports them, and saved selections are preserved. If a provider retires a model and it is removed from the catalog, Options falls back to that provider’s default. The CLI accepts `--model <id>` for any model id your account can call.
+Newer models appear first. The CLI accepts `--model <id>` for any model ID your account can call, including custom IDs. If a request fails because the model is unavailable, choose an accessible replacement in Settings or pass `--model <id>` and retry.
+
+The extension currently requires a model in its catalog. Both the extension and CLI normalize saved model IDs against that catalog when loading settings, so a custom or removed ID can resolve to the provider’s default. In the CLI, an explicit `--model <id>` takes precedence for that run. Check the active model after restarting or updating. If your chosen model is unavailable, select a replacement deliberately and use **Test Connection** before retrying.
 
 ## Test Connection
 
 Use **Test Connection** on the extension options page. That runs the same provider path as a lightweight health check and surfaces user-safe error messages if the key, model, or network path fails.
 
-In the CLI, structuring the walkthrough with **Structure With AI** (or fixing Settings and retrying) is the practical check — there is no separate Test button in the local UI.
+In the CLI, structuring the walkthrough with **Generate review units** (or fixing Settings and retrying) is the practical check — there is no separate Test button in the local UI.
 
 If the test fails, step through [Troubleshooting → Provider and API key](/docs/troubleshooting#provider-and-api-key).
 
 ## Cost and usage
 
-- **Annotate / Structure With AI** — one provider call per [diff chunk](/docs/how-it-works#chunking-large-diffs). Small diffs usually cost one call; large ones cost one call per chunk. On the CLI this only runs when you opt in.
+- **Annotate / Generate review units** — one provider call per [diff chunk](/docs/how-it-works#chunking-large-diffs). Small diffs usually cost one call; large ones cost one call per chunk. On the CLI this only runs when you opt in.
 - **Not billed to the model** — stepping units, [searching](/docs/keyboard-shortcuts#diff-search), drafting comments / notes, [submitting to GitHub](/docs/submit-review), or **Generate Prompt**.
 - **Test Connection** — a cheap health-check request when you run it from extension Options.
 
@@ -90,7 +92,9 @@ Token usage and cost are entirely between you and your provider. Guided Review d
 | Diff view (unified / split)         | `chrome.storage.local`                | Overlay (default: unified)  |
 | Active review session               | `chrome.storage.session`              | Extension overlay           |
 | Provider, model, API key, agent     | `~/.config/guided-review/config.json` | CLI                         |
-| Active local session                | In-memory for the running CLI server  | Local browser UI            |
+| Local diff snapshot                 | In-memory for the running CLI server  | CLI server                  |
+| Local walkthrough and notes         | Browser tab `sessionStorage`          | Local browser UI            |
+| Local diff view (unified / split)   | Browser `localStorage`                | Local browser UI            |
 
 Extension session resume: [Your first review → Resume later](/docs/first-review#resume-later) and [Troubleshooting](/docs/troubleshooting#session-and-resume).
 

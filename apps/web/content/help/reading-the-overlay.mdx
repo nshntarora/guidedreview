@@ -1,6 +1,7 @@
 export const toc = [
   { id: "layout", label: "Layout", level: 2 },
   { id: "change-summary-and-pr-description", label: "Change summary and PR description", level: 2 },
+  { id: "files-sidebar", label: "Files sidebar", level: 2 },
   { id: "review-units-sidebar", label: "Review units sidebar", level: 2 },
   { id: "context-panel", label: "Context panel", level: 2 },
   { id: "diff-pane", label: "Diff pane", level: 2 },
@@ -9,71 +10,83 @@ export const toc = [
 
 # Reading the overlay
 
-A map of the Guided Review UI once a review is open — so the sidebar, context column, and header stop feeling like three unrelated panels. Hands-on start: [Your first review](/docs/first-review) (extension) or [CLI](/docs/cli). How units are built: [How a review plan works](/docs/how-it-works).
+Use Files to inspect a changed file, or Review units to follow related hunks in order. Both show code from the real diff. Start with [Your first review](/docs/first-review) for a GitHub PR, or the [CLI](/docs/cli) for local work.
 
 <TocCard toc={toc} />
 
 ## Layout
 
-Left to right (desktop):
+Left to right on desktop:
 
-1. **Sidebar** — ordered list of review units for this walkthrough.
-2. **Context panel** — title, guidance, errors, provider prompts, and the shortcut cheat sheet.
-3. **Diff pane** — the real hunks (or [image / binary](/docs/images-and-binaries) empty state) for the active unit.
+1. **Sidebar** — Files and Review units tabs.
+2. **Diff pane** — hunks for the selected file or unit, or an [image preview / binary empty state](/docs/images-and-binaries).
+3. **Context panel** — commentary for the selected review unit, review errors, or host context.
 
-The **header** sits above: PR or local scope title, add/delete stats, and primary actions. The **footer** moves previous / next unit.
+The **header** shows the PR or local scope, change counts, and actions. The **footer** moves between files or units according to the selected tab.
 
-Keyboard chords for the same surfaces: [Keyboard shortcuts](/docs/keyboard-shortcuts).
+[![Guided Review with ordered review units on the left, the backoff implementation and tests in the middle, and commentary on the right.](/docs/screenshots/reading-the-overlay.png)](/docs/screenshots/reading-the-overlay.png)
+
+_A sample PR for Parcel HTTP. Select any screenshot to open it at full size._
 
 ## Change summary and PR description
 
-The first display step is synthetic — not an LLM unit:
+The summary comes from the host:
 
-| Host                 | First step title   | What it shows                                         |
-| -------------------- | ------------------ | ----------------------------------------------------- |
-| **Chrome extension** | **PR Description** | PR title and body from the page                       |
-| **CLI**              | **Change summary** | Local scope context; **Structure With AI** lives here |
+| Host             | Summary            | Source                         |
+| ---------------- | ------------------ | ------------------------------ |
+| Chrome extension | **PR Description** | PR title and body              |
+| CLI              | **Change summary** | Local branch and scope context |
 
-On the CLI, the walkthrough starts **one unit per file** until you structure it. **Structure With AI** on the Change summary card (or `⌘/Ctrl` + `I`) is the opt-in annotate call — [CLI → Follow the Walkthrough](/docs/cli#walk-the-plan).
+On GitHub, select **PR Description** in Review units or use **View PR Description** in the context panel. In the CLI, the context panel lists local commits and uncommitted work. Use the header’s diff-scope dropdown to choose a comparison.
+
+## Files sidebar
+
+Press `1` or select **Files** to browse the changed-file tree. Select a file to read all its diff hunks together, even when an AI plan splits them across units. Status letters identify added (`A`), modified (`M`), deleted (`D`), and renamed (`R`) files.
+
+With focus in the file tree, `↑` / `↓` move between rows, `←` / `→` collapse or expand folders, and `Home` / `End` move to the first or last visible row. `Enter` opens the file and moves focus to the diff. Once focus is in the diff, `←` / `→` move between files.
+
+Files remain available while a plan is building or if generation fails. Switching tabs does not call your provider.
+
+[![Files tab with the changed-file tree and the selected backoff file's complete diff.](/docs/screenshots/files-navigation.png)](/docs/screenshots/files-navigation.png)
 
 ## Review units sidebar
 
-Labeled **Review Units**. Each row is a step: number, title, and optionally a **flask** icon when the unit is a tests step (production and tests stay separate — [How a review plan works](/docs/how-it-works#review-units)).
+Press `2` or select **Review units** for the AI walkthrough. Each unit has a number and title; a flask marks a tests unit. [Production changes and tests](/docs/how-it-works#review-units) appear as separate steps.
 
-- Click a row to jump.
-- `←` / `→` move previous / next; the active row stays scrolled into view.
-- While a plan is still streaming, skeleton rows may trail completed units.
+Select a row to jump to it. With focus in the diff, `←` / `→` move between units. Completed units appear progressively during generation.
 
-Without a provider, titles are mostly file paths. With AI, titles and short guidance come from the model — take them with a grain of salt ([FAQ](/docs/faq#does-the-ai-approve-prs)).
+Before a plan is ready, this tab offers **Generate review units**, **Retry review units**, or **Connect AI Provider** as appropriate. `⌘/Ctrl` + `I` starts generation or opens provider setup when needed. A failed or incomplete plan can be retried while Files remain available.
+
+Treat model titles and commentary as guidance; you still judge the code.
 
 ## Context panel
 
-For the active unit the panel shows:
+Selecting an AI unit shows its commentary and change counts. Selecting a whole file does not attach a unit’s commentary to that file.
 
-- Unit title and commentary (empty on the no-provider file-per-unit fallback until you connect a key).
-- **Connect AI Provider** / **Structure With AI** prompts when the walkthrough is still file-by-file or the CLI needs a key.
-- Errors with a Retry when annotate or fetch failed.
-- The same shortcut list as the docs page, always available while the overlay is open.
+The extension shows PR guidance for file and summary selections. The CLI shows local commits and scope context. Errors appear with a Retry action when available.
 
-On the PR description / Change summary step, the panel explains that unit instead of review commentary.
+For the in-app shortcut reference, press `⌘/Ctrl` + `K` and choose **View keyboard shortcuts**. The [keyboard reference](/docs/keyboard-shortcuts) also explains focus and modal behavior.
 
 ## Diff pane
 
-Hunks for the files claimed by the active unit, mapped from the **real** parsed diff — the model never supplies those lines ([invariant](/docs/how-it-works#what-the-model-must-not-invent)).
+The selected file or unit resolves to the **real** parsed diff. The model supplies structure and commentary only; it never supplies the code displayed here.
 
-- Default view is **split**; toggle with `v` then `u` / `s`, or the toolbar. The extension remembers the choice.
-- [Search](/docs/keyboard-shortcuts#diff-search) (`⌘/Ctrl` + `F`) jumps to the unit that owns a match.
-- [Comment mode](/docs/leave-comments) (`c`) puts a line cursor on selectable lines in this pane.
+- The default view is **unified**. A saved preference takes precedence. Use `v` then `u` / `s`, or the toolbar, to choose unified / split view. Both hosts remember the choice locally.
+- **Search** (`⌘/Ctrl` + `F`) finds paths and code across the parsed diff. In Review units, a hit opens its owning unit when available; otherwise it opens the file.
+- [Comment mode](/docs/leave-comments) (`c`) selects diff lines for a draft comment or local note.
 
 ## Header actions
 
-| Control        | Extension                              | CLI                                           |
-| -------------- | -------------------------------------- | --------------------------------------------- |
-| Primary button | **Submit Review** (`⌘/Ctrl` + `Enter`) | **Generate Prompt** (needs at least one note) |
-| Settings       | Options page (outside overlay)         | **Settings** (`⌘/Ctrl` + `,`)                 |
-| Scope          | —                                      | Diff-scope dropdown (`d`)                     |
-| Exit           | Confirm, then close                    | Confirm; session ends with the server         |
+| Control        | Extension                                 | CLI                                                               |
+| -------------- | ----------------------------------------- | ----------------------------------------------------------------- |
+| **Search**     | Search files and code (`⌘/Ctrl` + `F`)    | Same                                                              |
+| Primary button | **Submit Review** (`⌘/Ctrl` + `Enter`)    | **Generate Prompt** (`⌘/Ctrl` + `Enter`; needs at least one note) |
+| Settings       | Actions → **View settings** opens Options | **Settings** (`⌘/Ctrl` + `,`)                                     |
+| Scope          | Current PR                                | Diff-scope dropdown (`d`)                                         |
+| Exit           | Confirm, then close the overlay           | Ctrl+C in the terminal stops the server                           |
 
-Submit needs [GitHub connected](/docs/connect-github). Generate Prompt details: [Generate Prompt](/docs/generate-prompt).
+Press `⌘/Ctrl` + `K` for Actions, including settings, view mode, and keyboard help. While a comment composer is open, `⌘/Ctrl` + `Enter` saves its draft instead of opening the primary action.
 
-**Next.** [Your first review](/docs/first-review) · [Images & binary files](/docs/images-and-binaries) · [Leave line comments](/docs/leave-comments) · [Keyboard shortcuts](/docs/keyboard-shortcuts)
+Submitting requires [GitHub connected](/docs/connect-github). For local notes, see [Generate Prompt](/docs/generate-prompt). If the CLI reports that the diff on disk changed, [copy notes and refresh](/docs/cli#session-and-refresh) before reviewing the updated code.
+
+**Next.** [Your first review](/docs/first-review) · [CLI](/docs/cli) · [Leave line comments](/docs/leave-comments) · [Keyboard shortcuts](/docs/keyboard-shortcuts)

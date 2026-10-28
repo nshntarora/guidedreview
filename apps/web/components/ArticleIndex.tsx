@@ -77,31 +77,44 @@ export function ArticleIndex({
                   <span aria-hidden="true" className="pt-1 font-mono text-xs text-muted">
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="mb-3 font-mono text-xs text-muted">
-                      {article.toolLogo ? (
-                        <img
-                          src={article.toolLogo}
-                          alt={article.tool}
-                          width="180"
-                          height="32"
-                          className="h-6 w-36 object-contain object-left"
-                        />
-                      ) : (
-                        <>
-                          Updated{" "}
-                          <time dateTime={article.lastModified}>
-                            {formatArticleMonthYear(article.lastModified)}
-                          </time>
-                        </>
-                      )}
-                    </p>
-                    <h2 className="font-brand text-lg font-semibold leading-relaxed tracking-tight transition-colors group-hover:text-primary sm:text-xl">
-                      {article.tool ? `Guided Review vs ${article.tool}` : article.title}
-                    </h2>
-                    <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted sm:text-base">
-                      {article.description}
-                    </p>
+                  <div className="flex min-w-0 flex-1 flex-col gap-5 sm:flex-row sm:gap-6">
+                    {article.coverImage && (
+                      <img
+                        src={article.coverImage}
+                        alt=""
+                        width="1536"
+                        height="1024"
+                        loading={index === 0 ? "eager" : "lazy"}
+                        decoding="async"
+                        className="aspect-[3/2] w-full shrink-0 self-start rounded-lg border border-border object-cover sm:w-44 md:w-56"
+                      />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="mb-3 font-mono text-xs text-muted">
+                        {article.toolLogo ? (
+                          <img
+                            src={article.toolLogo}
+                            alt={article.tool}
+                            width="180"
+                            height="32"
+                            className="h-6 w-36 object-contain object-left"
+                          />
+                        ) : (
+                          <>
+                            Updated{" "}
+                            <time dateTime={article.lastModified}>
+                              {formatArticleMonthYear(article.lastModified)}
+                            </time>
+                          </>
+                        )}
+                      </p>
+                      <h2 className="font-brand text-lg font-semibold leading-relaxed tracking-tight transition-colors group-hover:text-primary sm:text-xl">
+                        {article.tool ? `Guided Review vs ${article.tool}` : article.title}
+                      </h2>
+                      <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted sm:text-base">
+                        {article.description}
+                      </p>
+                    </div>
                   </div>
                   <span aria-hidden="true" className="pt-1 text-xl text-primary">
                     ↗

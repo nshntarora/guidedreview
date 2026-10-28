@@ -5,6 +5,7 @@ export const toc = [
   { id: "api-keys", label: "API keys", level: 2 },
   { id: "config-file", label: "Config file", level: 2 },
   { id: "notes", label: "Notes", level: 2 },
+  { id: "session-and-refresh", label: "Session and refresh", level: 2 },
   { id: "flags", label: "Flags", level: 2 },
 ];
 
@@ -51,11 +52,15 @@ If every scope is empty: `Nothing to review against <base>.` and exit 0. Not a g
 
 ## Follow the Walkthrough
 
-The walkthrough starts **one unit per file**. **Structure With AI** on the Change summary card is the opt-in LLM call — same pipeline as the extension ([How a review plan works](/docs/how-it-works)). It groups files and adds context; it does not review for you.
+The review starts in **Files**, where you can inspect every changed file. Open **Review units** and choose **Generate review units** for the opt-in LLM call — same pipeline as the extension ([How a review plan works](/docs/how-it-works)). It groups files and adds context; it does not review for you.
 
 Press `d` to open the scope dropdown, `⌘/Ctrl` + `I` to structure, or `⌘/Ctrl` + `,` for Settings — same keys as [Keyboard shortcuts → Local review](/docs/keyboard-shortcuts#local-review). Navigation, diff search, and comment mode share the extension shortcuts where they apply.
 
-Unlike the extension, there is no GitHub submit from the CLI UI. Line notes stay in the session until you [Generate Prompt](#notes) or stop the server.
+Unlike the extension, there is no GitHub submit from the CLI UI. Line notes are saved in the browser tab’s session storage. [Generate Prompt](#notes) copies them without removing them.
+
+[![Local CLI review with Branch changes selected, ordered review units, and Generate Prompt in the header.](/docs/screenshots/cli-review.png)](/docs/screenshots/cli-review.png)
+
+_The sample branch after review units are generated. Select the screenshot for full size._
 
 ## API keys
 
@@ -69,7 +74,7 @@ Resolution, in order:
 
 If more than one agent has a usable key, the CLI asks which to use each run (Enter keeps the last choice). The chosen agent is shown in the browser UI. It reads the agent's own store at review time and does not copy the secret into Guided Review config.
 
-No key still walks one unit per file. **Structure With AI** asks for a key.
+Without a key you can browse changed files. Open Review units and choose **Connect AI Provider**, or press `⌘/Ctrl` + `I`, to configure one.
 
 The local UI has **Settings** (header, `⌘/Ctrl` + `,`, or **Connect AI Provider** when no key is set). Paste an API key, or turn on **Use My Subscription** to borrow Claude Code / Codex / Grok on this machine. A saved API key always wins. Subscription is unofficial and can break — a console key is the better option. Save writes the [config file](#config-file) below. Flags and env still win for that run.
 
@@ -103,6 +108,20 @@ Prefer editing through **Settings** in the UI. If you hand-edit the file, restar
 ## Notes
 
 Line comments stay in the session. There is no GitHub submit from the CLI. **Generate Prompt** builds a coding-agent prompt from those notes and copies it — Guided Review does not send it anywhere. Full walkthrough: [Generate Prompt](/docs/generate-prompt). On a GitHub PR, use the extension to [draft and submit](/docs/leave-comments) instead.
+
+## Session and refresh
+
+The browser saves the diff, walkthrough, current selection, and notes in the tab’s `sessionStorage`. Reloading the same local URL restores that state when the repository, base, branch, scope, and diff still match. Stopping the server with Ctrl+C does not clear the browser’s saved state. Resume requires the server running at the same local URL and the same matching diff.
+
+When files on disk change, a banner asks you to refresh:
+
+1. Copy any notes you want to keep with [Generate Prompt](/docs/generate-prompt).
+2. Use the banner’s refresh control or reload the page to load the current diff.
+3. Read the updated files and request AI structure again if needed.
+
+A changed diff gets a different session key, so the previous walkthrough and notes are not carried onto new lines. Switching scope also loads a fresh Files view. Copy notes before switching if you need them.
+
+Closing the tab normally clears its session storage; browser session recovery may restore it. To explicitly remove saved review data, clear session storage for the local URL through browser developer tools. Saved provider settings live separately in the [config file](#config-file), and the diff view preference lives in browser `localStorage`.
 
 ## Flags
 

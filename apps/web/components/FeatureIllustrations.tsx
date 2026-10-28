@@ -5,7 +5,7 @@ type IllustProps = SVGProps<SVGSVGElement>;
 /**
  * Feature illustrations.
  *
- * All four share one canvas, one set of primitives, and one palette so the
+ * These share one canvas, one set of primitives, and one palette so the
  * section reads as a single system rather than four unrelated drawings. The
  * vocabulary is deliberately the product's own — review-unit rows, kbd chips,
  * provider fields, window chrome — drawn in the site's mono/lime/warm-black
@@ -209,6 +209,62 @@ function Spark({ x, y, scale = 0.5 }: { x: number; y: number; scale?: number }) 
 
 const FLAT_FILES = ["a11y.tsx", "api.ts", "auth.ts", "db.sql", "form.tsx", "seed.ts"];
 
+/** Files and a real diff view, with keyboard navigation and no AI step. */
+export function ManualReviewIllustration(props: IllustProps) {
+  return (
+    <svg {...frame(props)}>
+      <Panel x={8} y={10} w={304} h={148} />
+      <path d="M118 10v148" className="stroke-[var(--color-border)]" />
+      <SectionLabel x={20} y={29}>
+        files
+      </SectionLabel>
+      {["src/", "  api.ts", "  auth.ts", "test/", "  auth.test.ts"].map((file, i) => (
+        <g key={file}>
+          {i === 2 && <Panel x={16} y={75} w={94} h={22} r={4} className={ACCENT_WASH} />}
+          <Txt
+            x={24}
+            y={49 + i * 21}
+            size={8}
+            className={i === 2 ? "fill-[var(--color-primary)]" : "fill-[var(--color-muted)]"}
+          >
+            {file}
+          </Txt>
+        </g>
+      ))}
+      <SectionLabel x={132} y={29}>
+        auth.ts · diff
+      </SectionLabel>
+      <Txt x={132} y={52} size={8}>
+        function authenticate() &#123;
+      </Txt>
+      <Panel x={126} y={63} w={178} h={22} r={3} className={DEL_WASH} strokeWidth={0} />
+      <Txt x={132} y={78} size={8} className="fill-[var(--color-danger)]">
+        − return token;
+      </Txt>
+      <Panel x={126} y={89} w={178} h={22} r={3} className={ADD_WASH} strokeWidth={0} />
+      <Txt x={132} y={104} size={8} className="fill-[var(--color-success)]">
+        + return validate(token);
+      </Txt>
+      <Txt x={132} y={127} size={8}>
+        &#125;
+      </Txt>
+      <KeyCap x={16} y={174} label="↑" />
+      <KeyCap x={38} y={174} label="↓" />
+      <Txt x={62} y={187} size={7}>
+        files
+      </Txt>
+      <KeyCap x={103} y={174} w={38} label="Enter" />
+      <Txt x={148} y={187} size={7}>
+        open diff
+      </Txt>
+      <KeyCap x={219} y={174} label="c" />
+      <Txt x={244} y={187} size={7}>
+        comment
+      </Txt>
+    </svg>
+  );
+}
+
 const REVIEW_UNITS = [
   { title: "1  Schema", files: "db.sql · seed.ts" },
   { title: "2  Auth path", files: "auth.ts · api.ts" },
@@ -315,7 +371,7 @@ const CODE_TEXTURE = [
 
 const KEYMAP: { action: string; keys: string[]; accent?: boolean }[] = [
   { action: "next / prev unit", keys: ["←", "→"] },
-  { action: "scroll the diff", keys: ["j", "k"] },
+  { action: "scroll the diff", keys: ["↑", "↓"] },
   { action: "comment on a line", keys: ["c"] },
   { action: "submit review", keys: ["⌘", "↵"], accent: true },
 ];

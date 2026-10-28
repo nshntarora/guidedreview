@@ -3,8 +3,8 @@ import { cn } from "@guided-review/ui";
 import { WindowFrame } from "./WindowFrame";
 import {
   ApprovedToolsIllustration,
-  ClusteredChangesIllustration,
   KeyboardFirstIllustration,
+  ManualReviewIllustration,
   SummariesIllustration,
 } from "./FeatureIllustrations";
 
@@ -13,18 +13,11 @@ type Feature = {
   title: string;
   body: string[];
   footnote?: string;
+  wide?: boolean;
   Illustration: ComponentType<SVGProps<SVGSVGElement>>;
 };
 
 const features: Feature[] = [
-  {
-    file: "clustered-changes.diff",
-    Illustration: ClusteredChangesIllustration,
-    title: "Review changes, not files",
-    body: [
-      "Most tools dump every changed file in alphabetical order and leave you to work out how they connect. We use AI to cluster related changes into review units, so you read the change, not the file list.",
-    ],
-  },
   {
     file: "navigation.keys",
     Illustration: KeyboardFirstIllustration,
@@ -46,6 +39,7 @@ const features: Feature[] = [
   {
     file: "approved-tools.json",
     Illustration: ApprovedToolsIllustration,
+    wide: true,
     title: "Tools corporate security has already approved",
     body: [
       "Bring the AI provider your company already approved — Claude, OpenAI, or Grok — and your own API key. Want to read the code that handles that key? It's open source (without VC funding), so you can read it, or fork it and point it somewhere else, or modify it for your own workflow.",
@@ -53,12 +47,19 @@ const features: Feature[] = [
     footnote:
       "Please check with your employer if they've policies about this. If you're a 2 person startup, you're (probably) fine.",
   },
+  {
+    file: "manual-review.diff",
+    Illustration: ManualReviewIllustration,
+    title: "AI and IDE optional",
+    wide: true,
+    body: [
+      "Not every change needs a full AI-powered review. Sometimes you just need to read the diff. Open it in your browser and work through the changed files yourself — no API key, no AI generation, no full IDE to load into memory.",
+      "Browse the file list, search the diff, and leave line notes from the keyboard. Your mouse can sit this one out.",
+    ],
+  },
 ];
 
 export function FeatureGrid() {
-  const [lead, ...rest] = features;
-  const last = rest.pop();
-
   return (
     <section
       id="features"
@@ -74,20 +75,11 @@ export function FeatureGrid() {
         </p>
 
         <ul className="mt-14 m-0 grid list-none grid-cols-1 gap-5 p-0 sm:mt-20 md:grid-cols-2">
-          {/* Lead feature spans the full width with a side-by-side layout. */}
-          <li className="md:col-span-2">
-            <FeatureCard feature={lead} wide />
-          </li>
-          {rest.map((f) => (
-            <li key={f.title} className="flex">
-              <FeatureCard feature={f} />
+          {features.map((f) => (
+            <li key={f.title} className={f.wide ? "md:col-span-2" : "flex"}>
+              <FeatureCard feature={f} wide={f.wide} />
             </li>
           ))}
-          {last ? (
-            <li className="md:col-span-2">
-              <FeatureCard feature={last} wide />
-            </li>
-          ) : null}
         </ul>
       </div>
     </section>

@@ -41,11 +41,17 @@ The dialog mirrors GitHub’s review events:
 
 Use `↑` / `↓` to highlight a type and `Enter` to continue, or click.
 
+[![Submit Review dialog offering Comment, Approve, and Request Changes.](/docs/screenshots/submit-review-type.png)](/docs/screenshots/submit-review-type.png)
+
+_Captured with the sample PR. The live preview simulates submission; an installed extension posts when you confirm._
+
 ## Summary and send
 
 1. Optionally write a top-level review summary (required for Request Changes).
 2. Press `⌘/Ctrl` + `Enter` or click submit.
 3. The extension posts the review and all current drafts as line comments via your stored token. What leaves the browser: [Privacy & data](/docs/privacy-and-data#what-leaves-your-machine).
+
+[![Request Changes selected with a review summary asking to preserve Retry-After and test the delay-cap boundary, ready for confirmation.](/docs/screenshots/submit-review-summary.png)](/docs/screenshots/submit-review-summary.png)
 
 Errors from GitHub (permissions, expired token, stale line anchors, SSO) surface in the modal with a short next step — see [Troubleshooting → GitHub connect and submit](/docs/troubleshooting#github-connect-and-submit) and [Private repos and SSO](/docs/troubleshooting#private-repos-and-sso).
 

@@ -1,0 +1,278 @@
+export const toc = [
+  {
+    id: "a-pull-request-security-checklist-you-can-copy",
+    label: "A pull request security checklist you can copy",
+    level: 2,
+  },
+  {
+    id: "start-with-the-boundary-the-change-crosses",
+    label: "Start with the boundary the change crosses",
+    level: 2,
+  },
+  {
+    id: "1-check-authorization-on-the-resource-and-action",
+    label: "1. Check authorization on the resource and action",
+    level: 2,
+  },
+  {
+    id: "2-validate-external-input-before-using-it",
+    label: "2. Validate external input before using it",
+    level: 2,
+  },
+  {
+    id: "3-keep-input-out-of-query-command-and-browser-syntax",
+    label: "3. Keep input out of query, command, and browser syntax",
+    level: 2,
+  },
+  {
+    id: "4-follow-authentication-and-session-failure-paths",
+    label: "4. Follow authentication and session failure paths",
+    level: 2,
+  },
+  {
+    id: "5-check-where-secrets-and-sensitive-data-go",
+    label: "5. Check where secrets and sensitive data go",
+    level: 2,
+  },
+  {
+    id: "6-read-how-cryptographic-libraries-are-used",
+    label: "6. Read how cryptographic libraries are used",
+    level: 2,
+  },
+  {
+    id: "7-restrict-files-and-outbound-requests",
+    label: "7. Restrict files and outbound requests",
+    level: 2,
+  },
+  {
+    id: "8-include-dependencies-ci-and-configuration-in-the-review",
+    label: "8. Include dependencies, CI, and configuration in the review",
+    level: 2,
+  },
+  {
+    id: "9-try-the-operation-twice-concurrently-and-out-of-order",
+    label: "9. Try the operation twice, concurrently, and out of order",
+    level: 2,
+  },
+  {
+    id: "10-ask-for-evidence-at-the-rejection-boundary",
+    label: "10. Ask for evidence at the rejection boundary",
+    level: 2,
+  },
+  {
+    id: "work-through-the-invoice-endpoint",
+    label: "Work through the invoice endpoint",
+    level: 2,
+  },
+  {
+    id: "keep-dr-michaela-greiler-s-checklist-as-a-broader-reference",
+    label: "Keep Dr Michaela Greiler’s checklist as a broader reference",
+    level: 2,
+  },
+  {
+    id: "use-automation-to-support-the-security-review",
+    label: "Use automation to support the security review",
+    level: 2,
+  },
+];
+
+# Code review checklist: security best practices for pull requests
+
+<img
+  src="/assets/guides/code-review-checklist-security-best-practices/cover.webp"
+  alt="Follow a request from input through a permission check to the sensitive operation it reaches."
+  width="1536"
+  height="1024"
+  loading="eager"
+  decoding="async"
+  className="my-6 h-auto w-full rounded-xl border border-border"
+/>
+
+A PR adds an invoice download endpoint. The handler requires login, validates the invoice ID, and passes its tests. Change the ID to an invoice owned by another customer. What happens?
+
+That's where I'd start a security code review. Follow a request someone can control to the data or action it reaches. Then check which condition stops them from doing something they shouldn't.
+
+This secure code review checklist covers the questions I'd ask before approving a pull request, with links to the underlying guidance. Use the sections that match the change. A CSS adjustment and a password reset endpoint need different amounts of investigation.
+
+## A pull request security checklist you can copy
+
+Paste this into the PR description or your review notes. Mark an item complete when you have evidence. If it doesn't apply, say why.
+
+```markdown
+## Security review
+
+Changed entry points and sensitive operations:
+Expected caller, permissions, and data scope:
+
+- [ ] Authorization checks the action, resource, and tenant before access.
+- [ ] External input has server-side type, size, range, and field limits.
+- [ ] Queries bind data values; commands and rendered output use safe APIs.
+- [ ] Authentication, session expiry, and CSRF protections still apply.
+- [ ] Secrets and sensitive data stay out of source, responses, and logs.
+- [ ] Password storage and encryption use established libraries correctly.
+- [ ] Uploads, file paths, and outbound URLs have explicit restrictions.
+- [ ] Dependencies, CI permissions, and production defaults were reviewed.
+- [ ] Retries, concurrency, and expensive operations respect business limits.
+- [ ] Rejection tests verify that forbidden reads or side effects don't occur.
+
+Checks run on this revision:
+Unresolved questions and who will resolve them:
+```
+
+## Start with the boundary the change crosses
+
+Before reading every line, identify the entry point, caller, and sensitive operation. An HTTP request might reach a database write. A queue message might trigger a payment. A build workflow might receive code from an untrusted fork.
+
+Write down what the caller may control and what the system must protect. Include headers, stored values, webhook payloads, and third-party responses. Data doesn't become trustworthy because another service sent it.
+
+For the invoice endpoint, the caller controls the invoice ID. The server establishes their identity and allowed customer scope. The operation exposes billing data. You now have a specific requirement: a customer must only download invoices they are permitted to read.
+
+[OWASP's Secure Code Review Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Secure_Code_Review_Cheat_Sheet.html) describes data-flow and threat-based review techniques. For a PR, I'd use those techniques to follow the changed behavior into the surrounding code. An unchanged helper can still determine whether the new endpoint is safe.
+
+## 1. Check authorization on the resource and action
+
+“Requires login” answers who the caller is. You still need to establish what that caller may do.
+
+Check whether the server enforces the requested action, resource ownership or relationship, and tenant boundary. Read the policy at the point where data is fetched or changed. Hiding a download button doesn't protect an endpoint someone can call directly.
+
+Look at bulk operations, exports, background jobs, and alternate routes too. One protected page won't cover an unprotected API that reaches the same records. A caller-supplied `tenantId` needs verification against the authenticated user's permissions.
+
+[OWASP's authorization guidance](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html) recommends denying access by default and validating permissions on every request. In review, ask where denial happens and whether an error in the permission check can accidentally allow access.
+
+<img
+  src="/assets/guides/code-review-checklist-security-best-practices/tenant-boundary.webp"
+  alt="A tenant check lets customer A reach their own tenant's invoice and denies access to an invoice in tenant B."
+  width="1536"
+  height="1024"
+  loading="lazy"
+  decoding="async"
+  className="my-6 h-auto w-full rounded-xl border border-border"
+/>
+
+## 2. Validate external input before using it
+
+Read the server-side schema and the code that consumes its result. Does the schema constrain type, length, numeric range, list size, and allowed fields? Does the handler use the validated object, or return to the raw request body?
+
+A valid integer can still be a negative quantity. A small JSON body can contain a field that grants an unintended privilege. Check which fields the caller may set before passing an object into an update operation.
+
+For large bodies or nested formats, inspect parser limits too. A schema check after the entire payload has been buffered can't enforce an earlier memory limit.
+
+[OWASP's input validation guidance](https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html) distinguishes format checks from business rules. Neither establishes that the caller owns the invoice.
+
+## 3. Keep input out of query, command, and browser syntax
+
+For SQL, verify that values are bound through the database API. Read raw query helpers even when the application uses an ORM. A prepared statement doesn't help if the input was already concatenated into its SQL string. Dynamic table names or sort directions need fixed, application-owned choices. See [OWASP's SQL injection prevention guidance](https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html).
+
+For process execution, use a library function instead of invoking a command where possible. If a process is necessary, prefer an API that takes an executable and separate arguments without a shell. Check whether the executable interprets an argument as an option, path, or expression. [OWASP's command injection guidance](https://cheatsheetseries.owasp.org/cheatsheets/OS_Command_Injection_Defense_Cheat_Sheet.html) explains why argument separation still needs input restrictions.
+
+For browser output, inspect raw HTML insertion and template escape hatches. Plain text should use the framework's normal escaping. Intentionally supported rich HTML needs appropriate sanitization; URLs need scheme restrictions. [OWASP's XSS prevention guidance](https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html) explains why the defense depends on where the value is rendered.
+
+“Sanitized” is too broad to settle any of these questions. Find the API and the context.
+
+## 4. Follow authentication and session failure paths
+
+If the PR changes login, reset links, tokens, or middleware, read what happens to missing, expired, invalid, and revoked credentials. Check that new routes pass through the intended middleware. Reusing a familiar router doesn't prove that its authentication hook runs.
+
+For browser sessions, inspect cookie attributes such as `Secure`, `HttpOnly`, and the appropriate `SameSite` setting, along with session renewal and server-side expiration. [OWASP's session management guidance](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html) covers those controls.
+
+If the browser automatically attaches authentication cookies, check the CSRF protection on state-changing requests. Use the framework's supported mechanism and verify that the route hasn't bypassed it. `SameSite` is part of the design; it doesn't answer every CSRF case. See [OWASP's CSRF prevention guidance](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html).
+
+## 5. Check where secrets and sensitive data go
+
+Read configuration changes, fixtures, generated files, and example commands for credentials. Follow new data into responses, analytics, exceptions, and logs. Returning a database object directly can expose fields the UI never displays.
+
+A debug statement that prints the request may include an authorization header. A useful failure log can record the operation, outcome, and an appropriate correlation ID without recording the credential. [OWASP's logging guidance](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html) lists data to exclude or protect, including passwords, access tokens, and session identifiers.
+
+If a real secret has been committed, deleting the line leaves the exposed credential usable. Revoke or rotate it through the team's incident process. [OWASP's secrets management guidance](https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html) covers that lifecycle.
+
+## 6. Read how cryptographic libraries are used
+
+For passwords, look for a maintained password-hashing library and an appropriate configuration. A fast general-purpose hash is a different tool. [OWASP's password storage guidance](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) recommends purpose-built algorithms such as Argon2id and explains alternatives.
+
+For encrypted application data, check key storage, authenticated encryption, and the library's nonce requirements. Follow what happens when verification fails. Catching that error and returning unverified data defeats the protection.
+
+[OWASP's cryptographic storage guidance](https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html) is a useful reference for established constructions. If the PR introduces custom cryptography or changes a key-management design you can't assess, involve someone who can before approving that path.
+
+## 7. Restrict files and outbound requests
+
+An upload filename and its declared content type come from the caller. Check allowed formats, content validation, size limits, generated storage names, and authorization for later downloads. Inspect archive extraction for paths that could escape the intended directory. [OWASP's file upload guidance](https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html) covers layered controls.
+
+A URL field deserves its own review when the server fetches it. Could a preview, import, or webhook feature reach an internal service or cloud metadata endpoint? Check supported schemes, destination policy, resolved addresses, redirects, and network restrictions. A public-looking hostname alone doesn't establish where a connection will go.
+
+[OWASP's SSRF prevention guidance](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html) explains controls for known destinations and features that must reach arbitrary external hosts.
+
+## 8. Include dependencies, CI, and configuration in the review
+
+A one-line dependency addition can run code during installation and introduce transitive packages. Read the manifest and lockfile together. Confirm the package identity, why it's needed, relevant advisories, and whether the code uses the affected functionality. A clean advisory scan can't establish that a package is trustworthy.
+
+For CI changes, follow who controls the checked-out code and which credentials the job receives. Untrusted PR code should not gain access to privileged publishing credentials. Review changes to token permissions and reusable actions alongside the application patch.
+
+Check production defaults as well: debug modes, TLS verification, CORS policies, and storage permissions can change behavior without changing the handler. [OWASP's software supply chain guidance](https://cheatsheetseries.owasp.org/cheatsheets/Software_Supply_Chain_Security_Cheat_Sheet.html) covers risks across dependencies, builds, and deployment.
+
+## 9. Try the operation twice, concurrently, and out of order
+
+A payment handler may validate every field and still charge twice after a retry. A redemption endpoint may check that a voucher is unused, then let two concurrent requests spend it before either write completes.
+
+Follow the check and the write together. Ask which transaction, constraint, or idempotency mechanism enforces the rule under concurrency. Check whether the caller can skip a workflow step or supply a price the server should calculate.
+
+For costly operations, inspect limits on request frequency, work size, retries, and execution time. An endpoint that generates reports or calls a paid provider needs a bound on what one caller can consume.
+
+OWASP includes workflow integrity, atomicity, and resource limits in its [business logic review checklist](https://cheatsheetseries.owasp.org/cheatsheets/Secure_Code_Review_Cheat_Sheet.html#business-logic).
+
+## 10. Ask for evidence at the rejection boundary
+
+A test named “rejects unauthorized users” might assert only the response status. Check that it also observes the effect you're trying to prevent. A rejected payment request must not charge. An unauthorized download must not return invoice contents.
+
+Choose cases that could distinguish the intended policy from a plausible mistake. Use the existing test setup and keep the check focused on the changed behavior. A second test of the same happy path won't answer a missing permission question.
+
+<img
+  src="/assets/guides/code-review-checklist-security-best-practices/rejection-boundary.webp"
+  alt="A failed permission check returns 403 Denied before a charge or notification occurs. Verify both the response and the absence of side effects."
+  width="1536"
+  height="1024"
+  loading="lazy"
+  decoding="async"
+  className="my-6 h-auto w-full rounded-xl border border-border"
+/>
+
+## Work through the invoice endpoint
+
+Suppose authentication middleware has already established the caller. The new handler does this:
+
+```typescript
+const invoice = await db.invoice.findUnique({
+  where: { id: validatedParams.invoiceId },
+});
+return Response.json(invoice);
+```
+
+The query binds its value through the ORM. The ID has passed validation. Neither tells you whether this caller may read this invoice.
+
+I'd search for a policy check, tenant-scoped query, or database policy that enforces access. It might live outside this snippet. If nothing enforces it, the endpoint has an authorization gap.
+
+For this hypothetical endpoint, assume customers may read invoices only within their own tenant. I'd want evidence for these cases:
+
+| Request                                            | Expected result                                     |
+| -------------------------------------------------- | --------------------------------------------------- |
+| Permitted customer requests their tenant's invoice | Returns only the intended invoice fields            |
+| Same customer requests another tenant's invoice    | Denies access without returning that invoice's data |
+| Signed-out caller requests an invoice              | Rejects before protected data is returned           |
+| Customer supplies a different tenant ID            | Cannot use it to expand their allowed scope         |
+
+A useful review comment would be: “This lookup uses only the invoice ID. Where do we enforce the caller's tenant scope? Please verify that a customer in tenant A can't download an invoice from tenant B.”
+
+The author can locate an existing control or add the missing one. You have a behavior to recheck when the fix arrives.
+
+## Keep Dr Michaela Greiler’s checklist as a broader reference
+
+The [Dr Michaela Greiler’s secure code review checklist](https://github.com/mgreiler/secure-code-review-checklist) is a useful reference when building a team's checklist. It groups review questions around input validation, authentication, authorization, sessions, encryption, sensitive data, and error handling. It also asks about design consequences, such as whether a change collects unnecessary personal data or introduces a separate security mechanism. I'd use it to find questions our short PR template misses, then check the relevant OWASP guidance for implementation details. Select the questions that fit the application and record the evidence for each one.
+
+## Use automation to support the security review
+
+Run the repository's static analysis, dependency checks, secret scanning, and focused tests. Read the findings and confirm what was scanned. Passing checks won't explain whether a customer is entitled to an invoice or whether a retry should create another payment.
+
+For a [large pull request](/guides/review-large-ai-generated-prs), keep the handler, policy, query, and rejection tests in the same reading path. [Guided Review](/docs/how-it-works) groups real diff hunks into ordered review units with commentary. That can help you follow related changes. You'll still need repository context for code outside the diff.
+
+The model structures the review. You establish whether the permission check runs and decide whether the evidence is enough. The same standard applies to [AI-generated pull requests](/guides/review-ai-generated-pull-request).
+
+Before approving the invoice change, I'd want an answer about the other customer's invoice.

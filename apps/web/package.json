@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start --port 3000",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "screenshots:docs": "node scripts/capture-docs.mjs",
     "pretest:e2e": "pnpm run build",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
