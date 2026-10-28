@@ -101,13 +101,6 @@ function isEditableEvent(event: KeyboardEvent): boolean {
   return findEditableInPath(event) !== null;
 }
 
-function editableTextValue(el: HTMLElement): string {
-  if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) {
-    return el.value;
-  }
-  return el.innerText ?? "";
-}
-
 interface UseOverlayKeyboardOptions {
   isOpen: boolean;
   /** CLI settings (or similar) is on top — leave keys alone. */
@@ -359,16 +352,16 @@ export function useOverlayKeyboard({
       const editable = isEditableEvent(event);
       if (!store.composerOpen && !editable) return false;
 
+      if (store.composerOpen && event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        store.saveDraftComment(store.composerText, currentUnitId);
+        return true;
+      }
+      // A restored composer stays visible without taking focus from navigation.
+      if (!editable) return false;
       if (event.key === "Escape") {
         event.preventDefault();
         if (store.composerOpen) store.closeComposer();
-        return true;
-      }
-      if (store.composerOpen && event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault();
-        const el = findEditableInPath(event);
-        const body = el ? editableTextValue(el) : "";
-        store.saveDraftComment(body, currentUnitId);
         return true;
       }
       return true;
@@ -697,7 +690,7 @@ export function useOverlayKeyboard({
 
       if (handleViewModeChord(event, store)) return;
 
-      if (store.uiMode === "comment") {
+      if (store.uiMode === "comment" && !store.composerOpen) {
         handleCommentModeKeys(event, store);
         return;
       }

@@ -1,15 +1,17 @@
-import { useEffect, useLayoutEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useId, useMemo, useRef, useState } from "react";
 import type { SelectHandle } from "@guided-review/ui";
 import { formatAgentPrompt, resolveUnitFiles, summarizeDiff } from "@guided-review/core";
 import type { ReviewErrorInfo, ReviewPlan } from "@guided-review/ui/review/types";
 import {
   selectionKey,
+  reviewNavigation,
   summaryUnitTitle,
   useReviewStore,
   persistSession,
   type BuildPhase,
   type ReviewStatus,
 } from "./store";
+import { useReviewScroll } from "./useReviewScroll";
 import { orderedFiles } from "./fileNavigation";
 import { buildSelectableLines } from "./buildSelectableLines";
 import { restoreFocusAfterOverlay } from "./focusTrap";
@@ -57,12 +59,11 @@ function statusAnnouncementText(
   needsProvider: boolean,
   buildPhase: BuildPhase | null,
   providerLabel: string | null,
-  planSource: "ai" | "files" | null,
 ): string {
   if (status === "error" && error) {
     return `Error: ${error.message}`;
   }
-  if (needsProvider && status === "ready" && plan) {
+  if (needsProvider && status === "ready") {
     return "Files ready to review. AI review plans are optional.";
   }
   if (needsProvider) {
@@ -77,8 +78,8 @@ function statusAnnouncementText(
     }
     return detail ? `${BUILD_PLAN_PRIMARY}. ${detail}` : `${BUILD_PLAN_PRIMARY}…`;
   }
-  if (status === "ready" && plan) {
-    return planSource === "ai"
+  if (status === "ready") {
+    return plan !== null
       ? `Review plan ready. ${plan.units.length} review units available.`
       : "Files ready to review.";
   }
@@ -107,7 +108,6 @@ export function Overlay({
   const prContext = useReviewStore((s) => s.prContext);
   const selection = useReviewStore((s) => s.selection);
   const navigationMode = useReviewStore((s) => s.navigationMode);
-  const planSource = useReviewStore((s) => s.planSource);
   const planComplete = useReviewStore((s) => s.planComplete);
   const pendingComposers = useReviewStore((s) => s.pendingComposers);
   const collapsedDirectories = useReviewStore((s) => s.collapsedDirectories);
@@ -139,17 +139,20 @@ export function Overlay({
   const [navigationOpen, setNavigationOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const browseButtonRef = useRef<HTMLButtonElement>(null);
-  const generatePlan = host.generatePlan ?? localDiff?.onStructureReview;
+  const generatePlan = host.generatePlan;
+
+  const contentKey = selectionKey(selection);
+  const flushScrollPosition = useReviewScroll(codeColRef, contentKey, sessionKey, isOpen);
 
   function closeNavigation() {
     setNavigationOpen(false);
     browseButtonRef.current?.focus();
   }
 
-  function focusReviewContent() {
+  const focusReviewContent = useCallback(() => {
     setNavigationOpen(false);
     codeColRef.current?.focus({ preventScroll: true });
-  }
+  }, []);
 
   useEffect(() => {
     if (!navigationOpen) return;
@@ -188,9 +191,7 @@ export function Overlay({
   function handleDiffSearchSelect(result: DiffSearchResult) {
     const hunkId = result.kind === "line" ? result.hunkId : undefined;
     const unitIndex =
-      navigationMode === "units" && planSource === "ai"
-        ? findUnitForFile(plan, result.filePath, hunkId)
-        : null;
+      navigationMode === "units" ? findUnitForFile(plan, result.filePath, hunkId) : null;
     skipCodeScrollOnUnitChange.current = true;
     if (unitIndex !== null) goToUnit(unitIndex);
     else goToFile(result.filePath);
@@ -237,6 +238,7 @@ export function Overlay({
   }
 
   function handleExit() {
+    flushScrollPosition();
     void persistSession();
     onRequestClose?.();
     close();
@@ -314,6 +316,7 @@ export function Overlay({
   useEffect(() => {
     if (!isOpen) return;
     const save = () => {
+      flushScrollPosition();
       void persistSession();
     };
     window.addEventListener("pagehide", save);
@@ -321,7 +324,7 @@ export function Overlay({
       window.removeEventListener("pagehide", save);
       save();
     };
-  }, [isOpen]);
+  }, [isOpen, flushScrollPosition]);
 
   // Drop search UI when the overlay closes so the next open starts clean.
   useEffect(() => {
@@ -331,7 +334,6 @@ export function Overlay({
     }
   }, [isOpen]);
 
-  const contentKey = selectionKey(selection);
   useLayoutEffect(() => {
     if (!isOpen) return;
     if (skipCodeScrollOnUnitChange.current) skipCodeScrollOnUnitChange.current = false;
@@ -380,14 +382,11 @@ export function Overlay({
   }, [isOpen]);
 
   const files = useMemo(() => orderedFiles(diff), [diff]);
-  const total =
-    navigationMode === "files" ? files.length : planSource === "ai" ? (plan?.units.length ?? 0) : 0;
-  const currentIndex =
-    selection.kind === "summary"
-      ? 0
-      : selection.kind === "file"
-        ? files.findIndex((file) => file.path === selection.path) + 1
-        : (plan?.units.findIndex((unit) => unit.id === selection.id) ?? -1) + 1;
+  const navigation = useMemo(
+    () => reviewNavigation({ diff, plan, navigationMode, selection }, host.kind),
+    [diff, plan, navigationMode, selection, host.kind],
+  );
+  const { currentIndex, total } = navigation;
   const footerLabel =
     selection.kind === "summary"
       ? host.kind === "local"
@@ -398,12 +397,12 @@ export function Overlay({
   useLayoutEffect(() => {
     if (host.kind !== "local" || selection.kind !== "summary") return;
     const state = useReviewStore.getState();
-    const unit = navigationMode === "units" && planSource === "ai" ? plan?.units[0] : null;
+    const unit = navigationMode === "units" ? plan?.units[0] : null;
     if (unit) state.selectContent({ kind: "unit", id: unit.id }, navigationMode);
     else if (files[0]) state.selectContent({ kind: "file", path: files[0].path }, navigationMode);
-  }, [host.kind, selection.kind, navigationMode, planSource, plan, files]);
+  }, [host.kind, selection.kind, navigationMode, plan, files]);
   const currentReviewUnit =
-    selection.kind === "unit" && planSource === "ai"
+    selection.kind === "unit"
       ? (plan?.units.find((unit) => unit.id === selection.id) ?? null)
       : null;
   const selectedFile =
@@ -492,7 +491,6 @@ export function Overlay({
     needsProvider,
     buildPhase,
     providerLabel,
-    planSource,
   );
 
   if (!isOpen) return null;
@@ -559,13 +557,10 @@ export function Overlay({
         </aside>
         <main
           id="main-content"
-          className="min-h-0 min-w-0 flex-1 overflow-y-auto scroll-pt-10 border-r border-border bg-surface"
+          className="min-h-0 min-w-0 flex-1 overflow-y-auto scroll-pt-10 border-r border-border bg-surface [overflow-anchor:none]"
           ref={codeColRef}
           data-testid="code-col"
           tabIndex={-1}
-          onScroll={(event) =>
-            useReviewStore.getState().saveScrollPosition(contentKey, event.currentTarget.scrollTop)
-          }
         >
           <div ref={reviewContentRef} className="px-4 py-4 md:px-8 md:py-6">
             {isDescriptionUnit ? (
@@ -599,7 +594,7 @@ export function Overlay({
                 (diffStats.files >= 20 || diffStats.additions + diffStats.deletions >= 500) &&
                 diff !== dismissedInvitationDiff &&
                 !planComplete &&
-                planSource !== "ai" &&
+                !plan &&
                 status === "ready" &&
                 navigationMode === "files" && (
                   <div
@@ -671,8 +666,8 @@ export function Overlay({
       </div>
 
       <FooterNav
-        currentIndex={currentIndex}
-        total={total}
+        canGoPrev={navigation.previous !== null}
+        canGoNext={navigation.next !== null}
         label={footerLabel}
         onPrev={goPrev}
         onNext={goNext}

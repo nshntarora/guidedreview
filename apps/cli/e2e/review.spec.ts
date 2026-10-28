@@ -57,6 +57,7 @@ test.describe("CLI review overlay", () => {
     await expect(page.getByTestId("review-summary")).toHaveCount(0);
     await expect(page.getByTestId("description-pane")).toHaveCount(0);
     await expect(page.getByTestId("diff-file-header")).toContainText("feat.ts");
+    await expect(page.getByTestId("review-previous-unit")).toBeDisabled();
     await expect(page.getByTestId("context-pane").getByTestId("commit-card")).toContainText(
       "add feat",
     );

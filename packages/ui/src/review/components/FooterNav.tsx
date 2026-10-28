@@ -1,15 +1,14 @@
 import { Button, Kbd } from "@guided-review/ui";
 
 interface FooterNavProps {
-  /** Zero is the summary; actual files/units start at one. */
-  currentIndex: number;
-  total: number;
+  canGoPrev: boolean;
+  canGoNext: boolean;
   label: string;
   onPrev: () => void;
   onNext: () => void;
 }
 
-export function FooterNav({ currentIndex, total, label, onPrev, onNext }: FooterNavProps) {
+export function FooterNav({ canGoPrev, canGoNext, label, onPrev, onNext }: FooterNavProps) {
   return (
     <footer
       className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-background px-5 py-3"
@@ -19,7 +18,7 @@ export function FooterNav({ currentIndex, total, label, onPrev, onNext }: Footer
         variant="secondary"
         size="sm"
         onClick={onPrev}
-        disabled={currentIndex === 0}
+        disabled={!canGoPrev}
         data-testid="review-previous-unit"
       >
         Previous <Kbd>←</Kbd>
@@ -33,12 +32,7 @@ export function FooterNav({ currentIndex, total, label, onPrev, onNext }: Footer
       >
         {label}
       </p>
-      <Button
-        size="sm"
-        onClick={onNext}
-        disabled={currentIndex >= total}
-        data-testid="review-next-unit"
-      >
+      <Button size="sm" onClick={onNext} disabled={!canGoNext} data-testid="review-next-unit">
         Next <Kbd>→</Kbd>
       </Button>
     </footer>

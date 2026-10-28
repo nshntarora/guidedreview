@@ -37,7 +37,7 @@ interface DiffPaneProps {
   files: ResolvedUnitFile[];
   /**
    * Title of the currently active review unit (`displayTitle ?? title`).
-   * Already display-ready — path plans pre-truncate in buildFileReviewPlan.
+   * The selected file path or AI review unit title.
    */
   unitTitle: string;
   /** Full untruncated title for the native tooltip (falls back to unitTitle). */

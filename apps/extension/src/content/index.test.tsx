@@ -147,7 +147,7 @@ describe("content script review orchestration", () => {
     expect(state.selection).toEqual({ kind: "summary" });
   });
 
-  it("falls back to a file-per-unit plan when no provider key is configured", async () => {
+  it("opens the real diff without an AI plan when no provider key is configured", async () => {
     await setProviderSettings({ provider: "anthropic", model: "claude-opus-4-8", apiKey: "" });
 
     await startReview();
@@ -155,7 +155,8 @@ describe("content script review orchestration", () => {
     const state = useReviewStore.getState();
     expect(state.needsProvider).toBe(true);
     expect(state.status).toBe("ready");
-    expect(state.plan?.units.map((u) => u.title)).toEqual(["src/foo.ts"]);
+    expect(state.plan).toBeNull();
+    expect(state.diff?.files.map((file) => file.path)).toEqual(["src/foo.ts"]);
     // No provider means no annotate call at all.
     expect(chromeMock().runtime.connect).not.toHaveBeenCalled();
   });

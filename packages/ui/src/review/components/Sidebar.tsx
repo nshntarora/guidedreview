@@ -1,4 +1,5 @@
-import { useEffect, useId, useMemo, useRef } from "react";
+import { memo, useEffect, useId, useMemo, useRef } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { Button, cn } from "@guided-review/ui";
 import { useReviewStore } from "@guided-review/ui/review/store";
 import { buildFileTree } from "@guided-review/ui/review/fileNavigation";
@@ -13,11 +14,31 @@ interface SidebarProps {
   onSelect?: () => void;
 }
 
-export function Sidebar({ onGenerate, onSelect }: SidebarProps) {
-  const state = useReviewStore();
-  const { diff, plan, planSource, planComplete, navigationMode, selection, status, needsProvider } =
-    state;
-  const units = planSource === "ai" ? (plan?.units ?? []) : [];
+export const Sidebar = memo(function Sidebar({ onGenerate, onSelect }: SidebarProps) {
+  const {
+    diff,
+    plan,
+    planComplete,
+    navigationMode,
+    selection,
+    status,
+    needsProvider,
+    setNavigationMode,
+    selectContent,
+  } = useReviewStore(
+    useShallow((s) => ({
+      diff: s.diff,
+      plan: s.plan,
+      planComplete: s.planComplete,
+      navigationMode: s.navigationMode,
+      selection: s.selection,
+      status: s.status,
+      needsProvider: s.needsProvider,
+      setNavigationMode: s.setNavigationMode,
+      selectContent: s.selectContent,
+    })),
+  );
+  const units = plan?.units ?? [];
   const tree = useMemo(() => buildFileTree(diff), [diff]);
   const id = useId();
   const navRef = useRef<HTMLElement>(null);
@@ -69,7 +90,7 @@ export function Sidebar({ onGenerate, onSelect }: SidebarProps) {
                   : "text-muted",
               )}
               data-testid={`navigation-tab-${mode}`}
-              onClick={() => state.setNavigationMode(mode)}
+              onClick={() => setNavigationMode(mode)}
               onKeyDown={(event) => {
                 if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
                 event.preventDefault();
@@ -81,7 +102,7 @@ export function Sidebar({ onGenerate, onSelect }: SidebarProps) {
                       : mode === "files"
                         ? "units"
                         : "files";
-                state.setNavigationMode(next);
+                setNavigationMode(next);
                 navRef.current?.querySelector<HTMLElement>(`[id="${id}-${next}"]`)?.focus();
               }}
             >
@@ -128,7 +149,7 @@ export function Sidebar({ onGenerate, onSelect }: SidebarProps) {
                   )}
                   data-testid={`review-unit-${index + 1}`}
                   onClick={() => {
-                    state.selectContent({ kind: "unit", id: unit.id });
+                    selectContent({ kind: "unit", id: unit.id });
                     onSelect?.();
                   }}
                 >
@@ -189,16 +210,7 @@ export function Sidebar({ onGenerate, onSelect }: SidebarProps) {
                 No review units were generated. Browse Files to review the changes.
               </p>
             ) : null}
-            {(stillBuilding || state.tokenUsage || (planSource === "ai" && planComplete)) && (
-              <TokenStream
-                className={units.length > 0 ? "mt-8" : undefined}
-                phase={state.buildPhase}
-                providerLabel={state.providerLabel}
-                usage={state.tokenUsage}
-                generating={stillBuilding}
-                complete={planSource === "ai" && planComplete}
-              />
-            )}
+            <PlanProgress hasUnits={units.length > 0} />
           </>
         )}
       </div>
@@ -209,5 +221,29 @@ export function Sidebar({ onGenerate, onSelect }: SidebarProps) {
         hidden
       />
     </nav>
+  );
+});
+
+function PlanProgress({ hasUnits }: { hasUnits: boolean }) {
+  const { status, buildPhase, providerLabel, tokenUsage, planComplete } = useReviewStore(
+    useShallow((s) => ({
+      status: s.status,
+      buildPhase: s.buildPhase,
+      providerLabel: s.providerLabel,
+      tokenUsage: s.tokenUsage,
+      planComplete: s.planComplete,
+    })),
+  );
+  const generating = status === "streaming" || status === "loading";
+  if (!generating && !tokenUsage && !planComplete) return null;
+  return (
+    <TokenStream
+      className={hasUnits ? "mt-8" : undefined}
+      phase={buildPhase}
+      providerLabel={providerLabel}
+      usage={tokenUsage}
+      generating={generating}
+      complete={planComplete}
+    />
   );
 }

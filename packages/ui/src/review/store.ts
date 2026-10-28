@@ -9,7 +9,6 @@ import type {
 import type { ReviewContext } from "@guided-review/core";
 import { NO_API_KEY_ERROR_CODE } from "@guided-review/ui/review/types";
 import type { PRIdentity } from "@guided-review/ui/review/types";
-import { buildFileReviewPlan } from "@guided-review/core";
 import { orderedFiles } from "./fileNavigation";
 import {
   displayLineNumber,
@@ -23,9 +22,6 @@ import { DEFAULT_DIFF_VIEW_MODE, type DiffViewMode } from "./diffView";
 import { getActiveReviewHost } from "./host";
 
 export type ReviewStatus = "idle" | "loading" | "streaming" | "ready" | "error";
-
-/** File fallback data is separate from an AI review plan. */
-export type PlanSource = "files" | "ai";
 
 /**
  * Fine-grained progress while the review plan is being built (diff fetch →
@@ -89,6 +85,34 @@ export function selectionKey(selection: ContentSelection): string {
       : `unit:${selection.id}`;
 }
 
+/** One sequence drives keyboard actions and footer availability. */
+export function reviewNavigation(
+  state: {
+    diff: ParsedDiff | null;
+    plan: ReviewPlan | null;
+    navigationMode: NavigationMode;
+    selection: ContentSelection;
+  },
+  hostKind: "github" | "local" = "github",
+) {
+  const sequence: ContentSelection[] =
+    state.navigationMode === "files"
+      ? orderedFiles(state.diff).map((file) => ({ kind: "file", path: file.path }))
+      : (state.plan?.units ?? []).map((unit) => ({ kind: "unit", id: unit.id }));
+  const index = sequence.findIndex((item) => selectionKey(item) === selectionKey(state.selection));
+  return {
+    currentIndex: index + 1,
+    total: sequence.length,
+    previous:
+      index > 0
+        ? sequence[index - 1]
+        : index === 0 && hostKind !== "local"
+          ? ({ kind: "summary" } as ContentSelection)
+          : null,
+    next: sequence[index + 1] ?? null,
+  };
+}
+
 interface PendingComposer {
   lines: SelectableLine[];
   body: string;
@@ -98,7 +122,8 @@ interface PersistedSession {
   tokenUsage?: ReviewTokenUsage | null;
   diff: ParsedDiff;
   plan?: ReviewPlan | null;
-  planSource?: PlanSource | null;
+  /** Only read for sessions saved before file browsing was separated from AI plans. */
+  planSource?: "files" | "ai" | null;
   planComplete?: boolean;
   prContext: ReviewContext | null;
   /** Legacy sessions used an index including the description at zero. */
@@ -183,8 +208,6 @@ interface ReviewState {
   sessionKey: string | null;
   /** Unified vs side-by-side code view (UI preference, not session data). */
   diffViewMode: DiffViewMode;
-  /** `null` until a plan is installed. File plans are not persisted. */
-  planSource: PlanSource | null;
 
   /** navigate = unit walkthrough; comment = line selection for drafts. */
   uiMode: UiMode;
@@ -198,16 +221,15 @@ interface ReviewState {
   close: () => void;
   startLoading: (sessionKey: string) => number;
   /**
-   * Open a walkthrough on an already-built file plan without a loading flash
+   * Open an already-fetched diff without a loading flash
    * or an annotation stream. Bumps streamGeneration so a late SSE is ignored.
    */
-  bootReady: (args: { sessionKey: string; diff: ParsedDiff; plan: ReviewPlan }) => number;
+  bootReady: (args: { sessionKey: string; diff: ParsedDiff }) => number;
   setPRContext: (prContext: ReviewContext) => void;
   setDiff: (diff: ParsedDiff) => void;
   setFileReady: (diff: ParsedDiff, generation?: number) => void;
   setBuildPhase: (phase: BuildPhase, generation?: number) => void;
   setProviderLabel: (label: string | null) => void;
-  beginStreaming: (generation: number) => void;
   /**
    * Start a retry of the annotation stream without clearing the already-fetched
    * diff. Bumps streamGeneration and returns the new generation.
@@ -279,7 +301,6 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   streamGeneration: 0,
   sessionKey: null,
   diffViewMode: DEFAULT_DIFF_VIEW_MODE,
-  planSource: null,
   uiMode: "navigate",
   selectableLines: [],
   lineSelection: null,
@@ -310,13 +331,12 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       sessionKey,
       streamGeneration,
       draftComments: [],
-      planSource: null,
       ...COMMENT_UI_RESET,
     });
     return streamGeneration;
   },
 
-  bootReady: ({ sessionKey, diff, plan }) => {
+  bootReady: ({ sessionKey, diff }) => {
     const streamGeneration = get().streamGeneration + 1;
     set({
       tokenUsage: null,
@@ -325,11 +345,10 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       buildPhase: null,
       ...NAVIGATION_RESET,
       planComplete: false,
-      plan,
+      plan: null,
       diff,
       sessionKey,
       streamGeneration,
-      planSource: "files",
       draftComments: [],
       ...COMMENT_UI_RESET,
     });
@@ -354,8 +373,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
     set({
       status: "ready",
       diff,
-      plan: buildFileReviewPlan(diff),
-      planSource: "files",
+      plan: null,
       planComplete: false,
       buildPhase: null,
       error: null,
@@ -369,21 +387,14 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
 
   setProviderLabel: (label) => set({ providerLabel: label }),
 
-  beginStreaming: (generation) => {
-    if (get().streamGeneration !== generation) return;
-    set({
-      tokenUsage: null,
-      status: "streaming",
-      planSource: "ai",
-      planComplete: false,
-      plan: { units: [] },
-      error: null,
-    });
-  },
-
   beginRetry: () => {
-    const nextGeneration = get().streamGeneration + 1;
-    const hasDiff = get().diff !== null;
+    const state = get();
+    const nextGeneration = state.streamGeneration + 1;
+    const hasDiff = state.diff !== null;
+    const selectedId = state.selection.kind === "unit" ? state.selection.id : null;
+    const filePath = state.plan?.units
+      .find((unit) => unit.id === selectedId)
+      ?.files.find((ref) => state.diff?.files.some((file) => file.path === ref.fileId))?.fileId;
     set({
       tokenUsage: null,
       streamGeneration: nextGeneration,
@@ -392,8 +403,20 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       // A retry always re-runs the annotate call, so the connect-provider
       // prompt must not survive into the new attempt.
       needsProvider: false,
-      plan: get().planSource === "ai" ? get().plan : hasDiff ? { units: [] } : null,
-      planSource: "ai",
+      // Unit IDs are scoped to a request, not stable across model generations.
+      plan: hasDiff ? { units: [] } : null,
+      lastUnitSelection: null,
+      scrollPositions: Object.fromEntries(
+        Object.entries(state.scrollPositions).filter(([key]) => !key.startsWith("unit:")),
+      ),
+      ...(selectedId
+        ? {
+            selection: filePath
+              ? ({ kind: "file", path: filePath } as ContentSelection)
+              : ({ kind: "summary" } as ContentSelection),
+            ...COMMENT_UI_RESET,
+          }
+        : {}),
       planComplete: false,
       // Cached-diff retry skips extract; full restart goes through startLoading.
       buildPhase: hasDiff ? "processing_diff" : "extracting_diff",
@@ -412,7 +435,6 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       return {
         status: "streaming",
         plan: { units },
-        planSource: "ai",
         error: null,
         ...(existing.length === 0 && state.navigationMode === "units"
           ? {
@@ -444,7 +466,6 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       selection,
       error: null,
       buildPhase: null,
-      planSource: "ai",
       planComplete: true,
     });
   },
@@ -462,15 +483,12 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   },
 
   setNeedsProvider: () => {
-    const { diff, planSource } = get();
+    const { diff } = get();
     set({
       needsProvider: true,
       error: null,
       buildPhase: null,
       ...(diff ? { status: "ready" as const } : {}),
-      ...(diff && planSource !== "ai"
-        ? { plan: buildFileReviewPlan(diff), planSource: "files" as const }
-        : {}),
     });
   },
 
@@ -481,10 +499,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       !state.diff?.files.some((file) => file.path === selection.path)
     )
       return;
-    if (
-      selection.kind === "unit" &&
-      (state.planSource !== "ai" || !state.plan?.units.some((unit) => unit.id === selection.id))
-    )
+    if (selection.kind === "unit" && !state.plan?.units.some((unit) => unit.id === selection.id))
       return;
     const navigationMode =
       mode ??
@@ -534,16 +549,13 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
     }
     if (!selection && mode === "units") {
       const unit =
-        state.planSource === "ai"
-          ? (state.plan?.units.find(
-              (unit) =>
-                state.selection.kind === "file" &&
-                unit.files.some(
-                  (ref) =>
-                    ref.fileId === (state.selection.kind === "file" ? state.selection.path : ""),
-                ),
-            ) ?? state.plan?.units[0])
-          : null;
+        state.plan?.units.find(
+          (unit) =>
+            state.selection.kind === "file" &&
+            unit.files.some(
+              (ref) => ref.fileId === (state.selection.kind === "file" ? state.selection.path : ""),
+            ),
+        ) ?? state.plan?.units[0];
       selection = unit ? { kind: "unit", id: unit.id } : { kind: "summary" };
     }
     const selectedId = selection?.kind === "unit" ? selection.id : null;
@@ -565,38 +577,20 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       },
     })),
   saveScrollPosition: (key, top) =>
-    set((state) => ({ scrollPositions: { ...state.scrollPositions, [key]: top } })),
+    set((state) =>
+      state.scrollPositions[key] === top
+        ? state
+        : { scrollPositions: { ...state.scrollPositions, [key]: top } },
+    ),
 
   goNext: () => {
-    const state = get();
-    const sequence: ContentSelection[] =
-      state.navigationMode === "files"
-        ? orderedFiles(state.diff).map((file) => ({ kind: "file", path: file.path }))
-        : (state.planSource === "ai" ? (state.plan?.units ?? []) : []).map((unit) => ({
-            kind: "unit",
-            id: unit.id,
-          }));
-    const index = sequence.findIndex(
-      (item) => selectionKey(item) === selectionKey(state.selection),
-    );
-    if (sequence[index + 1]) state.selectContent(sequence[index + 1]);
+    const next = reviewNavigation(get(), getActiveReviewHost()?.kind).next;
+    if (next) get().selectContent(next);
   },
 
   goPrev: () => {
-    const state = get();
-    if (state.selection.kind === "summary") return;
-    const sequence: ContentSelection[] =
-      state.navigationMode === "files"
-        ? orderedFiles(state.diff).map((file) => ({ kind: "file", path: file.path }))
-        : (state.planSource === "ai" ? (state.plan?.units ?? []) : []).map((unit) => ({
-            kind: "unit",
-            id: unit.id,
-          }));
-    const index = sequence.findIndex(
-      (item) => selectionKey(item) === selectionKey(state.selection),
-    );
-    if (index <= 0 && getActiveReviewHost()?.kind === "local") return;
-    state.selectContent(sequence[index - 1] ?? { kind: "summary" });
+    const previous = reviewNavigation(get(), getActiveReviewHost()?.kind).previous;
+    if (previous) get().selectContent(previous);
   },
 
   setDiffViewMode: (mode) => {
@@ -833,8 +827,7 @@ export async function persistSession(): Promise<void> {
   const payload: PersistedSession = {
     tokenUsage: state.tokenUsage,
     diff: state.diff,
-    plan: state.planSource === "ai" ? state.plan : null,
-    planSource: state.planSource,
+    plan: state.plan,
     planComplete: state.planComplete,
     prContext: state.prContext,
     selection: state.selection,
@@ -866,10 +859,9 @@ export async function restoreSession(sessionKey: string): Promise<boolean> {
   }
   if (!saved?.diff?.files || generation !== useReviewStore.getState().streamGeneration)
     return false;
-  const source = saved.planSource ?? (saved.plan ? "ai" : "files");
-  const plan = source === "ai" ? (saved.plan ?? { units: [] }) : buildFileReviewPlan(saved.diff);
+  const plan = saved.planSource === "files" ? null : (saved.plan ?? null);
   const legacyUnit =
-    plan.units[Math.min(Math.max((saved.currentUnitIndex ?? 0) - 1, 0), plan.units.length - 1)];
+    plan?.units[Math.min(Math.max((saved.currentUnitIndex ?? 0) - 1, 0), plan.units.length - 1)];
   let selection: ContentSelection =
     saved.selection ??
     (saved.navigationMode === "files" && saved.currentFileIndex
@@ -882,8 +874,7 @@ export async function restoreSession(sessionKey: string): Promise<boolean> {
     if (item.kind === "summary") return item;
     if (item.kind === "file" && saved.diff.files.some((file) => file.path === item.path))
       return item;
-    if (item.kind === "unit" && source === "ai" && plan.units.some((unit) => unit.id === item.id))
-      return item;
+    if (item.kind === "unit" && plan?.units.some((unit) => unit.id === item.id)) return item;
     return null;
   };
   selection = valid(selection) ?? { kind: "summary" };
@@ -891,13 +882,12 @@ export async function restoreSession(sessionKey: string): Promise<boolean> {
     ...NAVIGATION_RESET,
     tokenUsage: saved.tokenUsage ?? null,
     status: "ready",
-    planSource: source,
-    planComplete: saved.planComplete ?? source === "ai",
+    planComplete: plan !== null && (saved.planComplete ?? true),
     diff: saved.diff,
     plan,
     prContext: saved.prContext ?? null,
     selection,
-    navigationMode: saved.navigationMode ?? "units",
+    navigationMode: saved.navigationMode ?? (plan ? "units" : "files"),
     lastFileSelection:
       valid(saved.lastFileSelection) ?? (selection.kind === "file" ? selection : null),
     lastUnitSelection:

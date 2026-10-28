@@ -1,9 +1,10 @@
+import { memo, useMemo } from "react";
 import { Button, cn } from "@guided-review/ui";
 import { useReviewStore } from "@guided-review/ui/review/store";
 import { FileIcon, FolderIcon } from "./FileIcon";
 import type { FileDirectory } from "@guided-review/ui/review/fileNavigation";
 
-export function FileNavigation({
+export const FileNavigation = memo(function FileNavigationRows({
   directory,
   onSelect,
 }: {
@@ -14,6 +15,23 @@ export function FileNavigation({
   const collapsed = useReviewStore((s) => s.collapsedDirectories);
   const toggleDirectory = useReviewStore((s) => s.toggleDirectory);
   const goToFile = useReviewStore((s) => s.goToFile);
+  const fileStats = useMemo(
+    () =>
+      new Map(
+        directory.files.map((file) => {
+          let additions = 0;
+          let deletions = 0;
+          for (const hunk of file.hunks) {
+            for (const line of hunk.lines) {
+              if (line.type === "add") additions++;
+              else if (line.type === "del") deletions++;
+            }
+          }
+          return [file.path, { additions, deletions }];
+        }),
+      ),
+    [directory.files],
+  );
   return (
     <ul
       className="m-0 list-none space-y-0.5 p-0"
@@ -69,9 +87,7 @@ export function FileNavigation({
       ))}
       {directory.files.map((file) => {
         const active = selection.kind === "file" && selection.path === file.path;
-        const lines = file.hunks.flatMap((hunk) => hunk.lines);
-        const additions = lines.filter((line) => line.type === "add").length;
-        const deletions = lines.filter((line) => line.type === "del").length;
+        const { additions, deletions } = fileStats.get(file.path)!;
         const label = file.previousPath ? `${file.previousPath} → ${file.path}` : file.path;
         return (
           <li key={file.path}>
@@ -124,4 +140,4 @@ export function FileNavigation({
       })}
     </ul>
   );
-}
+});

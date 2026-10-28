@@ -1,5 +1,3 @@
-import type { ProviderId } from "@guided-review/core";
-
 /** Individual commit scopes and the sidebar commit list. Keep in sync with apps/cli/src/git/localDiff.ts. */
 export const MAX_RECENT_COMMITS = 5;
 
@@ -56,12 +54,7 @@ export interface LocalDiffControls {
   selectedScope: string;
   commits: LocalCommitCard[];
   onSelectScope: (id: string) => void;
-  onStructureReview: () => void;
-  structuring: boolean;
-  structured: boolean;
   scopeBusy?: boolean;
-  /** Selected coding agent / provider shown under Structure with AI. */
-  structureWith?: { provider: ProviderId; label: string };
   /** Working-tree diff no longer matches the snapshot this review is showing. */
   stale?: boolean;
   onRefresh?: () => void;

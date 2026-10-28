@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { buildFileReviewPlan, getProvider, type ProviderId } from "@guided-review/core";
+import { getProvider, type ProviderId } from "@guided-review/core";
 import type { ReviewSessionPayload } from "../server/createServer";
 import { Overlay } from "@guided-review/ui/review/Overlay";
 import { ReviewHostProvider } from "@guided-review/ui/review/host";
 import { restoreSession, useReviewStore } from "@guided-review/ui/review/store";
 import type { LocalDiffControls } from "@guided-review/ui/review/localReview";
 import { createLocalReviewHost } from "./host";
-import { codingAgentLabel, structureWithLabel } from "./codingAgentLabel";
+import { codingAgentLabel } from "./codingAgentLabel";
 import { SettingsApp } from "./settings/SettingsApp";
 import type { PublicSettings } from "./settings/Settings";
 
@@ -38,13 +38,8 @@ export function App() {
   const [commits, setCommits] = useState<ReviewSessionPayload["commits"]>([]);
   const [scopes, setScopes] = useState<ReviewSessionPayload["scopes"]>([]);
   const [selectedScope, setSelectedScope] = useState("");
-  const [structured, setStructured] = useState(false);
   const [scopeBusy, setScopeBusy] = useState(false);
   const [stale, setStale] = useState(false);
-  const [structureWith, setStructureWith] = useState<{
-    provider: ProviderId;
-    label: string;
-  } | null>(null);
   const cancelStreamRef = useRef<(() => void) | undefined>(undefined);
   const hasKeyRef = useRef(false);
   const startStructureRef = useRef<() => void>(() => {});
@@ -67,10 +62,6 @@ export function App() {
     useReviewStore.getState().setProviderReady(hasKeyRef.current);
     providerIdRef.current = published.provider;
     codingAgentRef.current = published.codingAgent ?? null;
-    setStructureWith({
-      provider: published.provider,
-      label: structureWithLabel(published.codingAgent, published.provider),
-    });
     if (hasKeyRef.current) {
       const agentLabel = codingAgentLabel(published.codingAgent);
       useReviewStore
@@ -87,16 +78,14 @@ export function App() {
     useReviewStore.getState().setPRContext(session.context);
   }, []);
 
-  const installFilePlan = useCallback(
+  const installDiff = useCallback(
     (session: ReviewSessionPayload) => {
       applyMeta(session);
       useReviewStore.getState().bootReady({
         sessionKey: session.sessionKey,
         diff: session.diff,
-        plan: buildFileReviewPlan(session.diff),
       });
       useReviewStore.getState().setProviderReady(hasKeyRef.current);
-      setStructured(false);
     },
     [applyMeta],
   );
@@ -120,7 +109,6 @@ export function App() {
       onUnit: (unit) => useReviewStore.getState().appendUnit(unit, generation),
       onDone: (plan) => {
         useReviewStore.getState().setReady(diff, plan, generation);
-        setStructured(true);
       },
       onError: (error) => {
         useReviewStore.getState().setError(error, generation);
@@ -148,10 +136,9 @@ export function App() {
       const restored = await restoreSession(session.sessionKey);
       if (cancelled) return;
       if (restored) {
-        setStructured(useReviewStore.getState().planComplete);
         return;
       }
-      installFilePlan(session);
+      installDiff(session);
     }
 
     void boot().catch((error: unknown) => {
@@ -166,7 +153,7 @@ export function App() {
       cancelled = true;
       cancelStreamRef.current?.();
     };
-  }, [applyMeta, applyPublishedSettings, installFilePlan]);
+  }, [applyMeta, applyPublishedSettings, installDiff]);
 
   async function selectScope(scope: string) {
     if (scope === selectedScope || scopeBusy) return;
@@ -186,7 +173,7 @@ export function App() {
       if (!res.ok) {
         throw new Error(body.error ?? `Could not load that diff (${res.status}).`);
       }
-      installFilePlan(body);
+      installDiff(body);
       setStale(false);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Could not load that diff.";
@@ -197,10 +184,9 @@ export function App() {
   }
 
   const status = useReviewStore((s) => s.status);
-  const structuring = status === "loading" || status === "streaming";
 
   useEffect(() => {
-    if (status !== "ready" || structuring || scopeBusy) return;
+    if (status !== "ready" || scopeBusy) return;
 
     let cancelled = false;
     let inFlight = false;
@@ -225,7 +211,7 @@ export function App() {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [status, structuring, scopeBusy]);
+  }, [status, scopeBusy]);
 
   const localDiff: LocalDiffControls = {
     scopes,
@@ -234,11 +220,7 @@ export function App() {
     onSelectScope: (id) => {
       void selectScope(id);
     },
-    onStructureReview: startStructure,
-    structuring,
-    structured,
     scopeBusy,
-    structureWith,
     stale,
     onRefresh: () => {
       window.location.reload();

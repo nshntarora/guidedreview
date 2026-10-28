@@ -105,7 +105,6 @@ function resetStore(): void {
     streamGeneration: 0,
     sessionKey: null,
     diffViewMode: DEFAULT_DIFF_VIEW_MODE,
-    planSource: null,
     uiMode: "navigate",
     selectableLines: [],
     lineSelection: null,
@@ -124,7 +123,6 @@ function seedReadyReview(unitIndex = 1): void {
     prContext: prContextFixture(),
     selection: unitIndex === 0 ? { kind: "summary" } : { kind: "unit", id: "u1" },
     navigationMode: "units",
-    planSource: "ai",
     planComplete: true,
   });
 }
@@ -170,17 +168,16 @@ function localDiffFixture(overrides: Partial<LocalDiffControls> = {}): LocalDiff
       },
     ],
     onSelectScope: vi.fn(),
-    onStructureReview: vi.fn(),
-    structuring: false,
-    structured: false,
     ...overrides,
   };
 }
 
-function renderLocalOverlay(overrides: Partial<LocalDiffControls> = {}): LocalDiffControls {
+function renderLocalOverlay(overrides: Partial<LocalDiffControls> = {}) {
+  const generatePlan = vi.fn();
   setActiveReviewHost(
     createMemoryReviewHost({
       kind: "local",
+      generatePlan,
       exportNotes: vi.fn(),
       submit: undefined,
     }),
@@ -198,7 +195,7 @@ function renderLocalOverlay(overrides: Partial<LocalDiffControls> = {}): LocalDi
   });
   const localDiff = localDiffFixture(overrides);
   render(<Overlay allowExit={false} localDiff={localDiff} />);
-  return localDiff;
+  return { ...localDiff, generatePlan };
 }
 
 describe("Overlay", () => {
@@ -368,6 +365,31 @@ describe("Overlay", () => {
     expect(screen.getByTestId("generate-prompt-modal")).toBeInTheDocument();
   });
 
+  it("keeps navigation and view shortcuts available around a restored unfinished composer", () => {
+    seedReadyReview(1);
+    render(<Overlay />);
+    fireEvent.keyDown(window, { key: "c" });
+    fireEvent.keyDown(window, { key: "Enter" });
+    fireEvent.change(screen.getByTestId("comment-composer-input"), {
+      target: { value: "Keep this unfinished thought" },
+    });
+    fireEvent.click(screen.getByTestId("review-summary"));
+    fireEvent.click(screen.getByTestId("review-unit-1"));
+    expect(screen.getByTestId("comment-composer-input")).toHaveValue(
+      "Keep this unfinished thought",
+    );
+    expect(screen.getByTestId("comment-composer-input")).not.toHaveFocus();
+
+    fireEvent.keyDown(window, { key: "ArrowDown" });
+    expect(Element.prototype.scrollBy).toHaveBeenCalled();
+    fireEvent.keyDown(window, { key: "v" });
+    fireEvent.keyDown(window, { key: "u" });
+    expect(useReviewStore.getState().diffViewMode).toBe("unified");
+    fireEvent.keyDown(window, { key: "Enter", ctrlKey: true });
+    expect(useReviewStore.getState().draftComments[0].body).toBe("Keep this unfinished thought");
+    expect(useReviewStore.getState().pendingComposers).toEqual({});
+  });
+
   it("opens settings from the local header and hides the control on GitHub", () => {
     const connectProvider = vi.fn();
     setActiveReviewHost(
@@ -477,7 +499,7 @@ describe("Overlay", () => {
 
   describe("local review keyboard", () => {
     it("opens the scope picker on d and structures on ⌘/Ctrl+I", () => {
-      const { onStructureReview } = renderLocalOverlay();
+      const { generatePlan } = renderLocalOverlay();
 
       const picker = screen.getByRole("combobox", { name: /diff to review/i });
       expect(picker).toHaveAttribute("aria-expanded", "false");
@@ -485,14 +507,14 @@ describe("Overlay", () => {
       act(() => useReviewStore.setState({ planComplete: false }));
 
       fireEvent.keyDown(window, { key: "i", metaKey: true });
-      expect(onStructureReview).toHaveBeenCalledTimes(1);
+      expect(generatePlan).toHaveBeenCalledTimes(1);
       expect(useReviewStore.getState().navigationMode).toBe("units");
       fireEvent.keyDown(window, { key: "i", ctrlKey: true });
-      expect(onStructureReview).toHaveBeenCalledTimes(2);
+      expect(generatePlan).toHaveBeenCalledTimes(2);
 
       act(() => useReviewStore.setState({ status: "streaming" }));
       fireEvent.keyDown(window, { key: "i", ctrlKey: true });
-      expect(onStructureReview).toHaveBeenCalledTimes(2);
+      expect(generatePlan).toHaveBeenCalledTimes(2);
 
       fireEvent.keyDown(window, { key: "d" });
       expect(picker).toHaveAttribute("aria-expanded", "true");
@@ -534,11 +556,11 @@ describe("Overlay", () => {
     });
 
     it("does not structure after the review is already structured", () => {
-      const { onStructureReview } = renderLocalOverlay({ structured: true });
+      const { generatePlan } = renderLocalOverlay();
 
       expect(screen.queryByTestId("structure-review")).not.toBeInTheDocument();
       fireEvent.keyDown(window, { key: "i", metaKey: true });
-      expect(onStructureReview).not.toHaveBeenCalled();
+      expect(generatePlan).not.toHaveBeenCalled();
     });
 
     it("does not bind local shortcuts on a GitHub review", () => {
@@ -566,7 +588,6 @@ describe("Overlay", () => {
       seedReadyReview();
       useReviewStore.setState({
         plan: null,
-        planSource: "files",
         planComplete: false,
         navigationMode: "files",
         selection: { kind: "file", path: "src/foo.ts" },
@@ -645,7 +666,6 @@ describe("Overlay", () => {
       prContext: prContextFixture(),
       selection: { kind: "unit", id: "u1" },
       navigationMode: "units",
-      planSource: "ai",
     });
     render(<Overlay />);
 
@@ -710,7 +730,6 @@ describe("Overlay", () => {
       prContext: prContextFixture(),
       selection: { kind: "unit", id: "u1" },
       navigationMode: "units",
-      planSource: "ai",
       planComplete: true,
     });
     render(<Overlay />);
@@ -742,7 +761,6 @@ describe("Overlay", () => {
       prContext: prContextFixture(),
       selection: { kind: "unit", id: "u1" },
       navigationMode: "units",
-      planSource: "ai",
     });
     render(<Overlay />);
     expect(screen.getByTestId("review-summary")).toHaveTextContent("PR Details");
@@ -1516,8 +1534,8 @@ describe("Overlay", () => {
       fireEvent.keyDown(window, { key: "Enter" });
       expect(useReviewStore.getState().composerOpen).toBe(true);
 
-      fireEvent.keyDown(window, { key: "v" });
-      fireEvent.keyDown(window, { key: "u" });
+      fireEvent.keyDown(screen.getByTestId("comment-composer-input"), { key: "v" });
+      fireEvent.keyDown(screen.getByTestId("comment-composer-input"), { key: "u" });
 
       expect(useReviewStore.getState().diffViewMode).toBe("split");
     });
@@ -1564,7 +1582,11 @@ describe("Overlay", () => {
   });
 
   describe("keyboard isolation from the host page", () => {
-    function dispatchKeyOnWindow(key: string, init: KeyboardEventInit = {}) {
+    function dispatchKeyOnWindow(
+      key: string,
+      init: KeyboardEventInit = {},
+      target: EventTarget = window,
+    ) {
       const event = new KeyboardEvent("keydown", {
         key,
         bubbles: true,
@@ -1573,7 +1595,7 @@ describe("Overlay", () => {
       });
       const stopSpy = vi.spyOn(event, "stopPropagation");
       const preventSpy = vi.spyOn(event, "preventDefault");
-      window.dispatchEvent(event);
+      target.dispatchEvent(event);
       return { event, stopSpy, preventSpy };
     }
 
@@ -1597,7 +1619,11 @@ describe("Overlay", () => {
       expect(useReviewStore.getState().composerOpen).toBe(true);
 
       for (const key of ["s", "t", "c", "a", "i"]) {
-        const { stopSpy, preventSpy } = dispatchKeyOnWindow(key);
+        const { stopSpy, preventSpy } = dispatchKeyOnWindow(
+          key,
+          { composed: true },
+          screen.getByTestId("comment-composer-input"),
+        );
         expect(stopSpy).toHaveBeenCalled();
         // Character keys must not be cancelled so the textarea can receive them.
         expect(preventSpy).not.toHaveBeenCalled();

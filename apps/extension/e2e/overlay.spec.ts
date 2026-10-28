@@ -214,7 +214,14 @@ test.describe("Guided review overlay", () => {
     await expect(page.getByTestId("comment-composer-input")).toHaveValue(
       "Keep this unfinished thought",
     );
-    await page.getByTestId("comment-composer-save").click();
+    await page.getByTestId("navigation-tab-units").click();
+    await page.getByTestId("navigation-tab-files").click();
+    await expect.poll(() => code.evaluate((element) => element.scrollTop)).toBe(420);
+    await code.focus();
+    await page.keyboard.press("v");
+    await page.keyboard.press("u");
+    await expect(page.getByTestId("diff-view-unified")).toBeVisible();
+    await page.keyboard.press("Control+Enter");
     await expect(page.getByTestId("draft-comment")).toHaveCount(1);
     await page.getByTestId("navigation-tab-units").click();
     await expect(page.getByTestId("draft-comment")).toHaveCount(1);
