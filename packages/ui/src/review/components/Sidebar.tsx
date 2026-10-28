@@ -1,13 +1,16 @@
+import { GENERATE_REVIEW_UNITS, RETRY_REVIEW_UNITS } from "@guided-review/ui/review/overlayCopy";
 import { memo, useEffect, useId, useMemo, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { Button, cn } from "@guided-review/ui";
 import { useReviewStore } from "@guided-review/ui/review/store";
+import { useReviewHost } from "@guided-review/ui/review/host";
 import { buildFileTree } from "@guided-review/ui/review/fileNavigation";
 import { TestsUnitIcon } from "./TestsUnitIcon";
 import { ReviewUnitsEmptyState } from "./ReviewUnitsEmptyState";
 import { FileNavigation } from "./FileNavigation";
 import { ShortcutKeys } from "./ShortcutKeys";
 import { TokenStream } from "./TokenStream";
+import { SkeletonBar } from "./SkeletonBar";
 
 interface SidebarProps {
   onGenerate?: () => void;
@@ -38,11 +41,13 @@ export const Sidebar = memo(function Sidebar({ onGenerate, onSelect }: SidebarPr
       selectContent: s.selectContent,
     })),
   );
+  const host = useReviewHost();
   const units = plan?.units ?? [];
   const tree = useMemo(() => buildFileTree(diff), [diff]);
   const id = useId();
   const navRef = useRef<HTMLElement>(null);
   const stillBuilding = status === "streaming" || (status === "loading" && !!diff);
+  const loadingDiff = status === "loading" && !diff;
   const hasFiles = !!diff?.files.length;
   const selectionId =
     selection.kind === "file"
@@ -118,9 +123,21 @@ export const Sidebar = memo(function Sidebar({ onGenerate, onSelect }: SidebarPr
         role="tabpanel"
         id={`${id}-${navigationMode}-panel`}
         aria-labelledby={`${id}-${navigationMode}`}
+        aria-busy={loadingDiff}
         data-testid={navigationMode === "files" ? "review-files" : "review-units"}
       >
-        {navigationMode === "files" ? (
+        {loadingDiff ? (
+          <div aria-label="Loading changed files" data-testid="sidebar-loading">
+            <div aria-hidden="true" className="space-y-5 p-2">
+              {["w-4/5", "w-full", "w-2/3", "w-5/6", "w-3/4", "w-1/2"].map((width) => (
+                <div key={width} className="flex items-center gap-2">
+                  <SkeletonBar className="h-4 w-4 shrink-0" />
+                  <SkeletonBar className={width} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : navigationMode === "files" ? (
           <>
             {!diff ? (
               <p className="p-2 text-muted">
@@ -134,6 +151,25 @@ export const Sidebar = memo(function Sidebar({ onGenerate, onSelect }: SidebarPr
           </>
         ) : (
           <>
+            {host.kind === "github" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-current={selection.kind === "summary" ? "true" : undefined}
+                className={cn(
+                  "mb-1.5 min-h-10 w-full justify-start! px-2! py-2! text-left text-sm!",
+                  selection.kind === "summary" &&
+                    "border-primary/30! bg-primary-muted! text-primary!",
+                )}
+                data-testid="review-summary"
+                onClick={() => {
+                  selectContent({ kind: "summary" });
+                  onSelect?.();
+                }}
+              >
+                PR Description
+              </Button>
+            )}
             {units.map((unit, index) => {
               const active = selection.kind === "unit" && selection.id === unit.id;
               return (
@@ -195,12 +231,12 @@ export const Sidebar = memo(function Sidebar({ onGenerate, onSelect }: SidebarPr
                     className="w-full"
                     data-testid="generate-review-plan"
                     aria-keyshortcuts="Meta+i Control+i"
-                    title="Generate review plan (⌘/Ctrl+I)"
+                    title={`${status === "error" || units.length ? RETRY_REVIEW_UNITS : GENERATE_REVIEW_UNITS} (⌘/Ctrl+I)`}
                     onClick={onGenerate}
                   >
                     {status === "error" || units.length
-                      ? "Retry review plan"
-                      : "Generate review plan"}
+                      ? RETRY_REVIEW_UNITS
+                      : GENERATE_REVIEW_UNITS}
                     <ShortcutKeys keys={["mod", "I"]} join="chord" />
                   </Button>
                 )}

@@ -36,9 +36,8 @@ test("sample review switches between the CLI and extension flows", async ({ page
   await page.getByTestId("preview-mode-chrome").click();
   await expect(page.getByTestId("preview-mode-chrome")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("submit-review-button")).toContainText("Submit Review");
-  await expect(page.getByTestId("review-summary")).toHaveAttribute("aria-current", "true");
-
   await page.getByTestId("navigation-tab-units").click();
+  await expect(page.getByTestId("review-summary")).toHaveAttribute("aria-current", "true");
   await page.getByTestId("generate-review-plan").click();
   await expect(units.getByTestId(/review-unit-/)).toHaveCount(5);
   await overlay.focus();

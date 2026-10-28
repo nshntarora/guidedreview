@@ -1,3 +1,4 @@
+import { GENERATE_REVIEW_UNITS, RETRY_REVIEW_UNITS } from "@guided-review/ui/review/overlayCopy";
 import { Button, buttonClassName } from "@guided-review/ui";
 import { useReviewHost } from "@guided-review/ui/review/host";
 import { ShortcutKeys } from "./ShortcutKeys";
@@ -136,9 +137,9 @@ export function ReviewUnitsEmptyState({
               onClick={onGenerate}
               data-testid="generate-review-plan"
               aria-keyshortcuts="Meta+i Control+i"
-              title="Generate review plan (⌘/Ctrl+I)"
+              title={`${retry ? RETRY_REVIEW_UNITS : GENERATE_REVIEW_UNITS} (⌘/Ctrl+I)`}
             >
-              {retry ? "Retry review plan" : "Generate review plan"}
+              {retry ? RETRY_REVIEW_UNITS : GENERATE_REVIEW_UNITS}
               <ShortcutKeys keys={["mod", "I"]} join="chord" />
             </Button>
           ) : null}

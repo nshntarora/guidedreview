@@ -1,15 +1,14 @@
-import { useMemo } from "react";
 import { cn } from "@guided-review/ui";
 import {
   CodeContent,
   DIFF_LINE_WRAP,
-  highlightHunkLines,
   LineExtras,
   lineNumberClasses,
   selectionClasses,
   type HunkViewProps,
 } from "./hunkShared";
 import { lineIdFor, sideForLine } from "@guided-review/ui/review/commentTypes";
+import { useDeferredHighlight } from "./useDeferredHighlight";
 
 export function UnifiedHunk({
   hunk,
@@ -21,12 +20,13 @@ export function UnifiedHunk({
   composerRange,
   unitId,
 }: HunkViewProps) {
-  const highlighted = useMemo(() => highlightHunkLines(hunk, language), [hunk, language]);
+  const highlighted = useDeferredHighlight(hunk, language);
 
   return (
     <div
       className="overflow-x-hidden font-mono text-sm leading-relaxed"
       data-testid="diff-view-unified"
+      data-highlight-state={!language ? "plain" : highlighted ? "ready" : "pending"}
     >
       {hunk.lines.map((line, i) => {
         const side = sideForLine(line.type);
@@ -71,7 +71,7 @@ export function UnifiedHunk({
                 {line.type === "add" ? "+" : line.type === "del" ? "-" : ""}
               </span>
               <span className="min-w-0 flex-1">
-                <CodeContent content={line.content} highlighted={highlighted[i] ?? null} />
+                <CodeContent content={line.content} highlighted={highlighted?.[i] ?? null} />
               </span>
             </div>
             <LineExtras

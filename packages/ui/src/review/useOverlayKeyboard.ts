@@ -235,7 +235,59 @@ export function useOverlayKeyboard({
   useEffect(() => {
     if (!isOpen || suspended) return;
 
-    const SCROLL_STEP = 120;
+    const SCROLL_STEP = 240;
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    let scrollFrame: number | null = null;
+    let scrollTarget = 0;
+    let scrollDirection = 0;
+    let lastScrollTime = 0;
+
+    function stopScrolling(): void {
+      if (scrollFrame !== null) cancelAnimationFrame(scrollFrame);
+      scrollFrame = null;
+    }
+
+    function scrollDiff(direction: number): void {
+      const column = codeColRef.current;
+      if (!column) return;
+      if (reducedMotion?.matches) {
+        stopScrolling();
+        column.scrollBy({ top: direction * SCROLL_STEP, behavior: "instant" });
+        return;
+      }
+
+      // Accumulate repeats without restarting an animation. Reversing direction
+      // starts from the visible position so it responds immediately.
+      if (scrollFrame === null || direction !== scrollDirection) scrollTarget = column.scrollTop;
+      scrollDirection = direction;
+      scrollTarget = Math.max(
+        0,
+        Math.min(column.scrollHeight - column.clientHeight, scrollTarget + direction * SCROLL_STEP),
+      );
+      if (scrollFrame !== null) return;
+      lastScrollTime = performance.now();
+
+      function animateScroll(now: number): void {
+        if (!column) return;
+        const remaining = scrollTarget - column.scrollTop;
+        // Time-based easing keeps the same feel on different refresh rates.
+        const fraction = 1 - Math.exp(-(now - lastScrollTime) / 65);
+        lastScrollTime = now;
+        column.scrollBy({
+          top:
+            Math.sign(remaining) *
+            Math.min(Math.abs(remaining), Math.max(1, Math.abs(remaining) * fraction)),
+          behavior: "instant",
+        });
+        if (Math.abs(scrollTarget - column.scrollTop) < 1) {
+          scrollFrame = null;
+          return;
+        }
+        scrollFrame = requestAnimationFrame(animateScroll);
+      }
+
+      scrollFrame = requestAnimationFrame(animateScroll);
+    }
 
     /** Disarm a pending `v` leader so it cannot complete a chord later. */
     function clearViewChord(): void {
@@ -437,18 +489,12 @@ export function useOverlayKeyboard({
         case "ArrowUp":
           event.preventDefault();
           event.stopPropagation();
-          codeColRef.current?.scrollBy({
-            top: -SCROLL_STEP,
-            behavior: "smooth",
-          });
+          scrollDiff(-1);
           return;
         case "ArrowDown":
           event.preventDefault();
           event.stopPropagation();
-          codeColRef.current?.scrollBy({
-            top: SCROLL_STEP,
-            behavior: "smooth",
-          });
+          scrollDiff(1);
           return;
         case "c":
         case "C":
@@ -513,6 +559,7 @@ export function useOverlayKeyboard({
     }
 
     function onKeyDown(event: KeyboardEvent): void {
+      if (event.key !== "ArrowUp" && event.key !== "ArrowDown") stopScrolling();
       // An open custom select owns its keys. A closed select keeps focus after
       // a choice, but it does not use ←/→; let those resume review navigation.
       // We still leave its other keys alone for native-like typeahead and
@@ -710,7 +757,16 @@ export function useOverlayKeyboard({
     }
 
     window.addEventListener("keydown", onKeyDown, true);
-    return () => window.removeEventListener("keydown", onKeyDown, true);
+    window.addEventListener("wheel", stopScrolling, { capture: true, passive: true });
+    window.addEventListener("pointerdown", stopScrolling, true);
+    window.addEventListener("blur", stopScrolling);
+    return () => {
+      stopScrolling();
+      window.removeEventListener("keydown", onKeyDown, true);
+      window.removeEventListener("wheel", stopScrolling, true);
+      window.removeEventListener("pointerdown", stopScrolling, true);
+      window.removeEventListener("blur", stopScrolling);
+    };
   }, [
     isOpen,
     suspended,

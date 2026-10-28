@@ -4,13 +4,13 @@ import { buildSplitRows, type SplitCell } from "@guided-review/ui/review/buildSp
 import {
   CodeContent,
   DIFF_LINE_WRAP,
-  highlightHunkLines,
   LineExtras,
   lineNumberClasses,
   selectionClasses,
   type HunkViewProps,
 } from "./hunkShared";
 import { lineIdFor } from "@guided-review/ui/review/commentTypes";
+import { useDeferredHighlight } from "./useDeferredHighlight";
 
 function SplitCellView({
   cell,
@@ -88,13 +88,14 @@ export function SplitHunk({
   composerRange,
   unitId,
 }: HunkViewProps) {
-  const highlighted = useMemo(() => highlightHunkLines(hunk, language), [hunk, language]);
+  const highlighted = useDeferredHighlight(hunk, language);
   const rows = useMemo(() => buildSplitRows(hunk.lines), [hunk.lines]);
 
   return (
     <div
       className="overflow-x-hidden font-mono text-sm leading-relaxed"
       data-testid="diff-view-split"
+      data-highlight-state={!language ? "plain" : highlighted ? "ready" : "pending"}
     >
       {rows.map((row, i) => {
         const leftId =
@@ -117,7 +118,7 @@ export function SplitHunk({
               <SplitCellView
                 cell={row.left}
                 highlighted={
-                  row.left.kind === "content" ? (highlighted[row.left.sourceIndex] ?? null) : null
+                  row.left.kind === "content" ? (highlighted?.[row.left.sourceIndex] ?? null) : null
                 }
                 side="left"
                 lineId={leftId}
@@ -128,7 +129,9 @@ export function SplitHunk({
               <SplitCellView
                 cell={row.right}
                 highlighted={
-                  row.right.kind === "content" ? (highlighted[row.right.sourceIndex] ?? null) : null
+                  row.right.kind === "content"
+                    ? (highlighted?.[row.right.sourceIndex] ?? null)
+                    : null
                 }
                 side="right"
                 lineId={rightId}

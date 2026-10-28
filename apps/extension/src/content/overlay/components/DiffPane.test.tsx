@@ -111,15 +111,11 @@ describe("DiffPane", () => {
     expect(screen.getByTestId("diff-unit-title")).toHaveTextContent("Wire up the new auth path");
     expect(screen.getByTestId("diff-view-toggle")).toBeInTheDocument();
     expect(screen.getByTestId("enter-comment-mode")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Split" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: "Unified" })).toHaveAttribute(
-      "aria-pressed",
-      "false",
-    );
-    expect(screen.getByTestId("diff-view-split")).toBeInTheDocument();
-    expect(screen.queryByTestId("diff-view-unified")).not.toBeInTheDocument();
-    // Syntax highlighting splits tokens across child spans. Context lines
-    // appear on both sides of split view, so the same content may match twice.
+    expect(screen.getByRole("button", { name: "Unified" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Split" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByTestId("diff-view-unified")).toBeInTheDocument();
+    expect(screen.queryByTestId("diff-view-split")).not.toBeInTheDocument();
+    // Syntax highlighting splits tokens across child spans.
     expect(
       screen.getAllByText((_, el) => el?.textContent === "const a = 1;").length,
     ).toBeGreaterThan(0);
@@ -187,6 +183,7 @@ describe("DiffPane", () => {
   });
 
   it("switches to unified view when Unified is pressed", async () => {
+    useReviewStore.setState({ diffViewMode: "split" });
     renderPane();
 
     await act(async () => {
@@ -309,6 +306,7 @@ describe("DiffPane", () => {
   });
 
   it("persists the view mode to chrome.storage.local", async () => {
+    useReviewStore.setState({ diffViewMode: "split" });
     renderPane();
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Unified" }));

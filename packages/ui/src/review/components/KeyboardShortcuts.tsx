@@ -25,7 +25,7 @@ const SHORTCUTS: readonly ShortcutRow[] = [
   { keys: ["mod", "K"], join: "chord", description: "Open Actions" },
   { keys: ["1"], description: "Browse Files" },
   { keys: ["2"], description: "Browse Review Units" },
-  { keys: ["mod", "I"], join: "chord", description: "Generate / Retry Review Plan" },
+  { keys: ["mod", "I"], join: "chord", description: "Generate / Retry review units" },
   { keys: ["←", "→"], join: "none", description: "Previous / Next Step" },
   { keys: ["↑", "↓"], join: "none", description: "Scroll the Code Pane" },
   { keys: ["v", "u"], join: "sequence", description: "Unified View" },

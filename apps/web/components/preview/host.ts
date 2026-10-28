@@ -1,3 +1,4 @@
+import { DEFAULT_DIFF_VIEW_MODE } from "@guided-review/ui/review/diffView";
 import { useReviewStore } from "@guided-review/ui/review/store";
 import type { ReviewHost } from "@guided-review/ui/review";
 import { sampleContext, sampleDiff, sampleLocalContext, samplePlan } from "./sample";
@@ -15,8 +16,7 @@ export function createPreviewHost(
     assetUrl: () => "/assets/logomark.svg",
     persistSession: async () => {},
     restoreSession: async () => null,
-    readDiffViewMode: async () =>
-      window.matchMedia("(min-width: 768px)").matches ? "split" : "unified",
+    readDiffViewMode: async () => DEFAULT_DIFF_VIEW_MODE,
     generatePlan: () => {
       const state = useReviewStore.getState();
       const generation = state.beginRetry();
