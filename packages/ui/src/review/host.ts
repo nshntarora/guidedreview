@@ -17,6 +17,7 @@ import type {
   ReviewErrorInfo,
   ReviewPlan,
   ReviewUnit,
+  ReviewTokenUsage,
   SubmitReviewResponse,
 } from "@guided-review/ui/review/types";
 import type { ReviewCommentInput, ReviewEvent } from "@guided-review/ui/review/types";
@@ -28,6 +29,7 @@ export interface StreamPlanHandlers {
   onDone: (plan: ReviewPlan) => void;
   onError: (error: ReviewErrorInfo) => void;
   onStatus?: (phase: "waiting_for_tokens" | "tokens_streaming") => void;
+  onUsage?: (usage: ReviewTokenUsage) => void;
 }
 
 export interface ReviewSubmitAuth {

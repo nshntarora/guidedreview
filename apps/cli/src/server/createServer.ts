@@ -42,6 +42,8 @@ import type { Logger } from "winston";
 
 function describePlanEvent(event: AnnotateReviewStreamEvent): string | null {
   switch (event.type) {
+    case "USAGE":
+      return null;
     case "STATUS":
       return event.phase;
     case "UNIT":

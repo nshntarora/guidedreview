@@ -115,6 +115,7 @@ export function App() {
       .getState()
       .setProviderLabel(agentLabel ?? getProvider(providerIdRef.current).displayName);
     const { cancel } = host.streamPlan(diff, prContext, {
+      onUsage: (usage) => useReviewStore.getState().setTokenUsage(usage, generation),
       onStatus: (phase) => useReviewStore.getState().setBuildPhase(phase, generation),
       onUnit: (unit) => useReviewStore.getState().appendUnit(unit, generation),
       onDone: (plan) => {

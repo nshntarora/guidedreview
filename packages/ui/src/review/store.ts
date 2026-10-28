@@ -4,6 +4,7 @@ import type {
   ReviewErrorInfo,
   ReviewPlan,
   ReviewUnit,
+  ReviewTokenUsage,
 } from "@guided-review/ui/review/types";
 import type { ReviewContext } from "@guided-review/core";
 import { NO_API_KEY_ERROR_CODE } from "@guided-review/ui/review/types";
@@ -94,6 +95,7 @@ interface PendingComposer {
 }
 
 interface PersistedSession {
+  tokenUsage?: ReviewTokenUsage | null;
   diff: ParsedDiff;
   plan?: ReviewPlan | null;
   planSource?: PlanSource | null;
@@ -136,6 +138,8 @@ const COMMENT_UI_RESET = {
 };
 
 interface ReviewState {
+  tokenUsage: ReviewTokenUsage | null;
+  setTokenUsage: (usage: ReviewTokenUsage, generation: number) => void;
   isOpen: boolean;
   status: ReviewStatus;
   error: ReviewErrorInfo | null;
@@ -254,6 +258,11 @@ function newDraftId(): string {
 }
 
 export const useReviewStore = create<ReviewState>((set, get) => ({
+  tokenUsage: null,
+  setTokenUsage: (usage, generation) => {
+    if (get().streamGeneration !== generation) return;
+    set({ tokenUsage: usage });
+  },
   isOpen: false,
   status: "idle",
   error: null,
@@ -288,6 +297,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   startLoading: (sessionKey) => {
     const streamGeneration = get().streamGeneration + 1;
     set({
+      tokenUsage: null,
       status: "loading",
       error: null,
       needsProvider: false,
@@ -309,6 +319,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   bootReady: ({ sessionKey, diff, plan }) => {
     const streamGeneration = get().streamGeneration + 1;
     set({
+      tokenUsage: null,
       status: "ready",
       error: null,
       buildPhase: null,
@@ -361,6 +372,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   beginStreaming: (generation) => {
     if (get().streamGeneration !== generation) return;
     set({
+      tokenUsage: null,
       status: "streaming",
       planSource: "ai",
       planComplete: false,
@@ -373,6 +385,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
     const nextGeneration = get().streamGeneration + 1;
     const hasDiff = get().diff !== null;
     set({
+      tokenUsage: null,
       streamGeneration: nextGeneration,
       status: hasDiff ? "streaming" : "loading",
       error: null,
@@ -810,6 +823,7 @@ export async function persistSession(): Promise<void> {
   const host = getActiveReviewHost();
   if (!host) return;
   const payload: PersistedSession = {
+    tokenUsage: state.tokenUsage,
     diff: state.diff,
     plan: state.planSource === "ai" ? state.plan : null,
     planSource: state.planSource,
@@ -867,6 +881,7 @@ export async function restoreSession(sessionKey: string): Promise<boolean> {
   selection = valid(selection) ?? { kind: "summary" };
   useReviewStore.setState({
     ...NAVIGATION_RESET,
+    tokenUsage: saved.tokenUsage ?? null,
     status: "ready",
     planSource: source,
     planComplete: saved.planComplete ?? source === "ai",

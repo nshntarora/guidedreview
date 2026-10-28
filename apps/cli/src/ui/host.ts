@@ -39,6 +39,9 @@ export function createLocalReviewHost(options: {
           return;
         }
         switch (message.type) {
+          case "USAGE":
+            handlers.onUsage?.(message.usage);
+            return;
           case "STATUS":
             handlers.onStatus?.(message.phase);
             return;

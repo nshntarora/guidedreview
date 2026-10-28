@@ -68,6 +68,7 @@ describe("createOpenAICompatibleProvider", () => {
         streamOf(
           'data: {"choices":[{"delta":{"content":"{\\"units\\""}}]}\n',
           'data: {"choices":[{"delta":{"content":":[]}"}}]}\n',
+          'data: {"choices":[],"usage":{"prompt_tokens":120,"completion_tokens":8}}\n',
           "data: [DONE]\n",
         ),
       ),
@@ -81,6 +82,7 @@ describe("createOpenAICompatibleProvider", () => {
       expect.objectContaining({
         model: "gpt-4o",
         stream: true,
+        stream_options: { include_usage: true },
         response_format: expect.objectContaining({ type: "json_schema" }),
       }),
       "OpenAI",
@@ -89,6 +91,7 @@ describe("createOpenAICompatibleProvider", () => {
     expect(events).toEqual([
       { type: "text_delta", text: '{"units"' },
       { type: "text_delta", text: ":[]}" },
+      { type: "usage", inputTokens: 120, outputTokens: 8 },
       { type: "done" },
     ]);
   });
@@ -106,7 +109,7 @@ describe("createOpenAICompatibleProvider", () => {
 
     const events = await collect(provider.annotateReviewStream(input));
     expect(events).toEqual([
-      { type: "heartbeat" },
+      { type: "heartbeat", text: "thinking" },
       { type: "text_delta", text: "{}" },
       { type: "done" },
     ]);

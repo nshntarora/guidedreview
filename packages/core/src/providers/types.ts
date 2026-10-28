@@ -9,7 +9,9 @@ export interface AnnotateReviewInput {
 export type AnnotateStreamEvent =
   | { type: "text_delta"; text: string }
   /** Provider is alive (e.g. reasoning tokens) but has not emitted plan JSON yet. */
-  | { type: "heartbeat" }
+  | { type: "heartbeat"; text?: string }
+  /** Cumulative provider-reported usage for this request. */
+  | { type: "usage"; inputTokens?: number; outputTokens?: number }
   | { type: "done" };
 
 export interface ProviderClient {

@@ -64,9 +64,10 @@ describe("anthropicProvider", () => {
     postMock.mockResolvedValue(
       okStreamResponse(
         streamOf(
+          'data: {"type":"message_start","message":{"usage":{"input_tokens":90,"cache_read_input_tokens":30,"output_tokens":1}}}\n',
           'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"{\\"units\\""}}\n',
           'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":":[]}"}}\n',
-          'data: {"type":"message_delta","delta":{"stop_reason":"end_turn"}}\n',
+          'data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":8}}\n',
         ),
       ),
     );
@@ -92,8 +93,10 @@ describe("anthropicProvider", () => {
       undefined,
     );
     expect(events).toEqual([
+      { type: "usage", inputTokens: 120, outputTokens: 1 },
       { type: "text_delta", text: '{"units"' },
       { type: "text_delta", text: ":[]}" },
+      { type: "usage", inputTokens: undefined, outputTokens: 8 },
       { type: "done" },
     ]);
   });

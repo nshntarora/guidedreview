@@ -6,8 +6,10 @@ import type {
   ReviewErrorInfo,
   ReviewPlan,
   ReviewUnit,
+  ReviewTokenUsage,
 } from "../types";
-import { chunkDiffByFile } from "./buildPrompt";
+import { buildUserPrompt, chunkDiffByFile, SYSTEM_PROMPT } from "./buildPrompt";
+import { REVIEW_PLAN_JSON_SCHEMA } from "./reviewSchema";
 import { parseReviewUnit, prefixChunkUnitId, stripDuplicateHunks } from "./reviewPlan";
 import { StreamPlanParser } from "./streamPlanParser";
 import { getProviderClient } from "../providers";
@@ -40,6 +42,7 @@ export async function* annotateReview(
     const allUnits: ReviewUnit[] = [];
     const seenHunkIds = new Set<string>();
     const streamStatus = { postedWaiting: true, postedStreaming: false };
+    const chunkUsage: ReviewTokenUsage[] = [];
 
     for (const [chunkIndex, chunk] of chunks.entries()) {
       if (signal?.aborted) return;
@@ -50,6 +53,19 @@ export async function* annotateReview(
         signal,
       })) {
         if (signal?.aborted) return;
+        if (event.type === "usage") {
+          chunkUsage[chunkIndex] = event.usage;
+          yield {
+            type: "USAGE",
+            usage: {
+              inputTokens: chunkUsage.reduce((sum, usage) => sum + usage.inputTokens, 0),
+              outputTokens: chunkUsage.reduce((sum, usage) => sum + usage.outputTokens, 0),
+              inputEstimated: chunkUsage.some((usage) => usage.inputEstimated),
+              outputEstimated: chunkUsage.some((usage) => usage.outputEstimated),
+            },
+          };
+          continue;
+        }
         if (event.type === "token") {
           if (!streamStatus.postedStreaming) {
             streamStatus.postedStreaming = true;
@@ -76,7 +92,10 @@ export async function* annotateReview(
  * Stream one diff chunk through the provider and yield the review units that
  * survive validation, already deduplicated and namespaced by chunk.
  */
-type ChunkEvent = { type: "token" } | { type: "unit"; unit: ReviewUnit };
+type ChunkEvent =
+  | { type: "token" }
+  | { type: "unit"; unit: ReviewUnit }
+  | { type: "usage"; usage: ReviewTokenUsage };
 
 async function* streamChunkUnits(
   client: ProviderClient,
@@ -96,12 +115,48 @@ async function* streamChunkUnits(
   const parser = new StreamPlanParser();
   const knownFiles = new Map(chunk.files.map((file) => [file.path, file]));
   let sawToken = false;
+  // A character-based estimate keeps progress visible until provider usage arrives.
+  // Include the schema because structured-output instructions also consume input.
+  let usage: ReviewTokenUsage = {
+    inputTokens: Math.ceil(
+      (SYSTEM_PROMPT.length +
+        buildUserPrompt(chunk, context).length +
+        JSON.stringify(REVIEW_PLAN_JSON_SCHEMA).length) /
+        4,
+    ),
+    outputTokens: 0,
+    inputEstimated: true,
+    outputEstimated: true,
+  };
+  let outputCharacters = 0;
+  yield { type: "usage", usage };
 
   for await (const event of client.annotateReviewStream(
     { diff: chunk, context, settings },
     { signal },
   )) {
     if (signal?.aborted) return;
+
+    if (event.type === "usage") {
+      usage = {
+        inputTokens: event.inputTokens ?? usage.inputTokens,
+        outputTokens: event.outputTokens ?? usage.outputTokens,
+        inputEstimated: event.inputTokens === undefined ? usage.inputEstimated : false,
+        outputEstimated: event.outputTokens === undefined ? usage.outputEstimated : false,
+      };
+      yield { type: "usage", usage };
+      continue;
+    }
+
+    if (event.type === "text_delta" || (event.type === "heartbeat" && event.text)) {
+      outputCharacters += event.text?.length ?? 0;
+      usage = {
+        ...usage,
+        outputTokens: Math.max(usage.outputTokens, Math.ceil(outputCharacters / 4)),
+        outputEstimated: true,
+      };
+      yield { type: "usage", usage };
+    }
 
     if (event.type === "heartbeat") {
       if (!sawToken) {

@@ -241,6 +241,7 @@ function startAnnotationStream(
   useReviewStore.getState().setBuildPhase("sent_to_provider", streamGeneration);
 
   const { cancel } = reviewHost.streamPlan(diff, prContext, {
+    onUsage: (usage) => useReviewStore.getState().setTokenUsage(usage, streamGeneration),
     onStatus: (phase) => useReviewStore.getState().setBuildPhase(phase, streamGeneration),
     onUnit: (unit) => useReviewStore.getState().appendUnit(unit, streamGeneration),
     onDone: (plan) => {

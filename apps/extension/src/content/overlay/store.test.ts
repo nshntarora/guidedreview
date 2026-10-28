@@ -261,6 +261,31 @@ describe("review workspace state", () => {
     expect(buildSessionKey({ owner: "acme", repo: "widgets", number: 1 })).toBe(SESSION_KEY);
   });
 
+  it("keeps token usage with the saved review and rejects updates from an earlier generation", async () => {
+    const state = useReviewStore.getState();
+    const diff = populatedDiff();
+    state.bootReady({ sessionKey: SESSION_KEY, diff, plan: buildFileReviewPlan(diff) });
+    const generation = state.beginRetry();
+    const usage = {
+      inputTokens: 1200,
+      outputTokens: 300,
+      inputEstimated: false,
+      outputEstimated: false,
+    };
+    state.setTokenUsage(usage, generation);
+    state.setReady(diff, scopedPlan(), generation);
+    await persistSession();
+    resetStore();
+    expect(await restoreSession(SESSION_KEY)).toBe(true);
+    expect(useReviewStore.getState().tokenUsage).toEqual(usage);
+    const retry = state.beginRetry();
+    state.setTokenUsage(usage, retry - 1);
+    expect(useReviewStore.getState().tokenUsage).toBeNull();
+    state.setTokenUsage(usage, retry);
+    state.bootReady({ sessionKey: "other-scope", diff, plan: buildFileReviewPlan(diff) });
+    expect(useReviewStore.getState().tokenUsage).toBeNull();
+  });
+
   it("does not restore an obsolete asynchronous session over a new scope", async () => {
     let resolve!: (value: unknown) => void;
     setActiveReviewHost(
