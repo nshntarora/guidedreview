@@ -315,7 +315,10 @@ export function DiffSearch({
   const activeOptionId = results.length > 0 ? `${listboxId}-option-${activeIndex}` : undefined;
 
   return (
-    <div className="absolute inset-0 z-[60]" data-testid="diff-search-root">
+    <div
+      className="motion-safe:animate-gr-fade absolute inset-0 z-[60]"
+      data-testid="diff-search-root"
+    >
       {/* Dim + blur the review UI so the palette keeps focus. */}
       <div
         className="absolute inset-0 bg-background/70 backdrop-blur-[2px]"
@@ -328,7 +331,7 @@ export function DiffSearch({
       />
       <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center px-6 pt-12">
         <div
-          className="pointer-events-auto relative w-full max-w-3xl overflow-hidden rounded-xl border border-border-strong bg-background shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
+          className="motion-safe:animate-gr-enter pointer-events-auto relative w-full max-w-3xl overflow-hidden rounded-xl border border-border-strong bg-background shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
           data-testid="diff-search"
           role="presentation"
         >

@@ -92,7 +92,8 @@ export function Sidebar({ onGenerate, onSelect }: SidebarProps) {
         </div>
       </div>
       <div
-        className="min-h-0 flex-1 overflow-y-auto p-3"
+        key={navigationMode}
+        className="motion-safe:animate-gr-fade min-h-0 flex-1 overflow-y-auto p-3"
         role="tabpanel"
         id={`${id}-${navigationMode}-panel`}
         aria-labelledby={`${id}-${navigationMode}`}
@@ -122,7 +123,7 @@ export function Sidebar({ onGenerate, onSelect }: SidebarProps) {
                   title={unit.title}
                   aria-current={active ? "true" : undefined}
                   className={cn(
-                    "mb-1.5 min-h-10 w-full items-start! justify-start! gap-2.5! px-2! py-2! text-left text-sm!",
+                    "motion-safe:animate-gr-enter mb-1.5 min-h-10 w-full items-start! justify-start! gap-2.5! px-2! py-2! text-left text-sm!",
                     active && "border-primary/30! bg-primary-muted! text-primary!",
                   )}
                   data-testid={`review-unit-${index + 1}`}
@@ -133,7 +134,7 @@ export function Sidebar({ onGenerate, onSelect }: SidebarProps) {
                 >
                   <span
                     className={cn(
-                      "flex size-5 shrink-0 items-center justify-center rounded border font-mono text-xs tabular-nums",
+                      "flex size-5 shrink-0 items-center justify-center rounded border transition-colors duration-150 font-mono text-xs tabular-nums",
                       active
                         ? "border-primary/30 bg-primary-muted text-primary"
                         : "border-border bg-surface-raised text-muted",

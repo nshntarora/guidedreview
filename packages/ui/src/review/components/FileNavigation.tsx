@@ -41,7 +41,7 @@ export function FileNavigation({
               stroke="currentColor"
               strokeWidth="1.5"
               className={cn(
-                "shrink-0 text-faint transition-transform",
+                "shrink-0 text-faint transition-transform duration-150 ease-gr-out",
                 !collapsed[child.path] && "rotate-90",
               )}
               aria-hidden="true"
@@ -51,11 +51,20 @@ export function FileNavigation({
             <FolderIcon open={!collapsed[child.path]} />
             <span className="truncate">{child.name}</span>
           </Button>
-          {!collapsed[child.path] && (
-            <div className="ml-2 border-l border-border/60 pl-1">
-              <FileNavigation directory={child} onSelect={onSelect} />
+          <div
+            className={cn(
+              "grid transition-[grid-template-rows,opacity] duration-150 ease-gr-out",
+              collapsed[child.path] ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100",
+            )}
+            inert={collapsed[child.path] || undefined}
+            aria-hidden={collapsed[child.path] || undefined}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <div className="ml-2 border-l border-border/60 pl-1">
+                <FileNavigation directory={child} onSelect={onSelect} />
+              </div>
             </div>
-          )}
+          </div>
         </li>
       ))}
       {directory.files.map((file) => {

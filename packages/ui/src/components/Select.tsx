@@ -270,7 +270,7 @@ export function Select<T extends string = string>({
         data-testid={testId}
         disabled={disabled}
         className={cn(
-          "flex w-full items-center gap-2 rounded-md border border-border bg-surface-raised px-2.5 py-2 text-left text-base text-foreground",
+          "transition-colors duration-150 ease-gr-out flex w-full items-center gap-2 rounded-md border border-border bg-surface-raised px-2.5 py-2 text-left text-base text-foreground",
           "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary",
           "disabled:cursor-not-allowed disabled:opacity-60",
         )}
@@ -294,7 +294,7 @@ export function Select<T extends string = string>({
         <svg
           aria-hidden
           className={cn(
-            "h-3.5 w-3.5 shrink-0 text-muted transition-transform",
+            "h-3.5 w-3.5 shrink-0 text-muted transition-transform duration-150 ease-gr-out",
             open && "rotate-180",
           )}
           viewBox="0 0 16 16"
@@ -318,7 +318,7 @@ export function Select<T extends string = string>({
           tabIndex={-1}
           aria-labelledby={ariaLabelledBy}
           className={cn(
-            "absolute z-50 mt-1 max-h-80 w-full overflow-auto rounded-md border border-border bg-background py-1 text-foreground shadow-md",
+            "motion-safe:animate-gr-enter absolute z-50 mt-1 max-h-80 w-full overflow-auto rounded-md border border-border bg-background py-1 text-foreground shadow-md",
             menuClassName,
           )}
           onKeyDown={onListKeyDown}
@@ -344,7 +344,7 @@ export function Select<T extends string = string>({
                   aria-disabled={opt.disabled || undefined}
                   data-testid={testId ? `${testId}-option-${opt.value}` : undefined}
                   className={cn(
-                    "flex cursor-pointer items-center gap-2 px-2.5 py-1.5 text-base text-foreground",
+                    "transition-colors duration-100 flex cursor-pointer items-center gap-2 px-2.5 py-1.5 text-base text-foreground",
                     isHighlighted && "bg-primary-muted",
                     isSelected && "text-primary",
                     opt.disabled && "cursor-not-allowed opacity-50",

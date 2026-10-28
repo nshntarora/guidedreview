@@ -62,7 +62,7 @@ export function buttonClassName({
   className?: string;
 } = {}): string {
   return cn(
-    "inline-flex cursor-pointer items-center justify-center border no-underline transition-colors",
+    "inline-flex cursor-pointer items-center justify-center border no-underline transition-[color,background-color,border-color,opacity] duration-150 ease-gr-out",
     "disabled:cursor-not-allowed disabled:opacity-60",
     sizeClasses[size],
     variants[variant],

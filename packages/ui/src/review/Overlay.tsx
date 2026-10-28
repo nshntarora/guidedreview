@@ -127,6 +127,7 @@ export function Overlay({
   const generatePromptCopyActionRef = useRef<(() => void) | null>(null);
   const codeColRef = useRef<HTMLElement>(null);
   const contextPaneRef = useRef<HTMLDivElement>(null);
+  const reviewContentRef = useRef<HTMLDivElement>(null);
   /** Element focused before the overlay opened (for restore if start button gone). */
   const previousFocusRef = useRef<Element | null>(null);
   /** Pending `v` leader for view-mode chords (`v+u` / `v+s`). */
@@ -339,6 +340,18 @@ export function Overlay({
         top: useReviewStore.getState().scrollPositions[contentKey] ?? 0,
       });
     contextPaneRef.current?.scrollTo({ top: 0 });
+
+    // Animate the existing content so focus, composers, and scroll restoration survive.
+    // Cancel on the next selection so rapid keyboard navigation never queues motion.
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const animations = [reviewContentRef.current, contextPaneRef.current?.firstElementChild].map(
+      (element) =>
+        element?.animate?.([{ opacity: 0.65 }, { opacity: 1 }], {
+          duration: 120,
+          easing: "ease-out",
+        }),
+    );
+    return () => animations.forEach((animation) => animation?.cancel());
   }, [isOpen, contentKey]);
 
   useEffect(() => {
@@ -496,7 +509,7 @@ export function Overlay({
       aria-labelledby={titleId}
       tabIndex={-1}
       inert={inert || undefined}
-      className="gr-review fixed inset-0 z-[2147483000] flex flex-col bg-surface font-sans text-base text-foreground antialiased outline-none [color-scheme:dark] [text-rendering:optimizeLegibility]"
+      className="gr-review motion-safe:animate-gr-fade fixed inset-0 z-[2147483000] flex flex-col bg-surface font-sans text-base text-foreground antialiased outline-none [color-scheme:dark] [text-rendering:optimizeLegibility]"
       data-testid="guided-review-overlay"
     >
       <div
@@ -554,7 +567,7 @@ export function Overlay({
             useReviewStore.getState().saveScrollPosition(contentKey, event.currentTarget.scrollTop)
           }
         >
-          <div className="px-4 py-4 md:px-8 md:py-6">
+          <div ref={reviewContentRef} className="px-4 py-4 md:px-8 md:py-6">
             {isDescriptionUnit ? (
               <DescriptionPane prContext={prContext} diff={diff} />
             ) : (
@@ -667,7 +680,7 @@ export function Overlay({
 
       {navigationOpen && (
         <div
-          className="absolute inset-0 z-30 bg-background/80 lg:hidden"
+          className="motion-safe:animate-gr-fade absolute inset-0 z-30 bg-background/80 lg:hidden"
           onClick={(event) => {
             if (event.target === event.currentTarget) closeNavigation();
           }}
@@ -679,7 +692,7 @@ export function Overlay({
             aria-modal="true"
             aria-label="Browse changes"
             tabIndex={-1}
-            className="flex h-full w-80 max-w-full flex-col border-r border-border bg-background outline-none"
+            className="motion-safe:animate-gr-drawer flex h-full w-80 max-w-full flex-col border-r border-border bg-background outline-none"
             data-testid="navigation-drawer"
           >
             <div className="flex justify-end p-3">

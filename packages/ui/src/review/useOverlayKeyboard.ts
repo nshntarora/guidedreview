@@ -640,7 +640,7 @@ export function useOverlayKeyboard({
           const tree = control.closest("[data-review-file-tree]");
           const rows = Array.from(
             tree?.querySelectorAll<HTMLButtonElement>("button[data-file-path]") ?? [],
-          );
+          ).filter((row) => !row.closest("[inert]"));
           const index = rows.indexOf(control);
           const expanded = control.getAttribute("aria-expanded");
           let next: HTMLButtonElement | undefined;
@@ -674,7 +674,9 @@ export function useOverlayKeyboard({
           next?.focus();
         } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
           event.preventDefault();
-          const controls = Array.from(navigation.querySelectorAll<HTMLButtonElement>("button"));
+          const controls = Array.from(
+            navigation.querySelectorAll<HTMLButtonElement>("button"),
+          ).filter((row) => !row.closest("[inert]"));
           controls[controls.indexOf(control) + (event.key === "ArrowDown" ? 1 : -1)]?.focus();
         }
         return;

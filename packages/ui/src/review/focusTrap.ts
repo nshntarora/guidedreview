@@ -14,7 +14,7 @@ const FOCUSABLE_SELECTOR = [
 ].join(", ");
 
 function isVisible(el: HTMLElement): boolean {
-  if (!el.isConnected || el.hidden) return false;
+  if (!el.isConnected || el.hidden || el.closest("[inert]")) return false;
   // Walk ancestors for display:none / visibility:hidden (works in jsdom).
   let node: HTMLElement | null = el;
   while (node) {
