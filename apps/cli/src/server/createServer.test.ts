@@ -20,6 +20,7 @@ import {
 const execFileAsync = promisify(execFile);
 
 const snapshot: LocalReviewSnapshot = {
+  totalCommits: 1,
   repo: {
     repoRoot: "/tmp/repo",
     baseRef: "main",

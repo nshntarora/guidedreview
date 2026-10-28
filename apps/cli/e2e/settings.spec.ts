@@ -30,19 +30,45 @@ test.describe("CLI settings", () => {
     );
   });
 
-  test("Settings and About navigate via hash", async ({ page, reviewServer }) => {
+  test("Settings and About navigate via hash and the action palette", async ({
+    page,
+    reviewServer,
+  }) => {
     await page.goto(reviewUrl(reviewServer, "settings"), { waitUntil: "domcontentloaded" });
     await expect(page.getByTestId("settings-provider")).toBeVisible();
 
-    await page.getByTestId("settings-nav-about").click();
+    await page.getByTestId("settings-api-key").focus();
+    await page.keyboard.press("Meta+k");
+    await expect(page.getByTestId("command-palette-input")).toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(page.getByTestId("command-palette-close")).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(page.getByTestId("command-palette-input")).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("command-palette")).toHaveCount(0);
+    await expect(page.getByTestId("settings-api-key")).toBeFocused();
+    await expect(page).toHaveURL(/#settings/);
+
+    await page.getByTestId("settings-open-command-palette").click();
+    await page.getByTestId("command-palette-input").fill("about");
+    await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/#about/);
     await expect(page.getByTestId("settings-modal")).toBeVisible();
 
-    await page.getByTestId("settings-nav-settings").click();
+    await page.keyboard.press("Control+k");
+    await page.getByTestId("command-action-settings").click();
     await expect(page).toHaveURL(/#settings/);
     await expect(page.getByTestId("settings-provider")).toBeVisible();
 
+    await page.getByTestId("settings-api-key").fill("unsaved-key");
+    await page.keyboard.press("Control+k");
+    await page.getByTestId("command-action-back-to-review").click();
+    await expect(page.getByTestId("confirmation-dialog")).toBeVisible();
+    await page.getByTestId("confirmation-cancel").click();
+    await expect(page.getByTestId("settings-api-key")).toHaveValue("unsaved-key");
+
     await page.keyboard.press("Escape");
+    await page.getByTestId("confirmation-ok").click();
     await expect(page.getByTestId("settings-modal")).toHaveCount(0);
     await expect(page.getByTestId("navigation-tab-units")).toBeVisible();
   });

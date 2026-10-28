@@ -10,6 +10,13 @@ import {
   Kbd,
 } from "@guided-review/ui";
 import { trapTabKey } from "@guided-review/ui/review/focusTrap";
+import {
+  CommandPaletteProvider,
+  useCommandAction,
+  useCommandPalette,
+} from "@guided-review/ui/review/commandPalette";
+import { CommandPalette } from "@guided-review/ui/review/components/CommandPalette";
+import { ShortcutKeys } from "@guided-review/ui/review/components/ShortcutKeys";
 import { About } from "./About";
 import { Settings, type PublicSettings } from "./Settings";
 
@@ -44,6 +51,36 @@ function SettingsShell({
   children: ReactNode;
 }) {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const paletteDialogRef = useRef<HTMLDivElement>(null);
+  const paletteKeyRef = useRef<((event: KeyboardEvent) => boolean) | null>(null);
+  const paletteOpen = useCommandPalette((state) => state.isOpen);
+  const openPalette = useCommandPalette((state) => state.open);
+  const closePalette = useCommandPalette((state) => state.close);
+
+  useCommandAction({
+    id: "settings",
+    label: "View settings",
+    keywords: "provider model API key preferences",
+    shortcut: ["mod", ","],
+    onSelect: () => {
+      window.location.hash = "settings";
+    },
+  });
+  useCommandAction({
+    id: "about",
+    label: "View about",
+    keywords: "Guided Review version",
+    onSelect: () => {
+      window.location.hash = "about";
+    },
+  });
+  useCommandAction({
+    id: "back-to-review",
+    label: "Back to review",
+    keywords: "close settings diff files",
+    shortcut: ["Esc"],
+    onSelect: onClose,
+  });
 
   useEffect(() => {
     const previous = document.activeElement;
@@ -56,8 +93,22 @@ function SettingsShell({
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
       if (event.key === "Tab") {
-        const root = getConfirmationDialogElement() ?? dialogRef.current;
+        const root =
+          getConfirmationDialogElement() ??
+          (paletteOpen ? paletteDialogRef.current : dialogRef.current);
         if (root) trapTabKey(event, root);
+        return;
+      }
+      if (isConfirmationOpen()) return;
+      if (
+        (event.metaKey || event.ctrlKey) &&
+        !event.altKey &&
+        !event.shiftKey &&
+        event.key.toLowerCase() === "k"
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+        openPalette();
         return;
       }
       // Swallow ⌘/Ctrl+, so the browser does not steal it for its own prefs,
@@ -65,18 +116,26 @@ function SettingsShell({
       if (isSettingsShortcut(event)) {
         event.preventDefault();
         event.stopPropagation();
+        if (paletteOpen) closePalette();
         if (route !== "settings") window.location.hash = "settings";
         return;
       }
+      if (paletteOpen) {
+        if (paletteKeyRef.current?.(event)) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        return;
+      }
       if (event.key !== "Escape") return;
-      if (isConfirmationOpen() || isOpenSelectEvent(event)) return;
+      if (isOpenSelectEvent(event)) return;
       event.preventDefault();
       event.stopPropagation();
       onClose();
     }
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [onClose, route]);
+  }, [onClose, route, paletteOpen, openPalette, closePalette]);
 
   function handleBrandClick(event: MouseEvent<HTMLAnchorElement>): void {
     event.preventDefault();
@@ -102,7 +161,7 @@ function SettingsShell({
       </a>
 
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
-        <div className="flex items-center justify-between gap-3 px-5 py-3.5 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 sm:px-6">
           <a
             href="#review"
             onClick={handleBrandClick}
@@ -117,7 +176,7 @@ function SettingsShell({
             />
           </a>
 
-          <div className="flex shrink-0 items-center gap-2 sm:gap-3 md:gap-5">
+          <div className="flex max-w-full flex-wrap items-center gap-2 sm:gap-3 md:gap-5">
             <nav
               className="flex items-center gap-2 text-base sm:gap-3 md:gap-5"
               aria-label="Settings"
@@ -146,6 +205,16 @@ function SettingsShell({
                 Docs
               </a>
             </nav>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => openPalette()}
+              aria-keyshortcuts="Meta+k Control+k"
+              data-testid="settings-open-command-palette"
+            >
+              Actions
+              <ShortcutKeys keys={["mod", "K"]} join="chord" />
+            </Button>
             <Button variant="secondary" size="sm" onClick={onClose} data-testid="settings-close">
               <CloseIcon />
               Close
@@ -158,6 +227,11 @@ function SettingsShell({
       <div id="main-content" className="w-full flex-1 px-5 py-8 sm:px-6">
         {children}
       </div>
+      {paletteOpen && (
+        <div className="fixed inset-0 z-50">
+          <CommandPalette dialogRef={paletteDialogRef} keyActionRef={paletteKeyRef} />
+        </div>
+      )}
       <ConfirmationHost />
     </div>
   );
@@ -204,11 +278,13 @@ export function SettingsApp({
   }, [route]);
 
   return (
-    <SettingsShell route={route} onClose={requestClose}>
-      <div hidden={route !== "settings"}>
-        <Settings onSaved={onSaved} onDirtyChange={setDirty} />
-      </div>
-      {route === "about" ? <About /> : null}
-    </SettingsShell>
+    <CommandPaletteProvider>
+      <SettingsShell route={route} onClose={requestClose}>
+        <div hidden={route !== "settings"}>
+          <Settings onSaved={onSaved} onDirtyChange={setDirty} />
+        </div>
+        {route === "about" ? <About /> : null}
+      </SettingsShell>
+    </CommandPaletteProvider>
   );
 }

@@ -1,4 +1,5 @@
 import { Kbd, KbdGroup } from "@guided-review/ui";
+import { useId } from "react";
 import { ShortcutKeys, type ShortcutJoin } from "./ShortcutKeys";
 
 /**
@@ -21,6 +22,7 @@ type ShortcutRow =
     };
 
 const SHORTCUTS: readonly ShortcutRow[] = [
+  { keys: ["mod", "K"], join: "chord", description: "Open Actions" },
   { keys: ["1"], description: "Browse Files" },
   { keys: ["2"], description: "Browse Review Units" },
   { keys: ["mod", "I"], join: "chord", description: "Generate / Retry Review Plan" },
@@ -31,7 +33,7 @@ const SHORTCUTS: readonly ShortcutRow[] = [
   {
     keys: ["mod", "F"],
     join: "chord",
-    description: "Search Files and Code in This PR",
+    description: "Search Files and Code",
   },
   { keys: ["c"], join: "none", description: "Enter Comment Mode" },
   { keys: ["↑", "↓"], join: "none", description: "Select Lines (in Comment Mode)" },
@@ -93,15 +95,16 @@ export function KeyboardShortcuts({
   showSettings?: boolean;
   showScopePicker?: boolean;
 }) {
+  const headingId = useId();
   const rows = [
     ...(showSettings ? [SETTINGS_SHORTCUT] : []),
     ...(showScopePicker ? [SCOPE_PICKER_SHORTCUT] : []),
     ...(allowExit ? SHORTCUTS : LOCAL_SHORTCUTS),
   ];
   return (
-    <section className="mt-4 pt-3" aria-labelledby="keyboard-shortcuts-heading">
+    <section className="mt-4 pt-3" aria-labelledby={headingId}>
       <h2
-        id="keyboard-shortcuts-heading"
+        id={headingId}
         className="mb-2 text-xs font-semibold tracking-[0.04em] text-muted uppercase"
       >
         Keyboard Shortcuts

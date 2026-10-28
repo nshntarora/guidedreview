@@ -123,7 +123,7 @@ export function buildDiffSearchIndex(diff: ParsedDiff): DiffSearchDoc[] {
 
 // ---- Search -----------------------------------------------------------------
 
-const DEFAULT_LIMIT = 50;
+const DEFAULT_LIMIT = 20;
 
 /** Fuse options tuned for code: path weighted above content; moderate fuzziness. */
 const FUSE_OPTIONS: IFuseOptions<DiffSearchDoc> = {

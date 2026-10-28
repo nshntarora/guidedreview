@@ -1,5 +1,8 @@
-/** Individual commit scopes and the sidebar commit list. Keep in sync with apps/cli/src/git/localDiff.ts. */
+/** Individual commit scopes. Keep in sync with apps/cli/src/git/localDiff.ts. */
 export const MAX_RECENT_COMMITS = 5;
+
+/** Sidebar cards. Keep in sync with apps/cli/src/git/localDiff.ts. */
+export const MAX_SIDEBAR_COMMITS = 10;
 
 export const RECENT_COMMITS_GROUP = "Last 5 commits";
 
@@ -53,6 +56,7 @@ export interface LocalDiffControls {
   scopes: LocalDiffScopeOption[];
   selectedScope: string;
   commits: LocalCommitCard[];
+  totalCommits?: number;
   onSelectScope: (id: string) => void;
   scopeBusy?: boolean;
   /** Working-tree diff no longer matches the snapshot this review is showing. */

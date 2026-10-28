@@ -13,6 +13,7 @@ import { LocalCommitList } from "./LocalCommitList";
 
 interface ContextPanelProps {
   commits?: LocalCommitCard[];
+  totalCommits?: number;
   uncommitted?: LocalDiffScopeOption;
   /** The selected AI unit, or null for summary and full-file selections. */
   unit: ReviewUnit | null;
@@ -134,6 +135,7 @@ function SummaryUnitPanel({
 
 export function ContextPanel({
   commits,
+  totalCommits,
   uncommitted,
   unit,
   stats,
@@ -178,7 +180,7 @@ export function ContextPanel({
     return (
       <div className="flex flex-col gap-4">
         {error ? <ContextError error={error} onRetry={onRetry} /> : unitSummary}
-        <LocalCommitList commits={commits} uncommitted={uncommitted} />
+        <LocalCommitList commits={commits} totalCommits={totalCommits} uncommitted={uncommitted} />
         <KeyboardShortcuts allowExit={false} showSettings showScopePicker />
       </div>
     );

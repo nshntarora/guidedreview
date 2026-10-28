@@ -68,6 +68,7 @@ export interface ReviewSessionPayload {
   diffHash: string;
   settings: ReturnType<typeof publicSettings>;
   commits: LocalCommit[];
+  totalCommits: number;
   scopes: DiffScopeOption[];
   selectedScope: LocalReviewSnapshot["selectedScope"];
 }
@@ -114,6 +115,7 @@ function sessionPayload(
     diffHash: hashDiff(snapshot.raw),
     settings,
     commits: snapshot.commits,
+    totalCommits: snapshot.totalCommits,
     scopes: snapshot.scopes,
     selectedScope: snapshot.selectedScope,
   };

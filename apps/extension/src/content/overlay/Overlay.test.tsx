@@ -1542,6 +1542,26 @@ describe("Overlay", () => {
   });
 
   describe("diff search (⌘/Ctrl+F)", () => {
+    it("switches between actions and search from the composer, then restores its focus and text", () => {
+      seedReadyReview(1);
+      render(<Overlay />);
+      fireEvent.keyDown(window, { key: "c" });
+      fireEvent.keyDown(window, { key: "Enter" });
+      const composer = screen.getByTestId("comment-composer-input");
+      fireEvent.change(composer, { target: { value: "Keep this draft" } });
+      composer.focus();
+      fireEvent.keyDown(composer, { key: "k", metaKey: true });
+      expect(screen.getByTestId("command-action-settings")).toBeInTheDocument();
+      fireEvent.keyDown(window, { key: "f", metaKey: true });
+      expect(screen.getByTestId("diff-search-input")).toBeInTheDocument();
+      fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+      expect(screen.getByTestId("command-palette-input")).toBeInTheDocument();
+      fireEvent.keyDown(window, { key: "Escape" });
+      expect(composer).toHaveFocus();
+      expect(composer).toHaveValue("Keep this draft");
+      expect(useReviewStore.getState().composerOpen).toBe(true);
+    });
+
     it("opens the search palette on meta+f and prevents browser find", () => {
       seedReadyReview(1);
       render(<Overlay />);
@@ -1556,7 +1576,7 @@ describe("Overlay", () => {
       fireEvent(window, event);
 
       expect(preventSpy).toHaveBeenCalled();
-      expect(screen.getByTestId("diff-search")).toBeInTheDocument();
+      expect(screen.getByTestId("command-palette")).toBeInTheDocument();
       expect(screen.getByTestId("diff-search-input")).toBeInTheDocument();
     });
 
@@ -1564,14 +1584,14 @@ describe("Overlay", () => {
       seedReadyReview(1);
       render(<Overlay />);
       fireEvent.keyDown(window, { key: "f", ctrlKey: true });
-      expect(screen.getByTestId("diff-search")).toBeInTheDocument();
+      expect(screen.getByTestId("command-palette")).toBeInTheDocument();
     });
 
     it("closes search on Escape without exiting the overlay", () => {
       seedReadyReview(1);
       render(<Overlay />);
       fireEvent.keyDown(window, { key: "f", metaKey: true });
-      expect(screen.getByTestId("diff-search")).toBeInTheDocument();
+      expect(screen.getByTestId("command-palette")).toBeInTheDocument();
 
       fireEvent.keyDown(window, { key: "Escape" });
       expect(screen.queryByTestId("diff-search")).not.toBeInTheDocument();

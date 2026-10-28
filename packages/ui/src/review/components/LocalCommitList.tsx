@@ -1,5 +1,5 @@
 import {
-  MAX_RECENT_COMMITS,
+  MAX_SIDEBAR_COMMITS,
   type LocalCommitCard,
   type LocalDiffScopeOption,
 } from "@guided-review/ui/review/localReview";
@@ -7,12 +7,15 @@ import { DiffStatCounts } from "./DiffStatCounts";
 
 export function LocalCommitList({
   commits = [],
+  totalCommits = commits.length,
   uncommitted,
 }: {
   commits?: LocalCommitCard[];
+  totalCommits?: number;
   uncommitted?: LocalDiffScopeOption;
 }) {
-  const recentCommits = commits.slice(0, MAX_RECENT_COMMITS);
+  const recentCommits = commits.slice(0, MAX_SIDEBAR_COMMITS);
+  const remainingCommits = totalCommits - recentCommits.length;
   const showUncommitted = uncommitted && !uncommitted.empty;
   if (!recentCommits.length && !showUncommitted) return null;
   return (
@@ -24,6 +27,11 @@ export function LocalCommitList({
           <CommitCard key={commit.sha} commit={commit} />
         ))}
       </ol>
+      {remainingCommits > 0 && (
+        <p className="m-0 mt-2 text-xs text-muted" data-testid="more-commits">
+          + {remainingCommits} more {remainingCommits === 1 ? "commit" : "commits"}
+        </p>
+      )}
     </section>
   );
 }
