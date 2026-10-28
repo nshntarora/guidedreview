@@ -1,5 +1,48 @@
 import { JsonLd } from "@web/components/JsonLd";
 
+export const toc = [
+  {
+    id: "when-guided-review-is-the-worse-choice",
+    label: "When to keep your current tool",
+    level: 2,
+  },
+  {
+    id: "at-a-glance",
+    label: "At a glance",
+    level: 2,
+  },
+  {
+    id: "workflow-a-reading-tool-will-not-replace-a-team-process",
+    label: "Workflow",
+    level: 2,
+  },
+  {
+    id: "pricing-identify-the-plan-you-would-actually-use",
+    label: "Pricing",
+    level: 2,
+  },
+  {
+    id: "setup-and-data-check-the-host-and-the-request",
+    label: "Setup and data",
+    level: 2,
+  },
+  {
+    id: "sources",
+    label: "Sources",
+    level: 2,
+  },
+  {
+    id: "faq",
+    label: "FAQ",
+    level: 2,
+  },
+  {
+    id: "read-the-docs",
+    label: "Get started",
+    level: 2,
+  },
+];
+
 export const faqs = [
   {
     question: "What does Graphite do better than Guided Review?",
@@ -25,11 +68,17 @@ export const faqs = [
 
 # Graphite Diamond alternative for a human-driven walkthrough
 
-Pick Guided Review if you're an engineer who wants to read a GitHub PR or local diff with your own AI provider. Pick Graphite if you need automated review comments and suggested changes as part of a broader team workflow. The deciding difference is the work you want the tool to do: organize your reading, or provide review feedback and team tools. Guided Review won't replace a merge queue or review rules. If those are why you use Graphite, keep it. The choice flips toward Guided Review when your unmet need is a reading session you control.
+Pick Guided Review if you're an engineer who wants to read a GitHub PR or local diff with your own AI provider.
+
+Pick Graphite if you need automated review comments and suggested changes as part of a broader team workflow.
+
+The deciding difference is the work you want the tool to do: organize your reading, or provide review feedback and team tools. Guided Review won't replace a merge queue or review rules. If those are why you use Graphite, keep it. The choice flips toward Guided Review when your unmet need is a reading session you control.
 
 I built Guided Review, and Guided Review publishes this page. Yes, it's biased. Product claims below link to sources checked in **October, 2026**; features can change.
 
 Graphite's old Diamond URL now redirects to its **AI Reviews** page, which also uses the **Graphite Chat** name. This comparison follows that current page rather than pretending Diamond remains a separate product.
+
+<TocCard toc={toc} collapsible />
 
 ## When Guided Review is the worse choice
 
@@ -155,4 +204,4 @@ Checked October, 2026.
 
 ## Read the docs
 
-[Read the docs](/docs/install) to pick a host and see what setup involves.
+[Read the docs](/docs/install) to choose the CLI or Chrome extension and see what setup involves.

@@ -109,7 +109,10 @@ export async function ArticlePage({
         </span>
       </div>
       <div className="grid min-w-0 gap-12 lg:grid-cols-[minmax(0,1fr)_13rem] lg:gap-14">
-        <article className="article-content min-w-0" data-testid="article-content">
+        <article
+          className={`article-content min-w-0${isGuide ? "" : " comparison-content"}`}
+          data-testid="article-content"
+        >
           <JsonLd
             data={{
               "@context": "https://schema.org",
@@ -168,11 +171,11 @@ export async function ArticlePage({
           )}
           <Content />
         </article>
-        <aside className="min-w-0 lg:sticky lg:top-28 lg:max-h-[calc(100dvh-8rem)] lg:self-start lg:overflow-y-auto">
-          {isGuide ? <TocCard toc={toc ?? []} /> : keepReading}
+        <aside className="hidden min-w-0 lg:sticky lg:top-28 lg:block lg:max-h-[calc(100dvh-8rem)] lg:self-start lg:overflow-y-auto">
+          <TocCard toc={toc ?? []} />
         </aside>
       </div>
-      {isGuide && <div className="mt-12">{keepReading}</div>}
+      <div className="mt-12">{keepReading}</div>
 
       <nav
         aria-label="Back to collection"

@@ -1,7 +1,7 @@
 export const toc = [
+  { id: "quick-start", label: "Quick start", level: 2 },
   { id: "what-is-guided-review", label: "What is Guided Review?", level: 2 },
   { id: "what-youll-find-here", label: "What you'll find here", level: 2 },
-  { id: "quick-start", label: "Quick start", level: 2 },
 ];
 
 # Introduction
@@ -9,6 +9,25 @@ export const toc = [
 Guided Review turns a diff into an ordered walkthrough — schema first, then logic, call-sites, and tests — so you can review with intent instead of scrolling a raw change list. Same engine for GitHub pull requests and local git work. For the motivation behind that, see [Why](/docs/why).
 
 <TocCard toc={toc} />
+
+## Quick start
+
+Choose the change you want to review. You can start without an AI provider key.
+
+### Review a GitHub PR
+
+1. [Install the Chrome extension](/docs/chrome-extension) (or follow [Install](/docs/install)).
+2. [Configure a provider](/docs/configure-provider) (optional for a file-by-file walk).
+3. Open any GitHub pull request and click **Start Guided Review**.
+4. Follow the walkthrough — see [Your first review](/docs/first-review).
+5. Optionally [draft line comments](/docs/leave-comments) and [submit](/docs/submit-review) (needs [GitHub connected](/docs/connect-github)).
+
+### Review local changes
+
+1. [Install / run the CLI](/docs/install) with Node.js 22+: `npx @guided-review/cli`.
+2. Pick a diff scope (branch vs base, uncommitted, or a commit).
+3. Optionally hit **Structure With AI**, then walk the units.
+4. Full local workflow: [CLI](/docs/cli).
 
 ## What is Guided Review?
 
@@ -32,24 +51,5 @@ The extension can optionally [submit reviews](/docs/submit-review) to GitHub. Th
 ## What you'll find here
 
 <DocsIndex />
-
-## Quick start
-
-Start at [Install](/docs/install) for both hosts, then:
-
-**GitHub pull requests**
-
-1. [Install the Chrome extension](/docs/chrome-extension) (or follow [Install](/docs/install)).
-2. [Configure a provider](/docs/configure-provider) (optional for a file-by-file walk).
-3. Open any GitHub pull request and click **Start Guided Review**.
-4. Follow the walkthrough — see [Your first review](/docs/first-review).
-5. Optionally [draft line comments](/docs/leave-comments) and [submit](/docs/submit-review) (needs [GitHub connected](/docs/connect-github)).
-
-**Local changes**
-
-1. [Install / run the CLI](/docs/install) with Node.js 22+: `npx @guided-review/cli`.
-2. Pick a diff scope (branch vs base, uncommitted, or a commit).
-3. Optionally hit **Structure With AI**, then walk the units.
-4. Full local workflow: [CLI](/docs/cli).
 
 > **Open source.** Guided Review is Apache-2.0. Source and issues live on [GitHub](https://github.com/nshntarora/guidedreview). Stuck? Start with the [FAQ](/docs/faq) or [Troubleshooting](/docs/troubleshooting).

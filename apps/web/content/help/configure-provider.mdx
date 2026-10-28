@@ -1,7 +1,7 @@
 export const toc = [
-  { id: "supported-providers", label: "Supported providers", level: 2 },
   { id: "chrome-extension", label: "Chrome extension", level: 2 },
   { id: "cli", label: "CLI", level: 2 },
+  { id: "supported-providers", label: "Supported providers", level: 2 },
   { id: "pick-a-model", label: "Pick a model", level: 2 },
   { id: "test-connection", label: "Test Connection", level: 2 },
   { id: "cost-and-usage", label: "Cost and usage", level: 2 },
@@ -10,11 +10,41 @@ export const toc = [
 
 # Configure AI provider
 
-Guided Review calls **your** LLM account. There is no Guided Review cloud that holds your key or rewrites diffs for you. That design is spelled out in [Privacy & data](/docs/privacy-and-data).
+Connect Anthropic, OpenAI, or Grok to group related changes into review units with summaries. Guided Review uses your provider account and API key; there is no product backend.
 
-A provider unlocks AI clustering and unit summaries on both the [Chrome extension](/docs/chrome-extension) and the [CLI](/docs/cli). You can still [browse changed files without a key](/docs/reading-the-overlay#files-sidebar). GitHub auth is separate and only required to [submit a review](/docs/submit-review) from the extension — see [Connect GitHub](/docs/connect-github).
+Choose your setup below. You can also [read changed files without a key](/docs/reading-the-overlay#files-sidebar).
 
 <TocCard toc={toc} />
+
+## Chrome extension
+
+1. Open the extension **Options** page (after you [install the extension](/docs/chrome-extension#options)).
+2. In the **AI Provider** card, choose a provider and model.
+3. Paste an API key from that provider’s console.
+4. Click **Save**, then **Test Connection** if you want a cheap health check before a real review.
+
+The same Options page also has **GitHub** (optional, for [submit](/docs/submit-review)) and **Review → Automatically Open on Files Changed**. Full Options map: [Chrome Extension → Options](/docs/chrome-extension#options).
+
+## CLI
+
+1. Run `npx @guided-review/cli` in your repository.
+2. Open **Settings** (`⌘/Ctrl` + `,`, or **Connect AI Provider** when no key is set).
+3. Choose a provider and model, paste your API key, and save.
+4. Generate review units to use the provider on your diff.
+
+You can also turn on **Use My Subscription** to use a coding agent already logged in on this machine. Subscription reuse is unofficial and can break; use a provider API key for a more reliable setup.
+
+### Key precedence
+
+For each run, the CLI checks:
+
+1. Flags and environment variables: `--provider` / `--model` / `--agent` and `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `XAI_API_KEY` or `GROK_API_KEY`.
+2. A saved key in `~/.config/guided-review/config.json` (or `$XDG_CONFIG_HOME` / `GUIDED_REVIEW_CONFIG_DIR`).
+3. A coding agent already on this machine (Claude Code, Codex, or Grok).
+
+A saved API key takes precedence over subscription reuse. Flags and environment variables take precedence for the current run.
+
+When the CLI borrows an agent key, it reads that agent’s store at review time and does not copy the secret into Guided Review config. Details and scopes: [CLI → API keys](/docs/cli#api-keys).
 
 ## Supported providers
 
@@ -27,29 +57,6 @@ A provider unlocks AI clustering and unit summaries on both the [Chrome extensio
 OpenAI and Grok share the same client shape; Anthropic uses its own streaming endpoint. Structured output for the review plan is enforced with a shared JSON schema so behavior stays consistent across backends — see [How a review plan works](/docs/how-it-works).
 
 We’ll keep adding more providers — [request one on the repo](https://github.com/nshntarora/guidedreview), or open a PR that adds yours. Also covered in the [FAQ](/docs/faq#which-ai-providers).
-
-## Chrome extension
-
-1. Open the extension **Options** page (after you [install the extension](/docs/chrome-extension#options)).
-2. In the **AI Provider** card, choose a provider and model.
-3. Paste an API key from that provider’s console.
-4. Click **Save**, then **Test Connection** if you want a cheap health check before a real review.
-
-The same Options page also has **GitHub** (optional, for [submit](/docs/submit-review)) and **Review → Automatically Open on Files Changed**. Full Options map: [Chrome Extension → Options](/docs/chrome-extension#options).
-
-Keys are stored in `chrome.storage.local` and are only used from the **background service worker** when annotating a review or testing the connection. Content scripts never hold the key for outbound LLM calls. To remove a key later: [Privacy & data → Clear data](/docs/privacy-and-data#clear-data-and-disconnect).
-
-## CLI
-
-Same providers. Keys resolve in order for each run:
-
-1. `--provider` / `--model` / `--agent` and env (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `XAI_API_KEY` or `GROK_API_KEY`)
-2. A key saved in `~/.config/guided-review/config.json` (or `$XDG_CONFIG_HOME` / `GUIDED_REVIEW_CONFIG_DIR`)
-3. A coding agent already on this machine (Claude Code, Codex, or Grok)
-
-In the local UI, open **Settings** (`⌘/Ctrl` + `,`, or **Connect AI Provider** when no key is set). Paste an API key, or turn on **Use My Subscription** to borrow an agent already logged in on the machine. A saved API key always wins for that machine; flags and env still win for the current run. Subscription reuse is unofficial and can break — a console key is the better option.
-
-When the CLI borrows an agent key, it reads that agent’s store at review time and does not copy the secret into Guided Review config. Details and scopes: [CLI → API keys](/docs/cli#api-keys).
 
 ## Pick a model
 
@@ -84,6 +91,8 @@ If the test fails, step through [Troubleshooting → Provider and API key](/docs
 Token usage and cost are entirely between you and your provider. Guided Review does not meter or resell LLM usage. Short version: [FAQ → Will this run up my API bill?](/docs/faq#will-this-run-up-my-api-bill).
 
 ## Where settings live
+
+Keys are stored in `chrome.storage.local` and are only used from the **background service worker** when annotating a review or testing the connection. Content scripts never hold the key for outbound LLM calls. To remove a key later: [Privacy & data → Clear data](/docs/privacy-and-data#clear-data-and-disconnect).
 
 | Setting                             | Storage                               | Used by                     |
 | ----------------------------------- | ------------------------------------- | --------------------------- |

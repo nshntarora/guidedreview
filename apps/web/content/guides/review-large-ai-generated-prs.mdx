@@ -1,47 +1,47 @@
 export const toc = [
   {
     id: "decide-what-belongs-in-the-pr",
-    label: "Decide what belongs in the PR",
+    label: "PR scope",
     level: 2,
   },
   {
     id: "trace-a-contract-across-the-diff",
-    label: "Trace a contract across the diff",
+    label: "Trace the contract",
     level: 2,
   },
   {
     id: "know-what-the-model-saw",
-    label: "Know what the model saw",
+    label: "Model context",
     level: 2,
   },
   {
     id: "make-a-behavior-map-before-reading-every-hunk",
-    label: "Make a behavior map before reading every hunk",
+    label: "Behavior map",
     level: 2,
   },
   {
     id: "review-compatibility-in-deployment-order",
-    label: "Review compatibility in deployment order",
+    label: "Deployment compatibility",
     level: 2,
   },
   {
     id: "give-generated-and-mechanical-changes-a-separate-pass",
-    label: "Give generated and mechanical changes a separate pass",
+    label: "Mechanical changes",
     level: 2,
   },
   {
     id: "keep-an-uncertainty-list-as-you-read",
-    label: "Keep an uncertainty list as you read",
+    label: "Unresolved questions",
     level: 2,
   },
   {
     id: "test-a-failure-you-can-name",
-    label: "Test a failure you can name",
+    label: "Test failure cases",
     level: 2,
   },
   {
     id: "ask-for-a-split-when-you-cant-review-the-change",
-    label: "Ask for a split when you can't review the change",
+    label: "When to split the PR",
     level: 2,
   },
 ];
@@ -61,6 +61,15 @@ export const toc = [
 A 40-file PR changes a request schema, updates its callers, and replaces several tests. You start at the top of the file list. By the time you reach the implementation, you're holding half the patch in your head.
 
 I'd start with one behavior instead. Write down what's supposed to change, then follow a value through the contract, callers, and tests. File order can wait.
+
+Before you read every hunk:
+
+- Establish the intended behavior.
+- Trace it through the contract, callers, and tests.
+- Record unresolved questions with a path and a consequence.
+- Verify failure cases before choosing an outcome.
+
+<TocCard toc={toc} collapsible />
 
 ## Decide what belongs in the PR
 

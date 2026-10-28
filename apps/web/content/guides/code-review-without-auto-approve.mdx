@@ -6,7 +6,7 @@ export const toc = [
   },
   {
     id: "translate-the-summary-into-cases-you-can-distinguish",
-    label: "Translate the summary into cases you can distinguish",
+    label: "Define observable cases",
     level: 2,
   },
   {
@@ -21,12 +21,12 @@ export const toc = [
   },
   {
     id: "look-for-evidence-that-can-contradict-the-explanation",
-    label: "Look for evidence that can contradict the explanation",
+    label: "Challenge the explanation",
     level: 2,
   },
   {
     id: "use-comments-to-separate-requirements-from-preferences",
-    label: "Use comments to separate requirements from preferences",
+    label: "Requirements and preferences",
     level: 2,
   },
   {
@@ -36,7 +36,7 @@ export const toc = [
   },
   {
     id: "choose-an-outcome-from-the-current-evidence",
-    label: "Choose an outcome from the current evidence",
+    label: "Choose a review outcome",
     level: 2,
   },
   {
@@ -87,6 +87,15 @@ Here's why. You read “invalid input is rejected” in a summary. There's a pas
 Which input? A missing field? An empty string? A value outside a range?
 
 The summary has compressed three questions into one reassuring sentence.
+
+A quick review path:
+
+- Translate the intended behavior into observable cases.
+- Check code and tests for evidence that could contradict the summary.
+- Record unresolved requirements in comments.
+- Choose the review outcome yourself.
+
+<TocCard toc={toc} collapsible />
 
 ## Read the rejection branch before trusting the summary
 

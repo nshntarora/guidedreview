@@ -1,62 +1,62 @@
 export const toc = [
   {
     id: "a-pull-request-security-checklist-you-can-copy",
-    label: "A pull request security checklist you can copy",
+    label: "Copyable checklist",
     level: 2,
   },
   {
     id: "start-with-the-boundary-the-change-crosses",
-    label: "Start with the boundary the change crosses",
+    label: "Find the trust boundary",
     level: 2,
   },
   {
     id: "1-check-authorization-on-the-resource-and-action",
-    label: "1. Check authorization on the resource and action",
+    label: "1. Authorization",
     level: 2,
   },
   {
     id: "2-validate-external-input-before-using-it",
-    label: "2. Validate external input before using it",
+    label: "2. Input validation",
     level: 2,
   },
   {
     id: "3-keep-input-out-of-query-command-and-browser-syntax",
-    label: "3. Keep input out of query, command, and browser syntax",
+    label: "3. Injection",
     level: 2,
   },
   {
     id: "4-follow-authentication-and-session-failure-paths",
-    label: "4. Follow authentication and session failure paths",
+    label: "4. Authentication and sessions",
     level: 2,
   },
   {
     id: "5-check-where-secrets-and-sensitive-data-go",
-    label: "5. Check where secrets and sensitive data go",
+    label: "5. Sensitive data",
     level: 2,
   },
   {
     id: "6-read-how-cryptographic-libraries-are-used",
-    label: "6. Read how cryptographic libraries are used",
+    label: "6. Cryptography",
     level: 2,
   },
   {
     id: "7-restrict-files-and-outbound-requests",
-    label: "7. Restrict files and outbound requests",
+    label: "7. Files and outbound requests",
     level: 2,
   },
   {
     id: "8-include-dependencies-ci-and-configuration-in-the-review",
-    label: "8. Include dependencies, CI, and configuration in the review",
+    label: "8. Dependencies and CI",
     level: 2,
   },
   {
     id: "9-try-the-operation-twice-concurrently-and-out-of-order",
-    label: "9. Try the operation twice, concurrently, and out of order",
+    label: "9. Concurrency and retries",
     level: 2,
   },
   {
     id: "10-ask-for-evidence-at-the-rejection-boundary",
-    label: "10. Ask for evidence at the rejection boundary",
+    label: "10. Rejection tests",
     level: 2,
   },
   {
@@ -66,12 +66,12 @@ export const toc = [
   },
   {
     id: "keep-dr-michaela-greiler-s-checklist-as-a-broader-reference",
-    label: "Keep Dr Michaela Greiler’s checklist as a broader reference",
+    label: "Broader review checklist",
     level: 2,
   },
   {
     id: "use-automation-to-support-the-security-review",
-    label: "Use automation to support the security review",
+    label: "Supporting automation",
     level: 2,
   },
 ];
@@ -93,6 +93,8 @@ A PR adds an invoice download endpoint. The handler requires login, validates th
 That's where I'd start a security code review. Follow a request someone can control to the data or action it reaches. Then check which condition stops them from doing something they shouldn't.
 
 This secure code review checklist covers the questions I'd ask before approving a pull request, with links to the underlying guidance. Use the sections that match the change. A CSS adjustment and a password reset endpoint need different amounts of investigation.
+
+<TocCard toc={toc} collapsible />
 
 ## A pull request security checklist you can copy
 

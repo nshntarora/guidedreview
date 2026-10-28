@@ -139,9 +139,13 @@ body::before {
   color: var(--color-foreground);
 }
 
+.docs-content :is(h1, h2) {
+  font-family: var(--font-brand);
+}
+
 :is(.docs-content, .article-content) h1 {
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.02em;
   margin-top: 0;
   margin-bottom: 1rem;
@@ -150,7 +154,7 @@ body::before {
 
 :is(.docs-content, .article-content) h2 {
   font-size: 1.35rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.01em;
   margin-top: 2rem;
   margin-bottom: 0.75rem;
@@ -159,14 +163,14 @@ body::before {
 
 :is(.docs-content, .article-content) h3 {
   font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: 700;
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
 }
 
 :is(.docs-content, .article-content) h4 {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   margin-top: 1.25rem;
   margin-bottom: 0.5rem;
 }
@@ -176,7 +180,7 @@ body::before {
   line-height: 1.65;
   margin-top: 0.75rem;
   margin-bottom: 0.75rem;
-  color: var(--color-muted);
+  color: color-mix(in srgb, var(--color-foreground) 85%, var(--color-background));
   overflow-wrap: anywhere;
 }
 
@@ -185,7 +189,7 @@ body::before {
   padding-left: 1.5rem;
   margin-top: 0.75rem;
   margin-bottom: 0.75rem;
-  color: var(--color-muted);
+  color: color-mix(in srgb, var(--color-foreground) 85%, var(--color-background));
 }
 
 :is(.docs-content, .article-content) ul {
@@ -193,11 +197,11 @@ body::before {
   padding-left: 1.5rem;
   margin-top: 0.75rem;
   margin-bottom: 0.75rem;
-  color: var(--color-muted);
+  color: color-mix(in srgb, var(--color-foreground) 85%, var(--color-background));
 }
 
-:is(.docs-content, .article-content) li {
-  font-size: 0.9375rem;
+:is(.docs-content, .article-content) li:not(nav *) {
+  font-size: 1rem;
   line-height: 1.7;
   margin-top: 0.3rem;
   margin-bottom: 0.3rem;
@@ -261,6 +265,30 @@ body::before {
   border: 1px solid var(--color-border);
   color: var(--color-muted);
   vertical-align: top;
+}
+
+/* Comparisons need room for product descriptions and source references. */
+.comparison-content table {
+  min-width: 36rem;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.comparison-content :is(thead th, tbody td) {
+  padding: 0.75rem 1rem;
+}
+
+.comparison-content thead th {
+  font-weight: 700;
+}
+
+.comparison-content tbody td {
+  color: color-mix(in srgb, var(--color-foreground) 85%, var(--color-background));
+}
+
+.comparison-content tbody td:first-child {
+  color: var(--color-foreground);
+  font-weight: 600;
 }
 
 :is(.docs-content, .article-content) hr {
