@@ -27,7 +27,7 @@ test.describe("CLI settings", () => {
 
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("settings-modal")).toHaveCount(0);
-    await expect(page.getByTestId("review-plan-invitation-action")).toBeVisible();
+    await expect(page.getByTestId("navigation-tab-units")).toBeVisible();
   });
 });
 

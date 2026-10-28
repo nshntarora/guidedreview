@@ -167,6 +167,30 @@ describe("review workspace state", () => {
     ).toHaveLength(2);
   });
 
+  it("opens the first streamed review unit and preserves navigation as generation continues", () => {
+    const state = useReviewStore.getState();
+    const diff = populatedDiff();
+    state.bootReady({ sessionKey: SESSION_KEY, diff, plan: buildFileReviewPlan(diff) });
+    state.setNavigationMode("units");
+    const generation = state.beginRetry();
+    const plan = planFixture(2);
+
+    state.appendUnit(plan.units[0], generation - 1);
+    expect(useReviewStore.getState().selection).toEqual({ kind: "summary" });
+    state.appendUnit(plan.units[0], generation);
+    expect(useReviewStore.getState()).toMatchObject({
+      status: "streaming",
+      selection: { kind: "unit", id: "u0" },
+      lastUnitSelection: { kind: "unit", id: "u0" },
+    });
+
+    state.goToUnit(0);
+    state.appendUnit(plan.units[1], generation);
+    state.appendUnit(plan.units[0], generation);
+    state.setReady(diff, plan, generation);
+    expect(useReviewStore.getState().selection).toEqual({ kind: "summary" });
+  });
+
   it("preserves file selection, saved drafts and unfinished text through streaming, failure, retry and completion", () => {
     const diff = populatedDiff();
     const state = useReviewStore.getState();

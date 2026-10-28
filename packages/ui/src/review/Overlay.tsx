@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useId, useMemo, useRef, useState } from "react";
 import type { SelectHandle } from "@guided-review/ui";
-import { formatAgentPrompt, resolveUnitFiles } from "@guided-review/core";
+import { formatAgentPrompt, resolveUnitFiles, summarizeDiff } from "@guided-review/core";
 import type { ReviewErrorInfo, ReviewPlan } from "@guided-review/ui/review/types";
 import {
   selectionKey,
@@ -18,6 +18,7 @@ import { useSubmitReviewFlow } from "./useSubmitReviewFlow";
 import { findUnitForFile, type DiffSearchResult, type SearchScrollTarget } from "./diffSearch";
 import { ProgressHeader } from "@guided-review/ui/review/components/ProgressHeader";
 import { Sidebar } from "@guided-review/ui/review/components/Sidebar";
+import { ShortcutKeys } from "@guided-review/ui/review/components/ShortcutKeys";
 import { DiffPane } from "@guided-review/ui/review/components/DiffPane";
 import { DescriptionPane } from "@guided-review/ui/review/components/DescriptionPane";
 import { ContextPanel } from "@guided-review/ui/review/components/ContextPanel";
@@ -27,6 +28,7 @@ import { Button, confirm, ConfirmationHost, useConfirmationOpen } from "@guided-
 import { GeneratePromptModal } from "@guided-review/ui/review/components/GeneratePromptModal";
 import { SubmitReviewModal } from "@guided-review/ui/review/components/SubmitReviewModal";
 import { ReviewSubmittedModal } from "@guided-review/ui/review/components/ReviewSubmittedModal";
+import { ReviewUnitsIllustration } from "@guided-review/ui/review/components/ReviewUnitsEmptyState";
 import { BUILD_PLAN_PRIMARY, buildPhaseDetail } from "./overlayCopy";
 import { useReviewHost } from "./host";
 import type { LocalDiffControls } from "./localReview";
@@ -99,6 +101,8 @@ export function Overlay({
   const buildPhase = useReviewStore((s) => s.buildPhase);
   const providerLabel = useReviewStore((s) => s.providerLabel);
   const diff = useReviewStore((s) => s.diff);
+  const [dismissedInvitationDiff, setDismissedInvitationDiff] = useState<typeof diff>(null);
+  const diffStats = useMemo(() => (diff ? summarizeDiff(diff) : null), [diff]);
   const plan = useReviewStore((s) => s.plan);
   const prContext = useReviewStore((s) => s.prContext);
   const selection = useReviewStore((s) => s.selection);
@@ -373,9 +377,18 @@ export function Overlay({
         : (plan?.units.findIndex((unit) => unit.id === selection.id) ?? -1) + 1;
   const footerLabel =
     selection.kind === "summary"
-      ? summaryUnitTitle(host.kind)
+      ? host.kind === "local"
+        ? "No changes selected"
+        : summaryUnitTitle(host.kind)
       : `${navigationMode === "files" ? "File" : "Review unit"} ${currentIndex} of ${total}`;
-  const isDescriptionUnit = selection.kind === "summary";
+  const isDescriptionUnit = host.kind !== "local" && selection.kind === "summary";
+  useLayoutEffect(() => {
+    if (host.kind !== "local" || selection.kind !== "summary") return;
+    const state = useReviewStore.getState();
+    const unit = navigationMode === "units" && planSource === "ai" ? plan?.units[0] : null;
+    if (unit) state.selectContent({ kind: "unit", id: unit.id }, navigationMode);
+    else if (files[0]) state.selectContent({ kind: "file", path: files[0].path }, navigationMode);
+  }, [host.kind, selection.kind, navigationMode, planSource, plan, files]);
   const currentReviewUnit =
     selection.kind === "unit" && planSource === "ai"
       ? (plan?.units.find((unit) => unit.id === selection.id) ?? null)
@@ -395,6 +408,14 @@ export function Overlay({
   const selectableForUnit = useMemo(
     () => buildSelectableLines(resolvedFiles, diffViewMode),
     [resolvedFiles, diffViewMode],
+  );
+
+  const unitStats = useMemo(
+    () =>
+      currentReviewUnit
+        ? summarizeDiff({ files: resolvedFiles.map(({ file, hunks }) => ({ ...file, hunks })) })
+        : null,
+    [currentReviewUnit, resolvedFiles],
   );
 
   // Keep store selectable lines in sync while in comment mode (e.g. view toggle).
@@ -500,6 +521,10 @@ export function Overlay({
         notesCount={draftComments.length}
         onSubmitReview={handlePrimaryReviewAction}
         onGeneratePrompt={openGeneratePrompt}
+        onSelectSummary={() => {
+          useReviewStore.getState().selectContent({ kind: "summary" });
+          focusReviewContent();
+        }}
       />
 
       <div className="border-b border-border px-3 py-2 lg:hidden">
@@ -531,14 +556,7 @@ export function Overlay({
         >
           <div className="px-4 py-4 md:px-8 md:py-6">
             {isDescriptionUnit ? (
-              <DescriptionPane
-                prContext={prContext}
-                diff={diff}
-                commits={localDiff?.commits}
-                uncommitted={localDiff?.scopes.find(
-                  (scope) => scope.id === "uncommitted" && !scope.empty,
-                )}
-              />
+              <DescriptionPane prContext={prContext} diff={diff} />
             ) : (
               <DiffPane
                 files={resolvedFiles}
@@ -555,7 +573,7 @@ export function Overlay({
         </main>
 
         <aside
-          className="flex min-h-0 flex-[1_1_32%] flex-col overflow-hidden border-t border-border bg-background md:max-w-[420px] md:min-w-[300px] md:border-t-0"
+          className="flex min-h-0 flex-[1_1_32%] flex-col overflow-hidden border-t border-border bg-background md:max-w-80 md:min-w-70 md:flex-[0_1_24%] md:border-t-0"
           aria-label="Review context"
         >
           <div
@@ -564,8 +582,69 @@ export function Overlay({
             data-testid="context-pane"
           >
             <div className="px-5 py-6">
+              {diffStats &&
+                (diffStats.files >= 20 || diffStats.additions + diffStats.deletions >= 500) &&
+                diff !== dismissedInvitationDiff &&
+                !planComplete &&
+                planSource !== "ai" &&
+                status === "ready" &&
+                navigationMode === "files" && (
+                  <div
+                    className="relative mb-4 rounded-lg border border-border bg-surface p-3"
+                    data-testid="large-diff-prompt"
+                  >
+                    <ReviewUnitsIllustration className="float-right ml-2 mt-6 block h-auto w-20" />
+                    <div className="min-w-0">
+                      <p className="m-0 pr-6 text-base font-medium text-foreground">
+                        A lot of changes to work through?
+                      </p>
+                      <p className="mb-2 mt-1 text-sm leading-relaxed text-muted">
+                        Use AI to group related changes into review units and walk through them step
+                        by step.
+                      </p>
+                      <Button
+                        variant="secondary"
+                        className="w-full"
+                        size="sm"
+                        data-testid="large-diff-prompt-action"
+                        aria-keyshortcuts="Meta+i Control+i"
+                        title="Walk through with AI (⌘/Ctrl+I)"
+                        onClick={() => {
+                          useReviewStore.getState().setNavigationMode("units");
+                          focusReviewContent();
+                          if (needsProvider) host.connectProvider();
+                          else generatePlan?.();
+                        }}
+                      >
+                        Walk through with AI
+                        <ShortcutKeys keys={["mod", "I"]} join="chord" />
+                      </Button>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-2 top-2"
+                      aria-label="Dismiss AI walkthrough prompt"
+                      data-testid="large-diff-prompt-dismiss"
+                      onClick={() => {
+                        setDismissedInvitationDiff(diff);
+                        codeColRef.current?.focus({ preventScroll: true });
+                      }}
+                    >
+                      <span aria-hidden="true">×</span>
+                    </Button>
+                  </div>
+                )}
               <ContextPanel
+                commits={navigationMode === "files" ? localDiff?.commits : undefined}
+                uncommitted={
+                  navigationMode === "files"
+                    ? localDiff?.scopes.find((scope) => scope.id === "uncommitted" && !scope.empty)
+                    : undefined
+                }
                 unit={currentReviewUnit}
+                stats={unitStats}
+                isSummary={isDescriptionUnit}
                 hasTitle={Boolean(prContext?.title?.trim())}
                 hasDescription={Boolean(
                   prContext?.description?.trim() || prContext?.descriptionHtml?.trim(),

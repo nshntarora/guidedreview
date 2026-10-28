@@ -7,10 +7,17 @@ import {
   PR_DESCRIPTION_HINT,
 } from "@guided-review/ui/review/overlayCopy";
 import { useReviewHost } from "@guided-review/ui/review/host";
+import type { DiffSummary } from "@guided-review/core";
+import type { LocalCommitCard, LocalDiffScopeOption } from "@guided-review/ui/review/localReview";
+import { LocalCommitList } from "./LocalCommitList";
 
 interface ContextPanelProps {
-  /** When null, the synthetic PR-description unit is active. */
+  commits?: LocalCommitCard[];
+  uncommitted?: LocalDiffScopeOption;
+  /** The selected AI unit, or null for summary and full-file selections. */
   unit: ReviewUnit | null;
+  stats?: Pick<DiffSummary, "files" | "additions" | "deletions"> | null;
+  isSummary?: boolean;
   /** Whether the PR has a non-empty title. Used when the description unit is active. */
   hasTitle?: boolean;
   /** Whether the PR has a non-empty description. Used when the description unit is active. */
@@ -69,11 +76,13 @@ function ContextError({ error, onRetry }: { error: ReviewErrorInfo; onRetry?: ()
 }
 
 function SummaryUnitPanel({
+  isSummary,
   hasTitle,
   hasDescription,
   loading,
   loadingDetail,
 }: {
+  isSummary: boolean;
   hasTitle: boolean;
   hasDescription: boolean;
   loading?: boolean;
@@ -87,9 +96,11 @@ function SummaryUnitPanel({
 
   return (
     <div className="rounded-none border-0 bg-transparent px-0 py-0.5 pb-1">
-      <div className="text-lg leading-[1.7] text-foreground" data-testid="context-panel-body">
-        {hint}
-      </div>
+      {(host.kind !== "local" || isSummary) && (
+        <div className="text-lg leading-[1.7] text-foreground" data-testid="context-panel-body">
+          {hint}
+        </div>
+      )}
       {loading ? (
         <div
           className="mt-4 flex items-center gap-2.5 border-t border-border-strong pt-3"
@@ -122,7 +133,11 @@ function SummaryUnitPanel({
 }
 
 export function ContextPanel({
+  commits,
+  uncommitted,
   unit,
+  stats,
+  isSummary = true,
   hasTitle = true,
   hasDescription = true,
   error,
@@ -130,15 +145,54 @@ export function ContextPanel({
   loadingDetail,
   onRetry,
 }: ContextPanelProps) {
+  const host = useReviewHost();
+  const unitSummary = unit ? (
+    <div>
+      {unit.context.trim() && (
+        <div className="text-base leading-[1.7] text-foreground" data-testid="context-panel-body">
+          {unit.context}
+        </div>
+      )}
+      {stats && (
+        <div
+          className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted"
+          data-testid="review-unit-stats"
+        >
+          <span>
+            {stats.files} {stats.files === 1 ? "file" : "files"} changed
+          </span>
+          <span className="font-medium text-diff-add" aria-label={`${stats.additions} lines added`}>
+            +{stats.additions}
+          </span>
+          <span
+            className="font-medium text-diff-del"
+            aria-label={`${stats.deletions} lines deleted`}
+          >
+            −{stats.deletions}
+          </span>
+        </div>
+      )}
+    </div>
+  ) : null;
+  if (host.kind === "local") {
+    return (
+      <div className="flex flex-col gap-4">
+        {error ? <ContextError error={error} onRetry={onRetry} /> : unitSummary}
+        <LocalCommitList commits={commits} uncommitted={uncommitted} />
+        <KeyboardShortcuts allowExit={false} showSettings showScopePicker />
+      </div>
+    );
+  }
   if (error) {
     return <ContextError error={error} onRetry={onRetry} />;
   }
 
   // Summary and full-file selections share guidance and keyboard help.
   // Commentary belongs only to the selected AI unit.
-  if (!unit || !unit.context.trim()) {
+  if (!unit) {
     return (
       <SummaryUnitPanel
+        isSummary={isSummary}
         hasTitle={hasTitle}
         hasDescription={hasDescription}
         loading={loading}
@@ -147,11 +201,5 @@ export function ContextPanel({
     );
   }
 
-  return (
-    <div className="rounded-none border-0 bg-transparent px-0 py-0.5 pb-1">
-      <div className="text-base leading-[1.7] text-foreground" data-testid="context-panel-body">
-        {unit.context}
-      </div>
-    </div>
-  );
+  return <div className="rounded-none border-0 bg-transparent px-0 py-0.5 pb-1">{unitSummary}</div>;
 }

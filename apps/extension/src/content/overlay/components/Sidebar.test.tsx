@@ -19,7 +19,7 @@ it("opens provider setup from Review units, then offers explicit generation when
     needsProvider: true,
   });
   render(<Sidebar onGenerate={generatePlan} />);
-  fireEvent.click(screen.getByTestId("review-plan-invitation-action"));
+  fireEvent.click(screen.getByTestId("navigation-tab-units"));
   expect(generatePlan).not.toHaveBeenCalled();
   fireEvent.click(screen.getByTestId("connect-provider-open-settings"));
   expect(connectProvider).toHaveBeenCalledTimes(1);

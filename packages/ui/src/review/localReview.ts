@@ -1,6 +1,6 @@
 import type { ProviderId } from "@guided-review/core";
 
-/** Individual commit scopes and the Change summary list. Keep in sync with apps/cli/src/git/localDiff.ts. */
+/** Individual commit scopes and the sidebar commit list. Keep in sync with apps/cli/src/git/localDiff.ts. */
 export const MAX_RECENT_COMMITS = 5;
 
 export const RECENT_COMMITS_GROUP = "Last 5 commits";
@@ -28,7 +28,7 @@ export interface DiffStat {
   deletions: number;
 }
 
-/** Structured commit shown as a card in the local Change summary. */
+/** Structured commit shown as a card in the local sidebar. */
 export interface LocalCommitCard {
   sha: string;
   shortSha: string;

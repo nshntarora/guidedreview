@@ -95,7 +95,9 @@ export function FileNavigation({
                     ? "text-diff-add"
                     : file.status === "removed"
                       ? "text-diff-del"
-                      : "text-muted",
+                      : file.status === "modified"
+                        ? "text-warning"
+                        : "text-syntax-entity",
                 )}
                 title={file.status}
               >

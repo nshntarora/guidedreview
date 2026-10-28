@@ -233,7 +233,7 @@ describe("Overlay", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("uses Generate Prompt and Change summary for a local host", () => {
+  it("uses Generate Prompt and opens the diff for a local host", () => {
     setActiveReviewHost(
       createMemoryReviewHost({
         kind: "local",
@@ -246,7 +246,8 @@ describe("Overlay", () => {
 
     expect(screen.getByTestId("submit-review-button")).toHaveTextContent("Generate Prompt");
     expect(screen.getByTestId("submit-review-button")).toBeDisabled();
-    expect(screen.getAllByText("Commits").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByTestId("review-summary")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("description-pane")).not.toBeInTheDocument();
     expect(screen.queryByText("#1")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^exit$/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /settings/i })).toBeInTheDocument();
@@ -433,7 +434,7 @@ describe("Overlay", () => {
     expect(useReviewStore.getState().uiMode).toBe("navigate");
   });
 
-  it("shows the local scope picker, commit cards, and structure trigger", () => {
+  it("shows sidebar commit cards only in file-tree mode", () => {
     renderLocalOverlay();
 
     const picker = screen.getByRole("combobox", { name: /diff to review/i });
@@ -444,8 +445,14 @@ describe("Overlay", () => {
     expect(screen.queryByText(/main\s*←\s*feat/)).not.toBeInTheDocument();
     expect(screen.queryByText(/main\s*←\s*feature/)).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1, name: "feat" })).toHaveClass("gr-sr-only");
-    expect(screen.getByTestId("uncommitted-card")).toHaveTextContent("Uncommitted changes");
+    expect(screen.queryByTestId("uncommitted-card")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("sidebar-commits")).not.toBeInTheDocument();
+    act(() => useReviewStore.getState().setNavigationMode("files"));
+    expect(screen.getByTestId("sidebar-commits")).toBeInTheDocument();
     expect(screen.getByTestId("commit-card")).toHaveTextContent("Add header");
+    expect(screen.getByTestId("uncommitted-card")).toHaveTextContent("Uncommitted changes");
+    act(() => useReviewStore.getState().setNavigationMode("units"));
+    expect(screen.queryByTestId("sidebar-commits")).not.toBeInTheDocument();
     expect(screen.queryByTestId("structure-review")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^exit$/i })).not.toBeInTheDocument();
 
@@ -550,6 +557,54 @@ describe("Overlay", () => {
     });
   });
 
+  it.each(["files", "lines"] as const)(
+    "offers an AI walkthrough for a large diff by %s, with provider setup and dismissal",
+    (sizeBy) => {
+      const connectProvider = vi.fn();
+      const generatePlan = vi.fn();
+      setActiveReviewHost(createMemoryReviewHost({ connectProvider, generatePlan }));
+      seedReadyReview();
+      useReviewStore.setState({
+        plan: null,
+        planSource: "files",
+        planComplete: false,
+        navigationMode: "files",
+        selection: { kind: "file", path: "src/foo.ts" },
+        needsProvider: true,
+      });
+      render(<Overlay />);
+      expect(screen.queryByTestId("large-diff-prompt")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("review-plan-invitation")).not.toBeInTheDocument();
+
+      const diff = diffFixture();
+      if (sizeBy === "files") {
+        diff.files = Array.from({ length: 20 }, (_, i) => ({
+          ...diff.files[0],
+          path: `src/file-${i}.ts`,
+        }));
+      } else {
+        diff.files[0].hunks[0].lines = Array.from({ length: 500 }, (_, i) => ({
+          type: "add",
+          content: `const value${i} = ${i};`,
+          newLine: i + 1,
+        }));
+      }
+      act(() => useReviewStore.setState({ diff }));
+      fireEvent.click(screen.getByTestId("large-diff-prompt-action"));
+      expect(connectProvider).toHaveBeenCalledTimes(1);
+      expect(generatePlan).not.toHaveBeenCalled();
+      expect(screen.queryByTestId("large-diff-prompt")).not.toBeInTheDocument();
+
+      act(() => useReviewStore.setState({ navigationMode: "files", needsProvider: false }));
+      fireEvent.click(screen.getByTestId("large-diff-prompt-action"));
+      expect(generatePlan).toHaveBeenCalledTimes(1);
+      act(() => useReviewStore.setState({ navigationMode: "files" }));
+      fireEvent.click(screen.getByTestId("large-diff-prompt-dismiss"));
+      expect(screen.queryByTestId("large-diff-prompt")).not.toBeInTheDocument();
+      expect(screen.getByTestId("code-col")).toHaveFocus();
+    },
+  );
+
   it("switches sidebar tabs and generates a plan without taking shortcuts from text fields", () => {
     const generatePlan = vi.fn();
     const connectProvider = vi.fn();
@@ -638,7 +693,7 @@ describe("Overlay", () => {
     expect(screen.getByTestId("error-message")).toHaveTextContent("Invalid API key");
     expect(screen.getByTestId("error-status-code")).toHaveTextContent("401");
     expect(screen.getByTestId("error-code")).toHaveTextContent("authentication_error");
-    expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId("review-summary")).toHaveTextContent("PR Details");
     expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
 
     screen.getByRole("button", { name: /^retry$/i }).click();
@@ -674,7 +729,7 @@ describe("Overlay", () => {
       selection: { kind: "summary" },
     });
     render(<Overlay />);
-    expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId("review-summary")).toHaveTextContent("PR Details");
     expect(screen.queryByText(/no review units were generated/i)).not.toBeInTheDocument();
   });
 
@@ -690,7 +745,7 @@ describe("Overlay", () => {
       planSource: "ai",
     });
     render(<Overlay />);
-    expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId("review-summary")).toHaveTextContent("PR Details");
     expect(screen.getByTestId("diff-unit-title")).toHaveTextContent("Update foo");
     expect(screen.getByText("because it needed updating")).toBeInTheDocument();
   });

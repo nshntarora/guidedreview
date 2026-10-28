@@ -414,6 +414,13 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
         plan: { units },
         planSource: "ai",
         error: null,
+        ...(existing.length === 0 && state.navigationMode === "units"
+          ? {
+              selection: { kind: "unit" as const, id: unit.id },
+              lastUnitSelection: { kind: "unit" as const, id: unit.id },
+              ...COMMENT_UI_RESET,
+            }
+          : {}),
         // Units imply tokens already arrived (STATUS may have set this earlier).
         buildPhase: "tokens_streaming",
       };
@@ -588,6 +595,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
     const index = sequence.findIndex(
       (item) => selectionKey(item) === selectionKey(state.selection),
     );
+    if (index <= 0 && getActiveReviewHost()?.kind === "local") return;
     state.selectContent(sequence[index - 1] ?? { kind: "summary" });
   },
 

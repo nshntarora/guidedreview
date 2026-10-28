@@ -4,10 +4,18 @@ test.describe("CLI review overlay", () => {
   test("boots a file-by-file review", async ({ page, reviewServer }) => {
     await page.goto(reviewUrl(reviewServer), { waitUntil: "domcontentloaded" });
 
-    await expect(page.getByTestId("review-summary")).toBeVisible();
+    await expect(page.getByTestId("review-summary")).toHaveCount(0);
+    await expect(page.getByTestId("description-pane")).toHaveCount(0);
+    await expect(page.getByTestId("diff-file-header")).toContainText("feat.ts");
+    await expect(page.getByTestId("context-pane").getByTestId("commit-card")).toContainText(
+      "add feat",
+    );
+    await expect(page.getByTestId("context-pane").getByTestId("uncommitted-card")).toBeVisible();
+    await page.keyboard.press("ArrowLeft");
+    await expect(page.getByTestId("diff-file-header")).toContainText("feat.ts");
     await expect(page.getByTestId("review-file-feat.ts")).toBeVisible();
     await expect(page.getByTestId("review-scope-select")).toBeVisible();
-    await expect(page.getByTestId("review-plan-invitation-action")).toBeVisible();
+    await expect(page.getByTestId("navigation-tab-units")).toBeVisible();
     await expect(page.getByTestId("guided-review-overlay")).toBeFocused();
 
     await page.keyboard.press("ArrowDown");
@@ -16,9 +24,9 @@ test.describe("CLI review overlay", () => {
 
   test("Structure with AI without a key opens settings", async ({ page, reviewServer }) => {
     await page.goto(reviewUrl(reviewServer), { waitUntil: "domcontentloaded" });
-    await expect(page.getByTestId("review-plan-invitation-action")).toBeVisible();
+    await expect(page.getByTestId("navigation-tab-units")).toBeVisible();
 
-    await page.getByTestId("review-plan-invitation-action").click();
+    await page.getByTestId("navigation-tab-units").click();
     await page.getByTestId("connect-provider-open-settings").click();
 
     await expect(page).toHaveURL(/#settings/);
@@ -116,7 +124,7 @@ test.describe("CLI review overlay", () => {
 
   test("stale banner appears and Refresh reloads", async ({ page, reviewServer }) => {
     await page.goto(reviewUrl(reviewServer), { waitUntil: "domcontentloaded" });
-    await expect(page.getByTestId("review-plan-invitation-action")).toBeVisible();
+    await expect(page.getByTestId("navigation-tab-units")).toBeVisible();
     await expect(page.getByTestId("stale-diff-banner")).toHaveCount(0);
 
     await commitInRepo(reviewServer.repoDir, "feat.ts", "export const n = 2;\n");
@@ -124,7 +132,7 @@ test.describe("CLI review overlay", () => {
     await expect(page.getByTestId("stale-diff-banner")).toBeVisible({ timeout: 15_000 });
     await page.getByTestId("stale-diff-refresh").click();
 
-    await expect(page.getByTestId("review-plan-invitation-action")).toBeVisible();
+    await expect(page.getByTestId("navigation-tab-units")).toBeVisible();
     await expect(page.getByTestId("stale-diff-banner")).toHaveCount(0);
   });
 });

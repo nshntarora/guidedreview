@@ -1,13 +1,12 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef } from "react";
 import { Button, cn, Spinner } from "@guided-review/ui";
-import { summaryUnitTitle, useReviewStore } from "@guided-review/ui/review/store";
-import { useReviewHost } from "@guided-review/ui/review/host";
+import { useReviewStore } from "@guided-review/ui/review/store";
 import { buildFileTree } from "@guided-review/ui/review/fileNavigation";
-import { buildPhaseDetail } from "@guided-review/ui/review/overlayCopy";
 import { TestsUnitIcon } from "./TestsUnitIcon";
 import { ReviewUnitsEmptyState } from "./ReviewUnitsEmptyState";
 import { FileNavigation } from "./FileNavigation";
 import { ShortcutKeys } from "./ShortcutKeys";
+import { buildPhaseDetail } from "@guided-review/ui/review/overlayCopy";
 
 interface SidebarProps {
   onGenerate?: () => void;
@@ -15,7 +14,6 @@ interface SidebarProps {
 }
 
 export function Sidebar({ onGenerate, onSelect }: SidebarProps) {
-  const host = useReviewHost();
   const state = useReviewStore();
   const { diff, plan, planSource, planComplete, navigationMode, selection, status, needsProvider } =
     state;
@@ -23,7 +21,6 @@ export function Sidebar({ onGenerate, onSelect }: SidebarProps) {
   const tree = useMemo(() => buildFileTree(diff), [diff]);
   const id = useId();
   const navRef = useRef<HTMLElement>(null);
-  const [invitationDismissed, setInvitationDismissed] = useState(false);
   const stillBuilding = status === "streaming" || (status === "loading" && !!diff);
   const hasFiles = !!diff?.files.length;
   const selectionId =
@@ -48,39 +45,6 @@ export function Sidebar({ onGenerate, onSelect }: SidebarProps) {
       data-testid="review-navigation"
     >
       <div className="shrink-0 border-b border-border p-3">
-        <p className="m-0 mb-2 px-2 text-xs font-semibold uppercase tracking-widest text-faint">
-          Browse changes
-        </p>
-        <Button
-          variant="ghost"
-          className={cn(
-            "mb-3 min-h-10 w-full justify-start! gap-2.5! px-2.5! text-left",
-            selection.kind === "summary" && "border-primary/30! bg-primary-muted! text-primary!",
-          )}
-          aria-current={selection.kind === "summary" ? "true" : undefined}
-          data-testid="review-summary"
-          onClick={() => {
-            state.selectContent({ kind: "summary" });
-            onSelect?.();
-          }}
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.35"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="shrink-0"
-            aria-hidden="true"
-          >
-            <rect x="3" y="2.5" width="14" height="15" rx="2" />
-            <path d="M6.5 6.5h7m-7 3.5h7m-7 3.5h4" />
-          </svg>
-          {summaryUnitTitle(host.kind)}
-        </Button>
         <div
           role="tablist"
           aria-label="Navigate changes"
@@ -240,54 +204,6 @@ export function Sidebar({ onGenerate, onSelect }: SidebarProps) {
           </>
         )}
       </div>
-      {navigationMode === "files" && hasFiles && !planComplete && !invitationDismissed && (
-        <div
-          className="relative shrink-0 border-t border-border p-3"
-          data-testid="review-plan-invitation"
-        >
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute right-1 top-1 size-7 p-0!"
-            aria-label="Dismiss review units prompt"
-            data-testid="review-plan-invitation-dismiss"
-            onClick={() => {
-              setInvitationDismissed(true);
-              navRef.current?.querySelector<HTMLElement>(`[id="${id}-files"]`)?.focus();
-            }}
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              aria-hidden="true"
-            >
-              <path d="m4 4 8 8M12 4l-8 8" />
-            </svg>
-          </Button>
-          <p className="m-0 mb-1 pr-5 text-sm font-medium text-foreground">
-            Follow the change, step by step
-          </p>
-          <p className="m-0 mb-3 text-sm leading-relaxed text-muted">
-            Use AI to group related changes into ordered review units.
-          </p>
-          <Button
-            variant="secondary"
-            size="sm"
-            className="w-full"
-            data-testid="review-plan-invitation-action"
-            aria-keyshortcuts="2"
-            onClick={() => state.setNavigationMode("units")}
-          >
-            Explore review units
-            <ShortcutKeys keys={["2"]} />
-          </Button>
-        </div>
-      )}
       <div
         role="tabpanel"
         id={`${id}-${navigationMode === "files" ? "units" : "files"}-panel`}

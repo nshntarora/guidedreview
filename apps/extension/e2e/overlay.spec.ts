@@ -315,7 +315,7 @@ test.describe("Guided review overlay", () => {
     await page.getByTestId("review-file-src/foo.ts").click();
     await expect(page.getByTestId("diff-file-header")).toBeVisible();
     await expect(page.getByTestId("connect-provider-prompt")).toHaveCount(0);
-    await page.getByTestId("review-plan-invitation-action").click();
+    await page.getByTestId("navigation-tab-units").click();
     await expect(page.getByTestId("connect-provider-prompt")).toBeVisible();
     const newPage = context.waitForEvent("page");
     await page.getByTestId("connect-provider-open-settings").click();

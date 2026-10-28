@@ -3,12 +3,16 @@ import { useReviewHost } from "@guided-review/ui/review/host";
 import { ShortcutKeys } from "./ShortcutKeys";
 
 /** The landing page's file-to-unit diagram, composed for the narrow sidebar. */
-function ReviewUnitsIllustration() {
+export function ReviewUnitsIllustration({
+  className = "mx-auto block h-auto w-full max-w-64",
+}: {
+  className?: string;
+}) {
   return (
     <svg
       viewBox="0 0 260 170"
       fill="none"
-      className="mx-auto block h-auto w-full max-w-64"
+      className={className}
       aria-hidden="true"
       focusable="false"
     >
