@@ -328,7 +328,7 @@ test.describe("Guided review overlay", () => {
     await expect(page.getByTestId("generate-review-plan")).toBeVisible();
     expect(calls).toBe(0);
     await page.getByTestId("navigation-tab-files").click();
-    await expect(page.getByTestId("diff-file-header")).toContainText("src/foo.ts");
+    await expect(page.getByTestId("diff-file-header")).toContainText("foo.ts");
     expect(extensionId).toBeTruthy();
   });
 
@@ -350,6 +350,7 @@ test.describe("Guided review overlay", () => {
     await page.getByTestId("generate-review-plan").click();
     await expect(page.getByTestId("review-unit-1")).toBeVisible();
 
+    await page.getByTestId("review-summary").click();
     await page.getByTestId("review-next-unit").click();
     await expect(page.getByTestId("context-panel-body")).toBeVisible();
     await expect(page.getByTestId("footer-step-status")).toHaveText(/Review unit 1 of 1/i);
@@ -394,7 +395,10 @@ test.describe("Guided review overlay", () => {
     await expect(page.getByTestId("comment-composer")).toHaveCount(0);
   });
 
-  test("submit review with seeded GitHub auth", async ({ context, extensionId }) => {
+  test("retries a failed GitHub submission without losing draft comments", async ({
+    context,
+    extensionId,
+  }) => {
     await seedProviderApiKey(context, extensionId);
     await seedGitHubAuth(context, extensionId);
     await stubPrPageAndDiff(context);
@@ -410,20 +414,34 @@ test.describe("Guided review overlay", () => {
       }
       return route.fallback();
     });
-    await context.route("https://api.github.com/repos/acme/widgets/pulls/1/reviews", (route) =>
-      route.fulfill({
+    const submissions: unknown[] = [];
+    await context.route("https://api.github.com/repos/acme/widgets/pulls/1/reviews", (route) => {
+      submissions.push(route.request().postDataJSON());
+      if (submissions.length === 1) {
+        return route.fulfill({
+          status: 500,
+          contentType: "application/json",
+          body: JSON.stringify({ message: "GitHub is temporarily unavailable." }),
+        });
+      }
+      return route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
           id: 999001,
           html_url: "https://github.com/acme/widgets/pull/1#pullrequestreview-999001",
         }),
-      }),
-    );
+      });
+    });
 
     const page = await context.newPage();
     await startReviewOnCodeUnit(page);
 
+    await page.keyboard.press("c");
+    await page.keyboard.press("Enter");
+    await page.getByTestId("comment-composer-input").fill("Cover this constant change.");
+    await page.getByTestId("comment-composer-save").click();
+    await page.keyboard.press("Escape");
     await page.getByTestId("submit-review-button").click();
     await expect(page.getByTestId("submit-review-modal")).toBeVisible();
     await expect(page.getByTestId("submit-review-modal")).toHaveAttribute("data-step", "choose");
@@ -433,12 +451,34 @@ test.describe("Guided review overlay", () => {
     await page.getByTestId("submit-review-body").fill("Looks good — constant bump is clear.");
     await page.getByTestId("submit-review-confirm").click();
 
+    await expect(page.getByTestId("submit-review-error")).toContainText("HTTP 500");
+    await expect(page.getByTestId("submit-review-body")).toHaveValue(
+      "Looks good — constant bump is clear.",
+    );
+    await expect(page.getByTestId("review-submitted-modal")).toHaveCount(0);
+    await expect(page.getByTestId("draft-comment-body")).toHaveText("Cover this constant change.");
+    await page.getByTestId("submit-review-confirm").click();
+
     await expect(page.getByTestId("review-submitted-modal")).toBeVisible();
     await expect(page.getByTestId("review-submitted-modal")).toHaveAttribute(
       "data-event",
       "APPROVE",
     );
     await expect(page.getByTestId("review-submitted-summary")).toBeVisible();
+    await expect(page.getByTestId("review-submitted-modal")).toHaveAttribute(
+      "data-comment-count",
+      "1",
+    );
+    await expect(page.getByTestId("draft-comment")).toHaveCount(0);
+    expect(submissions).toHaveLength(2);
+    expect(submissions[0]).toMatchObject({
+      event: "APPROVE",
+      body: "Looks good — constant bump is clear.",
+      comments: [
+        { path: "src/foo.ts", body: "Cover this constant change.", side: "RIGHT", line: 1 },
+      ],
+    });
+    expect(submissions[1]).toEqual(submissions[0]);
   });
 
   test("submit without GitHub opens connect modal", async ({ context, extensionId }) => {
@@ -609,7 +649,7 @@ test.describe("Guided review overlay", () => {
     await page.keyboard.press("Control+f");
     await page.getByTestId("diff-search-input").fill("const b = 3");
     await page.keyboard.press("Enter");
-    await expect(page.getByTestId("diff-file-header")).toContainText("src/foo.ts");
+    await expect(page.getByTestId("diff-file-header")).toContainText("foo.ts");
     await expect(page.getByTestId("diff-view-split")).toBeVisible();
     await page.keyboard.press("v");
     await page.keyboard.press("u");
@@ -631,7 +671,7 @@ test.describe("Guided review overlay", () => {
     const codeCol = page.getByTestId("code-col");
     const header = page.getByTestId("diff-file-header");
     await expect(header).toBeVisible();
-    await expect(header).toContainText(LONG_FILE_PATH);
+    await expect(header).toContainText("long.ts");
     await expect(page.getByTestId("diff-view-split")).toBeVisible();
 
     const didScroll = await codeCol.evaluate((el) => {
@@ -640,7 +680,7 @@ test.describe("Guided review overlay", () => {
     });
     expect(didScroll).toBe(true);
 
-    await expect(header).toContainText(LONG_FILE_PATH);
+    await expect(header).toContainText("long.ts");
     await expect
       .poll(async () => {
         const [headerTop, colTop] = await Promise.all([

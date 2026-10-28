@@ -4,15 +4,18 @@ import { cn } from "../cn";
 export function HelpDetails({
   title,
   titleId,
+  testId,
   children,
 }: {
   title: string;
   titleId?: string;
+  testId?: string;
   children: ReactNode;
 }) {
   return (
     <details className="group">
       <summary
+        data-testid={testId}
         className={cn(
           "flex cursor-pointer list-none items-center justify-between gap-3 py-2.5",
           "[&::-webkit-details-marker]:hidden",

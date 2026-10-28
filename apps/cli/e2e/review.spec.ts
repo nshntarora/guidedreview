@@ -1,6 +1,56 @@
 import { commitInRepo, expect, reviewUrl, test } from "./fixtures";
 
 test.describe("CLI review overlay", () => {
+  test("copies edited notes into a prompt and excludes removed drafts", async ({
+    page,
+    context,
+    reviewServer,
+  }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"], {
+      origin: reviewServer.baseURL,
+    });
+    await page.goto(reviewUrl(reviewServer));
+    await page.getByTestId("review-file-feat.ts").click();
+    await page.keyboard.press("c");
+    await page.keyboard.press("Enter");
+    await page.getByTestId("comment-composer-input").fill("Original note");
+    await page.getByTestId("comment-composer-save").click();
+    await page.keyboard.press("Escape");
+
+    await page.getByTestId("draft-comment-edit").click();
+    await page.getByTestId("draft-comment-edit-input").fill("Add a boundary test for n.");
+    await page.getByTestId("draft-comment-edit-save").click();
+    await expect(page.getByTestId("draft-comment-body")).toHaveText("Add a boundary test for n.");
+
+    await page.getByTestId("code-col").focus();
+    await page.keyboard.press("c");
+    await page.keyboard.press("Enter");
+    await page.getByTestId("comment-composer-input").fill("Discard this note");
+    await page.getByTestId("comment-composer-save").click();
+    await page.keyboard.press("Escape");
+    const drafts = page.getByTestId("draft-comment");
+    await expect(drafts).toHaveCount(2);
+    await drafts.last().getByTestId("draft-comment-remove").click();
+    await page.getByTestId("confirmation-ok").click();
+    await expect(drafts).toHaveCount(1);
+
+    await page.getByTestId("submit-review-button").click();
+    const prompt = page.getByTestId("generate-prompt-text");
+    await expect(prompt).toContainText("feat.ts");
+    await expect(prompt).toContainText("Add a boundary test for n.");
+    await expect(prompt).not.toContainText("Original note");
+    await expect(prompt).not.toContainText("Discard this note");
+    await page.getByTestId("generate-prompt-copy").click();
+    await expect
+      .poll(() => page.evaluate(() => navigator.clipboard.readText()))
+      .toBe(await prompt.innerText());
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("generate-prompt-modal")).toHaveCount(0);
+    await expect(page.getByTestId("submit-review-button")).toBeFocused();
+    await page.reload();
+    await expect(page.getByTestId("draft-comment-body")).toHaveText("Add a boundary test for n.");
+  });
+
   test("boots a file-by-file review", async ({ page, reviewServer }) => {
     await page.goto(reviewUrl(reviewServer), { waitUntil: "domcontentloaded" });
 

@@ -1,16 +1,33 @@
 import { expect, reviewUrl, test } from "./fixtures";
 
 test.describe("CLI settings", () => {
-  test("saves an API key and keeps it after reload", async ({ page, reviewServer }) => {
+  test("changing the endpoint preserves the saved model and API key", async ({
+    page,
+    reviewServer,
+  }) => {
     await page.goto(reviewUrl(reviewServer, "settings"), { waitUntil: "domcontentloaded" });
 
     await expect(page.getByTestId("settings-provider")).toBeVisible();
+    await expect(page.getByTestId("settings-model")).toHaveText("Claude Opus 4.8");
     await page.getByTestId("settings-api-key").fill("sk-e2e-aaaa");
     await page.getByTestId("settings-save").click();
     await expect(page.getByTestId("settings-status")).toHaveText("Saved");
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.getByTestId("settings-api-key")).toHaveAttribute("placeholder", /aaaa/);
+    await expect(page.getByTestId("settings-api-key")).toHaveValue("");
+    await page.getByTestId("settings-advanced").click();
+    await page.getByTestId("settings-base-url").fill("https://gateway.example.test/v1");
+    await page.getByTestId("settings-save").click();
+    await expect(page.getByTestId("settings-status")).toHaveText("Saved");
+
+    await page.reload();
+    await expect(page.getByTestId("settings-provider")).toHaveText("Claude (Anthropic)");
+    await expect(page.getByTestId("settings-model")).toHaveText("Claude Opus 4.8");
+    await expect(page.getByTestId("settings-api-key")).toHaveAttribute("placeholder", /aaaa/);
+    await expect(page.getByTestId("settings-base-url")).toHaveValue(
+      "https://gateway.example.test/v1",
+    );
   });
 
   test("Settings and About navigate via hash", async ({ page, reviewServer }) => {

@@ -564,7 +564,7 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
               />
             )}
 
-            <HelpDetails title="Advanced">
+            <HelpDetails title="Advanced" testId="settings-advanced">
               <BaseUrlField
                 baseUrl={baseUrl}
                 placeholder={providerDef.baseUrlPlaceholder}

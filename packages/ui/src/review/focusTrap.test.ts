@@ -9,6 +9,9 @@ describe("getFocusableElements", () => {
       <button type="button" disabled>B</button>
       <a href="#x">C</a>
       <button type="button" aria-hidden="true">D</button>
+      <div hidden><button>Hidden ancestor</button></div>
+      <div style="display: none"><button>Collapsed ancestor</button></div>
+      <div style="visibility: hidden"><a href="#hidden">Hidden link</a></div>
       <textarea>E</textarea>
       <div inert><button type="button">Collapsed file</button></div>
     `;
