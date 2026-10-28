@@ -51,13 +51,33 @@ test.describe("CLI review overlay", () => {
       const messages =
         calls === 1
           ? [
+              {
+                type: "USAGE",
+                usage: {
+                  inputTokens: 1200,
+                  outputTokens: 42,
+                  inputEstimated: true,
+                  outputEstimated: true,
+                },
+              },
               { type: "UNIT", unit },
               {
                 type: "ERROR",
                 error: { message: "Provider disconnected. Retry the review plan." },
               },
             ]
-          : [{ type: "DONE", plan: { units: [unit] } }];
+          : [
+              {
+                type: "USAGE",
+                usage: {
+                  inputTokens: 1234,
+                  outputTokens: 321,
+                  inputEstimated: false,
+                  outputEstimated: false,
+                },
+              },
+              { type: "DONE", plan: { units: [unit] } },
+            ];
       return route.fulfill({
         contentType: "text/event-stream",
         body: messages.map((message) => `data: ${JSON.stringify(message)}\n\n`).join(""),
@@ -92,12 +112,17 @@ test.describe("CLI review overlay", () => {
     await page.keyboard.press("Control+i");
     await expect(page.getByTestId("review-unit-1")).toBeVisible();
     await expect(page.getByTestId("error-message")).toContainText("Provider disconnected");
+    await expect(page.getByTestId("review-output-tokens")).toHaveText("≈42");
     await page.keyboard.press("1");
     await expect(page.getByTestId("draft-comment")).toHaveCount(1);
     await page.getByTestId("context-panel-retry").click();
     await expect(page.getByTestId("overlay-status-live")).toContainText("Review plan ready");
     await expect(page.getByTestId("navigation-tab-files")).toHaveAttribute("aria-selected", "true");
     await expect(page.getByTestId("diff-file-header")).toContainText("feat.ts");
+    await page.getByTestId("navigation-tab-units").click();
+    await expect(page.getByTestId("review-input-tokens")).toHaveText("1,234");
+    await expect(page.getByTestId("review-output-tokens")).toHaveText("321");
+    await page.getByTestId("navigation-tab-files").click();
     await page.getByTestId("submit-review-button").click();
     await expect(page.getByTestId("generate-prompt-text")).toContainText(
       "Keep this note across generation",
@@ -108,6 +133,9 @@ test.describe("CLI review overlay", () => {
     await expect(page.getByTestId("navigation-tab-files")).toHaveAttribute("aria-selected", "true");
     await expect(page.getByTestId("draft-comment")).toHaveCount(1);
     expect(calls).toBe(2);
+    await page.getByTestId("navigation-tab-units").click();
+    await expect(page.getByTestId("review-input-tokens")).toHaveText("1,234");
+    await expect(page.getByTestId("review-output-tokens")).toHaveText("321");
   });
 
   test("switching scope reloads the overlay diff", async ({ page, reviewServer }) => {

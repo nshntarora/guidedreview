@@ -1,12 +1,12 @@
 import { useEffect, useId, useMemo, useRef } from "react";
-import { Button, cn, Spinner } from "@guided-review/ui";
+import { Button, cn } from "@guided-review/ui";
 import { useReviewStore } from "@guided-review/ui/review/store";
 import { buildFileTree } from "@guided-review/ui/review/fileNavigation";
 import { TestsUnitIcon } from "./TestsUnitIcon";
 import { ReviewUnitsEmptyState } from "./ReviewUnitsEmptyState";
 import { FileNavigation } from "./FileNavigation";
 import { ShortcutKeys } from "./ShortcutKeys";
-import { buildPhaseDetail } from "@guided-review/ui/review/overlayCopy";
+import { TokenStream } from "./TokenStream";
 
 interface SidebarProps {
   onGenerate?: () => void;
@@ -148,20 +148,7 @@ export function Sidebar({ onGenerate, onSelect }: SidebarProps) {
                 </Button>
               );
             })}
-            {stillBuilding ? (
-              <div
-                role="status"
-                className="flex items-center gap-2 p-3 text-muted"
-                data-testid="review-plan-progress"
-              >
-                <Spinner label="Generating review plan" />
-                <span>
-                  {state.buildPhase
-                    ? buildPhaseDetail(state.buildPhase, state.providerLabel)
-                    : "Generating review plan…"}
-                </span>
-              </div>
-            ) : !hasFiles ? (
+            {stillBuilding ? null : !hasFiles ? (
               <p className="p-2 text-muted">
                 {diff
                   ? "No changed files in this scope."
@@ -201,6 +188,16 @@ export function Sidebar({ onGenerate, onSelect }: SidebarProps) {
                 No review units were generated. Browse Files to review the changes.
               </p>
             ) : null}
+            {(stillBuilding || state.tokenUsage || (planSource === "ai" && planComplete)) && (
+              <TokenStream
+                className={units.length > 0 ? "mt-8" : undefined}
+                phase={state.buildPhase}
+                providerLabel={state.providerLabel}
+                usage={state.tokenUsage}
+                generating={stillBuilding}
+                complete={planSource === "ai" && planComplete}
+              />
+            )}
           </>
         )}
       </div>
