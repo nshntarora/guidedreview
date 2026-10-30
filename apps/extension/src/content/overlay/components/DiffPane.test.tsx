@@ -63,13 +63,14 @@ function resolvedFiles(): ResolvedUnitFile[] {
 function resetStore(): void {
   resetDiffViewModeHydrationForTests();
   useReviewStore.setState({
+    ...useReviewStore.getInitialState(),
     isOpen: false,
     status: "idle",
     error: null,
     diff: null,
     plan: null,
     prContext: null,
-    currentUnitIndex: 0,
+    selection: { kind: "summary" },
     streamGeneration: 0,
     sessionKey: null,
     diffViewMode: DEFAULT_DIFF_VIEW_MODE,

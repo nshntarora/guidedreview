@@ -9,11 +9,15 @@ describe("getFocusableElements", () => {
       <button type="button" disabled>B</button>
       <a href="#x">C</a>
       <button type="button" aria-hidden="true">D</button>
+      <div hidden><button>Hidden ancestor</button></div>
+      <div style="display: none"><button>Collapsed ancestor</button></div>
+      <div style="visibility: hidden"><a href="#hidden">Hidden link</a></div>
       <textarea>E</textarea>
+      <div inert><button type="button">Collapsed file</button></div>
     `;
     document.body.appendChild(root);
     const found = getFocusableElements(root).map((el) => el.textContent?.trim() || el.tagName);
-    // Textarea content is "E"; disabled B and aria-hidden D are excluded.
+    // Collapsing branches stay mounted for animation but must not enter the focus trap.
     expect(found).toEqual(["A", "C", "E"]);
     root.remove();
   });

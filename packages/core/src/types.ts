@@ -175,8 +175,16 @@ export const NO_API_KEY_ERROR_CODE = "no_api_key";
  */
 export type AnnotateStreamStatusPhase = "waiting_for_tokens" | "tokens_streaming";
 
+export interface ReviewTokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  inputEstimated: boolean;
+  outputEstimated: boolean;
+}
+
 export type AnnotateReviewStreamEvent =
   | { type: "STATUS"; phase: AnnotateStreamStatusPhase }
+  | { type: "USAGE"; usage: ReviewTokenUsage }
   | { type: "UNIT"; unit: ReviewUnit }
   | { type: "DONE"; plan: ReviewPlan }
   | { type: "ERROR"; error: ReviewErrorInfo };

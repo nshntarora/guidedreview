@@ -22,7 +22,8 @@ export function hasLineGapBetween(prev: DiffHunk, next: DiffHunk): boolean {
 }
 
 export type HunkSequenceItem =
-  { kind: "hunk"; hunk: DiffHunk } | { kind: "gap"; afterLine: number; key: string };
+  | { kind: "hunk"; hunk: DiffHunk }
+  | { kind: "gap"; afterLine: number; lineCount: number; key: string };
 
 /**
  * Interleave displayed hunks with gap markers for rendering.
@@ -40,6 +41,10 @@ export function withHunkGaps(hunks: DiffHunk[]): HunkSequenceItem[] {
           out.push({
             kind: "gap",
             afterLine,
+            lineCount:
+              prev.newLines > 0 && hunk.newLines > 0
+                ? hunk.newStart - prev.newStart - prev.newLines
+                : hunk.oldStart - prev.oldStart - prev.oldLines,
             key: `gap-${prev.id}-${hunk.id}`,
           });
         }

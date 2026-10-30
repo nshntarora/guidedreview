@@ -89,7 +89,7 @@ describe("withHunkGaps", () => {
     const b = hunk({ id: "f#1", newStart: 20, newLines: 2, oldStart: 18, oldLines: 2 });
     expect(withHunkGaps([a, b])).toEqual([
       { kind: "hunk", hunk: a },
-      { kind: "gap", afterLine: 4, key: "gap-f#0-f#1" },
+      { kind: "gap", afterLine: 4, lineCount: 15, key: "gap-f#0-f#1" },
       { kind: "hunk", hunk: b },
     ]);
   });
@@ -108,6 +108,6 @@ describe("withHunkGaps", () => {
     const third = hunk({ id: "f#2", newStart: 40, newLines: 5, oldStart: 38, oldLines: 5 });
     const seq = withHunkGaps([first, third]);
     expect(seq).toHaveLength(3);
-    expect(seq[1]).toEqual({ kind: "gap", afterLine: 3, key: "gap-f#0-f#2" });
+    expect(seq[1]).toEqual({ kind: "gap", afterLine: 3, lineCount: 36, key: "gap-f#0-f#2" });
   });
 });

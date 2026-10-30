@@ -42,9 +42,10 @@ function githubIdentity(context: ReviewContext): {
   return { owner: context.owner, repo: context.repo, number: context.number };
 }
 
-export function createGitHubReviewHost(): ReviewHost {
+export function createGitHubReviewHost(options: { onGeneratePlan?: () => void } = {}): ReviewHost {
   return {
     kind: "github",
+    generatePlan: options.onGeneratePlan,
     assetUrl: (path) => chrome.runtime.getURL(path),
     persistSession: async (key, data) => {
       await writeSession(sessionStorageKey(key), data);

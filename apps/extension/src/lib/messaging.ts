@@ -9,6 +9,7 @@
  * (`lib/github/submitReview.ts`, `ProviderClient.testConnection`).
  */
 
+import type { ReviewTokenUsage } from "@guided-review/core";
 import {
   MessageType,
   type AnnotateReviewRequest,
@@ -59,6 +60,7 @@ export interface StreamReviewPlanHandlers {
   onError: (error: ReviewErrorInfo) => void;
   /** Optional: waiting_for_tokens / tokens_streaming from the worker. */
   onStatus?: (phase: "waiting_for_tokens" | "tokens_streaming") => void;
+  onUsage?: (usage: ReviewTokenUsage) => void;
 }
 
 /**
@@ -85,6 +87,9 @@ export function streamReviewPlan(
     if (!message || typeof message !== "object" || !("type" in message)) return;
 
     switch (message.type) {
+      case "USAGE":
+        handlers.onUsage?.(message.usage);
+        return;
       case "STATUS":
         handlers.onStatus?.(message.phase);
         return;

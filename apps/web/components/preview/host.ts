@@ -1,3 +1,4 @@
+import { useReviewStore } from "@guided-review/ui/review/store";
 import type { ReviewHost } from "@guided-review/ui/review";
 import { sampleContext, sampleDiff, sampleLocalContext, samplePlan } from "./sample";
 
@@ -16,6 +17,11 @@ export function createPreviewHost(
     restoreSession: async () => null,
     readDiffViewMode: async () =>
       window.matchMedia("(min-width: 768px)").matches ? "split" : "unified",
+    generatePlan: () => {
+      const state = useReviewStore.getState();
+      const generation = state.beginRetry();
+      queueMicrotask(() => useReviewStore.getState().setReady(sampleDiff, samplePlan, generation));
+    },
     connectProvider: () => onUnsupported("Provider settings"),
     streamPlan: (_diff, _context, handlers) => {
       let cancelled = false;

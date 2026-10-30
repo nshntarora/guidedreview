@@ -5,20 +5,11 @@ import { cn } from "@guided-review/ui";
 import { missingMetadataHint } from "@guided-review/ui/review/overlayCopy";
 import { summaryUnitTitle } from "@guided-review/ui/review/store";
 import { useReviewHost } from "@guided-review/ui/review/host";
-import {
-  MAX_RECENT_COMMITS,
-  type LocalCommitCard,
-  type LocalDiffScopeOption,
-} from "@guided-review/ui/review/localReview";
-import { DiffStatCounts } from "./DiffStatCounts";
 import { MiddleEllipsisText } from "./MiddleEllipsisText";
 
 interface DescriptionPaneProps {
   prContext: ReviewContext | null;
   diff: ParsedDiff | null;
-  commits?: LocalCommitCard[];
-  /** Non-empty uncommitted scope, shown as a card above recent commits. */
-  uncommitted?: LocalDiffScopeOption;
 }
 
 function hasNonEmpty(value: string | undefined | null): boolean {
@@ -45,15 +36,12 @@ const STATUS_BADGE_CLASS: Record<FileChangeStatus, string> = {
  * state when the PR has no description (and notes a missing title too).
  * When a parsed diff is available, also shows a summary of file changes.
  */
-export function DescriptionPane({ prContext, diff, commits, uncommitted }: DescriptionPaneProps) {
+export function DescriptionPane({ prContext, diff }: DescriptionPaneProps) {
   const host = useReviewHost();
   const description = prContext?.description ?? "";
   const descriptionHtml = prContext?.descriptionHtml ?? "";
   const hasTitle = hasNonEmpty(prContext?.title);
   const summary = diff && diff.files.length > 0 ? summarizeDiff(diff) : null;
-  const recentCommits = commits?.slice(0, MAX_RECENT_COMMITS) ?? [];
-  const showUncommitted = Boolean(uncommitted && !uncommitted.empty);
-  const showCommitCards = host.kind === "local" && (recentCommits.length > 0 || showUncommitted);
 
   return (
     <div
@@ -70,9 +58,6 @@ export function DescriptionPane({ prContext, diff, commits, uncommitted }: Descr
           {summaryUnitTitle(host.kind)}
         </h2>
         <SummaryCopy
-          showCommitCards={showCommitCards}
-          uncommitted={showUncommitted ? uncommitted : undefined}
-          recentCommits={recentCommits}
           descriptionHtml={descriptionHtml}
           description={description}
           hasTitle={hasTitle}
@@ -85,32 +70,15 @@ export function DescriptionPane({ prContext, diff, commits, uncommitted }: Descr
 }
 
 function SummaryCopy({
-  showCommitCards,
-  uncommitted,
-  recentCommits,
   descriptionHtml,
   description,
   hasTitle,
 }: {
-  showCommitCards: boolean;
-  uncommitted?: LocalDiffScopeOption;
-  recentCommits: LocalCommitCard[];
   descriptionHtml: string;
   description: string;
   hasTitle: boolean;
 }) {
   const host = useReviewHost();
-
-  if (showCommitCards) {
-    return (
-      <ol className="m-0 flex list-none flex-col gap-2.5 p-0" data-testid="commit-list">
-        {uncommitted ? <UncommittedCard scope={uncommitted} /> : null}
-        {recentCommits.map((commit) => (
-          <CommitCard key={commit.sha} commit={commit} />
-        ))}
-      </ol>
-    );
-  }
 
   if (descriptionHtml) {
     return (
@@ -159,72 +127,6 @@ function ChangesSummary({ summary }: { summary: DiffSummary }) {
         ))}
       </ul>
     </section>
-  );
-}
-
-function formatCommitDate(iso: string): string {
-  const parsed = new Date(iso);
-  if (Number.isNaN(parsed.getTime())) return iso;
-  return parsed.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function UncommittedCard({ scope }: { scope: LocalDiffScopeOption }) {
-  return (
-    <li
-      className="rounded-lg border border-border bg-background px-3.5 py-3"
-      data-testid="uncommitted-card"
-    >
-      <h3 className="m-0 text-[0.9375rem] font-semibold leading-snug text-foreground">
-        {scope.label}
-      </h3>
-      {scope.stat && scope.stat.files > 0 ? (
-        <p className="m-0 mt-1 text-sm">
-          <DiffStatCounts {...scope.stat} />
-        </p>
-      ) : scope.meta ? (
-        <p className="m-0 mt-1 text-sm text-muted">{scope.meta}</p>
-      ) : null}
-      {scope.description ? (
-        <p className="m-0 mt-2 text-sm leading-relaxed text-foreground">{scope.description}</p>
-      ) : null}
-    </li>
-  );
-}
-
-function CommitCard({ commit }: { commit: LocalCommitCard }) {
-  return (
-    <li
-      className="rounded-lg border border-border bg-background px-3.5 py-3"
-      data-testid="commit-card"
-    >
-      <div className="flex items-baseline justify-between gap-3">
-        <h3 className="m-0 text-[0.9375rem] font-semibold leading-snug text-foreground">
-          {commit.subject}
-        </h3>
-        <span className="shrink-0 font-mono text-xs text-muted">{commit.shortSha}</span>
-      </div>
-      <p className="m-0 mt-1 flex items-baseline justify-between gap-3 text-sm text-muted">
-        <span>
-          {[commit.author, formatCommitDate(commit.authoredAt)].filter(Boolean).join(" · ")}
-        </span>
-        {commit.stat && commit.stat.files > 0 ? (
-          <DiffStatCounts
-            additions={commit.stat.additions}
-            deletions={commit.stat.deletions}
-            className="shrink-0"
-          />
-        ) : null}
-      </p>
-      {commit.body ? (
-        <p className="m-0 mt-2 text-sm leading-relaxed whitespace-pre-wrap text-foreground">
-          {commit.body}
-        </p>
-      ) : null}
-    </li>
   );
 }
 

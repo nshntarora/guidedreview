@@ -220,11 +220,12 @@ export function findUnitForFile(
     }
   }
 
-  for (let i = 0; i < displayUnits.length; i++) {
-    const unit = displayUnits[i];
-    if (unit.kind !== "review") continue;
-    if (unit.unit.files.some((ref) => ref.fileId === filePath)) return i;
-  }
+  if (!hunkId)
+    for (let i = 0; i < displayUnits.length; i++) {
+      const unit = displayUnits[i];
+      if (unit.kind !== "review") continue;
+      if (unit.unit.files.some((ref) => ref.fileId === filePath)) return i;
+    }
 
   return null;
 }

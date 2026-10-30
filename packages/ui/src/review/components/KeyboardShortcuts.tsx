@@ -21,6 +21,9 @@ type ShortcutRow =
     };
 
 const SHORTCUTS: readonly ShortcutRow[] = [
+  { keys: ["1"], description: "Browse Files" },
+  { keys: ["2"], description: "Browse Review Units" },
+  { keys: ["mod", "I"], join: "chord", description: "Generate / Retry Review Plan" },
   { keys: ["←", "→"], join: "none", description: "Previous / Next Step" },
   { keys: ["↑", "↓"], join: "none", description: "Scroll the Code Pane" },
   { keys: ["v", "u"], join: "sequence", description: "Unified View" },
@@ -63,12 +66,6 @@ const SCOPE_PICKER_SHORTCUT: ShortcutRow = {
   description: "Choose Which Diff to Review",
 };
 
-const STRUCTURE_REVIEW_SHORTCUT: ShortcutRow = {
-  keys: ["mod", "I"],
-  join: "chord",
-  description: "Structure With AI",
-};
-
 function ShortcutRowKeys({ row }: { row: ShortcutRow }) {
   if ("chordWithAlternatives" in row) {
     const { modifier, alternatives } = row.chordWithAlternatives;
@@ -91,24 +88,18 @@ export function KeyboardShortcuts({
   allowExit = true,
   showSettings = false,
   showScopePicker = false,
-  showStructureReview = false,
 }: {
   allowExit?: boolean;
   showSettings?: boolean;
   showScopePicker?: boolean;
-  showStructureReview?: boolean;
 }) {
   const rows = [
     ...(showSettings ? [SETTINGS_SHORTCUT] : []),
     ...(showScopePicker ? [SCOPE_PICKER_SHORTCUT] : []),
-    ...(showStructureReview ? [STRUCTURE_REVIEW_SHORTCUT] : []),
     ...(allowExit ? SHORTCUTS : LOCAL_SHORTCUTS),
   ];
   return (
-    <section
-      className="mt-4 border-t border-border-strong pt-3"
-      aria-labelledby="keyboard-shortcuts-heading"
-    >
+    <section className="mt-4 pt-3" aria-labelledby="keyboard-shortcuts-heading">
       <h2
         id="keyboard-shortcuts-heading"
         className="mb-2 text-xs font-semibold tracking-[0.04em] text-muted uppercase"

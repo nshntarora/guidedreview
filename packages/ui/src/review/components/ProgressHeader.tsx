@@ -2,7 +2,8 @@ import type { Ref } from "react";
 import type { ParsedDiff } from "@guided-review/ui/review/types";
 import type { ReviewContext } from "@guided-review/core";
 import { summarizeDiff } from "@guided-review/core";
-import { Button, Kbd, Select, type SelectHandle, type SelectOption } from "@guided-review/ui";
+import { Button, cn, Kbd, Select, type SelectHandle, type SelectOption } from "@guided-review/ui";
+import { useReviewStore } from "@guided-review/ui/review/store";
 import { useReviewHost } from "@guided-review/ui/review/host";
 import {
   isCommitScopeId,
@@ -28,6 +29,7 @@ interface ProgressHeaderProps {
   /** Opens the Submit Review modal or Generate Prompt (local). */
   onSubmitReview: () => void;
   onGeneratePrompt?: () => void;
+  onSelectSummary: () => void;
   /** When set, the primary action is generate-prompt (no GitHub submit). */
   notesCount?: number;
   localDiff?: LocalDiffControls;
@@ -146,7 +148,7 @@ function LocalTitleCluster({
   stats: { files: number; additions: number; deletions: number } | null;
 }) {
   return (
-    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5 text-sm text-muted">
+    <div className="flex min-w-0 flex-wrap items-center gap-2.5 text-sm text-muted">
       <h1 id={titleId} className="gr-sr-only">
         {title}
       </h1>
@@ -217,11 +219,13 @@ export function ProgressHeader({
   allowExit = true,
   onSubmitReview,
   onGeneratePrompt,
+  onSelectSummary,
   notesCount,
   localDiff,
   scopeSelectRef,
 }: ProgressHeaderProps) {
   const host = useReviewHost();
+  const isSummary = useReviewStore((state) => state.selection.kind === "summary");
   const stats = diff ? summarizeDiff(diff) : null;
   const logomarkUrl = host.assetUrl("logomark.svg");
   const showPrNumber = host.kind === "github" && prContext?.number != null;
@@ -284,7 +288,7 @@ export function ProgressHeader({
         </div>
       )}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex min-w-0 flex-1 items-center gap-3.5">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3.5">
           <img
             className="block h-4 w-8 shrink-0"
             src={logomarkUrl}
@@ -310,6 +314,21 @@ export function ProgressHeader({
               showPrNumber={showPrNumber}
               stats={stats}
             />
+          )}
+          {!isLocal && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "shrink-0",
+                isSummary && "border-primary/30! bg-primary-muted! text-primary!",
+              )}
+              aria-current={isSummary ? "true" : undefined}
+              data-testid="review-summary"
+              onClick={onSelectSummary}
+            >
+              PR Details
+            </Button>
           )}
         </div>
         <div className="flex max-w-full flex-wrap items-center gap-2 sm:gap-3">
@@ -368,11 +387,11 @@ export function ProgressHeader({
       {isLocal && localDiff?.stale && (
         <div
           role="status"
-          className="mt-1 flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-surface-raised px-3 py-2"
+          className="mt-1 flex flex-wrap items-center justify-between gap-3 rounded-md border border-warning/50 bg-warning/10 px-3 py-2"
           data-testid="stale-diff-banner"
         >
-          <p className="m-0 flex min-w-0 items-center gap-2.5 text-sm leading-snug text-foreground">
-            <RefreshIcon className="text-muted" />
+          <p className="m-0 flex min-w-0 items-center gap-2.5 text-sm leading-snug text-warning">
+            <RefreshIcon />
             <span>The diff on disk has changed. Refresh the page to get the latest changes.</span>
           </p>
           <Button

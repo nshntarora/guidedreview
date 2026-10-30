@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Overlay } from "@guided-review/ui/review/Overlay";
 import { resetConfirmationQueueForTests } from "@guided-review/ui";
@@ -8,7 +8,6 @@ import {
   shouldLetComboboxHandleKey,
   VIEW_CHORD_WINDOW_MS,
 } from "@guided-review/ui/review/useOverlayKeyboard";
-import { buildFileReviewPlan } from "@guided-review/core";
 import type { ParsedDiff, PRContext, ReviewPlan } from "@extension/lib/types";
 import * as messaging from "@extension/lib/messaging";
 import * as oauthConfig from "@extension/lib/github/oauthConfig";
@@ -92,6 +91,7 @@ function prContextFixture(overrides: Partial<PRContext> = {}): PRContext {
 
 function resetStore(): void {
   useReviewStore.setState({
+    ...useReviewStore.getInitialState(),
     isOpen: false,
     status: "idle",
     error: null,
@@ -101,11 +101,10 @@ function resetStore(): void {
     diff: null,
     plan: null,
     prContext: null,
-    currentUnitIndex: 0,
+    selection: { kind: "summary" },
     streamGeneration: 0,
     sessionKey: null,
     diffViewMode: DEFAULT_DIFF_VIEW_MODE,
-    planSource: null,
     uiMode: "navigate",
     selectableLines: [],
     lineSelection: null,
@@ -116,12 +115,15 @@ function resetStore(): void {
 
 function seedReadyReview(unitIndex = 1): void {
   useReviewStore.setState({
+    ...useReviewStore.getInitialState(),
     isOpen: true,
     status: "ready",
     diff: diffFixture(),
     plan: planFixture(),
     prContext: prContextFixture(),
-    currentUnitIndex: unitIndex,
+    selection: unitIndex === 0 ? { kind: "summary" } : { kind: "unit", id: "u1" },
+    navigationMode: "units",
+    planComplete: true,
   });
 }
 
@@ -166,17 +168,16 @@ function localDiffFixture(overrides: Partial<LocalDiffControls> = {}): LocalDiff
       },
     ],
     onSelectScope: vi.fn(),
-    onStructureReview: vi.fn(),
-    structuring: false,
-    structured: false,
     ...overrides,
   };
 }
 
-function renderLocalOverlay(overrides: Partial<LocalDiffControls> = {}): LocalDiffControls {
+function renderLocalOverlay(overrides: Partial<LocalDiffControls> = {}) {
+  const generatePlan = vi.fn();
   setActiveReviewHost(
     createMemoryReviewHost({
       kind: "local",
+      generatePlan,
       exportNotes: vi.fn(),
       submit: undefined,
     }),
@@ -194,7 +195,7 @@ function renderLocalOverlay(overrides: Partial<LocalDiffControls> = {}): LocalDi
   });
   const localDiff = localDiffFixture(overrides);
   render(<Overlay allowExit={false} localDiff={localDiff} />);
-  return localDiff;
+  return { ...localDiff, generatePlan };
 }
 
 describe("Overlay", () => {
@@ -229,7 +230,7 @@ describe("Overlay", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("uses Generate Prompt and Change summary for a local host", () => {
+  it("uses Generate Prompt and opens the diff for a local host", () => {
     setActiveReviewHost(
       createMemoryReviewHost({
         kind: "local",
@@ -242,7 +243,8 @@ describe("Overlay", () => {
 
     expect(screen.getByTestId("submit-review-button")).toHaveTextContent("Generate Prompt");
     expect(screen.getByTestId("submit-review-button")).toBeDisabled();
-    expect(screen.getAllByText("Change summary").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByTestId("review-summary")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("description-pane")).not.toBeInTheDocument();
     expect(screen.queryByText("#1")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^exit$/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /settings/i })).toBeInTheDocument();
@@ -363,6 +365,31 @@ describe("Overlay", () => {
     expect(screen.getByTestId("generate-prompt-modal")).toBeInTheDocument();
   });
 
+  it("keeps navigation and view shortcuts available around a restored unfinished composer", () => {
+    seedReadyReview(1);
+    render(<Overlay />);
+    fireEvent.keyDown(window, { key: "c" });
+    fireEvent.keyDown(window, { key: "Enter" });
+    fireEvent.change(screen.getByTestId("comment-composer-input"), {
+      target: { value: "Keep this unfinished thought" },
+    });
+    fireEvent.click(screen.getByTestId("review-summary"));
+    fireEvent.click(screen.getByTestId("review-unit-1"));
+    expect(screen.getByTestId("comment-composer-input")).toHaveValue(
+      "Keep this unfinished thought",
+    );
+    expect(screen.getByTestId("comment-composer-input")).not.toHaveFocus();
+
+    fireEvent.keyDown(window, { key: "ArrowDown" });
+    expect(Element.prototype.scrollBy).toHaveBeenCalled();
+    fireEvent.keyDown(window, { key: "v" });
+    fireEvent.keyDown(window, { key: "u" });
+    expect(useReviewStore.getState().diffViewMode).toBe("unified");
+    fireEvent.keyDown(window, { key: "Enter", ctrlKey: true });
+    expect(useReviewStore.getState().draftComments[0].body).toBe("Keep this unfinished thought");
+    expect(useReviewStore.getState().pendingComposers).toEqual({});
+  });
+
   it("opens settings from the local header and hides the control on GitHub", () => {
     const connectProvider = vi.fn();
     setActiveReviewHost(
@@ -429,7 +456,7 @@ describe("Overlay", () => {
     expect(useReviewStore.getState().uiMode).toBe("navigate");
   });
 
-  it("shows the local scope picker, commit cards, and structure trigger", () => {
+  it("shows sidebar commit cards only in file-tree mode", () => {
     renderLocalOverlay();
 
     const picker = screen.getByRole("combobox", { name: /diff to review/i });
@@ -440,9 +467,15 @@ describe("Overlay", () => {
     expect(screen.queryByText(/main\s*←\s*feat/)).not.toBeInTheDocument();
     expect(screen.queryByText(/main\s*←\s*feature/)).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1, name: "feat" })).toHaveClass("gr-sr-only");
-    expect(screen.getByTestId("uncommitted-card")).toHaveTextContent("Uncommitted changes");
+    expect(screen.queryByTestId("uncommitted-card")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("sidebar-commits")).not.toBeInTheDocument();
+    act(() => useReviewStore.getState().setNavigationMode("files"));
+    expect(screen.getByTestId("sidebar-commits")).toBeInTheDocument();
     expect(screen.getByTestId("commit-card")).toHaveTextContent("Add header");
-    expect(screen.getByTestId("structure-review")).toBeInTheDocument();
+    expect(screen.getByTestId("uncommitted-card")).toHaveTextContent("Uncommitted changes");
+    act(() => useReviewStore.getState().setNavigationMode("units"));
+    expect(screen.queryByTestId("sidebar-commits")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("structure-review")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^exit$/i })).not.toBeInTheDocument();
 
     fireEvent.click(picker);
@@ -466,15 +499,22 @@ describe("Overlay", () => {
 
   describe("local review keyboard", () => {
     it("opens the scope picker on d and structures on ⌘/Ctrl+I", () => {
-      const { onStructureReview } = renderLocalOverlay();
+      const { generatePlan } = renderLocalOverlay();
 
       const picker = screen.getByRole("combobox", { name: /diff to review/i });
       expect(picker).toHaveAttribute("aria-expanded", "false");
 
+      act(() => useReviewStore.setState({ planComplete: false }));
+
       fireEvent.keyDown(window, { key: "i", metaKey: true });
-      expect(onStructureReview).toHaveBeenCalledTimes(1);
+      expect(generatePlan).toHaveBeenCalledTimes(1);
+      expect(useReviewStore.getState().navigationMode).toBe("units");
       fireEvent.keyDown(window, { key: "i", ctrlKey: true });
-      expect(onStructureReview).toHaveBeenCalledTimes(2);
+      expect(generatePlan).toHaveBeenCalledTimes(2);
+
+      act(() => useReviewStore.setState({ status: "streaming" }));
+      fireEvent.keyDown(window, { key: "i", ctrlKey: true });
+      expect(generatePlan).toHaveBeenCalledTimes(2);
 
       fireEvent.keyDown(window, { key: "d" });
       expect(picker).toHaveAttribute("aria-expanded", "true");
@@ -516,11 +556,11 @@ describe("Overlay", () => {
     });
 
     it("does not structure after the review is already structured", () => {
-      const { onStructureReview } = renderLocalOverlay({ structured: true });
+      const { generatePlan } = renderLocalOverlay();
 
       expect(screen.queryByTestId("structure-review")).not.toBeInTheDocument();
       fireEvent.keyDown(window, { key: "i", metaKey: true });
-      expect(onStructureReview).not.toHaveBeenCalled();
+      expect(generatePlan).not.toHaveBeenCalled();
     });
 
     it("does not bind local shortcuts on a GitHub review", () => {
@@ -539,96 +579,81 @@ describe("Overlay", () => {
     });
   });
 
-  it("shows the full layout with the PR description unit while loading", () => {
-    useReviewStore.setState({
-      isOpen: true,
-      status: "loading",
-      buildPhase: "extracting_diff",
-      prContext: prContextFixture(),
-      currentUnitIndex: 0,
-    });
+  it.each(["files", "lines"] as const)(
+    "offers an AI walkthrough for a large diff by %s, with provider setup and dismissal",
+    (sizeBy) => {
+      const connectProvider = vi.fn();
+      const generatePlan = vi.fn();
+      setActiveReviewHost(createMemoryReviewHost({ connectProvider, generatePlan }));
+      seedReadyReview();
+      useReviewStore.setState({
+        plan: null,
+        planComplete: false,
+        navigationMode: "files",
+        selection: { kind: "file", path: "src/foo.ts" },
+        needsProvider: true,
+      });
+      render(<Overlay />);
+      expect(screen.queryByTestId("large-diff-prompt")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("review-plan-invitation")).not.toBeInTheDocument();
+
+      const diff = diffFixture();
+      if (sizeBy === "files") {
+        diff.files = Array.from({ length: 20 }, (_, i) => ({
+          ...diff.files[0],
+          path: `src/file-${i}.ts`,
+        }));
+      } else {
+        diff.files[0].hunks[0].lines = Array.from({ length: 500 }, (_, i) => ({
+          type: "add",
+          content: `const value${i} = ${i};`,
+          newLine: i + 1,
+        }));
+      }
+      act(() => useReviewStore.setState({ diff }));
+      fireEvent.click(screen.getByTestId("large-diff-prompt-action"));
+      expect(connectProvider).toHaveBeenCalledTimes(1);
+      expect(generatePlan).not.toHaveBeenCalled();
+      expect(screen.queryByTestId("large-diff-prompt")).not.toBeInTheDocument();
+
+      act(() => useReviewStore.setState({ navigationMode: "files", needsProvider: false }));
+      fireEvent.click(screen.getByTestId("large-diff-prompt-action"));
+      expect(generatePlan).toHaveBeenCalledTimes(1);
+      act(() => useReviewStore.setState({ navigationMode: "files" }));
+      fireEvent.click(screen.getByTestId("large-diff-prompt-dismiss"));
+      expect(screen.queryByTestId("large-diff-prompt")).not.toBeInTheDocument();
+      expect(screen.getByTestId("code-col")).toHaveFocus();
+    },
+  );
+
+  it("switches sidebar tabs and generates a plan without taking shortcuts from text fields", () => {
+    const generatePlan = vi.fn();
+    const connectProvider = vi.fn();
+    setActiveReviewHost(createMemoryReviewHost({ generatePlan, connectProvider }));
+    seedReadyReview();
+    useReviewStore.setState({ planComplete: false, needsProvider: true });
     render(<Overlay />);
 
-    // Title in left pane + entry in the unit list.
-    expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
-    const loading = screen.getByTestId("context-panel-loading");
-    expect(loading).toHaveTextContent(/building the walkthrough/i);
-    expect(screen.getByTestId("context-panel-loading-detail")).toHaveTextContent(
-      /extracting the diff/i,
-    );
-    expect(screen.getByRole("status", { name: /building the walkthrough/i })).toBeInTheDocument();
-    // Skeleton placeholders are present (non-interactive bars in the unit list).
-    expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
-    // Shortcuts are reserved for the ready state; spinner occupies that slot while loading.
-    expect(screen.queryByLabelText(/keyboard shortcuts/i)).not.toBeInTheDocument();
-    // No full-page loading spinner copy.
-    expect(screen.queryByText(/reading the diff/i)).not.toBeInTheDocument();
-    // Diff has not arrived yet — no Changes summary.
-    expect(screen.queryByLabelText(/diff summary/i)).not.toBeInTheDocument();
-  });
+    fireEvent.keyDown(screen.getByTestId("navigation-tab-units"), { key: "1" });
+    expect(useReviewStore.getState().navigationMode).toBe("files");
+    fireEvent.keyDown(screen.getByTestId("review-file-src/foo.ts"), { key: "2" });
+    expect(useReviewStore.getState().navigationMode).toBe("units");
+    expect(generatePlan).not.toHaveBeenCalled();
+    fireEvent.keyDown(screen.getByTestId("navigation-tab-units"), { key: "i", ctrlKey: true });
+    expect(connectProvider).toHaveBeenCalledTimes(1);
+    expect(generatePlan).not.toHaveBeenCalled();
 
-  it("shows the diff summary while the plan is still loading once the diff is fetched", () => {
-    useReviewStore.setState({
-      isOpen: true,
-      status: "loading",
-      buildPhase: "processing_diff",
-      diff: diffFixture(),
-      prContext: prContextFixture(),
-      currentUnitIndex: 0,
-    });
-    render(<Overlay />);
+    act(() => useReviewStore.getState().setProviderReady(true));
+    fireEvent.keyDown(screen.getByTestId("generate-review-plan"), { key: "i", metaKey: true });
+    expect(generatePlan).toHaveBeenCalledTimes(1);
 
-    expect(screen.getByLabelText(/diff summary/i)).toBeInTheDocument();
-    expect(screen.getByText("src/foo.ts")).toBeInTheDocument();
-    // Plan still loading — skeleton + status copy remain.
-    expect(screen.getByTestId("context-panel-loading")).toHaveTextContent(
-      /building the walkthrough/i,
-    );
-    expect(screen.getByTestId("context-panel-loading-detail")).toHaveTextContent(
-      /processing the diff/i,
-    );
-    expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
-  });
-
-  it("shows completed units alongside skeletons while streaming", () => {
-    useReviewStore.setState({
-      isOpen: true,
-      status: "streaming",
-      buildPhase: "tokens_streaming",
-      diff: diffFixture(),
-      plan: planFixture(),
-      prContext: prContextFixture(),
-      currentUnitIndex: 0,
-    });
-    render(<Overlay />);
-
-    expect(screen.getByText("Update foo")).toBeInTheDocument();
-    expect(screen.getAllByTestId("unit-skeleton").length).toBeGreaterThan(0);
-    expect(screen.getByTestId("context-panel-loading")).toHaveTextContent(
-      /building the walkthrough/i,
-    );
-    expect(screen.getByTestId("context-panel-loading-detail")).toHaveTextContent(
-      /tokens are streaming/i,
-    );
-  });
-
-  it("names the configured provider in the loading detail when the request is sent", () => {
-    useReviewStore.setState({
-      isOpen: true,
-      status: "streaming",
-      buildPhase: "sent_to_provider",
-      providerLabel: "Claude (Anthropic)",
-      diff: diffFixture(),
-      plan: { units: [] },
-      prContext: prContextFixture(),
-      currentUnitIndex: 0,
-    });
-    render(<Overlay />);
-
-    expect(screen.getByTestId("context-panel-loading-detail")).toHaveTextContent(
-      /sent it to claude \(anthropic\)/i,
-    );
+    fireEvent.keyDown(window, { key: "c" });
+    fireEvent.keyDown(window, { key: "Enter" });
+    const input = screen.getByTestId("comment-composer-input");
+    fireEvent.keyDown(input, { key: "1" });
+    fireEvent.keyDown(input, { key: "i", ctrlKey: true });
+    expect(useReviewStore.getState().navigationMode).toBe("units");
+    expect(generatePlan).toHaveBeenCalledTimes(1);
   });
 
   it("shows unit context without the building spinner when viewing a streamed unit", () => {
@@ -639,7 +664,8 @@ describe("Overlay", () => {
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture(),
-      currentUnitIndex: 1,
+      selection: { kind: "unit", id: "u1" },
+      navigationMode: "units",
     });
     render(<Overlay />);
 
@@ -655,7 +681,7 @@ describe("Overlay", () => {
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture(),
-      currentUnitIndex: 0,
+      selection: { kind: "summary" },
     });
     render(<Overlay />);
 
@@ -679,7 +705,7 @@ describe("Overlay", () => {
         code: "authentication_error",
       },
       prContext: prContextFixture(),
-      currentUnitIndex: 0,
+      selection: { kind: "summary" },
     });
     const onRetry = vi.fn();
     render(<Overlay onRetry={onRetry} />);
@@ -687,60 +713,11 @@ describe("Overlay", () => {
     expect(screen.getByTestId("error-message")).toHaveTextContent("Invalid API key");
     expect(screen.getByTestId("error-status-code")).toHaveTextContent("401");
     expect(screen.getByTestId("error-code")).toHaveTextContent("authentication_error");
-    expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId("review-summary")).toHaveTextContent("PR Details");
     expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
 
     screen.getByRole("button", { name: /^retry$/i }).click();
     expect(onRetry).toHaveBeenCalledTimes(1);
-  });
-
-  it("walks the diff with file-per-unit steps and prompts to connect a provider", () => {
-    const diff = diffFixture();
-    useReviewStore.setState({
-      isOpen: true,
-      status: "ready",
-      needsProvider: true,
-      diff,
-      plan: buildFileReviewPlan(diff),
-      prContext: prContextFixture(),
-      currentUnitIndex: 0,
-    });
-    const onRetry = vi.fn();
-    render(<Overlay onRetry={onRetry} />);
-
-    expect(screen.getByTestId("connect-provider-prompt")).toBeInTheDocument();
-    expect(screen.queryByTestId("context-panel-error")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^retry$/i })).not.toBeInTheDocument();
-    expect(screen.queryAllByTestId("unit-skeleton")).toHaveLength(0);
-
-    // Description unit still shows the PR body and the Changes summary.
-    expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
-    expect(screen.getByLabelText(/diff summary/i)).toBeInTheDocument();
-
-    // One navigable step per changed file, after the description.
-    expect(screen.getByText(/2 of 2|1 of 2/i)).toBeInTheDocument();
-    const live = screen.getByTestId("overlay-status-live");
-    expect(live).toHaveTextContent(/one per changed file/i);
-    expect(live).not.toHaveTextContent(/^Error:/);
-  });
-
-  it("shows the file diff on a locally built unit, with the prompt still in the context panel", () => {
-    const diff = diffFixture();
-    useReviewStore.setState({
-      isOpen: true,
-      status: "ready",
-      needsProvider: true,
-      diff,
-      plan: buildFileReviewPlan(diff),
-      prContext: prContextFixture(),
-      currentUnitIndex: 1,
-    });
-    render(<Overlay />);
-
-    // The unit is the file itself: its diff renders, titled by path.
-    expect(screen.getByTestId("diff-unit-title")).toHaveTextContent("src/foo.ts");
-    expect(screen.getByTestId("connect-provider-prompt")).toBeInTheDocument();
   });
 
   it("keeps restored AI context visible even when the provider key is gone", () => {
@@ -751,7 +728,9 @@ describe("Overlay", () => {
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture(),
-      currentUnitIndex: 1,
+      selection: { kind: "unit", id: "u1" },
+      navigationMode: "units",
+      planComplete: true,
     });
     render(<Overlay />);
 
@@ -766,10 +745,10 @@ describe("Overlay", () => {
       diff: diffFixture(),
       plan: { units: [] },
       prContext: prContextFixture(),
-      currentUnitIndex: 0,
+      selection: { kind: "summary" },
     });
     render(<Overlay />);
-    expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId("review-summary")).toHaveTextContent("PR Details");
     expect(screen.queryByText(/no review units were generated/i)).not.toBeInTheDocument();
   });
 
@@ -780,10 +759,11 @@ describe("Overlay", () => {
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture(),
-      currentUnitIndex: 1,
+      selection: { kind: "unit", id: "u1" },
+      navigationMode: "units",
     });
     render(<Overlay />);
-    expect(screen.getAllByText("PR Description").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId("review-summary")).toHaveTextContent("PR Details");
     expect(screen.getByTestId("diff-unit-title")).toHaveTextContent("Update foo");
     expect(screen.getByText("because it needed updating")).toBeInTheDocument();
   });
@@ -795,7 +775,7 @@ describe("Overlay", () => {
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture(),
-      currentUnitIndex: 0,
+      selection: { kind: "summary" },
     });
     render(<Overlay />);
     // Description lives in the left pane, not a header <details>.
@@ -810,7 +790,7 @@ describe("Overlay", () => {
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture(),
-      currentUnitIndex: 0,
+      selection: { kind: "summary" },
     });
     render(<Overlay />);
     expect(screen.getByText(/author's summary of intent/i)).toBeInTheDocument();
@@ -823,7 +803,7 @@ describe("Overlay", () => {
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture({ description: "", descriptionHtml: "" }),
-      currentUnitIndex: 0,
+      selection: { kind: "summary" },
     });
     render(<Overlay />);
 
@@ -840,7 +820,7 @@ describe("Overlay", () => {
       isOpen: true,
       status: "loading",
       prContext: prContextFixture({ title: "", description: "", descriptionHtml: "" }),
-      currentUnitIndex: 0,
+      selection: { kind: "summary" },
     });
     render(<Overlay />);
 
@@ -862,7 +842,7 @@ describe("Overlay", () => {
       diff: diffFixture(),
       plan: planFixture(),
       prContext: prContextFixture(),
-      currentUnitIndex: 0,
+      selection: { kind: "summary" },
     });
     render(<Overlay />);
 
@@ -876,10 +856,10 @@ describe("Overlay", () => {
 
     fireEvent.keyDown(window, { key: "ArrowRight" });
 
-    expect(useReviewStore.getState().currentUnitIndex).toBe(1);
+    expect(useReviewStore.getState().selection).toEqual({ kind: "file", path: "src/foo.ts" });
     expect(scrollToMock).toHaveBeenCalledWith({ top: 0 });
-    expect(scrollIntoViewMock).toHaveBeenCalledWith({ block: "nearest", behavior: "smooth" });
-    expect(screen.getByRole("button", { current: true }).textContent).toMatch(/Update foo/);
+    expect(scrollIntoViewMock).toHaveBeenCalledWith({ block: "nearest" });
+    expect(screen.getByRole("button", { current: true }).textContent).toMatch(/foo.ts/);
   });
 
   describe("comment mode keyboard", () => {
@@ -1554,8 +1534,8 @@ describe("Overlay", () => {
       fireEvent.keyDown(window, { key: "Enter" });
       expect(useReviewStore.getState().composerOpen).toBe(true);
 
-      fireEvent.keyDown(window, { key: "v" });
-      fireEvent.keyDown(window, { key: "u" });
+      fireEvent.keyDown(screen.getByTestId("comment-composer-input"), { key: "v" });
+      fireEvent.keyDown(screen.getByTestId("comment-composer-input"), { key: "u" });
 
       expect(useReviewStore.getState().diffViewMode).toBe("split");
     });
@@ -1602,7 +1582,11 @@ describe("Overlay", () => {
   });
 
   describe("keyboard isolation from the host page", () => {
-    function dispatchKeyOnWindow(key: string, init: KeyboardEventInit = {}) {
+    function dispatchKeyOnWindow(
+      key: string,
+      init: KeyboardEventInit = {},
+      target: EventTarget = window,
+    ) {
       const event = new KeyboardEvent("keydown", {
         key,
         bubbles: true,
@@ -1611,7 +1595,7 @@ describe("Overlay", () => {
       });
       const stopSpy = vi.spyOn(event, "stopPropagation");
       const preventSpy = vi.spyOn(event, "preventDefault");
-      window.dispatchEvent(event);
+      target.dispatchEvent(event);
       return { event, stopSpy, preventSpy };
     }
 
@@ -1635,7 +1619,11 @@ describe("Overlay", () => {
       expect(useReviewStore.getState().composerOpen).toBe(true);
 
       for (const key of ["s", "t", "c", "a", "i"]) {
-        const { stopSpy, preventSpy } = dispatchKeyOnWindow(key);
+        const { stopSpy, preventSpy } = dispatchKeyOnWindow(
+          key,
+          { composed: true },
+          screen.getByTestId("comment-composer-input"),
+        );
         expect(stopSpy).toHaveBeenCalled();
         // Character keys must not be cancelled so the textarea can receive them.
         expect(preventSpy).not.toHaveBeenCalled();

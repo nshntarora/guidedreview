@@ -20,8 +20,11 @@ The Guided Review sidebar always lists the same shortcuts as this page. Most cho
 
 | Shortcut           | Action                                                                                          |
 | ------------------ | ----------------------------------------------------------------------------------------------- |
-| `→`                | Next Unit                                                                                       |
-| `←`                | Previous Unit                                                                                   |
+| `1`                | Switch to Files                                                                                 |
+| `2`                | Switch to Review units                                                                          |
+| `⌘/Ctrl` + `I`     | Generate or retry the review plan; open provider setup if needed                                |
+| `→`                | Next File or Review Unit                                                                        |
+| `←`                | Previous File or Review Unit                                                                    |
 | `↑` / `↓`          | Scroll the Code Pane                                                                            |
 | `Esc`              | Exit Guided Review (when not in comment mode or a modal)                                        |
 | `c`                | Enter [Comment Mode](/docs/leave-comments) (if the unit has selectable lines)                   |
@@ -29,6 +32,10 @@ The Guided Review sidebar always lists the same shortcuts as this page. Most cho
 | `⌘/Ctrl` + `Enter` | Open [Submit Review](/docs/submit-review) (or [Connect GitHub](/docs/connect-github) if needed) |
 
 On a GitHub PR, while Guided Review is open, keys are not passed through to GitHub’s page shortcuts. What a “unit” is: [How a review plan works](/docs/how-it-works#review-units).
+
+Switching tabs does not start generation. Press `⌘/Ctrl` + `I` to generate review units when a plan is not yet complete. This shortcut stays inactive while generation is running or a text field has focus.
+
+In the file list, `↑` / `↓` move focus, `←` / `→` collapse or expand folders, and `Home` / `End` jump to the first or last visible row. Click a file or press `Enter` to open it and move focus to the diff. Comment and view shortcuts then work immediately. When a navigation tab has focus, `←` / `→` switch tabs.
 
 ## Diff view
 
@@ -85,7 +92,6 @@ The [CLI](/docs/cli) uses the same navigation, diff view, search, and comment-mo
 | Shortcut       | Action                       |
 | -------------- | ---------------------------- |
 | `d`            | Open the Diff-Scope Dropdown |
-| `⌘/Ctrl` + `I` | Structure With AI            |
 | `⌘/Ctrl` + `,` | Settings                     |
 
 ## Marketing site

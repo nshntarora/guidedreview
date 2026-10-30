@@ -38,6 +38,7 @@ export function createOpenAICompatibleProvider(
         {
           model: settings.model,
           stream: true,
+          stream_options: { include_usage: true },
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
             { role: "user", content: buildUserPrompt(diff, context) },
@@ -69,6 +70,7 @@ export function createOpenAICompatibleProvider(
             finish_reason?: string | null;
           }>;
           error?: { message?: string; code?: string; type?: string };
+          usage?: { prompt_tokens?: number; completion_tokens?: number } | null;
         };
 
         if (data.error?.message) {
@@ -78,9 +80,16 @@ export function createOpenAICompatibleProvider(
         }
 
         const delta = data.choices?.[0]?.delta;
+        if (data.usage) {
+          yield {
+            type: "usage",
+            inputTokens: data.usage.prompt_tokens,
+            outputTokens: data.usage.completion_tokens,
+          };
+        }
         const reasoning = delta?.reasoning_content;
         if (typeof reasoning === "string" && reasoning.length > 0) {
-          yield { type: "heartbeat" };
+          yield { type: "heartbeat", text: reasoning };
         }
         const content = delta?.content;
         if (typeof content === "string" && content.length > 0) {

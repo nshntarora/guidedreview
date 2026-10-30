@@ -12,6 +12,7 @@ export type {
   ReviewPlan,
   ProviderSettings,
   ReviewErrorInfo,
+  ReviewTokenUsage,
   AnnotateStreamStatusPhase,
   AnnotateReviewStreamEvent,
   ReviewNote,

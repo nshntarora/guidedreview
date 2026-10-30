@@ -17,6 +17,7 @@ import type {
   ReviewErrorInfo,
   ReviewPlan,
   ReviewUnit,
+  ReviewTokenUsage,
   SubmitReviewResponse,
 } from "@guided-review/ui/review/types";
 import type { ReviewCommentInput, ReviewEvent } from "@guided-review/ui/review/types";
@@ -28,6 +29,7 @@ export interface StreamPlanHandlers {
   onDone: (plan: ReviewPlan) => void;
   onError: (error: ReviewErrorInfo) => void;
   onStatus?: (phase: "waiting_for_tokens" | "tokens_streaming") => void;
+  onUsage?: (usage: ReviewTokenUsage) => void;
 }
 
 export interface ReviewSubmitAuth {
@@ -80,6 +82,8 @@ export interface ReviewHost {
     handlers: StreamPlanHandlers,
   ): { cancel(): void };
   connectProvider(): void;
+  /** Explicit user action; readiness is independent of any saved plan. */
+  generatePlan?(): void;
   persistDiffViewMode?(mode: DiffViewMode): Promise<void>;
   readDiffViewMode?(): Promise<DiffViewMode>;
   fileDiffUrl?(filePath: string, context: ReviewContext): Promise<string | null>;

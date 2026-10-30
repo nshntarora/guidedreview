@@ -27,7 +27,8 @@
     "fuse.js": "^7.5.0",
     "highlight.js": "^11.11.1",
     "zustand": "^5.0.14",
-    "clsx": "^2.1.1"
+    "clsx": "^2.1.1",
+    "@react-symbols/icons": "^1.4.1"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",

@@ -31,7 +31,7 @@ export function Toggle({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(
-        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border transition-colors",
+        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border transition-colors duration-150 ease-gr-out",
         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
         "disabled:cursor-not-allowed disabled:opacity-60",
         checked ? "border-primary bg-primary" : "border-border bg-surface-raised",
@@ -41,7 +41,7 @@ export function Toggle({
       <span
         aria-hidden="true"
         className={cn(
-          "pointer-events-none absolute top-0.5 left-0.5 size-4 rounded-full shadow-sm transition-transform",
+          "pointer-events-none absolute top-0.5 left-0.5 size-4 rounded-full shadow-sm transition-transform duration-150 ease-gr-out",
           checked ? "translate-x-5 bg-primary-foreground" : "translate-x-0 bg-muted",
         )}
       />

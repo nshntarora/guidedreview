@@ -1,36 +1,28 @@
-import { cn, Kbd } from "@guided-review/ui";
+import { Button, Kbd } from "@guided-review/ui";
 
 interface FooterNavProps {
-  currentIndex: number;
-  total: number;
+  canGoPrev: boolean;
+  canGoNext: boolean;
+  label: string;
   onPrev: () => void;
   onNext: () => void;
 }
 
-const navBtnBase =
-  "inline-flex cursor-pointer items-center gap-2 rounded-md border px-4 py-[7px] text-base font-medium disabled:cursor-default disabled:opacity-40";
-
-export function FooterNav({ currentIndex, total, onPrev, onNext }: FooterNavProps) {
-  const stepLabel =
-    total > 0 ? `Review unit ${currentIndex + 1} of ${total}` : "No review units yet";
-
+export function FooterNav({ canGoPrev, canGoNext, label, onPrev, onNext }: FooterNavProps) {
   return (
     <footer
       className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-background px-5 py-3"
       aria-label="Review navigation"
     >
-      <button
-        type="button"
-        className={cn(navBtnBase, "border-border bg-surface text-foreground")}
+      <Button
+        variant="secondary"
+        size="sm"
         onClick={onPrev}
-        disabled={currentIndex === 0 || total === 0}
-        aria-label="Previous review unit"
+        disabled={!canGoPrev}
         data-testid="review-previous-unit"
       >
-        Previous
-        <Kbd>←</Kbd>
-      </button>
-
+        Previous <Kbd>←</Kbd>
+      </Button>
       <p
         className="m-0 min-w-0 text-center text-base tabular-nums text-muted"
         role="status"
@@ -38,32 +30,11 @@ export function FooterNav({ currentIndex, total, onPrev, onNext }: FooterNavProp
         aria-atomic="true"
         data-testid="footer-step-status"
       >
-        {total > 0 ? (
-          <>
-            <span className="sr-only sm:not-sr-only">Review unit </span>
-            {currentIndex + 1} of {total}
-          </>
-        ) : (
-          stepLabel
-        )}
+        {label}
       </p>
-
-      <button
-        type="button"
-        className={cn(
-          navBtnBase,
-          "border-primary bg-primary text-primary-foreground transition-colors",
-          "not-disabled:hover:border-primary-hover not-disabled:hover:bg-primary-hover",
-          "[&_[data-slot=kbd]]:bg-[rgba(13,8,6,0.12)] [&_[data-slot=kbd]]:text-inherit",
-        )}
-        onClick={onNext}
-        disabled={total === 0 || currentIndex >= total - 1}
-        aria-label="Next review unit"
-        data-testid="review-next-unit"
-      >
-        Next
-        <Kbd>→</Kbd>
-      </button>
+      <Button size="sm" onClick={onNext} disabled={!canGoNext} data-testid="review-next-unit">
+        Next <Kbd>→</Kbd>
+      </Button>
     </footer>
   );
 }

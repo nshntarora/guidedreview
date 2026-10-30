@@ -9,6 +9,7 @@ import { annotateReview } from "./annotate";
 const provider = vi.hoisted(() => ({
   deltasByFirstFilePath: new Map<string, string[]>(),
   gate: null as Promise<void> | null,
+  usage: null as { inputTokens: number; outputTokens: number } | null,
 }));
 
 vi.mock("../providers", () => ({
@@ -24,6 +25,7 @@ vi.mock("../providers", () => ({
         if (options?.signal?.aborted) return;
         yield { type: "text_delta", text };
       }
+      if (provider.usage) yield { type: "usage", ...provider.usage };
       yield { type: "done" };
     },
   }),
@@ -117,6 +119,7 @@ describe("annotateReview", () => {
   beforeEach(() => {
     provider.deltasByFirstFilePath.clear();
     provider.gate = null;
+    provider.usage = null;
   });
 
   it("namespaces unit ids per chunk so ids from different chunks cannot collide", async () => {
@@ -143,6 +146,27 @@ describe("annotateReview", () => {
     const firstUnitIdx = events.findIndex((e) => e.type === "UNIT");
     const lastStatusIdx = events.map((e) => e.type).lastIndexOf("STATUS");
     expect(lastStatusIdx).toBeLessThan(firstUnitIdx);
+  });
+
+  it("streams estimates then aggregates provider totals across file chunks", async () => {
+    const text = planJson([unitJson("u1", "a.ts")]);
+    provider.deltasByFirstFilePath.set("a.ts", [text.slice(0, 20), text.slice(20)]);
+    provider.deltasByFirstFilePath.set("b.ts", [planJson([unitJson("u2", "b.ts")])]);
+    provider.usage = { inputTokens: 16000, outputTokens: 100 };
+
+    const events = await collect({ files: [oversizedFile("a.ts"), oversizedFile("b.ts")] });
+    const updates = events.flatMap((event) => (event.type === "USAGE" ? [event.usage] : []));
+    expect(updates[0]).toMatchObject({ outputTokens: 0, inputEstimated: true });
+    expect(updates[0].inputTokens).toBeGreaterThan(15000);
+    expect(updates[1]).toMatchObject({ outputTokens: 5, outputEstimated: true });
+    expect(updates[2].outputTokens).toBe(Math.ceil(text.length / 4));
+    expect(updates.at(-1)).toEqual({
+      inputTokens: 32000,
+      outputTokens: 200,
+      inputEstimated: false,
+      outputEstimated: false,
+    });
+    expect(events.at(-1)?.type).toBe("DONE");
   });
 
   it("drops units referencing a file the model was not given", async () => {

@@ -43,12 +43,14 @@ export default function Preview({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     setActiveReviewHost(host);
-    const { context, diff, plan } = loadPreviewReview(mode);
+    const { context, diff } = loadPreviewReview(mode);
     const state = useReviewStore.getState();
-    const generation = state.startLoading("preview:parcel-http");
+    const generation = state.bootReady({
+      sessionKey: "preview:parcel-http",
+      diff,
+    });
     state.setPRContext(context);
     state.setDiffViewMode(window.matchMedia("(min-width: 768px)").matches ? "split" : "unified");
-    state.setReady(diff, plan, generation);
     state.open();
     return () => {
       useReviewStore.setState({
@@ -95,9 +97,6 @@ export default function Preview({ onClose }: { onClose: () => void }) {
             },
           ],
           onSelectScope: () => showUnsupported("Changing the diff scope"),
-          onStructureReview: () => showUnsupported("Structuring a new review"),
-          structuring: false,
-          structured: true,
         }
       : undefined;
 

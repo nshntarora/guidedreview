@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ChromeMock, MockPort } from "@extension/test/chromeMock";
+import type { ChromeMock } from "@extension/test/chromeMock";
 import type { FetchDiffResponse, ParsedDiff } from "@extension/lib/types";
 import { setProviderSettings } from "@extension/lib/settings";
 import { useReviewStore } from "@guided-review/ui/review/store";
@@ -99,7 +99,7 @@ describe("content script review orchestration", () => {
       diff: null,
       plan: null,
       prContext: null,
-      currentUnitIndex: 0,
+      selection: { kind: "summary" },
       sessionKey: null,
       draftComments: [],
     });
@@ -119,26 +119,35 @@ describe("content script review orchestration", () => {
     await Promise.resolve();
   });
 
-  it("streams an AI plan when a provider is configured and there is no saved session", async () => {
+  it("loads files without calling a configured provider until explicitly requested", async () => {
     await setProviderSettings({ provider: "anthropic", model: "claude-opus-4-8", apiKey: "sk-1" });
 
-    await startReview();
+    let finish!: (value: FetchDiffResponse) => void;
+    chromeMock().runtime.sendMessage.mockImplementation(async (message: unknown) => {
+      if ((message as { type?: string }).type === "FETCH_DIFF")
+        return new Promise<FetchDiffResponse>((resolve) => {
+          finish = resolve;
+        });
+      return undefined;
+    });
+    const opening = startReview();
+    await vi.waitFor(() => expect(finish).toBeDefined());
+    useReviewStore.getState().setNavigationMode("units");
+    finish({ ok: true, diff: diffFixture() });
+    await opening;
 
     const state = useReviewStore.getState();
-    expect(state.status).toBe("streaming");
+    expect(state.status).toBe("ready");
     expect(state.diff?.files[0].path).toBe("src/foo.ts");
     expect(state.sessionKey).toBe("acme/web#42");
     expect(state.needsProvider).toBe(false);
 
-    // The annotate port is opened and handed the diff to work on.
-    expect(chromeMock().runtime.connect).toHaveBeenCalledWith({ name: "annotate-review" });
-    const port = chromeMock().runtime.connect.mock.results.at(-1)?.value as MockPort;
-    expect(port.postMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "ANNOTATE_REVIEW" }),
-    );
+    expect(chromeMock().runtime.connect).not.toHaveBeenCalled();
+    expect(state.navigationMode).toBe("units");
+    expect(state.selection).toEqual({ kind: "summary" });
   });
 
-  it("falls back to a file-per-unit plan when no provider key is configured", async () => {
+  it("opens the real diff without an AI plan when no provider key is configured", async () => {
     await setProviderSettings({ provider: "anthropic", model: "claude-opus-4-8", apiKey: "" });
 
     await startReview();
@@ -146,7 +155,8 @@ describe("content script review orchestration", () => {
     const state = useReviewStore.getState();
     expect(state.needsProvider).toBe(true);
     expect(state.status).toBe("ready");
-    expect(state.plan?.units.map((u) => u.title)).toEqual(["src/foo.ts"]);
+    expect(state.plan).toBeNull();
+    expect(state.diff?.files.map((file) => file.path)).toEqual(["src/foo.ts"]);
     // No provider means no annotate call at all.
     expect(chromeMock().runtime.connect).not.toHaveBeenCalled();
   });
@@ -170,7 +180,7 @@ describe("content script review orchestration", () => {
     const state = useReviewStore.getState();
     expect(state.status).toBe("ready");
     expect(state.plan?.units[0].title).toBe("Saved unit");
-    expect(state.currentUnitIndex).toBe(1);
+    expect(state.selection).toEqual({ kind: "unit", id: "u1" });
     expect(chromeMock().runtime.sendMessage).not.toHaveBeenCalledWith(
       expect.objectContaining({ type: "FETCH_DIFF" }),
     );

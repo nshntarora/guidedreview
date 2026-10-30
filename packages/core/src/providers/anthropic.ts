@@ -61,6 +61,12 @@ export const anthropicProvider: ProviderClient = {
     }
 
     let sawContent = false;
+    type Usage = {
+      input_tokens?: number;
+      output_tokens?: number;
+      cache_creation_input_tokens?: number;
+      cache_read_input_tokens?: number;
+    };
 
     for await (const event of readSseJsonStream(response.body, { signal: options?.signal })) {
       if (!event || typeof event !== "object") continue;
@@ -68,12 +74,28 @@ export const anthropicProvider: ProviderClient = {
         type?: string;
         delta?: { type?: string; text?: string; stop_reason?: string };
         error?: { message?: string; type?: string };
+        message?: { usage?: Usage };
+        usage?: Usage;
       };
 
       if (ev.type === "error") {
         throw new ProviderError(ev.error?.message ?? "Claude stream error.", {
           code: ev.error?.type,
         });
+      }
+
+      const usage = ev.message?.usage ?? ev.usage;
+      if (usage) {
+        yield {
+          type: "usage",
+          inputTokens:
+            usage.input_tokens === undefined
+              ? undefined
+              : usage.input_tokens +
+                (usage.cache_creation_input_tokens ?? 0) +
+                (usage.cache_read_input_tokens ?? 0),
+          outputTokens: usage.output_tokens,
+        };
       }
 
       if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta" && ev.delta.text) {

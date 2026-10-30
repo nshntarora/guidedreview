@@ -4,11 +4,12 @@ import type {
   ReviewErrorInfo,
   ReviewPlan,
   ReviewUnit,
+  ReviewTokenUsage,
 } from "@guided-review/ui/review/types";
 import type { ReviewContext } from "@guided-review/core";
 import { NO_API_KEY_ERROR_CODE } from "@guided-review/ui/review/types";
 import type { PRIdentity } from "@guided-review/ui/review/types";
-import { buildFileReviewPlan } from "@guided-review/core";
+import { orderedFiles } from "./fileNavigation";
 import {
   displayLineNumber,
   linesInSelection,
@@ -21,9 +22,6 @@ import { DEFAULT_DIFF_VIEW_MODE, type DiffViewMode } from "./diffView";
 import { getActiveReviewHost } from "./host";
 
 export type ReviewStatus = "idle" | "loading" | "streaming" | "ready" | "error";
-
-/** How the current plan was produced. File plans are cheap and must not be persisted. */
-export type PlanSource = "files" | "ai";
 
 /**
  * Fine-grained progress while the review plan is being built (diff fetch →
@@ -44,7 +42,7 @@ export type DisplayUnit =
   | { kind: "review"; id: string; title: string; unit: ReviewUnit; planIndex: number };
 
 export function summaryUnitTitle(kind: "github" | "local" = "github"): string {
-  return kind === "local" ? "Change summary" : "PR Description";
+  return kind === "local" ? "Commits" : "PR Description";
 }
 
 /** Ordered units shown in the overlay (description is UI-only, not model output). */
@@ -75,31 +73,103 @@ export function displayUnitCount(plan: ReviewPlan | null): number {
   return 1 + (plan?.units.length ?? 0);
 }
 
+export type NavigationMode = "files" | "units";
+export type ContentSelection =
+  { kind: "summary" } | { kind: "file"; path: string } | { kind: "unit"; id: string };
+
+export function selectionKey(selection: ContentSelection): string {
+  return selection.kind === "summary"
+    ? "summary"
+    : selection.kind === "file"
+      ? `file:${selection.path}`
+      : `unit:${selection.id}`;
+}
+
+/** One sequence drives keyboard actions and footer availability. */
+export function reviewNavigation(
+  state: {
+    diff: ParsedDiff | null;
+    plan: ReviewPlan | null;
+    navigationMode: NavigationMode;
+    selection: ContentSelection;
+  },
+  hostKind: "github" | "local" = "github",
+) {
+  const sequence: ContentSelection[] =
+    state.navigationMode === "files"
+      ? orderedFiles(state.diff).map((file) => ({ kind: "file", path: file.path }))
+      : (state.plan?.units ?? []).map((unit) => ({ kind: "unit", id: unit.id }));
+  const index = sequence.findIndex((item) => selectionKey(item) === selectionKey(state.selection));
+  return {
+    currentIndex: index + 1,
+    total: sequence.length,
+    previous:
+      index > 0
+        ? sequence[index - 1]
+        : index === 0 && hostKind !== "local"
+          ? ({ kind: "summary" } as ContentSelection)
+          : null,
+    next: sequence[index + 1] ?? null,
+  };
+}
+
+interface PendingComposer {
+  lines: SelectableLine[];
+  body: string;
+}
+
 interface PersistedSession {
+  tokenUsage?: ReviewTokenUsage | null;
   diff: ParsedDiff;
-  plan: ReviewPlan;
+  plan?: ReviewPlan | null;
+  /** Only read for sessions saved before file browsing was separated from AI plans. */
+  planSource?: "files" | "ai" | null;
+  planComplete?: boolean;
   prContext: ReviewContext | null;
-  /** Index into the display unit list (0 = PR description, then plan units). */
-  currentUnitIndex: number;
-  /** Local draft comments (session-scoped; not posted to GitHub). */
+  /** Legacy sessions used an index including the description at zero. */
+  currentUnitIndex?: number;
+  currentFileIndex?: number;
+  selection?: ContentSelection;
+  navigationMode?: NavigationMode;
+  lastFileSelection?: ContentSelection | null;
+  lastUnitSelection?: ContentSelection | null;
+  collapsedDirectories?: Record<string, boolean>;
+  scrollPositions?: Record<string, number>;
+  pendingComposers?: Record<string, PendingComposer>;
   draftComments?: DraftComment[];
+}
+
+const NAVIGATION_RESET = {
+  selection: { kind: "summary" } as ContentSelection,
+  navigationMode: "files" as NavigationMode,
+  lastFileSelection: null as ContentSelection | null,
+  lastUnitSelection: null as ContentSelection | null,
+  collapsedDirectories: {} as Record<string, boolean>,
+  scrollPositions: {} as Record<string, number>,
+  pendingComposers: {} as Record<string, PendingComposer>,
+};
+
+function composerKey(lines: SelectableLine[]): string {
+  return JSON.stringify(lines.map((line) => line.id));
 }
 
 const COMMENT_UI_RESET = {
   uiMode: "navigate" as UiMode,
   lineSelection: null as LineSelection | null,
   composerOpen: false,
+  composerText: "",
+  composerAutoFocus: false,
   selectableLines: [] as SelectableLine[],
 };
 
 interface ReviewState {
+  tokenUsage: ReviewTokenUsage | null;
+  setTokenUsage: (usage: ReviewTokenUsage, generation: number) => void;
   isOpen: boolean;
   status: ReviewStatus;
   error: ReviewErrorInfo | null;
   /**
-   * No AI provider configured. Orthogonal to `status`: the review still runs
-   * on a locally built file-per-unit plan, with the context panel prompting
-   * the user to connect a provider for ordering and commentary.
+   * Provider readiness is independent of the diff and any cached AI plan.
    */
   needsProvider: boolean;
   /** Pipeline sub-status while loading/streaming; null when idle/ready/error. */
@@ -109,8 +179,23 @@ interface ReviewState {
   diff: ParsedDiff | null;
   plan: ReviewPlan | null;
   prContext: ReviewContext | null;
-  /** Index into the display unit list (0 = PR description, then plan units). */
-  currentUnitIndex: number;
+  selection: ContentSelection;
+  navigationMode: NavigationMode;
+  lastFileSelection: ContentSelection | null;
+  lastUnitSelection: ContentSelection | null;
+  collapsedDirectories: Record<string, boolean>;
+  scrollPositions: Record<string, number>;
+  selectContent: (selection: ContentSelection, mode?: NavigationMode) => void;
+  setNavigationMode: (mode: NavigationMode) => void;
+  goToFile: (path: string) => void;
+  toggleDirectory: (path: string) => void;
+  saveScrollPosition: (key: string, top: number) => void;
+  planComplete: boolean;
+  setProviderReady: (ready: boolean) => void;
+  composerText: string;
+  composerAutoFocus: boolean;
+  pendingComposers: Record<string, PendingComposer>;
+  setComposerText: (body: string) => void;
   /**
    * Monotonic generation for the active annotation stream. Bumped on
    * startLoading so stale port events from a cancelled stream are ignored.
@@ -123,8 +208,6 @@ interface ReviewState {
   sessionKey: string | null;
   /** Unified vs side-by-side code view (UI preference, not session data). */
   diffViewMode: DiffViewMode;
-  /** `null` until a plan is installed. File plans are not persisted. */
-  planSource: PlanSource | null;
 
   /** navigate = unit walkthrough; comment = line selection for drafts. */
   uiMode: UiMode;
@@ -138,15 +221,15 @@ interface ReviewState {
   close: () => void;
   startLoading: (sessionKey: string) => number;
   /**
-   * Open a walkthrough on an already-built file plan without a loading flash
+   * Open an already-fetched diff without a loading flash
    * or an annotation stream. Bumps streamGeneration so a late SSE is ignored.
    */
-  bootReady: (args: { sessionKey: string; diff: ParsedDiff; plan: ReviewPlan }) => number;
+  bootReady: (args: { sessionKey: string; diff: ParsedDiff }) => number;
   setPRContext: (prContext: ReviewContext) => void;
   setDiff: (diff: ParsedDiff) => void;
+  setFileReady: (diff: ParsedDiff, generation?: number) => void;
   setBuildPhase: (phase: BuildPhase, generation?: number) => void;
   setProviderLabel: (label: string | null) => void;
-  beginStreaming: (generation: number) => void;
   /**
    * Start a retry of the annotation stream without clearing the already-fetched
    * diff. Bumps streamGeneration and returns the new generation.
@@ -156,9 +239,8 @@ interface ReviewState {
   setReady: (diff: ParsedDiff, plan: ReviewPlan, generation?: number) => void;
   setError: (error: ReviewErrorInfo | string, generation?: number) => void;
   /**
-   * No AI provider key: prompt to connect one instead of erroring. When the
-   * diff is already available, also swaps in the local file-per-unit plan so
-   * the walkthrough still works.
+   * No provider key: retain the diff, navigation, comments and any partial plan.
+   * Setup is offered from Review units.
    */
   setNeedsProvider: () => void;
   goToUnit: (index: number) => void;
@@ -198,6 +280,11 @@ function newDraftId(): string {
 }
 
 export const useReviewStore = create<ReviewState>((set, get) => ({
+  tokenUsage: null,
+  setTokenUsage: (usage, generation) => {
+    if (get().streamGeneration !== generation) return;
+    set({ tokenUsage: usage });
+  },
   isOpen: false,
   status: "idle",
   error: null,
@@ -207,11 +294,13 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   diff: null,
   plan: null,
   prContext: null,
-  currentUnitIndex: 0,
+  ...NAVIGATION_RESET,
+  planComplete: false,
+  composerText: "",
+  composerAutoFocus: true,
   streamGeneration: 0,
   sessionKey: null,
   diffViewMode: DEFAULT_DIFF_VIEW_MODE,
-  planSource: null,
   uiMode: "navigate",
   selectableLines: [],
   lineSelection: null,
@@ -219,41 +308,47 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   draftComments: [],
 
   open: () => set({ isOpen: true }),
-  close: () => set({ isOpen: false, ...COMMENT_UI_RESET }),
+  close: () =>
+    set((state) => ({
+      isOpen: false,
+      streamGeneration: state.streamGeneration + 1,
+      ...COMMENT_UI_RESET,
+    })),
 
   startLoading: (sessionKey) => {
     const streamGeneration = get().streamGeneration + 1;
     set({
+      tokenUsage: null,
       status: "loading",
       error: null,
       needsProvider: false,
       buildPhase: "extracting_diff",
       providerLabel: null,
-      currentUnitIndex: 0,
+      ...NAVIGATION_RESET,
+      planComplete: false,
       plan: null,
       diff: null,
       sessionKey,
       streamGeneration,
       draftComments: [],
-      planSource: null,
       ...COMMENT_UI_RESET,
     });
     return streamGeneration;
   },
 
-  bootReady: ({ sessionKey, diff, plan }) => {
+  bootReady: ({ sessionKey, diff }) => {
     const streamGeneration = get().streamGeneration + 1;
     set({
+      tokenUsage: null,
       status: "ready",
       error: null,
-      needsProvider: false,
       buildPhase: null,
-      currentUnitIndex: 0,
-      plan,
+      ...NAVIGATION_RESET,
+      planComplete: false,
+      plan: null,
       diff,
       sessionKey,
       streamGeneration,
-      planSource: "files",
       draftComments: [],
       ...COMMENT_UI_RESET,
     });
@@ -262,12 +357,28 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
 
   setPRContext: (prContext) => set({ prContext }),
 
+  setProviderReady: (ready) => set({ needsProvider: !ready }),
+
   setDiff: (diff) =>
     set({
       diff,
       // Diff just landed — move past "extracting" into local/provider prep.
       buildPhase: "processing_diff",
     }),
+
+  // Initial diff arrival is not a scope change. Keep any tab the user opened
+  // while fetching, and use the generation established by startLoading.
+  setFileReady: (diff, generation) => {
+    if (generation !== undefined && get().streamGeneration !== generation) return;
+    set({
+      status: "ready",
+      diff,
+      plan: null,
+      planComplete: false,
+      buildPhase: null,
+      error: null,
+    });
+  },
 
   setBuildPhase: (phase, generation) => {
     if (generation !== undefined && get().streamGeneration !== generation) return;
@@ -276,26 +387,40 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
 
   setProviderLabel: (label) => set({ providerLabel: label }),
 
-  beginStreaming: (generation) => {
-    if (get().streamGeneration !== generation) return;
-    set({ status: "streaming", plan: { units: [] }, error: null });
-  },
-
   beginRetry: () => {
-    const nextGeneration = get().streamGeneration + 1;
-    const hasDiff = get().diff !== null;
+    const state = get();
+    const nextGeneration = state.streamGeneration + 1;
+    const hasDiff = state.diff !== null;
+    const selectedId = state.selection.kind === "unit" ? state.selection.id : null;
+    const filePath = state.plan?.units
+      .find((unit) => unit.id === selectedId)
+      ?.files.find((ref) => state.diff?.files.some((file) => file.path === ref.fileId))?.fileId;
     set({
+      tokenUsage: null,
       streamGeneration: nextGeneration,
       status: hasDiff ? "streaming" : "loading",
       error: null,
       // A retry always re-runs the annotate call, so the connect-provider
       // prompt must not survive into the new attempt.
       needsProvider: false,
+      // Unit IDs are scoped to a request, not stable across model generations.
       plan: hasDiff ? { units: [] } : null,
+      lastUnitSelection: null,
+      scrollPositions: Object.fromEntries(
+        Object.entries(state.scrollPositions).filter(([key]) => !key.startsWith("unit:")),
+      ),
+      ...(selectedId
+        ? {
+            selection: filePath
+              ? ({ kind: "file", path: filePath } as ContentSelection)
+              : ({ kind: "summary" } as ContentSelection),
+            ...COMMENT_UI_RESET,
+          }
+        : {}),
+      planComplete: false,
       // Cached-diff retry skips extract; full restart goes through startLoading.
       buildPhase: hasDiff ? "processing_diff" : "extracting_diff",
       providerLabel: hasDiff ? get().providerLabel : null,
-      ...COMMENT_UI_RESET,
     });
     return nextGeneration;
   },
@@ -304,13 +429,20 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
     if (get().streamGeneration !== generation) return;
     set((state) => {
       const existing = state.plan?.units ?? [];
-      if (existing.some((u) => u.id === unit.id)) {
-        return state;
-      }
+      const units = existing.some((u) => u.id === unit.id)
+        ? existing.map((u) => (u.id === unit.id ? unit : u))
+        : [...existing, unit];
       return {
         status: "streaming",
-        plan: { units: [...existing, unit] },
+        plan: { units },
         error: null,
+        ...(existing.length === 0 && state.navigationMode === "units"
+          ? {
+              selection: { kind: "unit" as const, id: unit.id },
+              lastUnitSelection: { kind: "unit" as const, id: unit.id },
+              ...COMMENT_UI_RESET,
+            }
+          : {}),
         // Units imply tokens already arrived (STATUS may have set this earlier).
         buildPhase: "tokens_streaming",
       };
@@ -319,18 +451,22 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
 
   setReady: (diff, plan, generation) => {
     if (generation !== undefined && get().streamGeneration !== generation) return;
-    set((state) => {
-      const total = displayUnitCount(plan);
-      const index = Math.min(Math.max(state.currentUnitIndex, 0), total - 1);
-      return {
-        status: "ready",
-        diff,
-        plan,
-        currentUnitIndex: index,
-        error: null,
-        buildPhase: null,
-        planSource: "ai",
-      };
+    const state = get();
+    const selection =
+      state.selection.kind === "unit" &&
+      !plan.units.some(
+        (unit) => unit.id === (state.selection.kind === "unit" ? state.selection.id : ""),
+      )
+        ? ({ kind: "summary" } as ContentSelection)
+        : state.selection;
+    set({
+      status: "ready",
+      diff,
+      plan,
+      selection,
+      error: null,
+      buildPhase: null,
+      planComplete: true,
     });
   },
 
@@ -348,43 +484,113 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
 
   setNeedsProvider: () => {
     const { diff } = get();
-    if (!diff) {
-      set({ needsProvider: true, error: null, buildPhase: null });
-      return;
-    }
-    // Diff already fetched (or the background backstop fired mid-stream):
-    // fall back to the file-per-unit plan so the walkthrough still works.
     set({
       needsProvider: true,
       error: null,
-      status: "ready",
-      plan: buildFileReviewPlan(diff),
-      currentUnitIndex: 0,
       buildPhase: null,
-      planSource: "files",
-      ...COMMENT_UI_RESET,
+      ...(diff ? { status: "ready" as const } : {}),
+    });
+  },
+
+  selectContent: (selection, mode) => {
+    const state = get();
+    if (
+      selection.kind === "file" &&
+      !state.diff?.files.some((file) => file.path === selection.path)
+    )
+      return;
+    if (selection.kind === "unit" && !state.plan?.units.some((unit) => unit.id === selection.id))
+      return;
+    const navigationMode =
+      mode ??
+      (selection.kind === "file"
+        ? "files"
+        : selection.kind === "unit"
+          ? "units"
+          : state.navigationMode);
+    const collapsedDirectories = { ...state.collapsedDirectories };
+    if (selection.kind === "file") {
+      const parts = selection.path.split("/");
+      for (let i = 1; i < parts.length; i++)
+        delete collapsedDirectories[parts.slice(0, i).join("/")];
+    }
+    set({
+      selection,
+      navigationMode,
+      collapsedDirectories,
+      ...(navigationMode === "files"
+        ? { lastFileSelection: selection }
+        : { lastUnitSelection: selection }),
+      ...(selectionKey(selection) !== selectionKey(state.selection) ? COMMENT_UI_RESET : {}),
     });
   },
 
   goToUnit: (index) => {
-    const total = displayUnitCount(get().plan);
-    if (index < 0 || index >= total) return;
-    set({ currentUnitIndex: index, ...COMMENT_UI_RESET });
+    const unit = get().plan?.units[index - 1];
+    if (index === 0) get().selectContent({ kind: "summary" }, "units");
+    else if (unit) get().selectContent({ kind: "unit", id: unit.id });
   },
 
-  goNext: () => {
-    const { currentUnitIndex, plan } = get();
-    const total = displayUnitCount(plan);
-    if (currentUnitIndex < total - 1) {
-      set({ currentUnitIndex: currentUnitIndex + 1, ...COMMENT_UI_RESET });
+  setNavigationMode: (mode) => {
+    const state = get();
+    if (mode === state.navigationMode) return;
+    let selection = mode === "files" ? state.lastFileSelection : state.lastUnitSelection;
+    if (!selection && mode === "files") {
+      const unit =
+        state.selection.kind === "unit"
+          ? state.plan?.units.find(
+              (unit) => unit.id === (state.selection.kind === "unit" ? state.selection.id : ""),
+            )
+          : null;
+      const path =
+        unit?.files.find((ref) => state.diff?.files.some((file) => file.path === ref.fileId))
+          ?.fileId ?? orderedFiles(state.diff)[0]?.path;
+      selection = path ? { kind: "file", path } : { kind: "summary" };
     }
+    if (!selection && mode === "units") {
+      const unit =
+        state.plan?.units.find(
+          (unit) =>
+            state.selection.kind === "file" &&
+            unit.files.some(
+              (ref) => ref.fileId === (state.selection.kind === "file" ? state.selection.path : ""),
+            ),
+        ) ?? state.plan?.units[0];
+      selection = unit ? { kind: "unit", id: unit.id } : { kind: "summary" };
+    }
+    const selectedId = selection?.kind === "unit" ? selection.id : null;
+    if (selectedId && !state.plan?.units.some((unit) => unit.id === selectedId))
+      selection = { kind: "summary" };
+    state.selectContent(selection ?? { kind: "summary" }, mode);
+    // An empty tab has no unit to remember yet. Once streaming provides one,
+    // its first selection can follow the file the reviewer was reading.
+    if (mode === "units" && !state.lastUnitSelection && selection?.kind === "summary")
+      set({ lastUnitSelection: null });
+  },
+
+  goToFile: (path) => get().selectContent({ kind: "file", path }),
+  toggleDirectory: (path) =>
+    set((state) => ({
+      collapsedDirectories: {
+        ...state.collapsedDirectories,
+        [path]: !state.collapsedDirectories[path],
+      },
+    })),
+  saveScrollPosition: (key, top) =>
+    set((state) =>
+      state.scrollPositions[key] === top
+        ? state
+        : { scrollPositions: { ...state.scrollPositions, [key]: top } },
+    ),
+
+  goNext: () => {
+    const next = reviewNavigation(get(), getActiveReviewHost()?.kind).next;
+    if (next) get().selectContent(next);
   },
 
   goPrev: () => {
-    const { currentUnitIndex } = get();
-    if (currentUnitIndex > 0) {
-      set({ currentUnitIndex: currentUnitIndex - 1, ...COMMENT_UI_RESET });
-    }
+    const previous = reviewNavigation(get(), getActiveReviewHost()?.kind).previous;
+    if (previous) get().selectContent(previous);
   },
 
   setDiffViewMode: (mode) => {
@@ -410,7 +616,28 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   setSelectableLines: (lines) => {
     const { uiMode, lineSelection, selectableLines: prevLines } = get();
     if (uiMode !== "comment") {
-      set({ selectableLines: lines });
+      const pending = Object.values(get().pendingComposers).find(
+        (entry) =>
+          entry.lines.length > 0 &&
+          entry.lines.every((selected) => lines.some((line) => line.id === selected.id)),
+      );
+      set(
+        pending
+          ? {
+              uiMode: "comment",
+              selectableLines: lines,
+              composerOpen: true,
+              composerText: pending.body,
+              composerAutoFocus: false,
+              lineSelection: {
+                anchorIndex: lines.findIndex((line) => line.id === pending.lines[0].id),
+                focusIndex: lines.findIndex(
+                  (line) => line.id === pending.lines[pending.lines.length - 1].id,
+                ),
+              },
+            }
+          : { selectableLines: lines },
+      );
       return;
     }
     if (lines.length === 0) {
@@ -480,10 +707,23 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
     const { uiMode, lineSelection, selectableLines } = get();
     if (uiMode !== "comment" || !lineSelection) return;
     if (linesInSelection(selectableLines, lineSelection).length === 0) return;
-    set({ composerOpen: true });
+    const pending =
+      get().pendingComposers[composerKey(linesInSelection(selectableLines, lineSelection))];
+    set({ composerOpen: true, composerText: pending?.body ?? "", composerAutoFocus: true });
   },
 
-  closeComposer: () => set({ composerOpen: false }),
+  setComposerText: (body) => {
+    const { selectableLines, lineSelection, pendingComposers } = get();
+    const lines = lineSelection ? linesInSelection(selectableLines, lineSelection) : [];
+    const next = { ...pendingComposers };
+    if (body) next[composerKey(lines)] = { lines, body };
+    else delete next[composerKey(lines)];
+    set({ composerText: body, pendingComposers: next });
+  },
+  closeComposer: () => {
+    get().setComposerText("");
+    set({ composerOpen: false });
+  },
 
   saveDraftComment: (body, unitId) => {
     const trimmed = body.trim();
@@ -513,6 +753,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       unitId,
     };
 
+    get().setComposerText("");
     set({
       draftComments: [...draftComments, draft],
       composerOpen: false,
@@ -579,48 +820,36 @@ export function resetDiffViewModeHydrationForTests(): void {
  * review flow.
  */
 export async function persistSession(): Promise<void> {
-  const {
-    status,
-    needsProvider,
-    diff,
-    plan,
-    prContext,
-    currentUnitIndex,
-    sessionKey,
-    draftComments,
-    planSource,
-  } = useReviewStore.getState();
-  if (status !== "ready" || !diff || !plan || !sessionKey) return;
-  // The file-per-unit fallback is cheap to rebuild and would otherwise be
-  // resumed in place of the AI plan once a provider is configured.
-  if (needsProvider || planSource !== "ai") return;
-
+  const state = useReviewStore.getState();
+  if (!state.diff || !state.sessionKey) return;
   const host = getActiveReviewHost();
   if (!host) return;
-
   const payload: PersistedSession = {
-    diff,
-    plan,
-    prContext,
-    currentUnitIndex,
-    draftComments,
+    tokenUsage: state.tokenUsage,
+    diff: state.diff,
+    plan: state.plan,
+    planComplete: state.planComplete,
+    prContext: state.prContext,
+    selection: state.selection,
+    navigationMode: state.navigationMode,
+    lastFileSelection: state.lastFileSelection,
+    lastUnitSelection: state.lastUnitSelection,
+    collapsedDirectories: state.collapsedDirectories,
+    scrollPositions: state.scrollPositions,
+    draftComments: state.draftComments,
+    pendingComposers: state.pendingComposers,
   };
   try {
-    await host.persistSession(sessionKey, payload);
+    await host.persistSession(state.sessionKey, payload);
   } catch (error) {
     console.warn("Guided Review: failed to persist session", error);
   }
 }
 
-/**
- * Attempt to restore a previously persisted session for this PR. Returns true if restored,
- * false if there's nothing to restore or storage access failed — callers should fall back
- * to starting a fresh review in either case.
- */
 export async function restoreSession(sessionKey: string): Promise<boolean> {
   const host = getActiveReviewHost();
   if (!host) return false;
-
+  const generation = useReviewStore.getState().streamGeneration;
   let saved: PersistedSession | undefined;
   try {
     saved = (await host.restoreSession(sessionKey)) as PersistedSession | undefined;
@@ -628,24 +857,47 @@ export async function restoreSession(sessionKey: string): Promise<boolean> {
     console.warn("Guided Review: failed to restore session", error);
     return false;
   }
-  if (!saved) return false;
-
-  const total = displayUnitCount(saved.plan);
-  const currentUnitIndex = Math.min(Math.max(saved.currentUnitIndex, 0), total - 1);
-
+  if (!saved?.diff?.files || generation !== useReviewStore.getState().streamGeneration)
+    return false;
+  const plan = saved.planSource === "files" ? null : (saved.plan ?? null);
+  const legacyUnit =
+    plan?.units[Math.min(Math.max((saved.currentUnitIndex ?? 0) - 1, 0), plan.units.length - 1)];
+  let selection: ContentSelection =
+    saved.selection ??
+    (saved.navigationMode === "files" && saved.currentFileIndex
+      ? { kind: "file", path: saved.diff.files[saved.currentFileIndex - 1]?.path ?? "" }
+      : (saved.currentUnitIndex ?? 0) > 0 && legacyUnit
+        ? { kind: "unit", id: legacyUnit.id }
+        : { kind: "summary" });
+  const valid = (item: ContentSelection | null | undefined): ContentSelection | null => {
+    if (!item) return null;
+    if (item.kind === "summary") return item;
+    if (item.kind === "file" && saved.diff.files.some((file) => file.path === item.path))
+      return item;
+    if (item.kind === "unit" && plan?.units.some((unit) => unit.id === item.id)) return item;
+    return null;
+  };
+  selection = valid(selection) ?? { kind: "summary" };
   useReviewStore.setState({
+    ...NAVIGATION_RESET,
+    tokenUsage: saved.tokenUsage ?? null,
     status: "ready",
-    // Persisted sessions are always AI-built (see persistSession).
-    needsProvider: false,
-    planSource: "ai",
+    planComplete: plan !== null && (saved.planComplete ?? true),
     diff: saved.diff,
-    plan: saved.plan,
+    plan,
     prContext: saved.prContext ?? null,
-    currentUnitIndex,
+    selection,
+    navigationMode: saved.navigationMode ?? (plan ? "units" : "files"),
+    lastFileSelection:
+      valid(saved.lastFileSelection) ?? (selection.kind === "file" ? selection : null),
+    lastUnitSelection:
+      valid(saved.lastUnitSelection) ?? (selection.kind === "unit" ? selection : null),
+    collapsedDirectories: saved.collapsedDirectories ?? {},
+    scrollPositions: saved.scrollPositions ?? {},
+    pendingComposers: saved.pendingComposers ?? {},
     sessionKey,
     error: null,
     buildPhase: null,
-    providerLabel: null,
     draftComments: (saved.draftComments ?? []).map((draft) => ({
       ...draft,
       selectedCode: draft.selectedCode ?? "",

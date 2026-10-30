@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, type KeyboardEvent } from "react";
 import { formatLineRangeLabel } from "@guided-review/ui/review/commentTypes";
 import { Button, Kbd, Textarea } from "@guided-review/ui";
+import { useReviewStore } from "@guided-review/ui/review/store";
 import { ModEnterChord } from "./ShortcutKeys";
 
 interface CommentComposerProps {
@@ -22,11 +23,12 @@ export function CommentComposer({
   onSave,
   onCancel,
 }: CommentComposerProps) {
-  const [body, setBody] = useState("");
+  const body = useReviewStore((s) => s.composerText);
+  const setBody = useReviewStore((s) => s.setComposerText);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    textareaRef.current?.focus();
+    if (useReviewStore.getState().composerAutoFocus) textareaRef.current?.focus();
   }, []);
 
   const canSave = body.trim().length > 0;

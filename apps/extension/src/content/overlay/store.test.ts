@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { resolveUnitFiles } from "@guided-review/core";
+import { buildSelectableLines } from "@guided-review/ui/review/buildSelectableLines";
+import { orderedFiles } from "@guided-review/ui/review/fileNavigation";
 import { DEFAULT_DIFF_VIEW_MODE } from "@guided-review/ui/review/diffView";
 import {
   useReviewStore,
@@ -8,7 +11,7 @@ import {
 } from "@guided-review/ui/review/store";
 import type { ParsedDiff, PRContext, ReviewPlan } from "@extension/lib/types";
 import { createGitHubReviewHost } from "@extension/content/githubHost";
-import { setActiveReviewHost } from "@guided-review/ui/review/host";
+import { createMemoryReviewHost, setActiveReviewHost } from "@guided-review/ui/review/host";
 
 function diffFixture(): ParsedDiff {
   return { files: [] };
@@ -46,6 +49,7 @@ const STORAGE_KEY = `guidedReview.session.${SESSION_KEY}`;
 
 function resetStore(): void {
   useReviewStore.setState({
+    ...useReviewStore.getInitialState(),
     isOpen: false,
     status: "idle",
     error: null,
@@ -55,11 +59,10 @@ function resetStore(): void {
     diff: null,
     plan: null,
     prContext: null,
-    currentUnitIndex: 0,
+    selection: { kind: "summary" },
     streamGeneration: 0,
     sessionKey: null,
     diffViewMode: DEFAULT_DIFF_VIEW_MODE,
-    planSource: null,
     uiMode: "navigate",
     selectableLines: [],
     lineSelection: null,
@@ -81,463 +84,297 @@ function selectableFixture(count = 3) {
   }));
 }
 
-describe("buildSessionKey", () => {
-  it("uses owner/repo#number and is independent of tab path", () => {
-    expect(buildSessionKey({ owner: "acme", repo: "widgets", number: 42 })).toBe("acme/widgets#42");
-    // Same identity whether the user is on Conversation or Files changed.
-    expect(buildSessionKey({ owner: "acme", repo: "widgets", number: 1 })).toBe(SESSION_KEY);
+function populatedDiff(): ParsedDiff {
+  const file = (
+    path: string,
+    status: "modified" | "added" | "removed" | "renamed" = "modified",
+    binary = false,
+  ) => ({
+    path,
+    status,
+    isBinaryOrElided: binary,
+    previousPath: status === "renamed" ? "old.ts" : undefined,
+    hunks: binary
+      ? []
+      : [0, 1].map((i) => ({
+          id: `${path}#${i}`,
+          header: "@@ -1 +1 @@",
+          oldStart: i + 1,
+          oldLines: 1,
+          newStart: i + 1,
+          newLines: 1,
+          lines: [{ type: "add" as const, content: `line ${i + 1}`, newLine: i + 1 }],
+        })),
   });
-});
+  return {
+    files: [
+      file("README.md"),
+      file("src/renamed.ts", "renamed"),
+      file("src/deleted.ts", "removed"),
+      file("assets/binary.dat", "added", true),
+      file("generated/elided.txt", "modified", true),
+    ],
+  };
+}
 
-describe("useReviewStore", () => {
+function scopedPlan(): ReviewPlan {
+  return {
+    units: [
+      {
+        ...planFixture(1).units[0],
+        files: [{ fileId: "src/renamed.ts", hunkIds: ["src/renamed.ts#1"], role: "core_logic" }],
+      },
+    ],
+  };
+}
+
+describe("review workspace state", () => {
   beforeEach(() => {
+    resetStore();
     setActiveReviewHost(createGitHubReviewHost());
   });
 
-  it("open/close toggle isOpen", () => {
-    resetStore();
-    useReviewStore.getState().open();
-    expect(useReviewStore.getState().isOpen).toBe(true);
-    useReviewStore.getState().close();
-    expect(useReviewStore.getState().isOpen).toBe(false);
-  });
-
-  it("defaults diffViewMode to split and setDiffViewMode updates it", () => {
-    resetStore();
-    expect(useReviewStore.getState().diffViewMode).toBe("split");
-    useReviewStore.getState().setDiffViewMode("unified");
-    expect(useReviewStore.getState().diffViewMode).toBe("unified");
-    useReviewStore.getState().setDiffViewMode("split");
-    expect(useReviewStore.getState().diffViewMode).toBe("split");
-  });
-
-  it("startLoading sets status to loading, stores sessionKey, clears plan/diff/error, and resets unit index", () => {
-    resetStore();
-    useReviewStore.setState({
-      error: { message: "boom" },
-      plan: planFixture(1),
-      diff: diffFixture(),
-      currentUnitIndex: 2,
-      buildPhase: "tokens_streaming",
-      providerLabel: "OpenAI",
-    });
-    const generation = useReviewStore.getState().startLoading(SESSION_KEY);
-    const state = useReviewStore.getState();
-    expect(state.status).toBe("loading");
-    expect(state.error).toBeNull();
-    expect(state.plan).toBeNull();
-    expect(state.diff).toBeNull();
-    expect(state.currentUnitIndex).toBe(0);
-    expect(state.sessionKey).toBe(SESSION_KEY);
-    expect(state.buildPhase).toBe("extracting_diff");
-    expect(state.providerLabel).toBeNull();
-    expect(generation).toBe(state.streamGeneration);
-    expect(generation).toBeGreaterThan(0);
-  });
-
-  it("bootReady installs a file plan without loading or persisting", async () => {
-    resetStore();
-    const generation = useReviewStore.getState().bootReady({
-      sessionKey: SESSION_KEY,
-      diff: diffFixture(),
-      plan: planFixture(2),
-    });
-    const state = useReviewStore.getState();
-    expect(state.status).toBe("ready");
-    expect(state.planSource).toBe("files");
-    expect(state.buildPhase).toBeNull();
-    expect(state.sessionKey).toBe(SESSION_KEY);
-    expect(state.plan?.units).toHaveLength(2);
-    expect(generation).toBe(state.streamGeneration);
-
-    await persistSession();
-    expect(await chrome.storage.session.get(STORAGE_KEY)).toEqual({});
-  });
-
-  it("setDiff stores the diff and advances buildPhase to processing", () => {
-    resetStore();
-    useReviewStore.getState().startLoading(SESSION_KEY);
-    const diff = diffFixture();
-    useReviewStore.getState().setDiff(diff);
-
-    const state = useReviewStore.getState();
-    expect(state.status).toBe("loading");
-    expect(state.diff).toBe(diff);
-    expect(state.plan).toBeNull();
-    expect(state.buildPhase).toBe("processing_diff");
-  });
-
-  it("stream updates must use startLoading's return value, not a prior getState() snapshot", () => {
-    resetStore();
-    const snapshot = useReviewStore.getState();
-    const generation = snapshot.startLoading(SESSION_KEY);
-    expect(snapshot.streamGeneration).not.toBe(generation);
-
-    useReviewStore.getState().beginStreaming(generation);
-    const unit = planFixture(1).units[0];
-    useReviewStore.getState().appendUnit(unit, generation);
-    expect(useReviewStore.getState().plan?.units).toHaveLength(1);
-
-    useReviewStore
-      .getState()
-      .appendUnit({ ...unit, id: "stale-snapshot" }, snapshot.streamGeneration);
-    expect(useReviewStore.getState().plan?.units).toHaveLength(1);
-  });
-
-  it("beginStreaming and appendUnit grow the plan while streaming", () => {
-    resetStore();
-    useReviewStore.getState().startLoading(SESSION_KEY);
-    const gen = useReviewStore.getState().streamGeneration;
-    useReviewStore.getState().beginStreaming(gen);
-
-    expect(useReviewStore.getState().status).toBe("streaming");
-    expect(useReviewStore.getState().plan).toEqual({ units: [] });
-
-    const unit = planFixture(1).units[0];
-    useReviewStore.getState().appendUnit(unit, gen);
-    expect(useReviewStore.getState().plan?.units).toHaveLength(1);
-    expect(useReviewStore.getState().status).toBe("streaming");
-    expect(useReviewStore.getState().buildPhase).toBe("tokens_streaming");
-
-    // Duplicate id is ignored.
-    useReviewStore.getState().appendUnit(unit, gen);
-    expect(useReviewStore.getState().plan?.units).toHaveLength(1);
-
-    // Stale generation is ignored.
-    useReviewStore.getState().appendUnit({ ...unit, id: "stale" }, gen - 1);
-    expect(useReviewStore.getState().plan?.units).toHaveLength(1);
-  });
-
-  it("setBuildPhase respects stream generation", () => {
-    resetStore();
-    useReviewStore.getState().startLoading(SESSION_KEY);
-    const gen = useReviewStore.getState().streamGeneration;
-    useReviewStore.getState().setBuildPhase("sent_to_provider", gen);
-    expect(useReviewStore.getState().buildPhase).toBe("sent_to_provider");
-    useReviewStore.getState().setBuildPhase("waiting_for_tokens", gen - 1);
-    expect(useReviewStore.getState().buildPhase).toBe("sent_to_provider");
-  });
-
-  it("beginRetry with a cached diff starts at processing_diff", () => {
-    resetStore();
-    useReviewStore.getState().startLoading(SESSION_KEY);
-    useReviewStore.getState().setDiff(diffFixture());
-    useReviewStore.getState().setProviderLabel("Claude (Anthropic)");
-    const gen = useReviewStore.getState().beginRetry();
-    const state = useReviewStore.getState();
-    expect(gen).toBe(state.streamGeneration);
-    expect(state.status).toBe("streaming");
-    expect(state.buildPhase).toBe("processing_diff");
-    expect(state.providerLabel).toBe("Claude (Anthropic)");
-  });
-
-  it("setReady and setError clear buildPhase", () => {
-    resetStore();
-    useReviewStore.setState({ buildPhase: "tokens_streaming" });
-    useReviewStore.getState().setReady(diffFixture(), planFixture(1));
-    expect(useReviewStore.getState().buildPhase).toBeNull();
-
-    useReviewStore.setState({ buildPhase: "waiting_for_tokens" });
-    useReviewStore.getState().setError("boom");
-    expect(useReviewStore.getState().buildPhase).toBeNull();
-  });
-
-  it("goNext works mid-stream once units have been appended", () => {
-    resetStore();
-    useReviewStore.getState().startLoading(SESSION_KEY);
-    const gen = useReviewStore.getState().streamGeneration;
-    useReviewStore.getState().beginStreaming(gen);
-    useReviewStore.getState().appendUnit(planFixture(1).units[0], gen);
-
-    // display: [desc, u0]
-    useReviewStore.getState().goNext();
-    expect(useReviewStore.getState().currentUnitIndex).toBe(1);
-  });
-
-  it("setReady sets status ready, stores diff/plan, and clamps currentUnitIndex", () => {
-    resetStore();
-    useReviewStore.setState({ currentUnitIndex: 0 });
-    const diff = diffFixture();
-    const plan = planFixture(2);
+  it("navigates all diff files independently of ordered, scoped AI units", () => {
+    const diff = populatedDiff();
+    const plan = scopedPlan();
+    useReviewStore.getState().bootReady({ sessionKey: SESSION_KEY, diff });
+    expect(useReviewStore.getState().selection).toEqual({ kind: "summary" });
+    expect(useReviewStore.getState().navigationMode).toBe("files");
     useReviewStore.getState().setReady(diff, plan);
+    const visited = [];
+    for (let i = 0; i < diff.files.length; i++) {
+      useReviewStore.getState().goNext();
+      visited.push(useReviewStore.getState().selection);
+    }
+    expect(visited).toEqual(orderedFiles(diff).map((file) => ({ kind: "file", path: file.path })));
+    useReviewStore.getState().goToFile("src/renamed.ts");
+    useReviewStore.getState().saveScrollPosition("file:src/renamed.ts", 240);
+    useReviewStore.getState().setNavigationMode("units");
+    expect(useReviewStore.getState().selection).toEqual({ kind: "unit", id: "u0" });
+    expect(resolveUnitFiles(plan.units[0], diff)[0].hunks.map((hunk) => hunk.id)).toEqual([
+      "src/renamed.ts#1",
+    ]);
+    useReviewStore.getState().goPrev();
+    expect(useReviewStore.getState().selection).toEqual({ kind: "summary" });
+    useReviewStore.getState().setNavigationMode("files");
+    expect(useReviewStore.getState().selection).toEqual({ kind: "file", path: "src/renamed.ts" });
+    expect(useReviewStore.getState().scrollPositions["file:src/renamed.ts"]).toBe(240);
+    expect(
+      useReviewStore.getState().diff?.files.find((file) => file.path === "src/renamed.ts")?.hunks,
+    ).toHaveLength(2);
+  });
 
+  it("opens the first streamed review unit and preserves navigation as generation continues", () => {
     const state = useReviewStore.getState();
-    expect(state.status).toBe("ready");
-    expect(state.diff).toBe(diff);
-    expect(state.plan).toBe(plan);
-    // Display units = description + 2 plan units; stay on description (index 0).
-    expect(state.currentUnitIndex).toBe(0);
-  });
+    const diff = populatedDiff();
+    state.bootReady({ sessionKey: SESSION_KEY, diff });
+    state.setNavigationMode("units");
+    const generation = state.beginRetry();
+    const plan = planFixture(2);
 
-  it("setReady preserves a valid currentUnitIndex instead of resetting to 0", () => {
-    resetStore();
-    // While loading the user is on the description unit (index 0); after ready they stay.
-    useReviewStore.setState({ currentUnitIndex: 0 });
-    useReviewStore.getState().setReady(diffFixture(), planFixture(3));
-    expect(useReviewStore.getState().currentUnitIndex).toBe(0);
-
-    // If somehow past the end, clamp into range (display total = 1 + 2 = 3 → max index 2).
-    useReviewStore.setState({ currentUnitIndex: 99 });
-    useReviewStore.getState().setReady(diffFixture(), planFixture(2));
-    expect(useReviewStore.getState().currentUnitIndex).toBe(2);
-  });
-
-  it("setError sets status to error with a normalized message", () => {
-    resetStore();
-    useReviewStore.getState().setError("something broke");
-    expect(useReviewStore.getState().status).toBe("error");
-    expect(useReviewStore.getState().error).toEqual({ message: "something broke" });
-  });
-
-  it("setError accepts structured ReviewErrorInfo", () => {
-    resetStore();
-    useReviewStore.getState().setError({
-      message: "Invalid API key",
-      statusCode: 401,
-      code: "authentication_error",
+    state.appendUnit(plan.units[0], generation - 1);
+    expect(useReviewStore.getState().selection).toEqual({ kind: "summary" });
+    state.appendUnit(plan.units[0], generation);
+    expect(useReviewStore.getState()).toMatchObject({
+      status: "streaming",
+      selection: { kind: "unit", id: "u0" },
+      lastUnitSelection: { kind: "unit", id: "u0" },
     });
-    expect(useReviewStore.getState().error).toEqual({
-      message: "Invalid API key",
-      statusCode: 401,
-      code: "authentication_error",
-    });
+
+    state.goToUnit(0);
+    state.appendUnit(plan.units[1], generation);
+    state.appendUnit(plan.units[0], generation);
+    state.setReady(diff, plan, generation);
+    expect(useReviewStore.getState().selection).toEqual({ kind: "summary" });
   });
 
-  it("setNeedsProvider flags the state without a plan when no diff is available yet", () => {
-    resetStore();
-    useReviewStore.setState({
-      status: "loading",
-      error: { message: "boom" },
-      prContext: prContextFixture(),
-    });
-    useReviewStore.getState().setNeedsProvider();
+  it("preserves file selection, saved drafts and unfinished text through streaming, failure, retry and completion", () => {
+    const diff = populatedDiff();
     const state = useReviewStore.getState();
-    expect(state.needsProvider).toBe(true);
-    expect(state.error).toBeNull();
-    expect(state.plan).toBeNull();
-    expect(state.prContext).toEqual(prContextFixture());
+    state.bootReady({ sessionKey: SESSION_KEY, diff });
+    state.goToFile("src/renamed.ts");
+    const file = diff.files[1];
+    const lines = buildSelectableLines([{ file, hunks: file.hunks }], "unified");
+    state.enterCommentMode(lines);
+    state.saveDraftComment("Saved once");
+    state.openComposer();
+    state.setComposerText("Unfinished note");
+    const generation = state.beginRetry();
+    state.appendUnit(scopedPlan().units[0], generation);
+    state.setError("Provider disconnected", generation);
+    expect(useReviewStore.getState().plan?.units).toHaveLength(1);
+    const retry = state.beginRetry();
+    state.setReady(diff, { units: [] }, generation); // stale completion
+    expect(useReviewStore.getState().status).toBe("streaming");
+    state.setReady(diff, scopedPlan(), retry);
+    expect(useReviewStore.getState().selection).toEqual({ kind: "file", path: file.path });
+    expect(useReviewStore.getState().composerText).toBe("Unfinished note");
+    state.goToFile("README.md");
+    state.setSelectableLines([]);
+    state.goToFile(file.path);
+    state.setSelectableLines(lines);
+    expect(useReviewStore.getState().composerOpen).toBe(true);
+    expect(useReviewStore.getState().composerText).toBe("Unfinished note");
+    state.saveDraftComment("Unfinished note");
+    expect(useReviewStore.getState().draftComments.map((draft) => draft.body)).toEqual([
+      "Saved once",
+      "Unfinished note",
+    ]);
+    expect(useReviewStore.getState().pendingComposers).toEqual({});
   });
 
-  it("setNeedsProvider builds a file-per-unit plan once the diff is available", () => {
-    resetStore();
-    const diff: ParsedDiff = {
-      files: [
-        { path: "src/a.ts", status: "modified", isBinaryOrElided: false, hunks: [] },
-        { path: "src/b.test.ts", status: "added", isBinaryOrElided: false, hunks: [] },
-      ],
-    };
-    useReviewStore.setState({ status: "loading", diff });
-
-    useReviewStore.getState().setNeedsProvider();
-
+  it("persists file-only navigation, folder expansion, drafts and composer text without a synthetic plan", async () => {
+    const diff = populatedDiff();
     const state = useReviewStore.getState();
-    expect(state.needsProvider).toBe(true);
-    expect(state.status).toBe("ready");
-    expect(state.plan?.units.map((u) => u.title)).toEqual(["src/a.ts", "src/b.test.ts"]);
-    expect(state.diff).toBe(diff);
-  });
-
-  it("setError with a no_api_key code flags needsProvider instead of erroring", () => {
-    resetStore();
-    useReviewStore.getState().setError({
-      message: "No API key configured. Open the extension settings to add one.",
-      code: "no_api_key",
-    });
-    expect(useReviewStore.getState().needsProvider).toBe(true);
-    expect(useReviewStore.getState().status).not.toBe("error");
-    expect(useReviewStore.getState().error).toBeNull();
-  });
-
-  it("persistSession skips the locally built fallback plan", async () => {
-    resetStore();
-    useReviewStore.setState({
-      status: "ready",
-      needsProvider: true,
-      diff: diffFixture(),
-      plan: planFixture(1),
-      sessionKey: SESSION_KEY,
-    });
-
+    state.bootReady({ sessionKey: SESSION_KEY, diff });
+    state.goToFile("src/renamed.ts");
+    state.toggleDirectory("assets");
+    state.enterCommentMode(selectableFixture(2));
+    state.saveDraftComment("Keep this");
+    state.openComposer();
+    state.setComposerText("Still typing");
     await persistSession();
+    const stored = (await chrome.storage.session.get(STORAGE_KEY))[STORAGE_KEY] as {
+      plan: unknown;
+    };
+    expect(stored.plan).toBeNull();
+    resetStore();
+    expect(await restoreSession(SESSION_KEY)).toBe(true);
+    expect(useReviewStore.getState()).toMatchObject({
+      plan: null,
+      planComplete: false,
+      navigationMode: "files",
+      selection: { kind: "file", path: "src/renamed.ts" },
+      collapsedDirectories: { assets: true },
+    });
+    expect(useReviewStore.getState().plan).toBeNull();
+    expect(useReviewStore.getState().draftComments).toHaveLength(1);
+    expect(Object.values(useReviewStore.getState().pendingComposers)[0].body).toBe("Still typing");
 
-    expect(await chrome.storage.session.get(STORAGE_KEY)).toEqual({});
+    // Older file-browsing sessions may still contain a synthetic plan.
+    await chrome.storage.session.set({
+      [STORAGE_KEY]: { ...stored, diff, plan: scopedPlan(), planSource: "files" },
+    });
+    expect(await restoreSession(SESSION_KEY)).toBe(true);
+    expect(useReviewStore.getState().plan).toBeNull();
+    expect(useReviewStore.getState().draftComments).toHaveLength(1);
   });
 
-  it("beginRetry bumps generation, clears error/plan, keeps diff, and returns the new generation", () => {
-    resetStore();
-    useReviewStore.setState({
-      status: "error",
-      error: { message: "boom", statusCode: 500 },
-      diff: diffFixture(),
-      plan: planFixture(2),
-      prContext: prContextFixture(),
-      streamGeneration: 3,
-      sessionKey: SESSION_KEY,
-    });
-
-    const generation = useReviewStore.getState().beginRetry();
+  it("retries with a fresh plan even when the provider changes IDs, preserving notes and files", async () => {
     const state = useReviewStore.getState();
+    const diff = populatedDiff();
+    state.bootReady({ sessionKey: SESSION_KEY, diff });
+    const generation = state.beginRetry();
+    state.appendUnit(scopedPlan().units[0], generation);
+    state.goToUnit(1);
+    const file = diff.files[1];
+    state.enterCommentMode(buildSelectableLines([{ file, hunks: file.hunks }], "unified"));
+    state.saveDraftComment("Keep the saved note");
+    state.openComposer();
+    state.setComposerText("Keep the unfinished note");
+    state.saveScrollPosition("unit:u0", 400);
+    state.setError("Disconnected", generation);
 
-    expect(generation).toBe(4);
-    expect(state.streamGeneration).toBe(4);
-    expect(state.status).toBe("streaming");
-    expect(state.error).toBeNull();
-    expect(state.plan).toEqual({ units: [] });
-    expect(state.diff).toEqual(diffFixture());
-    expect(state.sessionKey).toBe(SESSION_KEY);
-  });
-
-  it("setPRContext stores the context", () => {
+    const retry = state.beginRetry();
+    expect(useReviewStore.getState().plan?.units).toEqual([]);
+    expect(useReviewStore.getState().selection).toEqual({ kind: "file", path: "src/renamed.ts" });
+    expect(useReviewStore.getState().scrollPositions["unit:u0"]).toBeUndefined();
+    state.appendUnit(scopedPlan().units[0], generation); // stale stream
+    const replacement = { ...scopedPlan().units[0], id: "different-model-id" };
+    state.appendUnit(replacement, retry);
+    state.setError("Disconnected again", retry);
+    await persistSession();
     resetStore();
-    const prContext = prContextFixture();
-    useReviewStore.getState().setPRContext(prContext);
-    expect(useReviewStore.getState().prContext).toEqual(prContext);
+    expect(await restoreSession(SESSION_KEY)).toBe(true);
+    expect(useReviewStore.getState().plan?.units).toEqual([replacement]);
+    expect(useReviewStore.getState().planComplete).toBe(false);
+    expect(useReviewStore.getState().draftComments[0].body).toBe("Keep the saved note");
+    expect(Object.values(useReviewStore.getState().pendingComposers)[0].body).toBe(
+      "Keep the unfinished note",
+    );
   });
 
-  describe("navigation (display units: description + plan)", () => {
-    it("goToUnit moves to a valid display index including the description unit", () => {
-      resetStore();
-      useReviewStore.getState().setReady(diffFixture(), planFixture(3));
-      // display: [desc, u0, u1, u2] — indices 0..3
-      useReviewStore.getState().goToUnit(3);
-      expect(useReviewStore.getState().currentUnitIndex).toBe(3);
-      useReviewStore.getState().goToUnit(0);
-      expect(useReviewStore.getState().currentUnitIndex).toBe(0);
+  it("restores a legacy AI index as a stable selection, and resets incompatible state on scope change", async () => {
+    await chrome.storage.session.set({
+      [STORAGE_KEY]: {
+        diff: populatedDiff(),
+        plan: scopedPlan(),
+        currentUnitIndex: 99,
+        prContext: prContextFixture(),
+      },
     });
-
-    it("goToUnit ignores out-of-range indices", () => {
-      resetStore();
-      useReviewStore.getState().setReady(diffFixture(), planFixture(3));
-      useReviewStore.getState().goToUnit(5);
-      expect(useReviewStore.getState().currentUnitIndex).toBe(0);
-      useReviewStore.getState().goToUnit(-1);
-      expect(useReviewStore.getState().currentUnitIndex).toBe(0);
+    expect(await restoreSession(SESSION_KEY)).toBe(true);
+    expect(useReviewStore.getState()).toMatchObject({
+      selection: { kind: "unit", id: "u0" },
+      navigationMode: "units",
+      planComplete: true,
     });
-
-    it("goNext advances across description then plan units, and stops at the last", () => {
-      resetStore();
-      useReviewStore.getState().setReady(diffFixture(), planFixture(2));
-      // total display = 3
-      expect(useReviewStore.getState().currentUnitIndex).toBe(0);
-      useReviewStore.getState().goNext();
-      expect(useReviewStore.getState().currentUnitIndex).toBe(1);
-      useReviewStore.getState().goNext();
-      expect(useReviewStore.getState().currentUnitIndex).toBe(2);
-      useReviewStore.getState().goNext();
-      expect(useReviewStore.getState().currentUnitIndex).toBe(2);
+    useReviewStore.getState().bootReady({
+      sessionKey: "other-scope",
+      diff: diffFixture(),
     });
-
-    it("goPrev retreats but stops at the description unit (index 0)", () => {
-      resetStore();
-      useReviewStore.getState().setReady(diffFixture(), planFixture(2));
-      useReviewStore.getState().goToUnit(1);
-      useReviewStore.getState().goPrev();
-      expect(useReviewStore.getState().currentUnitIndex).toBe(0);
-      useReviewStore.getState().goPrev();
-      expect(useReviewStore.getState().currentUnitIndex).toBe(0);
+    expect(useReviewStore.getState()).toMatchObject({
+      selection: { kind: "summary" },
+      navigationMode: "files",
+      draftComments: [],
+      pendingComposers: {},
+      collapsedDirectories: {},
     });
-
-    it("goNext is a no-op while loading (only the description unit exists)", () => {
-      resetStore();
-      useReviewStore.getState().startLoading(SESSION_KEY);
-      useReviewStore.getState().goNext();
-      useReviewStore.getState().goPrev();
-      expect(useReviewStore.getState().currentUnitIndex).toBe(0);
-    });
+    expect(buildSessionKey({ owner: "acme", repo: "widgets", number: 1 })).toBe(SESSION_KEY);
   });
 
-  describe("persistSession / restoreSession", () => {
-    it("persistSession is a no-op when the review isn't ready", async () => {
-      resetStore();
-      useReviewStore.getState().startLoading(SESSION_KEY);
-      await persistSession();
-      const stored = await chrome.storage.session.get(STORAGE_KEY);
-      expect(stored[STORAGE_KEY]).toBeUndefined();
-    });
+  it("keeps token usage with the saved review and rejects updates from an earlier generation", async () => {
+    const state = useReviewStore.getState();
+    const diff = populatedDiff();
+    state.bootReady({ sessionKey: SESSION_KEY, diff });
+    const generation = state.beginRetry();
+    const usage = {
+      inputTokens: 1200,
+      outputTokens: 300,
+      inputEstimated: false,
+      outputEstimated: false,
+    };
+    state.setTokenUsage(usage, generation);
+    state.setReady(diff, scopedPlan(), generation);
+    await persistSession();
+    resetStore();
+    expect(await restoreSession(SESSION_KEY)).toBe(true);
+    expect(useReviewStore.getState().tokenUsage).toEqual(usage);
+    const retry = state.beginRetry();
+    state.setTokenUsage(usage, retry - 1);
+    expect(useReviewStore.getState().tokenUsage).toBeNull();
+    state.setTokenUsage(usage, retry);
+    state.bootReady({ sessionKey: "other-scope", diff });
+    expect(useReviewStore.getState().tokenUsage).toBeNull();
+  });
 
-    it("persistSession is a no-op without a sessionKey", async () => {
-      resetStore();
-      useReviewStore.getState().setReady(diffFixture(), planFixture(1));
-      // ready but no sessionKey
-      await persistSession();
-      const stored = await chrome.storage.session.get(STORAGE_KEY);
-      expect(stored[STORAGE_KEY]).toBeUndefined();
-    });
+  it("does not restore an obsolete asynchronous session over a new scope", async () => {
+    let resolve!: (value: unknown) => void;
+    setActiveReviewHost(
+      createMemoryReviewHost({
+        restoreSession: () =>
+          new Promise((done) => {
+            resolve = done;
+          }),
+      }),
+    );
+    const restoration = restoreSession(SESSION_KEY);
+    useReviewStore.getState().startLoading("new-scope");
+    resolve({ diff: populatedDiff(), plan: scopedPlan() });
+    expect(await restoration).toBe(false);
+    expect(useReviewStore.getState().sessionKey).toBe("new-scope");
+  });
 
-    it("persistSession stores the ready session under the canonical key, and restoreSession restores it", async () => {
-      resetStore();
-      const diff = diffFixture();
-      const plan = planFixture(2);
-      const prContext = prContextFixture();
-      useReviewStore.getState().startLoading(SESSION_KEY);
-      useReviewStore.getState().setPRContext(prContext);
-      useReviewStore.getState().setReady(diff, plan);
-      useReviewStore.getState().goToUnit(1);
-
-      await persistSession();
-
-      resetStore();
-      const restored = await restoreSession(SESSION_KEY);
-
-      expect(restored).toBe(true);
-      const state = useReviewStore.getState();
-      expect(state.status).toBe("ready");
-      expect(state.diff).toEqual(diff);
-      expect(state.plan).toEqual(plan);
-      expect(state.prContext).toEqual(prContext);
-      expect(state.currentUnitIndex).toBe(1);
-      expect(state.sessionKey).toBe(SESSION_KEY);
-    });
-
-    it("restoreSession clamps an out-of-range saved index", async () => {
-      resetStore();
-      const plan = planFixture(1); // display total = 2
-      useReviewStore.getState().startLoading(SESSION_KEY);
-      useReviewStore.getState().setReady(diffFixture(), plan);
-      useReviewStore.setState({ currentUnitIndex: 99 });
-      await persistSession();
-
-      // Force-write an out-of-range index to storage.
-      await chrome.storage.session.set({
-        [STORAGE_KEY]: {
-          diff: diffFixture(),
-          plan,
-          prContext: null,
-          currentUnitIndex: 99,
-        },
-      });
-
-      resetStore();
-      await restoreSession(SESSION_KEY);
-      expect(useReviewStore.getState().currentUnitIndex).toBe(1);
-    });
-
-    it("restoreSession returns false when nothing was persisted", async () => {
-      resetStore();
-      const restored = await restoreSession(
-        buildSessionKey({ owner: "acme", repo: "widgets", number: 999 }),
-      );
-      expect(restored).toBe(false);
-      expect(useReviewStore.getState().status).toBe("idle");
-    });
-
-    it("persistSession / restoreSession round-trips draft comments", async () => {
-      resetStore();
-      const lines = selectableFixture(2);
-      useReviewStore.getState().startLoading(SESSION_KEY);
-      useReviewStore.getState().setReady(diffFixture(), planFixture(1));
-      useReviewStore.getState().enterCommentMode(lines);
-      useReviewStore.getState().saveDraftComment("Looks good");
-
-      await persistSession();
-      resetStore();
-      await restoreSession(SESSION_KEY);
-
-      const drafts = useReviewStore.getState().draftComments;
-      expect(drafts).toHaveLength(1);
-      expect(drafts[0].body).toBe("Looks good");
-      expect(useReviewStore.getState().uiMode).toBe("navigate");
-    });
+  it("refreshes provider readiness without replacing a cached plan or changing selection", () => {
+    const state = useReviewStore.getState();
+    state.setReady(populatedDiff(), scopedPlan());
+    state.goToUnit(1);
+    state.setProviderReady(false);
+    state.setNeedsProvider();
+    expect(useReviewStore.getState().plan).toEqual(scopedPlan());
+    expect(useReviewStore.getState().selection).toEqual({ kind: "unit", id: "u0" });
+    state.setProviderReady(true);
+    expect(useReviewStore.getState().status).toBe("ready");
   });
 
   describe("comment mode", () => {
@@ -668,7 +505,7 @@ describe("useReviewStore", () => {
       useReviewStore.getState().enterCommentMode(selectableFixture(2));
       useReviewStore.getState().saveDraftComment("keep me");
 
-      useReviewStore.getState().goNext();
+      useReviewStore.getState().goToUnit(1);
       expect(useReviewStore.getState().uiMode).toBe("navigate");
       expect(useReviewStore.getState().lineSelection).toBeNull();
       expect(useReviewStore.getState().draftComments).toHaveLength(1);

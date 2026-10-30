@@ -149,41 +149,83 @@ async function startReviewOnCodeUnit(page: Page): Promise<void> {
   await page.goto(PR_URL);
   await page.getByTestId("guided-review-start").click();
   await expect(page.getByTestId("description-pane")).toBeVisible();
+  await page.getByTestId("navigation-tab-units").click();
+  await page.getByTestId("generate-review-plan").click();
   await expect(page.getByTestId("review-unit-1")).toBeVisible();
-  await page.getByTestId("review-next-unit").click();
+  await page.getByTestId("review-unit-1").click();
+  await page.getByTestId("code-col").focus();
   await expect(page.getByTestId("context-panel-body")).toBeVisible();
   await expect(page.getByTestId("diff-view-split")).toBeVisible();
 }
 
 test.describe("Guided review overlay", () => {
-  test("clicking Start Guided Review builds and shows a review plan", async ({
+  test("generates only on request and preserves file reading and unfinished text when the plan completes", async ({
     context,
     extensionId,
-  }) => {
-    // Seed provider settings via the real options page (real chrome.storage.local), the same
-    // way a user would configure the extension before it can call an AI provider.
+  }, testInfo) => {
     await seedProviderApiKey(context, extensionId);
-
-    // Stub every external call the extension makes for this PR: the page itself, the raw
-    // diff, and the AI provider's streaming completion — nothing here touches the real internet.
-    await stubPrPageAndDiff(context);
-
+    await stubPrPageAndDiff(context, { diff: LONG_FILE_DIFF });
+    let calls = 0;
+    let finish!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    await context.route("https://api.anthropic.com/v1/messages", async (route) => {
+      calls++;
+      await pending;
+      await route.fulfill({
+        status: 200,
+        contentType: "text/event-stream",
+        body: anthropicSseForPlan({
+          units: [
+            {
+              ...CANNED_PLAN.units[0],
+              files: [{ fileId: LONG_FILE_PATH, hunkIds: [], role: "core_logic" }],
+            },
+          ],
+        }),
+      });
+    });
     const page = await context.newPage();
     await page.goto(PR_URL);
-
-    const startButton = page.getByTestId("guided-review-start");
-    await expect(startButton).toBeVisible();
-    await startButton.click();
-
-    // Playwright locators pierce open shadow roots by default, so these resolve inside the
-    // overlay's shadow DOM without any special selector syntax.
-    // First unit is always the synthetic PR description.
-    await expect(page.getByTestId("description-pane")).toBeVisible();
-
-    // After the plan streams in, the AI unit is listed and reachable via Next.
-    await expect(page.getByTestId("review-unit-1")).toBeVisible();
-    await page.getByTestId("review-next-unit").click();
-    await expect(page.getByTestId("context-panel-body")).toBeVisible();
+    await page.getByTestId("guided-review-start").click();
+    await page.getByTestId(`review-file-${LONG_FILE_PATH}`).click();
+    await expect(page.getByTestId("code-col")).toBeFocused();
+    await page.keyboard.press("c");
+    await page.keyboard.press("Enter");
+    await page.getByTestId("comment-composer-input").fill("Keep this unfinished thought");
+    expect(calls).toBe(0);
+    await page.getByTestId("navigation-tab-units").click();
+    expect(calls).toBe(0);
+    await page.keyboard.press("Control+i");
+    await expect.poll(() => calls).toBe(1);
+    await page.keyboard.press("1");
+    await expect(page.getByTestId("comment-composer-input")).toHaveValue(
+      "Keep this unfinished thought",
+    );
+    const code = page.getByTestId("code-col");
+    await code.evaluate((element) => {
+      element.scrollTop = 420;
+    });
+    finish();
+    await expect(page.getByTestId("overlay-status-live")).toContainText("Review plan ready");
+    await expect(page.getByTestId("navigation-tab-files")).toHaveAttribute("aria-selected", "true");
+    await expect.poll(() => code.evaluate((element) => element.scrollTop)).toBe(420);
+    await expect(page.getByTestId("comment-composer-input")).toHaveValue(
+      "Keep this unfinished thought",
+    );
+    await page.getByTestId("navigation-tab-units").click();
+    await page.getByTestId("navigation-tab-files").click();
+    await expect.poll(() => code.evaluate((element) => element.scrollTop)).toBe(420);
+    await code.focus();
+    await page.keyboard.press("v");
+    await page.keyboard.press("u");
+    await expect(page.getByTestId("diff-view-unified")).toBeVisible();
+    await page.keyboard.press("Control+Enter");
+    await expect(page.getByTestId("draft-comment")).toHaveCount(1);
+    await page.getByTestId("navigation-tab-units").click();
+    await expect(page.getByTestId("draft-comment")).toHaveCount(1);
+    await page.screenshot({ path: testInfo.outputPath("workspace-wide.png") });
   });
 
   test("injects Start Guided Review on the modern React PR header", async ({ context }) => {
@@ -264,29 +306,37 @@ test.describe("Guided review overlay", () => {
     await expect(page.getByTestId("guided-review-start")).toBeVisible();
   });
 
-  test("without API key shows connect-provider prompt and file-per-unit plan", async ({
+  test("browses files without a key and returns from provider setup without generating", async ({
     context,
+    extensionId,
   }) => {
-    // No options seeding — default storage has no API key. Content script still
-    // fetches the diff, then falls back to one unit per file + connect prompt.
     await stubPrPageAndDiff(context, { plan: null });
-
+    let calls = 0;
+    await context.route("https://api.anthropic.com/v1/messages", (route) => {
+      calls++;
+      return route.abort();
+    });
     const page = await context.newPage();
     await page.goto(PR_URL);
-
     await page.getByTestId("guided-review-start").click();
-
-    await expect(page.getByTestId("connect-provider-prompt")).toBeVisible();
-    await expect(page.getByTestId("connect-provider-prompt")).toBeVisible();
-    await expect(page.getByTestId("connect-provider-open-settings")).toBeVisible();
-    await expect(page.getByTestId("connect-provider-learn-more")).toBeVisible();
-
-    // Synthetic PR description first, then the fallback file unit.
-    await expect(page.getByTestId("description-pane")).toBeVisible();
-    await page.getByTestId("review-next-unit").click();
+    await page.getByTestId("review-file-src/foo.ts").click();
     await expect(page.getByTestId("diff-file-header")).toBeVisible();
-    // File-unit context is empty, so the prompt stays in the context panel.
+    await expect(page.getByTestId("connect-provider-prompt")).toHaveCount(0);
+    await page.getByTestId("navigation-tab-units").click();
     await expect(page.getByTestId("connect-provider-prompt")).toBeVisible();
+    const newPage = context.waitForEvent("page");
+    await page.getByTestId("connect-provider-open-settings").click();
+    const settings = await newPage;
+    await expect(settings.getByTestId("settings-api-key")).toBeVisible();
+    await settings.getByTestId("settings-api-key").fill("sk-e2e-opt-in");
+    await settings.getByTestId("settings-save").click();
+    await expect(settings.getByTestId("settings-status")).toBeVisible();
+    await settings.close();
+    await expect(page.getByTestId("generate-review-plan")).toBeVisible();
+    expect(calls).toBe(0);
+    await page.getByTestId("navigation-tab-files").click();
+    await expect(page.getByTestId("diff-file-header")).toContainText("foo.ts");
+    expect(extensionId).toBeTruthy();
   });
 
   test("previous / next navigate units and Escape confirms exit", async ({
@@ -301,17 +351,19 @@ test.describe("Guided review overlay", () => {
     await page.getByTestId("guided-review-start").click();
 
     await expect(page.getByTestId("description-pane")).toBeVisible();
-    await expect(page.getByTestId("footer-step-status")).toHaveText(/Review unit 1 of/i);
+    await expect(page.getByTestId("footer-step-status")).toHaveText("PR Description");
 
-    // Wait for the streamed AI unit before navigating past the description.
+    await page.getByTestId("navigation-tab-units").click();
+    await page.getByTestId("generate-review-plan").click();
     await expect(page.getByTestId("review-unit-1")).toBeVisible();
 
+    await page.getByTestId("review-summary").click();
     await page.getByTestId("review-next-unit").click();
     await expect(page.getByTestId("context-panel-body")).toBeVisible();
-    await expect(page.getByTestId("footer-step-status")).toHaveText(/Review unit 2 of/i);
+    await expect(page.getByTestId("footer-step-status")).toHaveText(/Review unit 1 of 1/i);
 
     await page.getByTestId("review-previous-unit").click();
-    await expect(page.getByTestId("footer-step-status")).toHaveText(/Review unit 1 of/i);
+    await expect(page.getByTestId("footer-step-status")).toHaveText("PR Description");
 
     // Esc opens the exit confirmation; confirm to tear the overlay down.
     await page.keyboard.press("Escape");
@@ -350,7 +402,10 @@ test.describe("Guided review overlay", () => {
     await expect(page.getByTestId("comment-composer")).toHaveCount(0);
   });
 
-  test("submit review with seeded GitHub auth", async ({ context, extensionId }) => {
+  test("retries a failed GitHub submission without losing draft comments", async ({
+    context,
+    extensionId,
+  }) => {
     await seedProviderApiKey(context, extensionId);
     await seedGitHubAuth(context, extensionId);
     await stubPrPageAndDiff(context);
@@ -366,20 +421,34 @@ test.describe("Guided review overlay", () => {
       }
       return route.fallback();
     });
-    await context.route("https://api.github.com/repos/acme/widgets/pulls/1/reviews", (route) =>
-      route.fulfill({
+    const submissions: unknown[] = [];
+    await context.route("https://api.github.com/repos/acme/widgets/pulls/1/reviews", (route) => {
+      submissions.push(route.request().postDataJSON());
+      if (submissions.length === 1) {
+        return route.fulfill({
+          status: 500,
+          contentType: "application/json",
+          body: JSON.stringify({ message: "GitHub is temporarily unavailable." }),
+        });
+      }
+      return route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
           id: 999001,
           html_url: "https://github.com/acme/widgets/pull/1#pullrequestreview-999001",
         }),
-      }),
-    );
+      });
+    });
 
     const page = await context.newPage();
     await startReviewOnCodeUnit(page);
 
+    await page.keyboard.press("c");
+    await page.keyboard.press("Enter");
+    await page.getByTestId("comment-composer-input").fill("Cover this constant change.");
+    await page.getByTestId("comment-composer-save").click();
+    await page.keyboard.press("Escape");
     await page.getByTestId("submit-review-button").click();
     await expect(page.getByTestId("submit-review-modal")).toBeVisible();
     await expect(page.getByTestId("submit-review-modal")).toHaveAttribute("data-step", "choose");
@@ -389,12 +458,34 @@ test.describe("Guided review overlay", () => {
     await page.getByTestId("submit-review-body").fill("Looks good — constant bump is clear.");
     await page.getByTestId("submit-review-confirm").click();
 
+    await expect(page.getByTestId("submit-review-error")).toContainText("HTTP 500");
+    await expect(page.getByTestId("submit-review-body")).toHaveValue(
+      "Looks good — constant bump is clear.",
+    );
+    await expect(page.getByTestId("review-submitted-modal")).toHaveCount(0);
+    await expect(page.getByTestId("draft-comment-body")).toHaveText("Cover this constant change.");
+    await page.getByTestId("submit-review-confirm").click();
+
     await expect(page.getByTestId("review-submitted-modal")).toBeVisible();
     await expect(page.getByTestId("review-submitted-modal")).toHaveAttribute(
       "data-event",
       "APPROVE",
     );
     await expect(page.getByTestId("review-submitted-summary")).toBeVisible();
+    await expect(page.getByTestId("review-submitted-modal")).toHaveAttribute(
+      "data-comment-count",
+      "1",
+    );
+    await expect(page.getByTestId("draft-comment")).toHaveCount(0);
+    expect(submissions).toHaveLength(2);
+    expect(submissions[0]).toMatchObject({
+      event: "APPROVE",
+      body: "Looks good — constant bump is clear.",
+      comments: [
+        { path: "src/foo.ts", body: "Cover this constant change.", side: "RIGHT", line: 1 },
+      ],
+    });
+    expect(submissions[1]).toEqual(submissions[0]);
   });
 
   test("submit without GitHub opens connect modal", async ({ context, extensionId }) => {
@@ -440,6 +531,8 @@ test.describe("Guided review overlay", () => {
     await page.goto(PR_URL);
     await page.getByTestId("guided-review-start").click();
 
+    await page.getByTestId("navigation-tab-units").click();
+    await page.getByTestId("generate-review-plan").click();
     // Diff still loads; annotation fails with the provider's auth error.
     await expect(page.getByTestId("error-message")).toHaveText(/invalid x-api-key/i);
     await expect(page.getByTestId("error-status-code")).toHaveText("401");
@@ -467,7 +560,7 @@ test.describe("Guided review overlay", () => {
     // Overlay should open without clicking Start Guided Review.
     await expect(page.getByTestId("guided-review-overlay")).toBeVisible();
     await expect(page.getByTestId("description-pane")).toBeVisible();
-    await expect(page.getByTestId("connect-provider-prompt")).toBeVisible();
+    await expect(page.getByTestId("review-file-src/foo.ts")).toBeVisible();
   });
 
   test("diff view chord and search", async ({ context, extensionId }) => {
@@ -507,6 +600,70 @@ test.describe("Guided review overlay", () => {
     await expect(page.getByTestId("diff-search-input")).toBeVisible();
   });
 
+  test("drawer, tabs and folder controls own real Shadow DOM keys; search opens a full file", async ({
+    context,
+  }, testInfo) => {
+    await stubPrPageAndDiff(context, { plan: null });
+    const page = await context.newPage();
+    await page.setViewportSize({ width: 900, height: 720 });
+    await page.goto(PR_URL);
+    await page.getByTestId("guided-review-start").click();
+    await page.getByTestId("browse-changes").click();
+    const drawer = page.getByTestId("navigation-drawer");
+    const filesTab = drawer.getByTestId("navigation-tab-files");
+    await filesTab.focus();
+    await page.keyboard.press("End");
+    await expect(drawer.getByTestId("navigation-tab-units")).toBeFocused();
+    await page.keyboard.press("Home");
+    const folder = drawer.getByTestId("file-directory-src");
+    await folder.focus();
+    await page.keyboard.press("ArrowLeft");
+    await expect(folder).toHaveAttribute("aria-expanded", "false");
+    await page.keyboard.press("ArrowRight");
+    await expect(folder).toHaveAttribute("aria-expanded", "true");
+    await expect(folder).toHaveCSS("outline-style", "solid");
+    await expect(folder).toHaveCSS("outline-width", "2px");
+    await expect(folder).toHaveCSS("outline-color", "rgb(202, 255, 87)");
+    await expect(folder).toHaveCSS("outline-offset", "-2px");
+    await page.screenshot({ path: testInfo.outputPath("workspace-drawer.png") });
+    const file = drawer.getByTestId("review-file-src/foo.ts");
+    await page.keyboard.press("ArrowRight");
+    await expect(file).toBeFocused();
+    await expect(file).toHaveCSS("outline-style", "solid");
+    await expect(file).toHaveCSS("outline-width", "2px");
+    await page.keyboard.press("ArrowLeft");
+    await expect(folder).toBeFocused();
+    await page.keyboard.press("End");
+    await expect(file).toBeFocused();
+    await page.keyboard.press("Home");
+    await expect(folder).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await expect(file).toBeFocused();
+    await page.keyboard.press("ArrowUp");
+    await expect(folder).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(file).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(drawer).toHaveCount(0);
+    await expect(page.getByTestId("browse-changes")).toBeFocused();
+    await expect(page.getByTestId("confirmation-dialog")).toHaveCount(0);
+    await page.getByTestId("browse-changes").click();
+    await page.getByTestId("navigation-drawer").getByTestId("review-file-src/foo.ts").focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("navigation-drawer")).toHaveCount(0);
+    await expect(page.getByTestId("code-col")).toBeFocused();
+    await page.getByTestId("code-col").focus();
+    await page.keyboard.press("Control+f");
+    await page.getByTestId("diff-search-input").fill("const b = 3");
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("diff-file-header")).toContainText("foo.ts");
+    await expect(page.getByTestId("diff-view-split")).toBeVisible();
+    await page.keyboard.press("v");
+    await page.keyboard.press("u");
+    await expect(page.getByTestId("diff-view-unified")).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath("workspace-narrow-unified.png") });
+  });
+
   test("file path header stays pinned while scrolling a long diff", async ({ context }) => {
     await stubPrPageAndDiff(context, { plan: null, diff: LONG_FILE_DIFF });
 
@@ -521,7 +678,7 @@ test.describe("Guided review overlay", () => {
     const codeCol = page.getByTestId("code-col");
     const header = page.getByTestId("diff-file-header");
     await expect(header).toBeVisible();
-    await expect(header).toContainText(LONG_FILE_PATH);
+    await expect(header).toContainText("long.ts");
     await expect(page.getByTestId("diff-view-split")).toBeVisible();
 
     const didScroll = await codeCol.evaluate((el) => {
@@ -530,7 +687,7 @@ test.describe("Guided review overlay", () => {
     });
     expect(didScroll).toBe(true);
 
-    await expect(header).toContainText(LONG_FILE_PATH);
+    await expect(header).toContainText("long.ts");
     await expect
       .poll(async () => {
         const [headerTop, colTop] = await Promise.all([

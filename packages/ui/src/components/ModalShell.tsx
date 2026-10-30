@@ -35,7 +35,7 @@ export function ModalShell({
     <div
       className={cn(
         position === "fixed" ? "fixed" : "absolute",
-        "inset-0 flex items-center justify-center bg-black/60 p-4",
+        "motion-safe:animate-gr-fade inset-0 flex items-center justify-center bg-black/60 p-4",
         zIndexClassName,
       )}
       data-testid={scrimTestId}
@@ -50,7 +50,7 @@ export function ModalShell({
       <div
         ref={panelRef}
         className={cn(
-          "flex w-full flex-col rounded-lg border border-border bg-background shadow-xl",
+          "motion-safe:animate-gr-enter flex w-full flex-col rounded-lg border border-border bg-background shadow-xl",
           maxWidthClassName,
           panelClassName,
         )}
@@ -95,7 +95,7 @@ export function CloseButton({
   return (
     <button
       type="button"
-      className="inline-flex cursor-pointer items-center justify-center rounded-md border border-border bg-surface p-1.5 text-muted hover:bg-surface-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+      className="transition-colors duration-150 ease-gr-out inline-flex cursor-pointer items-center justify-center rounded-md border border-border bg-surface p-1.5 text-muted hover:bg-surface-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
       onClick={onClick}
       disabled={disabled}
       aria-label="Close"

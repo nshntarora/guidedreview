@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@guided-review/ui";
 
-import { isImagePath, type ResolvedUnitFile } from "@guided-review/core";
+import { isImagePath, summarizeDiff, type ResolvedUnitFile } from "@guided-review/core";
 import { languageForPath } from "@guided-review/ui/review/highlight";
 import {
   displayLineNumber,
@@ -26,7 +26,8 @@ import { ImageDiff } from "@guided-review/ui/review/components/diff/ImageDiff";
 import { SplitHunk } from "@guided-review/ui/review/components/diff/SplitHunk";
 import { UnifiedHunk } from "@guided-review/ui/review/components/diff/UnifiedHunk";
 import { deriveSelection } from "@guided-review/ui/review/components/diff/deriveSelection";
-import { MiddleEllipsisText } from "./MiddleEllipsisText";
+import { FileIcon } from "./FileIcon";
+import { DiffStatCounts } from "./DiffStatCounts";
 import { TestsUnitIcon } from "./TestsUnitIcon";
 
 /** How long the search-match flash highlight stays on the target line/file. */
@@ -36,7 +37,7 @@ interface DiffPaneProps {
   files: ResolvedUnitFile[];
   /**
    * Title of the currently active review unit (`displayTitle ?? title`).
-   * Already display-ready — path plans pre-truncate in buildFileReviewPlan.
+   * The selected file path or AI review unit title.
    */
   unitTitle: string;
   /** Full untruncated title for the native tooltip (falls back to unitTitle). */
@@ -111,6 +112,9 @@ function DiffFileCard({
   const extension = file.path.includes(".") ? file.path.split(".").pop() : undefined;
   const imageFile = isImagePath(file.path);
   const pathLabel = file.previousPath ? `${file.previousPath} → ${file.path}` : file.path;
+  const filenameStart = file.path.lastIndexOf("/") + 1;
+  const filename = file.path.slice(filenameStart);
+  const stats = useMemo(() => summarizeDiff({ files: [file] }), [file]);
   const fileSearchHit =
     searchHighlight != null && searchHighlight.filePath === file.path && !searchHighlight.lineId;
   // When highlighting a line match, pass it as focus so existing focus styles apply.
@@ -130,10 +134,23 @@ function DiffFileCard({
       data-testid={fileSearchHit ? "diff-file-search-highlight" : undefined}
     >
       <div
-        className="sticky top-0 z-10 flex min-w-0 items-baseline gap-2.5 rounded-t-lg border-b border-border bg-background px-3 py-2 font-mono text-sm"
+        className="sticky top-0 z-10 flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 rounded-t-lg border-b border-border bg-background px-3 py-2 font-mono text-sm"
         data-testid="diff-file-header"
       >
-        <MiddleEllipsisText text={pathLabel} maxWidth="100%" className="min-w-0 flex-1" />
+        <FileIcon path={file.path} />
+        <span className="min-w-0 flex-1 truncate" title={pathLabel}>
+          {filename}
+        </span>
+        <span className="shrink-0 text-xs text-muted">{file.status}</span>
+        {file.isBinaryOrElided ? (
+          <span className="shrink-0 text-xs text-muted">binary</span>
+        ) : (
+          <DiffStatCounts
+            additions={stats.additions}
+            deletions={stats.deletions}
+            className="shrink-0 whitespace-nowrap text-xs"
+          />
+        )}
         {!language && !file.isBinaryOrElided && !imageFile && (
           <span className="shrink-0 font-normal text-muted italic">
             {extension ? `no syntax highlighting for .${extension}` : "no syntax highlighting"}
@@ -153,6 +170,7 @@ function DiffFileCard({
                   key={item.key}
                   filePath={file.path}
                   afterLine={item.afterLine}
+                  lineCount={item.lineCount}
                 />
               );
             }
@@ -228,6 +246,10 @@ export function DiffPane({
   // Scroll the focused line into view when the cursor moves.
   useEffect(() => {
     if (uiMode !== "comment" || !focusId || !rootRef.current) return;
+    // Restoring an unfinished composer must not override this selection's
+    // saved reading position or move focus off the sidebar row.
+    if (useReviewStore.getState().composerOpen && !useReviewStore.getState().composerAutoFocus)
+      return;
     const el = rootRef.current.querySelector(`[data-line-id="${CSS.escape(focusId)}"]`);
     el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [uiMode, focusId, lineSelection?.focusIndex]);
@@ -276,6 +298,9 @@ export function DiffPane({
 
   const commentModeActive = uiMode === "comment";
   const commentModeDisabled = selectableForUnit.length === 0;
+  const titleFilenameStart = files.some(({ file }) => file.path === unitTitle)
+    ? unitTitle.lastIndexOf("/") + 1
+    : 0;
 
   // Announce focused/selected lines so comment mode is not color-only (1.4.1 / 4.1.3).
   const selectionAnnouncement = selectionAnnouncementText(
@@ -306,7 +331,10 @@ export function DiffPane({
             {isTestsUnit && (
               <TestsUnitIcon className="mr-1.5 inline-block align-[-0.125em] text-muted" />
             )}
-            {unitTitle}
+            {titleFilenameStart > 0 && (
+              <span className="text-muted">{unitTitle.slice(0, titleFilenameStart)}</span>
+            )}
+            <span className="text-foreground">{unitTitle.slice(titleFilenameStart)}</span>
           </span>
         </h2>
         <div className="flex max-w-full flex-wrap items-center gap-2">
