@@ -25,6 +25,9 @@ import { DiffPane } from "@guided-review/ui/review/components/DiffPane";
 import { DescriptionPane } from "@guided-review/ui/review/components/DescriptionPane";
 import { ContextPanel } from "@guided-review/ui/review/components/ContextPanel";
 import { FooterNav } from "@guided-review/ui/review/components/FooterNav";
+import { CommandPaletteProvider, useCommandPalette } from "./commandPalette";
+import { CommandPalette } from "@guided-review/ui/review/components/CommandPalette";
+import { ReviewCommands } from "@guided-review/ui/review/components/ReviewCommands";
 import { DiffSearch } from "@guided-review/ui/review/components/DiffSearch";
 import { Button, confirm, ConfirmationHost, useConfirmationOpen } from "@guided-review/ui";
 import { GeneratePromptModal } from "@guided-review/ui/review/components/GeneratePromptModal";
@@ -86,7 +89,15 @@ function statusAnnouncementText(
   return "";
 }
 
-export function Overlay({
+export function Overlay(props: OverlayProps) {
+  return (
+    <CommandPaletteProvider>
+      <ReviewLayout {...props} />
+    </CommandPaletteProvider>
+  );
+}
+
+function ReviewLayout({
   onRequestClose,
   onRetry,
   allowExit = true,
@@ -170,22 +181,19 @@ export function Overlay({
 
   const [generatePromptOpen, setGeneratePromptOpen] = useState(false);
   const [generatedPrompt, setGeneratedPrompt] = useState("");
-  const [diffSearchOpen, setDiffSearchOpen] = useState(false);
-  /** Bumped on each ⌘F so DiffSearch re-focuses even when already open. */
-  const [diffSearchFocusId, setDiffSearchFocusId] = useState(0);
+  const paletteOpen = useCommandPalette((state) => state.isOpen);
+  const openPalette = useCommandPalette((state) => state.open);
+  const closePalette = useCommandPalette((state) => state.close);
+  const paletteDialogRef = useRef<HTMLDivElement>(null);
   const [searchScrollTarget, setSearchScrollTarget] = useState<SearchScrollTarget | null>(null);
-  const diffSearchKeyRef = useRef<((e: KeyboardEvent) => boolean) | null>(null);
+  const paletteKeyRef = useRef<((e: KeyboardEvent) => boolean) | null>(null);
   /** Set by search navigation so unit-change scroll-to-top does not fight the match jump. */
   const skipCodeScrollOnUnitChange = useRef(false);
 
-  function openDiffSearch() {
+  function openCommands(actionId?: string) {
+    if (navigationOpen) browseButtonRef.current?.focus();
     setNavigationOpen(false);
-    setDiffSearchOpen(true);
-    setDiffSearchFocusId((n) => n + 1);
-  }
-
-  function closeDiffSearch() {
-    setDiffSearchOpen(false);
+    openPalette(actionId);
   }
 
   function handleDiffSearchSelect(result: DiffSearchResult) {
@@ -200,7 +208,6 @@ export function Overlay({
       filePath: result.filePath,
       lineId: result.kind === "line" ? result.id : undefined,
     });
-    setDiffSearchOpen(false);
   }
 
   function clearSearchScrollTarget() {
@@ -326,13 +333,13 @@ export function Overlay({
     };
   }, [isOpen, flushScrollPosition]);
 
-  // Drop search UI when the overlay closes so the next open starts clean.
+  // Drop the palette and search target when the overlay closes.
   useEffect(() => {
     if (!isOpen) {
-      setDiffSearchOpen(false);
+      closePalette();
       setSearchScrollTarget(null);
     }
-  }, [isOpen]);
+  }, [isOpen, closePalette]);
 
   useLayoutEffect(() => {
     if (!isOpen) return;
@@ -465,10 +472,11 @@ export function Overlay({
     setConnectGitHubOpen: closeConnectGitHubModal,
     confirmationOpen,
     requestExit,
-    diffSearchOpen,
-    openDiffSearch,
-    closeDiffSearch,
-    diffSearchKeyRef,
+    paletteOpen,
+    openCommands,
+    closePalette,
+    paletteKeyRef,
+    paletteDialogRef,
     openScopePicker:
       localDiff && localDiff.scopes.length > 0
         ? () => scopeSelectRef.current?.focusAndOpen()
@@ -645,6 +653,7 @@ export function Overlay({
                 )}
               <ContextPanel
                 commits={navigationMode === "files" ? localDiff?.commits : undefined}
+                totalCommits={navigationMode === "files" ? localDiff?.totalCommits : undefined}
                 uncommitted={
                   navigationMode === "files"
                     ? localDiff?.scopes.find((scope) => scope.id === "uncommitted" && !scope.empty)
@@ -705,14 +714,9 @@ export function Overlay({
         </div>
       )}
 
-      <DiffSearch
-        open={diffSearchOpen}
-        diff={diff}
-        onClose={closeDiffSearch}
-        onSelect={handleDiffSearchSelect}
-        focusRequestId={diffSearchFocusId}
-        keyActionRef={diffSearchKeyRef}
-      />
+      <ReviewCommands allowExit={allowExit} showScopePicker={Boolean(localDiff?.scopes.length)} />
+      <DiffSearch diff={diff} onSelect={handleDiffSearchSelect} />
+      <CommandPalette dialogRef={paletteDialogRef} keyActionRef={paletteKeyRef} />
 
       {ConnectionDialog && (
         <ConnectionDialog

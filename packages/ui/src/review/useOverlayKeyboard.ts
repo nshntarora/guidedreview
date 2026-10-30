@@ -6,17 +6,17 @@
  *
  * Because capture + stopPropagation runs before target React handlers, real
  * keystrokes never reach element `onKeyDown` for actions we own (⌘Enter submit,
- * listbox arrows, search arrows). Modals and DiffSearch therefore register their
+ * listbox arrows, search arrows). Modals and CommandPalette therefore register their
  * current primary actions via **mutable refs** (`submitActionRef`, `keyActionRef`,
- * `connectActionRef`, `diffSearchKeyRef`). Those components write the latest
+ * `connectActionRef`, `paletteKeyRef`). Those components write the latest
  * handler into the ref each render; this hook only reads `.current`.
  *
  * Priority while a key is handled (first match wins):
  *  1. Tab trap (confirmation → submit modal → overlay)
  *  2. Modals: confirmation → success → connect-GitHub → submit-review
- *  3. ⌘/Ctrl+F diff search (open or re-focus)
+ *  3. ⌘/Ctrl+K actions or ⌘/Ctrl+F diff search (open or re-focus)
  *  4. ⌘/Ctrl+, local settings
- *  5. Diff search keys while the palette is open
+ *  5. Command palette keys while the palette is open
  *  6. Comment composer / any editable (Esc, ⌘Enter save)
  *  7. ⌘/Ctrl+Enter open Submit Review
  *  8. View chords (`v` then `u`/`s`)
@@ -135,12 +135,13 @@ interface UseOverlayKeyboardOptions {
   setConnectGitHubOpen: (open: boolean) => void;
   confirmationOpen: boolean;
   requestExit: () => void;
-  /** Diff search palette (⌘/Ctrl+F) open state. */
-  diffSearchOpen: boolean;
-  openDiffSearch: () => void;
-  closeDiffSearch: () => void;
-  /** Diff search: Arrow/Enter routing while the palette owns the keyboard. */
-  diffSearchKeyRef: MutableRefObject<((e: KeyboardEvent) => boolean) | null>;
+  /** Action palette (⌘/Ctrl+K, ⌘/Ctrl+F) open state. */
+  paletteDialogRef?: RefObject<HTMLDivElement | null>;
+  paletteOpen: boolean;
+  openCommands: (actionId?: string) => void;
+  closePalette: () => void;
+  /** Command palette: Arrow/Enter routing while the palette owns the keyboard. */
+  paletteKeyRef: MutableRefObject<((e: KeyboardEvent) => boolean) | null>;
   /** Local: focus and open the diff-scope picker. */
   openScopePicker?: () => void;
   /** Generate a review plan (or connect a provider) while the CTA is available. */
@@ -181,10 +182,11 @@ export function useOverlayKeyboard({
   setConnectGitHubOpen,
   confirmationOpen,
   requestExit,
-  diffSearchOpen,
-  openDiffSearch,
-  closeDiffSearch,
-  diffSearchKeyRef,
+  paletteDialogRef,
+  paletteOpen,
+  openCommands,
+  closePalette,
+  paletteKeyRef,
   openScopePicker,
   structureReview,
   openSettings,
@@ -217,12 +219,12 @@ export function useOverlayKeyboard({
   requestOpenSubmitReviewRef.current = requestOpenSubmitReview;
   const requestExitRef = useRef(requestExit);
   requestExitRef.current = requestExit;
-  const diffSearchOpenRef = useRef(diffSearchOpen);
-  diffSearchOpenRef.current = diffSearchOpen;
-  const openDiffSearchRef = useRef(openDiffSearch);
-  openDiffSearchRef.current = openDiffSearch;
-  const closeDiffSearchRef = useRef(closeDiffSearch);
-  closeDiffSearchRef.current = closeDiffSearch;
+  const paletteOpenRef = useRef(paletteOpen);
+  paletteOpenRef.current = paletteOpen;
+  const openCommandsRef = useRef(openCommands);
+  openCommandsRef.current = openCommands;
+  const closePaletteRef = useRef(closePalette);
+  closePaletteRef.current = closePalette;
   const openScopePickerRef = useRef(openScopePicker);
   openScopePickerRef.current = openScopePicker;
   const structureReviewRef = useRef(structureReview);
@@ -258,9 +260,11 @@ export function useOverlayKeyboard({
           ? submitModalDialogRef.current
           : generatePromptOpenRef.current
             ? generatePromptDialogRef.current
-            : navigationOpenRef.current
-              ? navigationDrawerRef?.current
-              : overlayRef.current;
+            : paletteOpenRef.current
+              ? paletteDialogRef?.current
+              : navigationOpenRef.current
+                ? navigationDrawerRef?.current
+                : overlayRef.current;
       if (trapRoot) trapTabKey(event, trapRoot);
       return true;
     }
@@ -514,7 +518,7 @@ export function useOverlayKeyboard({
       // We still leave its other keys alone for native-like typeahead and
       // ArrowUp/ArrowDown behavior.
       const comboboxState = getComboboxState(event);
-      if (shouldLetComboboxHandleKey(comboboxState, event.key)) {
+      if (!paletteOpenRef.current && shouldLetComboboxHandleKey(comboboxState, event.key)) {
         return;
       }
 
@@ -533,10 +537,16 @@ export function useOverlayKeyboard({
 
       // ⌘/Ctrl+F: always open (or re-focus) the diff search palette. Must run
       // before composer handling so find is not swallowed as "editable typing".
-      if (isFindShortcut(event)) {
+      if (
+        isFindShortcut(event) ||
+        ((event.metaKey || event.ctrlKey) &&
+          !event.altKey &&
+          !event.shiftKey &&
+          event.key.toLowerCase() === "k")
+      ) {
         event.preventDefault();
         clearViewChord();
-        openDiffSearchRef.current();
+        openCommandsRef.current(isFindShortcut(event) ? "search" : undefined);
         return;
       }
 
@@ -545,21 +555,22 @@ export function useOverlayKeyboard({
       if (isSettingsShortcut(event) && openSettingsRef.current) {
         event.preventDefault();
         clearViewChord();
+        if (paletteOpenRef.current) closePaletteRef.current();
         openSettingsRef.current();
         return;
       }
 
-      // Diff search owns Esc / arrows / Enter while open (above the composer so
+      // Command palette owns Esc / arrows / Enter while open (above the composer so
       // Esc closes search instead of only clearing a pending composer state).
-      if (diffSearchOpenRef.current) {
+      if (paletteOpenRef.current) {
         clearViewChord();
-        // Esc is handled here so close works even before DiffSearch mounts its ref.
+        // Esc is handled here so close works even before CommandPalette mounts its ref.
         if (event.key === "Escape") {
           event.preventDefault();
-          closeDiffSearchRef.current();
+          closePaletteRef.current();
           return;
         }
-        if (diffSearchKeyRef.current?.(event)) {
+        if (paletteKeyRef.current?.(event)) {
           event.preventDefault();
           return;
         }
@@ -713,12 +724,13 @@ export function useOverlayKeyboard({
     overlayRef,
     submitModalDialogRef,
     generatePromptDialogRef,
+    paletteDialogRef,
     codeColRef,
     viewChordRef,
     submitReviewActionRef,
     submitReviewKeyRef,
     generatePromptCopyActionRef,
     connectGitHubActionRef,
-    diffSearchKeyRef,
+    paletteKeyRef,
   ]);
 }

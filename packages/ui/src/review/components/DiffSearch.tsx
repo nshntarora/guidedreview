@@ -1,43 +1,19 @@
-import {
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type MutableRefObject,
-  type ReactNode,
-} from "react";
-import { cn, Input } from "@guided-review/ui";
+import { useMemo, type ReactNode } from "react";
+import { cn } from "@guided-review/ui";
+import { summarizeDiff } from "@guided-review/core";
+import { FileIcon } from "./FileIcon";
+import { DiffStatCounts } from "./DiffStatCounts";
+import { useCommandAction } from "@guided-review/ui/review/commandPalette";
 import {
   buildDiffSearchIndex,
   buildLinePreview,
   fallbackMatchRanges,
   highlightSegments,
   searchDiff,
-  type DiffSearchDoc,
   type DiffSearchResult,
   type MatchRange,
 } from "@guided-review/ui/review/diffSearch";
 import type { ParsedDiff } from "@guided-review/ui/review/types";
-
-export interface DiffSearchProps {
-  open: boolean;
-  diff: ParsedDiff | null;
-  onClose: () => void;
-  onSelect: (result: DiffSearchResult) => void;
-  /**
-   * Re-focus + select-all when the parent re-requests (⌘F while already open).
-   */
-  focusRequestId?: number;
-  /**
-   * Action-ref for overlay capture keyboard (see useOverlayKeyboard module
-   * comment). Arrow/Enter while the palette is open — React input handlers
-   * never see those keys after capture stopPropagation.
-   * Return true when the key was handled.
-   */
-  keyActionRef?: MutableRefObject<((e: globalThis.KeyboardEvent) => boolean) | null>;
-}
 
 function linePrefix(type: "add" | "del" | "context"): string {
   if (type === "add") return "+";
@@ -45,49 +21,91 @@ function linePrefix(type: "add" | "del" | "context"): string {
   return " ";
 }
 
-/** Wrap active index by `delta` within a result list (empty list → 0). */
-function nextActiveIndex(current: number, delta: number, length: number): number {
-  if (length === 0) return 0;
-  const next = current + delta;
-  if (next < 0) return length - 1;
-  if (next >= length) return 0;
-  return next;
-}
-
-/**
- * Palette navigation keys shared by the capture-phase ref and the input
- * keydown fallback. Returns true when the key was handled.
- *
- * `ignoreEnterWithModifier` mirrors the capture path (⌘/Ctrl+Enter must not
- * steal the chord); the input fallback always treats Enter as select.
- */
-function handlePaletteKey(
-  key: string,
-  options: {
-    ignoreEnterWithModifier: boolean;
-    hasModifier: boolean;
-    onMove: (delta: number) => void;
-    onSelectActive: () => void;
-    onClose: () => void;
-  },
-): boolean {
-  switch (key) {
-    case "ArrowDown":
-      options.onMove(1);
-      return true;
-    case "ArrowUp":
-      options.onMove(-1);
-      return true;
-    case "Enter":
-      if (options.ignoreEnterWithModifier && options.hasModifier) return false;
-      options.onSelectActive();
-      return true;
-    case "Escape":
-      options.onClose();
-      return true;
-    default:
-      return false;
-  }
+/** Register diff search with the layout's palette, reusing the full diff index and ranking. */
+export function DiffSearch({
+  diff,
+  onSelect,
+}: {
+  diff: ParsedDiff | null;
+  onSelect: (result: DiffSearchResult) => void;
+}) {
+  const docs = useMemo(() => (diff ? buildDiffSearchIndex(diff) : []), [diff]);
+  const fileStats = useMemo(
+    () => new Map(diff ? summarizeDiff(diff).fileSummaries.map((file) => [file.path, file]) : []),
+    [diff],
+  );
+  useCommandAction({
+    id: "search",
+    label: "Search files and code",
+    keywords: "find fuzzy paths diff",
+    shortcut: ["mod", "F"],
+    placeholder: "Search files and code…",
+    emptyMessage: docs.length
+      ? "Type a file name or code to search the whole diff."
+      : "No changed files to search yet.",
+    results: (query) =>
+      searchDiff(docs, query).map((result) => {
+        const file = fileStats.get(result.filePath);
+        return {
+          id: result.id,
+          label: result.filePath,
+          testId: result.kind === "file" ? "diff-search-result-file" : "diff-search-result-line",
+          onSelect: () => onSelect(result),
+          content: (
+            <>
+              <div className="flex min-w-0 items-center gap-2.5">
+                <FileIcon path={result.filePath} />
+                <div
+                  className="min-w-0 flex-1 truncate font-mono text-base text-foreground"
+                  title={result.filePath}
+                >
+                  <HighlightedText
+                    text={result.filePath}
+                    ranges={rangesForField(result, "path", result.filePath, query)}
+                  />
+                </div>
+                {file && (
+                  <span className="flex shrink-0 items-center gap-2.5 whitespace-nowrap font-mono text-xs">
+                    <span
+                      title={file.status}
+                      aria-label={file.status}
+                      className={cn(
+                        file.status === "added"
+                          ? "text-diff-add"
+                          : file.status === "removed"
+                            ? "text-diff-del"
+                            : file.status === "modified"
+                              ? "text-warning"
+                              : "text-syntax-entity",
+                      )}
+                    >
+                      {file.status === "modified"
+                        ? "M"
+                        : file.status === "removed"
+                          ? "D"
+                          : file.status === "renamed"
+                            ? "R"
+                            : "A"}
+                    </span>
+                    {file.isBinaryOrElided ? (
+                      <span className="text-muted">binary</span>
+                    ) : (
+                      <DiffStatCounts additions={file.additions} deletions={file.deletions} />
+                    )}
+                  </span>
+                )}
+              </div>
+              {result.kind === "file" ? (
+                <div className="mt-1 text-sm text-muted">File name match</div>
+              ) : (
+                <LineResultPreview result={result} docs={docs} query={query} />
+              )}
+            </>
+          ),
+        };
+      }),
+  });
+  return null;
 }
 
 /** Brand-colored mark spans for matched substrings. */
@@ -138,276 +156,6 @@ function rangesForField(
     return fromFuse;
   }
   return undefined;
-}
-
-interface DiffSearchResultRowProps {
-  result: DiffSearchResult;
-  index: number;
-  optionId: string;
-  isActive: boolean;
-  query: string;
-  docs: DiffSearchDoc[];
-  onActivate: (index: number) => void;
-  onSelect: (index: number) => void;
-}
-
-/** One combobox option: file path match or line match with preview. */
-function DiffSearchResultRow({
-  result,
-  index,
-  optionId,
-  isActive,
-  query,
-  docs,
-  onActivate,
-  onSelect,
-}: DiffSearchResultRowProps) {
-  const pathRanges = rangesForField(result, "path", result.filePath, query);
-
-  return (
-    <li
-      id={optionId}
-      role="option"
-      aria-selected={isActive}
-      data-search-index={index}
-      data-testid={result.kind === "file" ? "diff-search-result-file" : "diff-search-result-line"}
-      className={cn(
-        "cursor-pointer rounded-lg px-3 py-2.5",
-        isActive ? "bg-primary-muted" : "hover:bg-surface-raised",
-      )}
-      onMouseEnter={() => onActivate(index)}
-      onMouseDown={(e) => {
-        // Prevent input blur before click registers.
-        e.preventDefault();
-      }}
-      onClick={() => onSelect(index)}
-    >
-      <div className="truncate font-mono text-base text-foreground" title={result.filePath}>
-        <HighlightedText text={result.filePath} ranges={pathRanges} />
-      </div>
-
-      {result.kind === "file" ? (
-        <div className="mt-1 text-sm text-muted">File name match</div>
-      ) : (
-        <LineResultPreview result={result} docs={docs} query={query} />
-      )}
-    </li>
-  );
-}
-
-/**
- * Floating search palette for the whole PR diff. Opened via ⌘/Ctrl+F while the
- * overlay is open; results cover every file and line, not only the active unit.
- */
-export function DiffSearch({
-  open,
-  diff,
-  onClose,
-  onSelect,
-  focusRequestId = 0,
-  keyActionRef,
-}: DiffSearchProps) {
-  const [query, setQuery] = useState("");
-  const [activeIndex, setActiveIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
-  const listboxId = useId();
-  const labelId = useId();
-
-  const docs = useMemo(() => (diff ? buildDiffSearchIndex(diff) : []), [diff]);
-  const results = useMemo(() => searchDiff(docs, query), [docs, query]);
-
-  // Latest values for the capture-phase key handler without re-binding every stroke.
-  const resultsRef = useRef(results);
-  resultsRef.current = results;
-  const activeIndexRef = useRef(activeIndex);
-  activeIndexRef.current = activeIndex;
-  const onSelectRef = useRef(onSelect);
-  onSelectRef.current = onSelect;
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
-
-  // Reset query when reopened fresh; keep query if only re-focusing.
-  useEffect(() => {
-    if (!open) {
-      setQuery("");
-      setActiveIndex(0);
-    }
-  }, [open]);
-
-  // Autofocus when opened or when parent re-requests focus (⌘F while open).
-  useEffect(() => {
-    if (!open) return;
-    const frame = requestAnimationFrame(() => {
-      const el = inputRef.current;
-      if (!el) return;
-      el.focus();
-      el.select();
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [open, focusRequestId]);
-
-  // Clamp active index when results shrink.
-  useEffect(() => {
-    setActiveIndex((i) => (results.length === 0 ? 0 : Math.min(i, results.length - 1)));
-  }, [results.length]);
-
-  // Scroll the active option into view inside the list.
-  useEffect(() => {
-    if (!open || results.length === 0) return;
-    const list = listRef.current;
-    if (!list) return;
-    const option = list.querySelector<HTMLElement>(`[data-search-index="${activeIndex}"]`);
-    option?.scrollIntoView({ block: "nearest" });
-  }, [open, activeIndex, results.length]);
-
-  // Register capture-phase actions for the overlay keyboard hook.
-  useEffect(() => {
-    if (!keyActionRef || !open) return;
-
-    keyActionRef.current = (event: globalThis.KeyboardEvent) => {
-      return handlePaletteKey(event.key, {
-        ignoreEnterWithModifier: true,
-        hasModifier: event.metaKey || event.ctrlKey || event.altKey,
-        onMove: (delta) => {
-          const list = resultsRef.current;
-          if (list.length === 0) return;
-          setActiveIndex((i) => nextActiveIndex(i, delta, list.length));
-        },
-        onSelectActive: () => {
-          const result = resultsRef.current[activeIndexRef.current];
-          if (!result) return;
-          onSelectRef.current(result);
-        },
-        onClose: () => onCloseRef.current(),
-      });
-    };
-
-    return () => {
-      keyActionRef.current = null;
-    };
-  }, [keyActionRef, open]);
-
-  if (!open) return null;
-
-  function selectIndex(index: number) {
-    const result = results[index];
-    if (!result) return;
-    onSelect(result);
-  }
-
-  /** Fallback when the input still receives keydown (e.g. unit tests). */
-  function onInputKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    const handled = handlePaletteKey(event.key, {
-      ignoreEnterWithModifier: false,
-      hasModifier: event.metaKey || event.ctrlKey || event.altKey,
-      onMove: (delta) => {
-        setActiveIndex((i) => nextActiveIndex(i, delta, results.length));
-      },
-      onSelectActive: () => selectIndex(activeIndex),
-      onClose,
-    });
-    if (handled) {
-      event.preventDefault();
-    }
-  }
-
-  const activeOptionId = results.length > 0 ? `${listboxId}-option-${activeIndex}` : undefined;
-
-  return (
-    <div
-      className="motion-safe:animate-gr-fade absolute inset-0 z-[60]"
-      data-testid="diff-search-root"
-    >
-      {/* Dim + blur the review UI so the palette keeps focus. */}
-      <div
-        className="absolute inset-0 bg-background/70 backdrop-blur-[2px]"
-        data-testid="diff-search-backdrop"
-        aria-hidden="true"
-        onMouseDown={(e) => {
-          // mousedown (not click) so dismiss runs before the input blurs awkwardly.
-          if (e.button === 0) onClose();
-        }}
-      />
-      <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center px-6 pt-12">
-        <div
-          className="motion-safe:animate-gr-enter pointer-events-auto relative w-full max-w-3xl overflow-hidden rounded-xl border border-border-strong bg-background shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
-          data-testid="diff-search"
-          role="presentation"
-        >
-          <div className="border-b border-border px-4 py-3.5">
-            <label id={labelId} className="gr-sr-only" htmlFor={`${listboxId}-input`}>
-              Search files and code in this pull request
-            </label>
-            <Input
-              ref={inputRef}
-              id={`${listboxId}-input`}
-              type="search"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setActiveIndex(0);
-              }}
-              onKeyDown={onInputKeyDown}
-              placeholder="Search files and code…"
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck={false}
-              role="combobox"
-              aria-autocomplete="list"
-              aria-expanded={true}
-              aria-controls={listboxId}
-              aria-activedescendant={activeOptionId}
-              aria-labelledby={labelId}
-              data-testid="diff-search-input"
-              className="border-border-strong bg-surface-raised px-3.5 py-2.5 font-mono text-base"
-            />
-            <div
-              className="mt-2 flex items-center justify-between text-sm text-muted"
-              data-testid="diff-search-meta"
-              aria-live="polite"
-            >
-              <span>
-                {query.trim()
-                  ? results.length === 0
-                    ? "No matches"
-                    : `${results.length} match${results.length === 1 ? "" : "es"}`
-                  : "Search files and code in this PR"}
-              </span>
-              <span className="text-faint" aria-hidden="true">
-                ↑↓ navigate · Enter open · Esc close
-              </span>
-            </div>
-          </div>
-
-          {query.trim() && results.length > 0 ? (
-            <ul
-              ref={listRef}
-              id={listboxId}
-              role="listbox"
-              aria-label="Search results"
-              className="m-0 max-h-[min(28rem,55vh)] list-none overflow-y-auto p-2"
-              data-testid="diff-search-results"
-            >
-              {results.map((result, index) => (
-                <DiffSearchResultRow
-                  key={result.id}
-                  result={result}
-                  index={index}
-                  optionId={`${listboxId}-option-${index}`}
-                  isActive={index === activeIndex}
-                  query={query}
-                  docs={docs}
-                  onActivate={setActiveIndex}
-                  onSelect={selectIndex}
-                />
-              ))}
-            </ul>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function LineResultPreview({

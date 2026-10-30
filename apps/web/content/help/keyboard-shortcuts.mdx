@@ -1,5 +1,6 @@
 export const toc = [
   { id: "review-navigation", label: "Review navigation", level: 2 },
+  { id: "actions", label: "Actions", level: 2 },
   { id: "diff-view", label: "Diff view", level: 2 },
   { id: "diff-search", label: "Diff search", level: 2 },
   { id: "comment-mode", label: "Comment mode", level: 2 },
@@ -10,7 +11,7 @@ export const toc = [
 
 # Keyboard shortcuts
 
-Move through a guided review without leaving the keyboard. Focus must not be in an editable field for most of these — when the comment composer is open, typing goes to the text field and only Esc / ⌘/Ctrl+Enter are intercepted.
+Move through a guided review without leaving the keyboard. Most navigation keys need focus outside an editable field. In the comment composer, typing goes to the text field; actions, search, Esc, and ⌘/Ctrl+Enter still work.
 
 The Guided Review sidebar always lists the same shortcuts as this page. Most chords work in both the [Chrome extension](/docs/first-review) and the [CLI](/docs/cli); [Local review](#local-review) adds CLI-only keys. Submit chords apply to the extension only.
 
@@ -28,6 +29,7 @@ The Guided Review sidebar always lists the same shortcuts as this page. Most cho
 | `↑` / `↓`          | Scroll the Code Pane                                                                            |
 | `Esc`              | Exit Guided Review (when not in comment mode or a modal)                                        |
 | `c`                | Enter [Comment Mode](/docs/leave-comments) (if the unit has selectable lines)                   |
+| `⌘/Ctrl` + `K`     | Open [Actions](#actions)                                                                        |
 | `⌘/Ctrl` + `F`     | Open [Diff Search](#diff-search)                                                                |
 | `⌘/Ctrl` + `Enter` | Open [Submit Review](/docs/submit-review) (or [Connect GitHub](/docs/connect-github) if needed) |
 
@@ -36,6 +38,14 @@ On a GitHub PR, while Guided Review is open, keys are not passed through to GitH
 Switching tabs does not start generation. Press `⌘/Ctrl` + `I` to generate review units when a plan is not yet complete. This shortcut stays inactive while generation is running or a text field has focus.
 
 In the file list, `↑` / `↓` move focus, `←` / `→` collapse or expand folders, and `Home` / `End` jump to the first or last visible row. Click a file or press `Enter` to open it and move focus to the diff. Comment and view shortcuts then work immediately. When a navigation tab has focus, `←` / `→` switch tabs.
+
+## Actions
+
+Press `⌘/Ctrl` + `K` or click **Actions** in the review header. Type to find an action, move with `↑` / `↓`, and select with `Enter`.
+
+Open settings, view keyboard shortcuts, choose unified or split view, search files and code, or generate a prompt from your review notes. Generate prompt needs at least one note. GitHub reviews also offer Submit review.
+
+Search and view mode open a second step in the same palette. Click the back arrow or press `Backspace` with an empty query to return to actions. `Esc` closes the palette and restores focus. Actions and search shortcuts also work from the comment composer; dialogs above the review keep their own keys.
 
 ## Diff view
 
@@ -52,7 +62,7 @@ Type `v`, then `u` or `s` within about a second. You can also toggle unified / s
 
 Search **every** file path and line in the parsed diff — not only the active unit.
 
-1. Press `⌘/Ctrl` + `F` while the overlay is open.
+1. Press `⌘/Ctrl` + `F` while the overlay is open. This opens the action palette with **Search files and code** selected.
 2. Type a path fragment or code snippet. Results are fuzzy-ranked (paths rank above line hits).
 3. Move with `↑` / `↓`, open a hit with `Enter`, or close with `Esc`.
 4. Selecting a result jumps to the unit that owns that file (or hunk) and scrolls the match into view.

@@ -227,32 +227,39 @@ describe("buildLocalReview", () => {
     expect(paths).not.toContain("unstaged.ts");
   });
 
-  it("exposes only the last 5 commits as cards and scopes", async () => {
+  it("exposes 10 sidebar commits and the total count while keeping 5 commit scopes", async () => {
     const root = await makeRepo();
     await git(root, ["checkout", "-b", "feat"]);
-    for (let i = 1; i <= 6; i++) {
+    for (let i = 1; i <= 12; i++) {
       await writeFile(path.join(root, `f${i}.ts`), `export const n = ${i};\n`);
       await git(root, ["add", `f${i}.ts`]);
       await git(root, ["commit", "-m", `commit ${i}`]);
     }
 
     const review = await buildLocalReview({ cwd: root });
-    expect(review.commits).toHaveLength(5);
+    expect(review.totalCommits).toBe(12);
+    expect(review.commits).toHaveLength(10);
     expect(review.commits.map((c) => c.subject)).toEqual([
+      "commit 12",
+      "commit 11",
+      "commit 10",
+      "commit 9",
+      "commit 8",
+      "commit 7",
       "commit 6",
       "commit 5",
       "commit 4",
       "commit 3",
-      "commit 2",
     ]);
+    expect(review.commits.every((commit) => commit.stat?.files === 1)).toBe(true);
     expect(review.scopes.filter((s) => s.id.startsWith("commit:")).map((s) => s.label)).toEqual([
-      "commit 6",
-      "commit 5",
-      "commit 4",
-      "commit 3",
-      "commit 2",
+      "commit 12",
+      "commit 11",
+      "commit 10",
+      "commit 9",
+      "commit 8",
     ]);
-    expect(review.scopes.find((s) => s.id === "branch")?.meta).toMatch(/6 commits/);
+    expect(review.scopes.find((s) => s.id === "branch")?.meta).toMatch(/12 commits/);
   });
 
   it("rebuilds a single-commit scope as that commit's patch", async () => {

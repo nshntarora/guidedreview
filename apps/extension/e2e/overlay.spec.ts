@@ -563,7 +563,10 @@ test.describe("Guided review overlay", () => {
     await expect(page.getByTestId("review-file-src/foo.ts")).toBeVisible();
   });
 
-  test("diff view chord and search", async ({ context, extensionId }) => {
+  test("action palette, view modes, shortcuts and diff search share real Shadow DOM keys", async ({
+    context,
+    extensionId,
+  }, testInfo) => {
     await seedProviderApiKey(context, extensionId);
     await stubPrPageAndDiff(context);
 
@@ -583,21 +586,71 @@ test.describe("Guided review overlay", () => {
     await page.keyboard.press("s");
     await expect(page.getByTestId("diff-view-split")).toBeVisible();
 
-    // ⌘/Ctrl+F can be claimed by the browser chrome; dispatch on window so the
-    // overlay's capture listener still sees it (same path as real key events).
-    await page.evaluate(() => {
-      window.dispatchEvent(
-        new KeyboardEvent("keydown", {
-          key: "f",
-          code: "KeyF",
-          ctrlKey: true,
-          bubbles: true,
-          cancelable: true,
-        }),
-      );
+    await page.keyboard.press("Control+k");
+    const palette = page.getByTestId("command-palette");
+    await expect(palette).toBeVisible();
+    await expect(page.getByTestId("command-palette-input")).toBeFocused();
+    await page.screenshot({
+      path: testInfo.outputPath("command-palette-actions.png"),
+      animations: "disabled",
     });
-    await expect(page.getByTestId("diff-search")).toBeVisible();
-    await expect(page.getByTestId("diff-search-input")).toBeVisible();
+    await page.getByTestId("command-action-view-mode").click();
+    const commandInput = page.getByTestId("command-palette-input");
+    await expect(commandInput).toBeFocused();
+    await page.keyboard.press("ArrowUp");
+    await expect(page.getByTestId("command-result-split")).toHaveAttribute("aria-selected", "true");
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("command-result-unified")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await commandInput.fill("zzzzzzzzzz");
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("command-palette-empty")).toBeVisible();
+    await expect(page.getByTestId("diff-view-split")).toBeVisible();
+    await commandInput.fill("");
+    await page.keyboard.press("Backspace");
+    await expect(page.getByTestId("command-action-view-mode")).toBeVisible();
+    await page.getByTestId("command-action-view-mode").click();
+    await page.getByTestId("command-palette-input").fill("unified");
+    await page.keyboard.press("Enter");
+    await expect(palette).toHaveCount(0);
+    await expect(page.getByTestId("diff-view-unified")).toBeVisible();
+
+    // Closing after nested navigation restores the original Shadow DOM focus.
+    await page.getByTestId("code-col").focus();
+    await page.keyboard.press("Meta+k");
+    await page.getByTestId("command-action-view-mode").click();
+    await page.getByTestId("command-palette-back").click();
+    await page.keyboard.press("Escape");
+    await expect(palette).toHaveCount(0);
+    await expect(page.getByTestId("code-col")).toBeFocused();
+    await expect(page.getByTestId("confirmation-dialog")).toHaveCount(0);
+
+    await page.keyboard.press("Control+k");
+    await page.getByTestId("command-action-keyboard-shortcuts").click();
+    await expect(palette).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(page.getByTestId("command-palette-back")).toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(page.getByTestId("command-palette-close")).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(page.getByTestId("command-palette-back")).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("command-palette-input")).toBeFocused();
+
+    await page.keyboard.press("Control+f");
+    await expect(palette).toBeVisible();
+    const search = page.getByTestId("diff-search-input");
+    await expect(search).toBeFocused();
+    await search.fill("const b = 3");
+    await page.screenshot({
+      path: testInfo.outputPath("command-palette-search.png"),
+      animations: "disabled",
+    });
+    await page.keyboard.press("Enter");
+    await expect(palette).toHaveCount(0);
+    await expect(page.getByTestId("code-col")).toBeFocused();
   });
 
   test("drawer, tabs and folder controls own real Shadow DOM keys; search opens a full file", async ({

@@ -36,6 +36,7 @@ export function App() {
   const route = useHashRoute();
   const [bootError, setBootError] = useState<string | null>(null);
   const [commits, setCommits] = useState<ReviewSessionPayload["commits"]>([]);
+  const [totalCommits, setTotalCommits] = useState(0);
   const [scopes, setScopes] = useState<ReviewSessionPayload["scopes"]>([]);
   const [selectedScope, setSelectedScope] = useState("");
   const [scopeBusy, setScopeBusy] = useState(false);
@@ -72,6 +73,7 @@ export function App() {
 
   const applyMeta = useCallback((session: ReviewSessionPayload) => {
     setCommits(session.commits);
+    setTotalCommits(session.totalCommits);
     setScopes(session.scopes);
     setSelectedScope(session.selectedScope);
     useReviewStore.getState().open();
@@ -217,6 +219,7 @@ export function App() {
     scopes,
     selectedScope,
     commits,
+    totalCommits,
     onSelectScope: (id) => {
       void selectScope(id);
     },

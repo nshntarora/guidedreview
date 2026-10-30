@@ -1,7 +1,11 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { useRef } from "react";
+import { expect, it, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ParsedDiff } from "@guided-review/ui/review/types";
+import { Button } from "@guided-review/ui";
+import { CommandPaletteProvider, useCommandPalette } from "@guided-review/ui/review/commandPalette";
+import { CommandPalette } from "./CommandPalette";
 import { DiffSearch } from "./DiffSearch";
 
 function sampleDiff(): ParsedDiff {
@@ -53,139 +57,87 @@ function sampleDiff(): ParsedDiff {
   };
 }
 
-describe("DiffSearch", () => {
-  const onClose = vi.fn();
+function Layout({
+  children,
+  keyActionRef = { current: null },
+}: {
+  children?: React.ReactNode;
+  keyActionRef?: { current: ((event: KeyboardEvent) => boolean) | null };
+}) {
+  const open = useCommandPalette((state) => state.open);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  return (
+    <>
+      <Button data-testid="open-actions" onClick={() => open()}>
+        Actions
+      </Button>
+      <Button data-testid="open-search" onClick={() => open("search")}>
+        Search
+      </Button>
+      {children}
+      <CommandPalette dialogRef={dialogRef} keyActionRef={keyActionRef} />
+    </>
+  );
+}
+
+beforeEach(() => {
+  Element.prototype.scrollIntoView = vi.fn();
+});
+
+it("opens registered search from actions, keeps fuzzy matches and previews, and selects a real diff line", async () => {
+  const user = userEvent.setup();
   const onSelect = vi.fn();
-
-  beforeEach(() => {
-    onClose.mockReset();
-    onSelect.mockReset();
-    Element.prototype.scrollIntoView = vi.fn();
-  });
-
-  it("renders nothing when closed", () => {
-    render(<DiffSearch open={false} diff={sampleDiff()} onClose={onClose} onSelect={onSelect} />);
-    expect(screen.queryByTestId("diff-search")).not.toBeInTheDocument();
-  });
-
-  it("shows the input when open and focuses it", async () => {
-    render(<DiffSearch open={true} diff={sampleDiff()} onClose={onClose} onSelect={onSelect} />);
-    const input = screen.getByTestId("diff-search-input");
-    expect(input).toBeInTheDocument();
-    await waitFor(() => expect(input).toHaveFocus());
-  });
-
-  it("renders a backdrop that dismisses search on mousedown", () => {
-    render(<DiffSearch open={true} diff={sampleDiff()} onClose={onClose} onSelect={onSelect} />);
-    const backdrop = screen.getByTestId("diff-search-backdrop");
-    expect(backdrop).toBeInTheDocument();
-    fireEvent.mouseDown(backdrop);
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it("does not dismiss when interacting with the panel", async () => {
-    const user = userEvent.setup();
-    render(<DiffSearch open={true} diff={sampleDiff()} onClose={onClose} onSelect={onSelect} />);
-    await user.click(screen.getByTestId("diff-search-input"));
-    expect(onClose).not.toHaveBeenCalled();
-  });
-
-  it("filters results as the user types", async () => {
-    const user = userEvent.setup();
-    render(<DiffSearch open={true} diff={sampleDiff()} onClose={onClose} onSelect={onSelect} />);
-    const input = screen.getByTestId("diff-search-input");
-    await user.type(input, "authenticate");
-
-    expect(screen.getByTestId("diff-search-results")).toBeInTheDocument();
-    // Text may be split across highlight <mark> nodes.
-    expect(screen.getByTestId("diff-search-preview-match-line")).toHaveTextContent(
-      /export function authenticate/,
-    );
-    expect(screen.getByTestId("diff-search-meta")).toHaveTextContent(/match/);
-  });
-
-  it("shows surrounding context lines and brand-highlights the match", () => {
-    render(<DiffSearch open={true} diff={sampleDiff()} onClose={onClose} onSelect={onSelect} />);
-    // Set the full query at once so highlight ranges use the complete token
-    // (character-by-character typing would leave intermediate Fuse fuzzy marks).
-    fireEvent.change(screen.getByTestId("diff-search-input"), {
-      target: { value: "authenticate" },
-    });
-
-    const preview = screen.getByTestId("diff-search-line-preview");
-    expect(preview).toBeInTheDocument();
-    // Context above / below the hit
-    expect(preview).toHaveTextContent("import { User }");
-    expect(preview).toHaveTextContent("export function logout");
-    expect(screen.getByTestId("diff-search-preview-match-line")).toHaveTextContent(
-      "export function authenticate",
-    );
-    // Matched token painted with brand mark
-    const marks = screen.getAllByTestId("diff-search-match-mark");
-    expect(marks.length).toBeGreaterThan(0);
-    expect(marks.map((m) => m.textContent).join("")).toMatch(/authenticate/i);
-  });
-
-  it("calls onSelect with the active result on Enter", async () => {
-    const user = userEvent.setup();
-    render(<DiffSearch open={true} diff={sampleDiff()} onClose={onClose} onSelect={onSelect} />);
-    const input = screen.getByTestId("diff-search-input");
-    await user.type(input, "authenticate");
-    fireEvent.keyDown(input, { key: "Enter" });
-
-    expect(onSelect).toHaveBeenCalledTimes(1);
-    expect(onSelect.mock.calls[0][0]).toMatchObject({
+  render(
+    <CommandPaletteProvider>
+      <Layout>
+        <DiffSearch diff={sampleDiff()} onSelect={onSelect} />
+      </Layout>
+    </CommandPaletteProvider>,
+  );
+  await user.click(screen.getByTestId("open-actions"));
+  await user.type(screen.getByTestId("command-palette-input"), "serch");
+  await user.keyboard("{Enter}");
+  const input = screen.getByTestId("diff-search-input");
+  await user.type(input, "authentcate");
+  expect(screen.getByTestId("diff-search-line-preview")).toHaveTextContent(
+    "export function logout",
+  );
+  expect(screen.getAllByTestId("diff-search-match-mark").length).toBeGreaterThan(0);
+  await user.keyboard("{Enter}");
+  expect(onSelect).toHaveBeenCalledWith(
+    expect.objectContaining({
       kind: "line",
       filePath: "src/auth/login.ts",
       content: "export function authenticate() {}",
-    });
+    }),
+  );
+  expect(screen.queryByTestId("command-palette")).not.toBeInTheDocument();
+  expect(screen.getByTestId("open-actions")).toHaveFocus();
+});
+
+it("routes capture keys, supports back navigation, and restores focus after dismissal", async () => {
+  const user = userEvent.setup();
+  const keyActionRef = { current: null as ((event: KeyboardEvent) => boolean) | null };
+  render(
+    <CommandPaletteProvider>
+      <Layout keyActionRef={keyActionRef}>
+        <DiffSearch diff={sampleDiff()} onSelect={vi.fn()} />
+      </Layout>
+    </CommandPaletteProvider>,
+  );
+  await user.click(screen.getByTestId("open-search"));
+  const input = screen.getByTestId("diff-search-input");
+  await waitFor(() => expect(input).toHaveFocus());
+  fireEvent.change(input, { target: { value: "login" } });
+  act(() => {
+    keyActionRef.current!(new KeyboardEvent("keydown", { key: "ArrowDown" }));
   });
-
-  it("calls onClose on Escape", async () => {
-    render(<DiffSearch open={true} diff={sampleDiff()} onClose={onClose} onSelect={onSelect} />);
-    const input = screen.getByTestId("diff-search-input");
-    fireEvent.keyDown(input, { key: "Escape" });
-    expect(onClose).toHaveBeenCalledTimes(1);
+  expect(screen.getAllByRole("option")[1]).toHaveAttribute("aria-selected", "true");
+  await user.clear(input);
+  act(() => {
+    keyActionRef.current!(new KeyboardEvent("keydown", { key: "Backspace" }));
   });
-
-  it("moves the active option with arrow keys", async () => {
-    const user = userEvent.setup();
-    render(<DiffSearch open={true} diff={sampleDiff()} onClose={onClose} onSelect={onSelect} />);
-    const input = screen.getByTestId("diff-search-input");
-    // Broad query so we get both file and line hits
-    await user.type(input, "login");
-
-    const options = screen.getAllByRole("option");
-    expect(options.length).toBeGreaterThan(1);
-    expect(options[0]).toHaveAttribute("aria-selected", "true");
-
-    fireEvent.keyDown(input, { key: "ArrowDown" });
-    expect(options[1]).toHaveAttribute("aria-selected", "true");
-  });
-
-  it("selects a result on click", async () => {
-    const user = userEvent.setup();
-    render(<DiffSearch open={true} diff={sampleDiff()} onClose={onClose} onSelect={onSelect} />);
-    await user.type(screen.getByTestId("diff-search-input"), "authenticate");
-    const option = screen.getByTestId("diff-search-result-line");
-    await user.click(option);
-    expect(onSelect).toHaveBeenCalledTimes(1);
-  });
-
-  it("routes keys through keyActionRef for the overlay capture listener", () => {
-    const keyActionRef = { current: null as ((e: KeyboardEvent) => boolean) | null };
-    render(
-      <DiffSearch
-        open={true}
-        diff={sampleDiff()}
-        onClose={onClose}
-        onSelect={onSelect}
-        keyActionRef={keyActionRef}
-      />,
-    );
-    expect(keyActionRef.current).toBeTypeOf("function");
-    // Escape via capture-path handler
-    expect(keyActionRef.current!(new KeyboardEvent("keydown", { key: "Escape" }))).toBe(true);
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
+  expect(screen.getByTestId("command-action-search")).toBeInTheDocument();
+  fireEvent.mouseDown(screen.getByTestId("command-palette-backdrop"));
+  expect(screen.getByTestId("open-search")).toHaveFocus();
 });

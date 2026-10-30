@@ -53,6 +53,7 @@ export interface LocalRepoState {
 export interface LocalReviewSnapshot {
   repo: LocalRepoState;
   commits: LocalCommit[];
+  totalCommits: number;
   scopes: DiffScopeOption[];
   selectedScope: DiffScopeId;
   context: ReviewContext;
@@ -63,8 +64,9 @@ export interface LocalReviewSnapshot {
 }
 
 const COMMIT_SCOPE_PREFIX = "commit:";
-/** Individual commit scopes and the Change summary list. Keep in sync with overlay/localReview.ts. */
+/** Keep in sync with packages/ui/src/review/localReview.ts. */
 const MAX_RECENT_COMMITS = 5;
+const MAX_SIDEBAR_COMMITS = 10;
 
 export function isDiffScopeId(value: string): value is DiffScopeId {
   return (
@@ -315,7 +317,7 @@ async function listCommits(repo: LocalRepoState): Promise<LocalCommit[]> {
     [
       "log",
       "-n",
-      String(MAX_RECENT_COMMITS),
+      String(MAX_SIDEBAR_COMMITS),
       "--format=%H%x00%s%x00%b%x00%an%x00%aI%x1e",
       `${repo.mergeBase}..HEAD`,
     ],
@@ -328,20 +330,19 @@ async function buildScopes(
   repo: LocalRepoState,
   commits: LocalCommit[],
   untracked: string[],
+  commitCount: number,
 ): Promise<DiffScopeOption[]> {
   const untrackedCount = untracked.length;
   const headLabel = repo.headRef === "HEAD" ? "this HEAD" : repo.headRef;
-  const recent = commits.slice(0, MAX_RECENT_COMMITS);
 
-  const [workingTreeStats, commitCount, commitStats] = await Promise.all([
+  const [workingTreeStats, commitStats] = await Promise.all([
     Promise.all([
       statForScope(repo, "branch", untrackedCount),
       statForScope(repo, "uncommitted", untrackedCount),
       statForScope(repo, "unstaged", untrackedCount),
     ]),
-    countCommitsAhead(repo),
     Promise.all(
-      recent.map((commit) =>
+      commits.map((commit) =>
         statForScope(repo, `${COMMIT_SCOPE_PREFIX}${commit.sha}`, untrackedCount),
       ),
     ),
@@ -380,9 +381,10 @@ async function buildScopes(
     },
   ];
 
-  recent.forEach((commit, index) => {
+  commits.forEach((commit, index) => {
     const stat = commitStats[index]!;
     commit.stat = stat;
+    if (index >= MAX_RECENT_COMMITS) return;
     const when = dateLabel(commit.authoredAt);
     scopes.push({
       id: `${COMMIT_SCOPE_PREFIX}${commit.sha}`,
@@ -453,8 +455,8 @@ async function snapshotFrom(
   requested?: DiffScopeId,
 ): Promise<LocalReviewSnapshot> {
   const untracked = repo.includeUntracked && !repo.staged ? await listUntracked(repo.repoRoot) : [];
-  const commits = await listCommits(repo);
-  const scopes = await buildScopes(repo, commits, untracked);
+  const [commits, totalCommits] = await Promise.all([listCommits(repo), countCommitsAhead(repo)]);
+  const scopes = await buildScopes(repo, commits, untracked, totalCommits);
   const selected = requested ?? pickDefaultScope(scopes, repo.staged);
   if (requested && !scopes.some((option) => option.id === requested)) {
     throw new GitError(`Unknown diff scope "${requested}".`);
@@ -464,9 +466,10 @@ async function snapshotFrom(
   return {
     repo,
     commits,
+    totalCommits,
     scopes,
     selectedScope: selected,
-    context: contextFor(repo, commits, selected),
+    context: contextFor(repo, commits.slice(0, MAX_RECENT_COMMITS), selected),
     diff,
     raw,
     sessionKey: sessionKeyFor(repo, selected, raw),

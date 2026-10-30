@@ -14,7 +14,7 @@ export interface GeneratePromptModalProps {
 }
 
 /**
- * Local-CLI dialog: show the coding-agent prompt built from draft notes and
+ * Show the coding-agent prompt built from draft notes and
  * let the user copy it. The LLM never sees this text — the user pastes it.
  */
 export function GeneratePromptModal({

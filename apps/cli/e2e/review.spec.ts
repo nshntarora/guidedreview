@@ -1,6 +1,45 @@
 import { commitInRepo, expect, reviewUrl, test } from "./fixtures";
 
 test.describe("CLI review overlay", () => {
+  test("command palette and search preserve an unfinished line note", async ({
+    page,
+    reviewServer,
+  }) => {
+    await page.goto(reviewUrl(reviewServer));
+    await page.getByTestId("review-file-feat.ts").click();
+    await page.keyboard.press("c");
+    await page.keyboard.press("Enter");
+    const composer = page.getByTestId("comment-composer-input");
+    await composer.fill("Check the boundary before shipping");
+
+    await page.keyboard.press("Control+k");
+    await expect(page.getByTestId("command-palette-input")).toBeFocused();
+    await page.getByTestId("command-action-view-mode").click();
+    await expect(page.getByTestId("command-palette-input")).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(composer).toBeFocused();
+    await expect(composer).toHaveValue("Check the boundary before shipping");
+
+    await page.keyboard.press("Meta+f");
+    const search = page.getByTestId("diff-search-input");
+    await expect(search).toBeFocused();
+    await search.fill("export const n");
+    await page.keyboard.press("Tab");
+    await expect(page.getByTestId("command-palette-back")).toBeFocused();
+    await page.keyboard.press("Control+f");
+    await expect(search).toBeFocused();
+    await expect(search).toHaveValue("export const n");
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("command-palette")).toHaveCount(0);
+    await expect(composer).toBeFocused();
+    await expect(composer).toHaveValue("Check the boundary before shipping");
+
+    await page.getByTestId("comment-composer-save").click();
+    await expect(page.getByTestId("draft-comment-body")).toHaveText(
+      "Check the boundary before shipping",
+    );
+  });
+
   test("copies edited notes into a prompt and excludes removed drafts", async ({
     page,
     context,
@@ -34,7 +73,8 @@ test.describe("CLI review overlay", () => {
     await page.getByTestId("confirmation-ok").click();
     await expect(drafts).toHaveCount(1);
 
-    await page.getByTestId("submit-review-button").click();
+    await page.keyboard.press("Control+k");
+    await page.getByTestId("command-action-generate-prompt").click();
     const prompt = page.getByTestId("generate-prompt-text");
     await expect(prompt).toContainText("feat.ts");
     await expect(prompt).toContainText("Add a boundary test for n.");
@@ -73,7 +113,10 @@ test.describe("CLI review overlay", () => {
     await expect(page.getByTestId("review-scope-select-option-branch")).toHaveCount(0);
   });
 
-  test("Structure with AI without a key opens settings", async ({ page, reviewServer }) => {
+  test("provider setup and the action palette both open settings", async ({
+    page,
+    reviewServer,
+  }) => {
     await page.goto(reviewUrl(reviewServer), { waitUntil: "domcontentloaded" });
     await expect(page.getByTestId("navigation-tab-units")).toBeVisible();
 
@@ -83,6 +126,12 @@ test.describe("CLI review overlay", () => {
     await expect(page).toHaveURL(/#settings/);
     await expect(page.getByTestId("settings-modal")).toBeVisible();
     await expect(page.getByTestId("settings-provider")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("settings-modal")).toHaveCount(0);
+    await page.keyboard.press("Control+k");
+    await page.getByTestId("command-action-settings").click();
+    await expect(page.getByTestId("settings-modal")).toBeVisible();
+    await expect(page.getByTestId("command-palette")).toHaveCount(0);
   });
 
   test("provider setup, generation failure and retry preserve file notes and selection", async ({

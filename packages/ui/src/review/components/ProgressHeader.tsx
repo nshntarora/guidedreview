@@ -5,6 +5,7 @@ import { summarizeDiff } from "@guided-review/core";
 import { Button, cn, Kbd, Select, type SelectHandle, type SelectOption } from "@guided-review/ui";
 import { useReviewStore } from "@guided-review/ui/review/store";
 import { useReviewHost } from "@guided-review/ui/review/host";
+import { useCommandAction, useCommandPalette } from "@guided-review/ui/review/commandPalette";
 import {
   isCommitScopeId,
   limitCommitScopes,
@@ -232,6 +233,28 @@ export function ProgressHeader({
   const primaryIsExport = !host.submit && Boolean(host.exportNotes);
   const primaryDisabled = primaryIsExport && (notesCount ?? 0) === 0;
   const isLocal = host.kind === "local";
+  const openCommands = useCommandPalette((state) => state.open);
+  useCommandAction({
+    id: "generate-prompt",
+    label: "Generate prompt",
+    description:
+      (notesCount ?? 0) === 0
+        ? "Add a review note first."
+        : "Build a coding-agent prompt from your review notes.",
+    keywords: "copy export notes agent",
+    disabled: (notesCount ?? 0) === 0,
+    onSelect: onGeneratePrompt,
+  });
+  useCommandAction(
+    host.submit
+      ? {
+          id: "submit-review",
+          label: "Submit review",
+          shortcut: ["mod", "Enter"],
+          onSelect: onSubmitReview,
+        }
+      : null,
+  );
   const scopeOptions = (localDiff ? limitCommitScopes(localDiff.scopes) : []).map((scope) => ({
     value: scope.id,
     label: scope.label,
@@ -332,6 +355,16 @@ export function ProgressHeader({
           )}
         </div>
         <div className="flex max-w-full flex-wrap items-center gap-2 sm:gap-3">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => openCommands("search")}
+            aria-keyshortcuts="Meta+f Control+f"
+            data-testid="open-command-palette"
+          >
+            Search
+            <ShortcutKeys keys={["mod", "F"]} join="chord" />
+          </Button>
           {host.submit && host.exportNotes && (
             <Button
               variant="secondary"
