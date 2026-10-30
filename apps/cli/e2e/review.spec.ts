@@ -92,9 +92,10 @@ test.describe("CLI review overlay", () => {
             JSON.stringify({
               names: cards.map((card) => card.textContent?.match(/\w+\.ts/)?.[0]),
               frame,
-              highlighted: [...column.querySelectorAll('[data-testid="diff-view-unified"]')].some(
-                (hunk) => hunk.getAttribute("data-highlight-state") === "ready",
-              ),
+              highlighted:
+                column
+                  .querySelectorAll('[data-testid="diff-view-unified"]')
+                  [count - 1]?.getAttribute("data-highlight-state") === "ready",
             }),
         );
         if (count === 3) {
@@ -118,14 +119,13 @@ test.describe("CLI review overlay", () => {
     expect(mounts.every((mount) => !mount.highlighted)).toBe(true);
     expect(mounts[1].frame).toBeGreaterThan(mounts[0].frame);
     expect(mounts[2].frame).toBeGreaterThan(mounts[1].frame);
+    await page.getByTestId("code-col").evaluate((column) => {
+      column.scrollTop = column.scrollHeight;
+    });
     await expect(page.getByTestId("diff-view-unified").last()).toHaveAttribute(
       "data-highlight-state",
       "ready",
     );
-
-    await page.getByTestId("code-col").evaluate((column) => {
-      column.scrollTop = column.scrollHeight;
-    });
     await expect
       .poll(() =>
         page.evaluate(
