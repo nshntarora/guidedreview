@@ -80,6 +80,9 @@ test.describe("SEO and Open Graph", () => {
 
       const canonical = crawl.meta["link:canonical"];
       expect(canonical, `${path} canonical`).toBeTruthy();
+      // Next.js emits the root canonical without a trailing slash.
+      const expectedCanonical = `https://guidedreview.dev${path === "/" ? "" : path}`;
+      expect(canonical, `${path} production canonical`).toBe(expectedCanonical);
       const resolved = resolveHref(canonical!, crawl.pageUrl, baseURL!);
       expect(resolved.kind, `${path} canonical internal`).toBe("internal");
       if (resolved.kind === "internal") {

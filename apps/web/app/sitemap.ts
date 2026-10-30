@@ -58,7 +58,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }));
   const collections: MetadataRoute.Sitemap = ["/guides", "/compare"].map((path) => ({
     url: `${SITE_URL}${path}`,
-    lastModified: path === "/guides" ? "2026-10-28" : "2026-10-22",
+    lastModified:
+      path === "/guides"
+        ? GUIDES.map((guide) => guide.lastModified)
+            .sort()
+            .at(-1)!
+        : "2026-10-22",
     changeFrequency: "monthly",
     priority: 0.8,
   }));
