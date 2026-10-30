@@ -18,4 +18,3 @@ playwright-report/
 blob-report/
 coverage/
 .env
-review-artifacts/
