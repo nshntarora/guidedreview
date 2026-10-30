@@ -14,6 +14,7 @@ export function Footer() {
             <Link href="/docs">Docs</Link>
             <Link href="/compare">Compare</Link>
             <Link href="/guides">Guides</Link>
+            <Link href="/changelog">Changelog</Link>
             <a href="/llms.txt">For LLMs / agents</a>
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>

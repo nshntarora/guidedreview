@@ -5,7 +5,9 @@
   "license": "Apache-2.0",
   "scripts": {
     "dev": "next dev --port 3000",
-    "build": "next build",
+    "build": "pnpm sync:releases && next build",
+    "sync:releases": "node scripts/sync-releases.mjs",
+    "test": "node --test scripts/*.test.mjs",
     "start": "next start --port 3000",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "screenshots:docs": "node scripts/capture-docs.mjs",
@@ -25,7 +27,9 @@
     "next": "^16.4.2",
     "posthog-js": "^1.418.10",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@next/env": "^16.4.2",

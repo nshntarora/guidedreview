@@ -3,6 +3,7 @@ import { DOCS_PAGES, docsPath } from "@web/config/docs";
 import { GUIDES } from "@web/config/guides";
 import { COMPARISONS } from "@web/config/compare";
 import { SITE_URL } from "@web/lib/site";
+import { RELEASES, releasePath } from "@web/lib/releases";
 
 export const dynamic = "force-static";
 
@@ -67,5 +68,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: "monthly",
     priority: 0.8,
   }));
-  return [...staticEntries, ...docEntries, ...collections, ...articleEntries];
+  const releaseEntries: MetadataRoute.Sitemap = RELEASES.map((release) => ({
+    url: `${SITE_URL}${releasePath(release.version)}`,
+    lastModified: release.updatedAt,
+    changeFrequency: "monthly",
+    priority: 0.6,
+  }));
+  return [
+    ...staticEntries,
+    ...docEntries,
+    ...collections,
+    ...articleEntries,
+    {
+      url: `${SITE_URL}/changelog`,
+      lastModified: RELEASES[0]?.updatedAt ?? "2026-10-31",
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    ...releaseEntries,
+  ];
 }

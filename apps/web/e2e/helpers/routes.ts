@@ -1,6 +1,7 @@
 import { DOCS_PAGES, docsPath } from "@web/config/docs";
 import { GUIDES } from "@web/config/guides";
 import { COMPARISONS } from "@web/config/compare";
+import { RELEASES, releasePath } from "@web/lib/releases";
 export { docsPath } from "@web/config/docs";
 
 /** Static marketing + legal routes (always present). */
@@ -9,6 +10,7 @@ const STATIC_ROUTES = [
   "/docs",
   "/compare",
   "/guides",
+  "/changelog",
   "/privacy",
   "/terms",
   "/cookies",
@@ -39,6 +41,7 @@ export function allRoutes(): string[] {
       ...DOCS_PAGES.map((page) => docsPath(page.slug)),
       ...GUIDES.map((article) => article.path),
       ...COMPARISONS.map((article) => article.path),
+      ...RELEASES.map((release) => releasePath(release.version)),
     ]),
   ];
 }

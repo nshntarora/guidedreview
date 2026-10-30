@@ -33,7 +33,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `pnpm exec serve out -l ${PORT} --no-clipboard`,
+    // Match production routing, including dotted version URLs such as /changelog/0.3.2.
+    command: `pnpm exec wrangler pages dev out --port ${PORT} --ip 127.0.0.1 --log-level error`,
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
