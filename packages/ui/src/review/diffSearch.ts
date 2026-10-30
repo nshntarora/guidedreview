@@ -125,6 +125,9 @@ export function buildDiffSearchIndex(diff: ParsedDiff): DiffSearchDoc[] {
 
 const DEFAULT_LIMIT = 20;
 
+// Document arrays are immutable and released with their review session.
+const searchEngines = new WeakMap<DiffSearchDoc[], Fuse<DiffSearchDoc>>();
+
 /** Fuse options tuned for code: path weighted above content; moderate fuzziness. */
 const FUSE_OPTIONS: IFuseOptions<DiffSearchDoc> = {
   keys: [
@@ -151,7 +154,11 @@ export function searchDiff(
   const q = query.trim();
   if (!q || docs.length === 0) return [];
 
-  const fuse = new Fuse(docs, FUSE_OPTIONS);
+  let fuse = searchEngines.get(docs);
+  if (!fuse) {
+    fuse = new Fuse(docs, FUSE_OPTIONS);
+    searchEngines.set(docs, fuse);
+  }
   const raw = fuse.search(q, { limit: Math.max(limit * 2, limit) });
 
   const results: DiffSearchResult[] = raw.map((hit) => {

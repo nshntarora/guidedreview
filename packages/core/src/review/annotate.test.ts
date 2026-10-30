@@ -122,6 +122,33 @@ describe("annotateReview", () => {
     provider.usage = null;
   });
 
+  it("keeps units unique when a split tests id collides with a model id", async () => {
+    const mixed = {
+      id: "feature",
+      title: "Feature",
+      context: "Why",
+      files: [
+        { fileId: "a.ts", hunkIds: [], role: "core_logic" },
+        { fileId: "a.test.ts", hunkIds: [], role: "test" },
+      ],
+    };
+    provider.deltasByFirstFilePath.set("a.ts", [
+      planJson([
+        JSON.stringify(mixed),
+        unitJson("feature-tests", "b.ts"),
+        unitJson("feature-tests-2", "c.ts"),
+      ]),
+    ]);
+    const events = await collect({ files: ["a.ts", "a.test.ts", "b.ts", "c.ts"].map(twoHunkFile) });
+    expect(unitIds(events)).toEqual([
+      "c0-feature",
+      "c0-feature-tests",
+      "c0-feature-tests-2",
+      "c0-feature-tests-2-2",
+    ]);
+    expect(donePlan(events)?.map((unit) => unit.id)).toEqual(unitIds(events));
+  });
+
   it("namespaces unit ids per chunk so ids from different chunks cannot collide", async () => {
     provider.deltasByFirstFilePath.set("a.ts", [planJson([unitJson("shared", "a.ts")])]);
     provider.deltasByFirstFilePath.set("b.ts", [planJson([unitJson("shared", "b.ts")])]);

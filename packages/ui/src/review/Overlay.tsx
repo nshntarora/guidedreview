@@ -120,9 +120,6 @@ function ReviewLayout({
   const selection = useReviewStore((s) => s.selection);
   const navigationMode = useReviewStore((s) => s.navigationMode);
   const planComplete = useReviewStore((s) => s.planComplete);
-  const pendingComposers = useReviewStore((s) => s.pendingComposers);
-  const collapsedDirectories = useReviewStore((s) => s.collapsedDirectories);
-  const scrollPositions = useReviewStore((s) => s.scrollPositions);
   const sessionKey = useReviewStore((s) => s.sessionKey);
   const diffViewMode = useReviewStore((s) => s.diffViewMode);
   const close = useReviewStore((s) => s.close);
@@ -311,23 +308,34 @@ function ReviewLayout({
   }
 
   useEffect(() => {
-    // Coalesce typing and scrolling; persist file reviews and partial plans too.
-    const timer = window.setTimeout(() => {
-      void persistSession();
-    }, 150);
-    return () => window.clearTimeout(timer);
-  }, [
-    status,
-    selection,
-    navigationMode,
-    sessionKey,
-    draftComments,
-    pendingComposers,
-    collapsedDirectories,
-    scrollPositions,
-    plan,
-    planComplete,
-  ]);
+    // Persistence-only updates (scrolling, unfinished notes) must not rerender
+    // the overlay or rerun an open diff search. Preserve the existing debounce.
+    const fields = [
+      "status",
+      "selection",
+      "navigationMode",
+      "sessionKey",
+      "draftComments",
+      "pendingComposers",
+      "collapsedDirectories",
+      "scrollPositions",
+      "plan",
+      "planComplete",
+    ] as const;
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => void persistSession(), 150);
+    };
+    schedule();
+    const unsubscribe = useReviewStore.subscribe((state, previous) => {
+      if (fields.some((field) => state[field] !== previous[field])) schedule();
+    });
+    return () => {
+      clearTimeout(timer);
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;

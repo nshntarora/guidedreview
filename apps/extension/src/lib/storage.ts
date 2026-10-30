@@ -70,3 +70,41 @@ export async function grantSessionAccessToContentScripts(): Promise<void> {
     accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS",
   });
 }
+
+/** Store immutable diff data once; progress writes stay small. Writes are ordered
+ * and a changed diff and its progress are committed in the same storage call. */
+export function createReviewSessionStorage() {
+  let lastKey: string | undefined;
+  let lastDiff: unknown;
+  let pending: Promise<void> = Promise.resolve();
+  return {
+    write(key: string, value: unknown): Promise<void> {
+      const save = async () => {
+        if (!value || typeof value !== "object" || !("diff" in value)) {
+          throw new Error("Cannot save a review session without a diff.");
+        }
+        const { diff, ...progress } = value;
+        const diffKey = `${key}.diff`;
+        const entries: Record<string, unknown> = { [key]: { ...progress, diffKey } };
+        if (lastKey !== key || lastDiff !== diff) entries[diffKey] = diff;
+        await chrome.storage.session.set(entries);
+        lastKey = key;
+        lastDiff = diff;
+      };
+      const result = pending.then(save);
+      pending = result.catch(() => {});
+      return result;
+    },
+    async read(key: string): Promise<unknown | null> {
+      await pending;
+      const diffKey = `${key}.diff`;
+      const entries = await chrome.storage.session.get([key, diffKey]);
+      const saved = entries[key];
+      if (!saved || typeof saved !== "object") return null;
+      // Existing full snapshots take precedence, including legacy records.
+      if ("diff" in saved) return saved;
+      if (!("diffKey" in saved) || saved.diffKey !== diffKey || !entries[diffKey]) return null;
+      return { ...saved, diff: entries[diffKey] };
+    },
+  };
+}

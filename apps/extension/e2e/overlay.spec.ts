@@ -46,7 +46,7 @@ function longAddedFileDiff(filePath: string, addCount: number): string {
 }
 
 const LONG_FILE_PATH = "src/long.ts";
-const LONG_FILE_DIFF = longAddedFileDiff(LONG_FILE_PATH, 100);
+const LONG_FILE_DIFF = longAddedFileDiff(LONG_FILE_PATH, 1000);
 
 const CANNED_PLAN: ReviewPlan = {
   units: [
@@ -737,6 +737,8 @@ test.describe("Guided review overlay", () => {
     await expect(header).toBeVisible();
     await expect(header).toContainText("long.ts");
     await expect(page.getByTestId("diff-view-unified")).toBeVisible();
+    await expect.poll(() => page.getByTestId("diff-rendered-row").count()).toBeGreaterThan(0);
+    expect(await page.getByTestId("diff-rendered-row").count()).toBeLessThan(500);
 
     const didScroll = await codeCol.evaluate((el) => {
       el.scrollTop = el.scrollHeight;
@@ -744,6 +746,8 @@ test.describe("Guided review overlay", () => {
     });
     expect(didScroll).toBe(true);
 
+    await expect(page.getByTestId("diff-rendered-row")).toContainText(["LINE_LAST"]);
+    expect(await page.getByTestId("diff-rendered-row").count()).toBeLessThan(500);
     await expect(header).toContainText("long.ts");
     await expect
       .poll(async () => {
@@ -755,6 +759,20 @@ test.describe("Guided review overlay", () => {
       })
       .toBeLessThan(2);
 
-    await expect(page.getByTestId("diff-view-unified")).toBeVisible();
+    await page.keyboard.press("Control+f");
+    await page.getByTestId("diff-search-input").fill("line_450 = 450");
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("diff-line-focus")).toContainText("line_450 = 450");
+    await codeCol.focus();
+    await page.keyboard.press("v");
+    await page.keyboard.press("s");
+    await expect(page.getByTestId("diff-view-split")).toBeVisible();
+    await page.keyboard.press("Control+f");
+    await page.getByTestId("diff-search-input").fill("line_750 = 750");
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("diff-line-focus")).toContainText("line_750 = 750");
+    expect(await page.getByTestId("diff-rendered-row").count()).toBeLessThan(500);
+    await page.getByTestId("diff-show-all-lines").click();
+    await expect(page.getByTestId("diff-rendered-row")).toHaveCount(1001);
   });
 });

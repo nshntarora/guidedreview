@@ -10,10 +10,11 @@ import { MessageType, type ContentRequest, type ParsedDiff } from "@extension/li
 import type { ReviewContext } from "@guided-review/core";
 import { ensureFallbackHost, FALLBACK_HOST_ID, findButtonAnchor } from "./buttonAnchor";
 import { createGitHubReviewHost } from "./githubHost";
-import { Overlay } from "@guided-review/ui/review/Overlay";
+import { lazy, Suspense } from "react";
+import { Button } from "@guided-review/ui";
 import { ReviewHostProvider, setActiveReviewHost } from "@guided-review/ui/review/host";
 import { isPrFilesChangedPath } from "@extension/lib/github/prUrls";
-import overlayStyles from "@guided-review/ui/review/styles/overlay.css?inline";
+
 import { useReviewStore, restoreSession, buildSessionKey } from "@guided-review/ui/review/store";
 
 const reviewHost = createGitHubReviewHost({ onGeneratePlan: retryAnnotation });
@@ -22,6 +23,27 @@ setActiveReviewHost(reviewHost);
 const BUTTON_ID = "guided-review-start-btn";
 const BUTTON_STYLE_ID = "guided-review-start-btn-styles";
 const HOST_ID = "guided-review-overlay-host";
+const Overlay = lazy(async () => {
+  try {
+    const [module, { default: css }] = await Promise.all([
+      import("@guided-review/ui/review/Overlay"),
+      import("@guided-review/ui/review/styles/overlay.css?inline"),
+    ]);
+    const style = document.getElementById(HOST_ID)?.shadowRoot?.querySelector("style");
+    if (style) style.textContent = css;
+    return { default: module.Overlay };
+  } catch {
+    return {
+      default: () => (
+        <div role="alert" style={{ position: "fixed", inset: 0, zIndex: 2147483647 }}>
+          Guided Review could not load. Refresh the PR tab and try again.
+          <Button onClick={() => window.location.reload()}>Refresh PR</Button>
+        </div>
+      ),
+    };
+  }
+});
+
 /**
  * Start button is injected into GitHub's light DOM, not the overlay Shadow Root,
  * so it cannot use theme.css tokens. Hex must stay in sync with `--color-primary`,
@@ -347,7 +369,6 @@ function ensureOverlayMounted(): void {
   const shadowRoot = host.attachShadow({ mode: "open" });
 
   const style = document.createElement("style");
-  style.textContent = overlayStyles;
   shadowRoot.appendChild(style);
 
   const appRoot = document.createElement("div");
@@ -357,7 +378,9 @@ function ensureOverlayMounted(): void {
   // another PR never leaves a stale prUrl prop from the first mount.
   createRoot(appRoot).render(
     <ReviewHostProvider host={reviewHost}>
-      <Overlay onRequestClose={cancelActiveStream} onRetry={retryAnnotation} />
+      <Suspense fallback={<div role="status">Opening Guided Review…</div>}>
+        <Overlay onRequestClose={cancelActiveStream} onRetry={retryAnnotation} />
+      </Suspense>
     </ReviewHostProvider>,
   );
 }

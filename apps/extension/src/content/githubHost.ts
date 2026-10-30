@@ -12,7 +12,7 @@ import {
   streamReviewPlan,
 } from "@extension/lib/messaging";
 import { getStoredDiffViewMode, setStoredDiffViewMode } from "@extension/lib/preferences";
-import { readSession, writeSession } from "@extension/lib/storage";
+import { createReviewSessionStorage } from "@extension/lib/storage";
 import { requestFilePreview } from "@extension/lib/messaging";
 import {
   buildFileLineUrl,
@@ -43,15 +43,16 @@ function githubIdentity(context: ReviewContext): {
 }
 
 export function createGitHubReviewHost(options: { onGeneratePlan?: () => void } = {}): ReviewHost {
+  const sessions = createReviewSessionStorage();
   return {
     kind: "github",
     generatePlan: options.onGeneratePlan,
     assetUrl: (path) => chrome.runtime.getURL(path),
     persistSession: async (key, data) => {
-      await writeSession(sessionStorageKey(key), data);
+      await sessions.write(sessionStorageKey(key), data);
     },
     restoreSession: async (key) => {
-      return readSession(sessionStorageKey(key), (raw) => (raw ?? null) as unknown);
+      return sessions.read(sessionStorageKey(key));
     },
     streamPlan: (diff, context, handlers) => {
       // Annotate messages require GitHub PR identity. This host only runs on a

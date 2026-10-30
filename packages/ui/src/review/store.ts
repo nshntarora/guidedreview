@@ -859,6 +859,11 @@ export async function restoreSession(sessionKey: string): Promise<boolean> {
   }
   if (!saved?.diff?.files || generation !== useReviewStore.getState().streamGeneration)
     return false;
+  useReviewStore.setState(normalizeSession(saved, sessionKey));
+  return true;
+}
+
+function normalizeSession(saved: PersistedSession, sessionKey: string): Partial<ReviewState> {
   const plan = saved.planSource === "files" ? null : (saved.plan ?? null);
   const legacyUnit =
     plan?.units[Math.min(Math.max((saved.currentUnitIndex ?? 0) - 1, 0), plan.units.length - 1)];
@@ -878,7 +883,7 @@ export async function restoreSession(sessionKey: string): Promise<boolean> {
     return null;
   };
   selection = valid(selection) ?? { kind: "summary" };
-  useReviewStore.setState({
+  return {
     ...NAVIGATION_RESET,
     tokenUsage: saved.tokenUsage ?? null,
     status: "ready",
@@ -903,6 +908,5 @@ export async function restoreSession(sessionKey: string): Promise<boolean> {
       selectedCode: draft.selectedCode ?? "",
     })),
     ...COMMENT_UI_RESET,
-  });
-  return true;
+  };
 }

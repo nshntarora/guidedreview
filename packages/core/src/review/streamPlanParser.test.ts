@@ -34,6 +34,19 @@ function ids(values: unknown[]): (string | undefined)[] {
 }
 
 describe("StreamPlanParser", () => {
+  it("preserves escaped strings and nested objects across single-character deltas", () => {
+    const units = [
+      {
+        id: "large",
+        context: 'quote " slash \\ braces {} '.repeat(1000),
+        nested: { values: [{ id: "inner" }] },
+      },
+    ];
+    const parser = new StreamPlanParser();
+    const emitted = [...fullJson(units)].flatMap((character) => parser.push(character));
+    expect([...emitted, ...parser.finish()]).toEqual(units);
+  });
+
   it("emits nothing until a complete unit object is available", () => {
     const parser = new StreamPlanParser();
     expect(parser.push('{"units":[')).toEqual([]);

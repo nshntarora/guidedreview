@@ -386,8 +386,8 @@ export function DiffPane({
             composerPlacementId={composerPlacementId}
             composerRange={composerRange}
             unitId={unitId}
-            searchHighlight={searchHighlight}
-            highlightEnabled={filesRendered}
+            searchHighlight={searchScrollTarget ?? searchHighlight}
+            highlightEnabled={true}
           />
         ))}
       </div>

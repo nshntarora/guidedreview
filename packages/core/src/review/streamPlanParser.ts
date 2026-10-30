@@ -13,6 +13,13 @@ export class StreamPlanParser {
   private buffer = "";
   private unitsArrayStart = -1;
   private scanPos = 0;
+  private pendingObject: {
+    start: number;
+    position: number;
+    depth: number;
+    inString: boolean;
+    escape: boolean;
+  } | null = null;
   /**
    * How many elements of the `units` array the incremental scanner has walked
    * past — including ones it declined to emit. This is an array offset, not an
@@ -85,14 +92,22 @@ export class StreamPlanParser {
         continue;
       }
 
-      const end = findMatchingBrace(this.buffer, next);
+      const pending = (this.pendingObject ??= {
+        start: next,
+        position: next,
+        depth: 0,
+        inString: false,
+        escape: false,
+      });
+      const end = findMatchingBrace(this.buffer, pending);
       if (end < 0) {
         // Incomplete object — wait for more text.
         this.scanPos = next;
         break;
       }
 
-      const slice = this.buffer.slice(next, end + 1);
+      const slice = this.buffer.slice(pending.start, end + 1);
+      this.pendingObject = null;
       this.scanPos = end + 1;
       // Counted whether or not it survives validation below — this element of
       // the array has been consumed either way.
@@ -132,43 +147,43 @@ function skipWsAndCommas(text: string, start: number): number {
 }
 
 /**
- * Find the index of the `}` that closes the object starting at `openBrace`.
+ * Resume scanning the pending object and return its closing brace index.
  * String-aware (handles escapes). Returns -1 if the object is incomplete.
  */
-function findMatchingBrace(text: string, openBrace: number): number {
-  let depth = 0;
-  let inString = false;
-  let escape = false;
-
-  for (let i = openBrace; i < text.length; i++) {
+function findMatchingBrace(
+  text: string,
+  state: { position: number; depth: number; inString: boolean; escape: boolean },
+): number {
+  for (; state.position < text.length; state.position++) {
+    const i = state.position;
     const c = text[i];
 
-    if (inString) {
-      if (escape) {
-        escape = false;
+    if (state.inString) {
+      if (state.escape) {
+        state.escape = false;
         continue;
       }
       if (c === "\\") {
-        escape = true;
+        state.escape = true;
         continue;
       }
       if (c === '"') {
-        inString = false;
+        state.inString = false;
       }
       continue;
     }
 
     if (c === '"') {
-      inString = true;
+      state.inString = true;
       continue;
     }
     if (c === "{") {
-      depth++;
+      state.depth++;
       continue;
     }
     if (c === "}") {
-      depth--;
-      if (depth === 0) return i;
+      state.depth--;
+      if (state.depth === 0) return i;
     }
   }
 

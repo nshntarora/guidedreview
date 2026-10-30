@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  createReviewSessionStorage,
   readLocal,
   readSession,
   removeLocal,
@@ -106,4 +107,28 @@ describe("session storage", () => {
     expect(await readLocal("shared", (raw) => raw)).toBe("local-value");
     expect(await readSession("shared", (raw) => raw)).toBe("session-value");
   });
+});
+
+it("saves progress without rewriting the diff and restores both split and legacy sessions", async () => {
+  const sessions = createReviewSessionStorage();
+  const diff = { files: [{ path: "a.ts" }] };
+  await sessions.write("review", { diff, selection: "first" });
+  chromeMock().storage.session.set.mockClear();
+  await Promise.all([
+    sessions.write("review", { diff, selection: "second" }),
+    sessions.write("review", { diff, selection: "latest", drafts: ["Keep this"] }),
+  ]);
+  for (const [entries] of chromeMock().storage.session.set.mock.calls) {
+    expect(Object.keys(entries)).toEqual(["review"]);
+  }
+  expect(await sessions.read("review")).toMatchObject({
+    diff,
+    selection: "latest",
+    drafts: ["Keep this"],
+  });
+  const replacement = { files: [{ path: "b.ts" }] };
+  await sessions.write("review", { diff: replacement, selection: "new diff" });
+  expect(await sessions.read("review")).toMatchObject({ diff: replacement, selection: "new diff" });
+  await writeSession("legacy", { diff, selection: "old format" });
+  expect(await sessions.read("legacy")).toEqual({ diff, selection: "old format" });
 });

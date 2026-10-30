@@ -4,7 +4,7 @@ import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import net from "node:net";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ParsedDiff } from "@guided-review/core";
 import { buildLocalReview, type LocalReviewSnapshot } from "../git/localDiff";
 import { configPath } from "../config";
@@ -16,6 +16,8 @@ import {
   listen,
   type ReviewSessionPayload,
 } from "./createServer";
+
+import * as localDiff from "../git/localDiff";
 
 const execFileAsync = promisify(execFile);
 
@@ -99,6 +101,51 @@ const snapshot: LocalReviewSnapshot = {
 };
 
 describe("createReviewServer", () => {
+  it("does not let an older session refresh overwrite a scope change", async () => {
+    let release!: (value: LocalReviewSnapshot) => void;
+    let started!: () => void;
+    const pending = new Promise<LocalReviewSnapshot>((resolve) => {
+      release = resolve;
+    });
+    const entered = new Promise<void>((resolve) => {
+      started = resolve;
+    });
+    const next = { ...snapshot, selectedScope: "unstaged" as const };
+    const rebuild = vi
+      .spyOn(localDiff, "rebuildLocalReview")
+      .mockImplementationOnce(() => {
+        started();
+        return pending;
+      })
+      .mockResolvedValue(next);
+    const server = createReviewServer({
+      snapshot,
+      settings: { provider: "anthropic", model: "custom", apiKey: "" },
+    });
+    const base = `http://127.0.0.1:${await listen(server)}`;
+    try {
+      const refresh = fetch(`${base}/api/session`);
+      await entered;
+      const changed = await fetch(`${base}/api/diff`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ scope: "unstaged" }),
+      });
+      expect(changed.status).toBe(200);
+      release(snapshot);
+      expect(((await (await refresh).json()) as ReviewSessionPayload).selectedScope).toBe(
+        "unstaged",
+      );
+      expect(
+        ((await (await fetch(`${base}/api/session`)).json()) as ReviewSessionPayload).selectedScope,
+      ).toBe("unstaged");
+    } finally {
+      release(snapshot);
+      rebuild.mockRestore();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  });
+
   it("serves the session and streams no_api_key without a key", async () => {
     const { logger, records } = createCapturingLogger();
     const server = createReviewServer({
@@ -377,6 +424,30 @@ describe("createReviewServer", () => {
       process.env.GUIDED_REVIEW_CONFIG_DIR = dir!;
       return dir!;
     }
+
+    it("preserves live settings when persistence fails", async () => {
+      const dir = await withTempConfig();
+      await writeFile(path.join(dir, "config.json"), "invalid JSON");
+      const settings = {
+        provider: "anthropic" as const,
+        model: "custom-original",
+        apiKey: "saved-key",
+      };
+      const server = createReviewServer({ snapshot, settings });
+      const base = `http://127.0.0.1:${await listen(server)}`;
+      try {
+        const before = await (await fetch(`${base}/api/settings`)).json();
+        const response = await fetch(`${base}/api/settings`, {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ model: "custom-new" }),
+        });
+        expect(response.status).toBe(500);
+        expect(await (await fetch(`${base}/api/settings`)).json()).toEqual(before);
+      } finally {
+        await new Promise<void>((resolve) => server.close(() => resolve()));
+      }
+    });
 
     it("keeps agent auth in memory and does not persist the secret", async () => {
       const dir = await withTempConfig();

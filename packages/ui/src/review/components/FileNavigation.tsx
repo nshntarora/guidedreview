@@ -79,7 +79,7 @@ export const FileNavigation = memo(function FileNavigationRows({
           >
             <div className="min-h-0 overflow-hidden">
               <div className="ml-2 border-l border-border/60 pl-1">
-                <FileNavigation directory={child} onSelect={onSelect} />
+                {!collapsed[child.path] && <FileNavigation directory={child} onSelect={onSelect} />}
               </div>
             </div>
           </div>

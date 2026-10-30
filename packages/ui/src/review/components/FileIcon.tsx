@@ -1,4 +1,8 @@
-import { FileIcon as SymbolsFileIcon } from "@react-symbols/icons/utils";
+import { lazy, Suspense } from "react";
+
+const SymbolsFileIcon = lazy(() =>
+  import("@react-symbols/icons/utils").then((module) => ({ default: module.FileIcon })),
+);
 
 export function FolderIcon({ open }: { open: boolean }) {
   return (
@@ -29,14 +33,16 @@ export function FolderIcon({ open }: { open: boolean }) {
 /** Bundled SVGs: recognizable file marks with no fonts or network requests. */
 export function FileIcon({ path }: { path: string }) {
   return (
-    <SymbolsFileIcon
-      fileName={path.split("/").pop() ?? path}
-      autoAssign
-      width={18}
-      height={20}
-      className="shrink-0 text-muted"
-      aria-hidden="true"
-      focusable="false"
-    />
+    <Suspense fallback={<span className="inline-block h-5 w-[18px] shrink-0" aria-hidden="true" />}>
+      <SymbolsFileIcon
+        fileName={path.split("/").pop() ?? path}
+        autoAssign
+        width={18}
+        height={20}
+        className="shrink-0 text-muted"
+        aria-hidden="true"
+        focusable="false"
+      />
+    </Suspense>
   );
 }
