@@ -154,7 +154,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 >
                   Guides
                 </Link>
-                <StarOnGitHubButton size="sm" compact location="header" />
                 <Link
                   href="/changelog"
                   className="text-foreground hover:text-primary"
@@ -162,6 +161,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 >
                   Changelog
                 </Link>
+                <StarOnGitHubButton size="sm" compact location="header" />
                 <InstallButton size="sm" compact location="header" />
               </nav>
             </div>
