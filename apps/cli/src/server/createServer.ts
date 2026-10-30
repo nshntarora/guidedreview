@@ -161,10 +161,18 @@ function parseSettingsBody(value: unknown): SettingsBody | null {
   return body;
 }
 
+function readSettingsBody(req: Request, res: Response): SettingsBody | null {
+  const parsed = readJsonBody(req);
+  const body = parsed.ok ? parseSettingsBody(parsed.value) : null;
+  if (!body) sendJson(res, 400, { error: "Request body must be JSON." });
+  return body;
+}
+
 export function createReviewServer(options: CreateReviewServerOptions) {
   let settings = options.settings;
   let codingAgent = options.codingAgent ?? null;
   let snapshot = options.snapshot;
+  let snapshotRevision = 0;
   const logger = options.logger ?? createLogger({ silent: true });
   const onStatus = options.onStatus;
   const httpLog = labeled(logger, "http");
@@ -190,9 +198,9 @@ export function createReviewServer(options: CreateReviewServerOptions) {
       if (!agent) return { ok: false, error: "That coding agent is not installed." };
       try {
         const applied = applyDetectedAgent(agent, body.model);
+        await patchConfigFile(applied.persist);
         settings = applied.settings;
         codingAgent = applied.codingAgent;
-        await patchConfigFile(applied.persist);
       } catch (error) {
         return {
           ok: false,
@@ -205,9 +213,9 @@ export function createReviewServer(options: CreateReviewServerOptions) {
         applied.codingAgent = null;
         applied.persist.codingAgent = null;
       }
+      await patchConfigFile(applied.persist);
       settings = applied.settings;
       codingAgent = applied.codingAgent;
-      await patchConfigFile(applied.persist);
     }
     return { ok: true, published: publicSettings(settings, codingAgent) };
   }
@@ -238,7 +246,9 @@ export function createReviewServer(options: CreateReviewServerOptions) {
 
   app.get("/api/session", async (_req, res) => {
     try {
-      snapshot = await rebuildLocalReview(snapshot.repo, snapshot.selectedScope);
+      const revision = snapshotRevision;
+      const refreshed = await rebuildLocalReview(snapshot.repo, snapshot.selectedScope);
+      if (revision === snapshotRevision) snapshot = refreshed;
       const published = publicSettings(settings, codingAgent);
       onStatus?.({
         ...sessionStatus(snapshot, published),
@@ -272,16 +282,8 @@ export function createReviewServer(options: CreateReviewServerOptions) {
   });
 
   app.put("/api/settings", async (req, res) => {
-    const parsed = readJsonBody(req);
-    if (!parsed.ok) {
-      sendJson(res, 400, { error: "Request body must be JSON." });
-      return;
-    }
-    const body = parseSettingsBody(parsed.value);
-    if (!body) {
-      sendJson(res, 400, { error: "Request body must be JSON." });
-      return;
-    }
+    const body = readSettingsBody(req, res);
+    if (!body) return;
     const applied = await applySettingsBody(body);
     if (!applied.ok) {
       sendJson(res, 400, { error: applied.error });
@@ -301,16 +303,8 @@ export function createReviewServer(options: CreateReviewServerOptions) {
   });
 
   app.post("/api/settings/test", async (req, res) => {
-    const parsed = readJsonBody(req);
-    if (!parsed.ok) {
-      sendJson(res, 400, { error: "Request body must be JSON." });
-      return;
-    }
-    const body = parseSettingsBody(parsed.value);
-    if (!body) {
-      sendJson(res, 400, { error: "Request body must be JSON." });
-      return;
-    }
+    const body = readSettingsBody(req, res);
+    if (!body) return;
     const applied = await applySettingsBody(body);
     if (!applied.ok) {
       sendJson(res, 400, { error: applied.error });
@@ -375,13 +369,19 @@ export function createReviewServer(options: CreateReviewServerOptions) {
       sendJson(res, 400, { error: "Unknown diff scope." });
       return;
     }
+    const revision = ++snapshotRevision;
     try {
       const next = await rebuildLocalReview(snapshot.repo, scope);
       if (next.empty) {
         sendJson(res, 400, { error: "That scope has no changes." });
         return;
       }
+      if (revision !== snapshotRevision) {
+        sendJson(res, 409, { error: "Diff scope changed again. Reload the session." });
+        return;
+      }
       snapshot = next;
+      snapshotRevision += 1;
       const published = publicSettings(settings, codingAgent);
       diffLog.info(`${scope}  ${next.diff.files.length} file(s)`);
       onStatus?.({

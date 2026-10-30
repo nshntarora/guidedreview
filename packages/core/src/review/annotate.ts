@@ -41,7 +41,7 @@ export async function* annotateReview(
     const chunks = chunkDiffByFile(diff).filter((chunk) => chunk.files.length > 0);
     const allUnits: ReviewUnit[] = [];
     const seenHunkIds = new Set<string>();
-    const streamStatus = { postedWaiting: true, postedStreaming: false };
+    let postedStreaming = false;
     const chunkUsage: ReviewTokenUsage[] = [];
 
     for (const [chunkIndex, chunk] of chunks.entries()) {
@@ -67,8 +67,8 @@ export async function* annotateReview(
           continue;
         }
         if (event.type === "token") {
-          if (!streamStatus.postedStreaming) {
-            streamStatus.postedStreaming = true;
+          if (!postedStreaming) {
+            postedStreaming = true;
             yield { type: "STATUS", phase: "tokens_streaming" };
           }
           continue;
@@ -115,6 +115,7 @@ async function* streamChunkUnits(
   const parser = new StreamPlanParser();
   const knownFiles = new Map(chunk.files.map((file) => [file.path, file]));
   let sawToken = false;
+  const emittedIds = new Set<string>();
   // A character-based estimate keeps progress visible until provider usage arrives.
   // Include the schema because structured-output instructions also consume input.
   let usage: ReviewTokenUsage = {
@@ -183,7 +184,12 @@ async function* streamChunkUnits(
         if (signal?.aborted) return;
         const deduped = stripDuplicateHunks(cleaned, knownFiles, seenHunkIds);
         if (!deduped) continue;
-        yield { type: "unit", unit: { ...deduped, id: prefixChunkUnitId(chunkIndex, deduped.id) } };
+        const baseId = prefixChunkUnitId(chunkIndex, deduped.id);
+        let id = baseId;
+        let suffix = 2;
+        while (emittedIds.has(id)) id = `${baseId}-${suffix++}`;
+        emittedIds.add(id);
+        yield { type: "unit", unit: { ...deduped, id } };
       }
     }
   }
