@@ -24,8 +24,8 @@ it("excludes collapsed descendants from navigation and selects a nested file aft
     <FileNavigation directory={buildFileTree(diff)} onSelect={onSelect} />,
   );
   const directory = screen.getByTestId("file-directory-src");
-  const nestedDirectory = screen.getByTestId("file-directory-src/auth");
-  const file = screen.getByTestId("review-file-src/auth/login.ts");
+  let nestedDirectory = screen.getByTestId("file-directory-src/auth");
+  let file = screen.getByTestId("review-file-src/auth/login.ts");
 
   expect(getFocusableElements(container)).toEqual([directory, nestedDirectory, file]);
   await user.click(directory);
@@ -35,6 +35,8 @@ it("excludes collapsed descendants from navigation and selects a nested file aft
 
   await user.keyboard("{Enter}");
   expect(directory).toHaveAttribute("aria-expanded", "true");
+  nestedDirectory = screen.getByTestId("file-directory-src/auth");
+  file = screen.getByTestId("review-file-src/auth/login.ts");
   await user.tab();
   expect(nestedDirectory).toHaveFocus();
   await user.tab();

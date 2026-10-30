@@ -1,3 +1,4 @@
+import { WindowedRows } from "./WindowedRows";
 import { useMemo } from "react";
 import { cn } from "@guided-review/ui";
 import { buildSplitRows, type SplitCell } from "@guided-review/ui/review/buildSplitRows";
@@ -88,86 +89,109 @@ export function SplitHunk({
   composerRange,
   unitId,
 }: HunkViewProps) {
-  const highlighted = useDeferredHighlight(hunk, language);
+  const { ref, lines: highlighted } = useDeferredHighlight(hunk, language);
   const rows = useMemo(() => buildSplitRows(hunk.lines), [hunk.lines]);
 
   return (
     <div
       className="overflow-x-hidden font-mono text-sm leading-relaxed"
+      ref={ref}
       data-testid="diff-view-split"
       data-highlight-state={!language ? "plain" : highlighted ? "ready" : "pending"}
     >
-      {rows.map((row, i) => {
-        const leftId =
-          row.left.kind === "content"
-            ? lineIdFor(hunk.id, row.left.sourceIndex, "LEFT")
-            : undefined;
-        const rightId =
-          row.right.kind === "content"
-            ? lineIdFor(hunk.id, row.right.sourceIndex, "RIGHT")
-            : undefined;
+      {
+        <WindowedRows
+          count={rows.length}
+          isPinned={(i) => {
+            const row = rows[i];
+            return ([row.left, row.right] as const).some((cell, side) => {
+              if (cell.kind !== "content") return false;
+              const id = lineIdFor(hunk.id, cell.sourceIndex, side === 0 ? "LEFT" : "RIGHT");
+              return (
+                id === focusId ||
+                selectedIds.has(id) ||
+                id === composerPlacementId ||
+                draftsByEndLineId.has(id)
+              );
+            });
+          }}
+          renderRow={(i) => {
+            const row = rows[i];
+            const leftId =
+              row.left.kind === "content"
+                ? lineIdFor(hunk.id, row.left.sourceIndex, "LEFT")
+                : undefined;
+            const rightId =
+              row.right.kind === "content"
+                ? lineIdFor(hunk.id, row.right.sourceIndex, "RIGHT")
+                : undefined;
 
-        const showLeftExtras =
-          leftId != null && (composerPlacementId === leftId || draftsByEndLineId.has(leftId));
-        const showRightExtras =
-          rightId != null && (composerPlacementId === rightId || draftsByEndLineId.has(rightId));
+            const showLeftExtras =
+              leftId != null && (composerPlacementId === leftId || draftsByEndLineId.has(leftId));
+            const showRightExtras =
+              rightId != null &&
+              (composerPlacementId === rightId || draftsByEndLineId.has(rightId));
 
-        return (
-          <div key={i}>
-            <div className="flex min-w-0 border-b border-border-strong last:border-b-0">
-              <SplitCellView
-                cell={row.left}
-                highlighted={
-                  row.left.kind === "content" ? (highlighted?.[row.left.sourceIndex] ?? null) : null
-                }
-                side="left"
-                lineId={leftId}
-                selectedIds={selectedIds}
-                focusId={focusId}
-              />
-              <div className="w-px shrink-0 bg-border" aria-hidden="true" />
-              <SplitCellView
-                cell={row.right}
-                highlighted={
-                  row.right.kind === "content"
-                    ? (highlighted?.[row.right.sourceIndex] ?? null)
-                    : null
-                }
-                side="right"
-                lineId={rightId}
-                selectedIds={selectedIds}
-                focusId={focusId}
-              />
-            </div>
-            {(showLeftExtras || showRightExtras) && (
-              <div className="flex min-w-0" data-testid="split-line-extras">
-                <div className="min-w-0 flex-1" aria-hidden="true" />
-                <div className="w-px shrink-0 bg-border" aria-hidden="true" />
-                <div className="min-w-0 flex-1">
-                  {showLeftExtras && leftId && (
-                    <LineExtras
-                      lineId={leftId}
-                      draftsByEndLineId={draftsByEndLineId}
-                      composerPlacementId={composerPlacementId}
-                      composerRange={composerRange}
-                      unitId={unitId}
-                    />
-                  )}
-                  {showRightExtras && rightId && (
-                    <LineExtras
-                      lineId={rightId}
-                      draftsByEndLineId={draftsByEndLineId}
-                      composerPlacementId={composerPlacementId}
-                      composerRange={composerRange}
-                      unitId={unitId}
-                    />
-                  )}
+            return (
+              <div key={i} data-testid="diff-rendered-row">
+                <div className="flex min-w-0 border-b border-border-strong last:border-b-0">
+                  <SplitCellView
+                    cell={row.left}
+                    highlighted={
+                      row.left.kind === "content"
+                        ? (highlighted?.[row.left.sourceIndex] ?? null)
+                        : null
+                    }
+                    side="left"
+                    lineId={leftId}
+                    selectedIds={selectedIds}
+                    focusId={focusId}
+                  />
+                  <div className="w-px shrink-0 bg-border" aria-hidden="true" />
+                  <SplitCellView
+                    cell={row.right}
+                    highlighted={
+                      row.right.kind === "content"
+                        ? (highlighted?.[row.right.sourceIndex] ?? null)
+                        : null
+                    }
+                    side="right"
+                    lineId={rightId}
+                    selectedIds={selectedIds}
+                    focusId={focusId}
+                  />
                 </div>
+                {(showLeftExtras || showRightExtras) && (
+                  <div className="flex min-w-0" data-testid="split-line-extras">
+                    <div className="min-w-0 flex-1" aria-hidden="true" />
+                    <div className="w-px shrink-0 bg-border" aria-hidden="true" />
+                    <div className="min-w-0 flex-1">
+                      {showLeftExtras && leftId && (
+                        <LineExtras
+                          lineId={leftId}
+                          draftsByEndLineId={draftsByEndLineId}
+                          composerPlacementId={composerPlacementId}
+                          composerRange={composerRange}
+                          unitId={unitId}
+                        />
+                      )}
+                      {showRightExtras && rightId && (
+                        <LineExtras
+                          lineId={rightId}
+                          draftsByEndLineId={draftsByEndLineId}
+                          composerPlacementId={composerPlacementId}
+                          composerRange={composerRange}
+                          unitId={unitId}
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        );
-      })}
+            );
+          }}
+        />
+      }
     </div>
   );
 }
