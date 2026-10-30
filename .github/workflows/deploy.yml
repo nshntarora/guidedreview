@@ -1,7 +1,7 @@
 # Deploy the marketing site (apps/web) to Cloudflare Pages.
 #
 # Runs only after the "Tests" workflow succeeds on a push to main
-# (or via workflow_dispatch). Static Next export (`apps/web/out`) is uploaded
+# (or on release changes / workflow_dispatch). Static Next export (`apps/web/out`) is uploaded
 # with `wrangler pages deploy` to the production branch.
 #
 # Required GitHub secrets (repo Settings → Secrets and variables → Actions):
@@ -22,9 +22,11 @@ on:
     branches:
       - main
   workflow_dispatch:
+  release:
+    types: [published, edited, deleted, unpublished, released]
 
 concurrency:
-  group: deploy-${{ github.event.workflow_run.head_branch || github.ref_name }}
+  group: deploy-production
   cancel-in-progress: true
 
 permissions:
@@ -41,13 +43,14 @@ jobs:
     # is main in edge cases; require event == push to stay production-only.
     if: |
       github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'release' ||
       (
         github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.event == 'push' &&
         github.event.workflow_run.head_branch == 'main'
       )
     outputs:
-      web: ${{ github.event_name == 'workflow_dispatch' && 'true' || steps.filter.outputs.web }}
+      web: ${{ github.event_name != 'workflow_run' && 'true' || steps.filter.outputs.web }}
     steps:
       - uses: actions/checkout@v4
         if: github.event_name == 'workflow_run'
@@ -91,7 +94,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+          # Release events point at a tag; build the current site from main.
+          ref: ${{ github.event_name == 'release' && 'main' || github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
 
       - uses: pnpm/action-setup@v4
 
@@ -115,6 +119,8 @@ jobs:
 
       - name: Build marketing site
         env:
+          RELEASES_SYNC_REQUIRED: "true"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NEXT_TELEMETRY_DISABLED: "1"
           NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
           # Analytics is off unless ENABLED is exactly "true" and a key is set.

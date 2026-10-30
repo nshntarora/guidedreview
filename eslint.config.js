@@ -10,6 +10,7 @@ export default tseslint.config(
       "**/node_modules/**",
       "**/coverage/**",
       "**/.next/**",
+      "**/.wrangler/**",
       "**/out/**",
       "**/test-results/**",
       "**/playwright-report/**",
