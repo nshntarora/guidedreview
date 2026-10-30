@@ -29,7 +29,7 @@ Typical loop:
 
 Generate Prompt is built only from the notes in the current session. With **zero notes**, the header button stays disabled and `⌘/Ctrl` + `Enter` does nothing useful — leave at least one draft first ([comment mode](/docs/keyboard-shortcuts#comment-mode)).
 
-Notes live in memory with the running CLI server. Stopping the process (Ctrl+C) clears them ([Troubleshooting → Session and resume](/docs/troubleshooting#session-and-resume)).
+Notes are saved in the browser tab’s `sessionStorage`. Reloading can restore them for the same diff; stopping the CLI does not clear browser storage. Copy notes before refreshing a changed diff or switching scope. Details: [CLI → Session and refresh](/docs/cli#session-and-refresh).
 
 ## Open Generate Prompt
 
@@ -37,6 +37,10 @@ In the local UI:
 
 1. Click **Generate Prompt** in the header (same place the extension shows **Submit Review**), or press `⌘/Ctrl` + `Enter` while not typing in the composer.
 2. A dialog shows the full prompt text.
+
+[![Generate Prompt dialog containing the backoff file path, line 11, selected code, review feedback, and a Copy button.](/docs/screenshots/generate-prompt.png)](/docs/screenshots/generate-prompt.png)
+
+_A prompt built from one note on the sample branch. Select the screenshot for full size._
 
 Shortcut context: [Keyboard shortcuts → Local review](/docs/keyboard-shortcuts#local-review).
 
@@ -58,7 +62,7 @@ The header asks the agent to fix or resolve the feedback (and answer questions w
 1. Review the text in the dialog.
 2. Copy with the dialog’s copy control, or `⌘/Ctrl` + `Enter` while the modal is open.
 3. Paste into your coding agent’s chat or prompt input.
-4. Close with `Esc` when done.
+4. Close with `Esc` when done. Copying and closing leave your notes in place; remove individual notes from their draft cards when you no longer need them.
 
 Nothing leaves your machine through Guided Review for this path — clipboard only ([Privacy & data](/docs/privacy-and-data)).
 

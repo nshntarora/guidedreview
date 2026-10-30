@@ -2,7 +2,18 @@ import type { Article } from "@web/config/articles";
 
 export const GUIDES: Article[] = [
   {
+    slug: "code-review-checklist-security-best-practices",
+    coverImage: "/assets/guides/code-review-checklist-security-best-practices/cover.webp",
+    path: "/guides/code-review-checklist-security-best-practices",
+    title: "Code review checklist: security best practices for pull requests",
+    description:
+      "A secure code review checklist for pull requests. Trace permissions, inputs, secrets, and failure paths, with practical examples and links to OWASP guidance.",
+    lastModified: "2026-10-28",
+    load: () => import("@web/content/guides/code-review-checklist-security-best-practices.mdx"),
+  },
+  {
     slug: "review-large-ai-generated-prs",
+    coverImage: "/assets/guides/review-large-ai-generated-prs/cover.webp",
     path: "/guides/review-large-ai-generated-prs",
     title: "How to review a large AI-generated PR",
     description:
@@ -12,6 +23,7 @@ export const GUIDES: Article[] = [
   },
   {
     slug: "guided-review-for-teams",
+    coverImage: "/assets/guides/guided-review-for-teams/cover.webp",
     path: "/guides/guided-review-for-teams",
     title: "Using Guided Review in a team review workflow",
     description:
@@ -21,6 +33,7 @@ export const GUIDES: Article[] = [
   },
   {
     slug: "keyboard-first-code-review",
+    coverImage: "/assets/guides/keyboard-first-code-review/cover.webp",
     path: "/guides/keyboard-first-code-review",
     title: "A keyboard-first code review workflow",
     description:
@@ -31,6 +44,7 @@ export const GUIDES: Article[] = [
 
   {
     slug: "review-ai-generated-pull-request",
+    coverImage: "/assets/guides/review-ai-generated-pull-request/cover.webp",
     path: "/guides/review-ai-generated-pull-request",
     title: "How to review an AI-generated pull request",
     description:
@@ -40,6 +54,7 @@ export const GUIDES: Article[] = [
   },
   {
     slug: "review-local-changes-before-pr",
+    coverImage: "/assets/guides/review-local-changes-before-pr/cover.webp",
     path: "/guides/review-local-changes-before-pr",
     title: "Review local git changes before opening a PR",
     description:
@@ -49,6 +64,7 @@ export const GUIDES: Article[] = [
   },
   {
     slug: "github-pr-review-extension",
+    coverImage: "/assets/guides/github-pr-review-extension/cover.webp",
     path: "/guides/github-pr-review-extension",
     title: "A Chrome extension to review GitHub pull requests",
     description:
@@ -58,6 +74,7 @@ export const GUIDES: Article[] = [
   },
   {
     slug: "byo-key-code-review",
+    coverImage: "/assets/guides/byo-key-code-review/cover.webp",
     path: "/guides/byo-key-code-review",
     title: "Bring your own key to code review",
     description:
@@ -67,6 +84,7 @@ export const GUIDES: Article[] = [
   },
   {
     slug: "code-review-without-auto-approve",
+    coverImage: "/assets/guides/code-review-without-auto-approve/cover.webp",
     path: "/guides/code-review-without-auto-approve",
     title: "AI code review that does not auto-approve",
     description:

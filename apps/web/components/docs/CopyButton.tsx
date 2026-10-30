@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, cn } from "@guided-review/ui";
 
 type CopyButtonProps = {
@@ -9,15 +9,20 @@ type CopyButtonProps = {
 };
 
 export function CopyButton({ text, className }: CopyButtonProps) {
-  const [copied, setCopied] = useState(false);
+  const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
+
+  useEffect(() => {
+    if (status !== "copied") return;
+    const timer = window.setTimeout(() => setStatus("idle"), 2000);
+    return () => window.clearTimeout(timer);
+  }, [status]);
 
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(text);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
+      setStatus("copied");
     } catch {
-      // Clipboard may be blocked; fail silently.
+      setStatus("error");
     }
   }
 
@@ -27,10 +32,20 @@ export function CopyButton({ text, className }: CopyButtonProps) {
       variant="secondary"
       size="sm"
       onClick={handleCopy}
-      aria-label={copied ? "Copied" : "Copy Code"}
+      data-testid="copy-code"
+      aria-label={
+        status === "copied"
+          ? "Copied"
+          : status === "error"
+            ? "Copy failed. Try again or select the code and copy it manually."
+            : "Copy code"
+      }
+      title={status === "error" ? "Select the code and copy it manually, or try again." : undefined}
       className={cn("px-2 py-1 text-xs", className)}
     >
-      {copied ? "Copied" : "Copy"}
+      <span role="status">
+        {status === "copied" ? "Copied" : status === "error" ? "Retry copy" : "Copy"}
+      </span>
     </Button>
   );
 }

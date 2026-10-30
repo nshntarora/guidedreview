@@ -1,3 +1,46 @@
+export const toc = [
+  {
+    id: "choose-the-local-diff-you-actually-mean-to-review",
+    label: "Choose the diff",
+    level: 2,
+  },
+  {
+    id: "read-the-retry-contract-before-its-test",
+    label: "Read the retry contract before its test",
+    level: 2,
+  },
+  {
+    id: "establish-the-base-and-the-snapshot",
+    label: "Establish the base and the snapshot",
+    level: 2,
+  },
+  {
+    id: "check-the-staged-version-when-a-file-has-mixed-work",
+    label: "Check staged changes",
+    level: 2,
+  },
+  {
+    id: "send-specific-notes-back-to-a-coding-agent",
+    label: "Send notes to an agent",
+    level: 2,
+  },
+  {
+    id: "check-what-will-actually-be-published",
+    label: "Check what will actually be published",
+    level: 2,
+  },
+  {
+    id: "write-a-handoff-someone-else-can-verify",
+    label: "Write the handoff",
+    level: 2,
+  },
+  {
+    id: "faq",
+    label: "FAQ",
+    level: 2,
+  },
+];
+
 import { JsonLd } from "@web/components/JsonLd";
 
 export const faqs = [
@@ -35,6 +78,15 @@ Before `gh pr create`, I want to check two things: the committed branch against 
 You review the retry loop. It looks right. You remember adding a test for zero retries, so you open the PR.
 
 Except the test is still uncommitted. You've filled a hole in the branch diff with something you remember from your editor.
+
+A quick review path:
+
+- Choose the branch, commit, or working-tree diff you mean to review.
+- Confirm the base and snapshot before following the changes.
+- Record specific notes for the author or coding agent.
+- Check the staged version and final diff before publishing.
+
+<TocCard toc={toc} collapsible />
 
 ## Choose the local diff you actually mean to review
 

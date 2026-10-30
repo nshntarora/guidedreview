@@ -1,3 +1,51 @@
+export const toc = [
+  {
+    id: "follow-one-ai-structuring-request",
+    label: "Follow one AI structuring request",
+    level: 2,
+  },
+  {
+    id: "count-model-calls-not-clicks",
+    label: "Count model calls, not clicks",
+    level: 2,
+  },
+  {
+    id: "inspect-the-payload-before-choosing-the-account",
+    label: "Inspect the payload",
+    level: 2,
+  },
+  {
+    id: "separate-provider-identity-from-model-availability",
+    label: "Account and model access",
+    level: 2,
+  },
+  {
+    id: "diagnose-a-failed-request-before-retrying",
+    label: "Diagnose failed requests",
+    level: 2,
+  },
+  {
+    id: "check-where-keys-and-review-state-live",
+    label: "Check where keys and review state live",
+    level: 2,
+  },
+  {
+    id: "what-byo-key-leaves-for-you-to-decide",
+    label: "Decisions you still own",
+    level: 2,
+  },
+  {
+    id: "keep-review-evidence-independent-of-the-model-account",
+    label: "Keep review evidence",
+    level: 2,
+  },
+  {
+    id: "faq",
+    label: "FAQ",
+    level: 2,
+  },
+];
+
 import { JsonLd } from "@web/components/JsonLd";
 
 export const faqs = [
@@ -35,6 +83,15 @@ export const faqs = [
 In Guided Review, AI structuring sends a prompt built from your diff to Anthropic, OpenAI, or Grok using your account. There's no Guided Review backend between you and the provider. The provider still receives the prompt.
 
 I'd check that request path before treating BYO key as a privacy answer.
+
+A quick review path:
+
+- Check what code goes to your provider.
+- Understand which actions make model calls.
+- Choose an account and model you can use.
+- Keep review evidence independent of model commentary.
+
+<TocCard toc={toc} collapsible />
 
 ## Follow one AI structuring request
 

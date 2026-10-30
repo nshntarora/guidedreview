@@ -17,29 +17,48 @@ test("sample review switches between the CLI and extension flows", async ({ page
   await expect(page.getByTestId("preview-mode-notice")).toContainText("Live preview");
   await expect(page.getByTestId("preview-mode-cli")).toHaveAttribute("aria-pressed", "true");
   const units = page.getByTestId("review-units");
-  await expect(page.getByTestId("navigation-tab-files")).toHaveAttribute("aria-selected", "true");
-  await page.getByTestId("navigation-tab-units").click();
-  const selectedFile = await page.getByTestId("diff-file-header").innerText();
-  await page.getByTestId("generate-review-plan").click();
+  async function expectTokenUsage() {
+    await expect(page.getByTestId("review-input-tokens")).toHaveText("8,420");
+    await expect(page.getByTestId("review-output-tokens")).toHaveText("1,260");
+  }
+  await expect(page.getByTestId("navigation-tab-units")).toHaveAttribute("aria-selected", "true");
   await expect(units.getByTestId(/review-unit-/)).toHaveCount(5);
+  await expectTokenUsage();
+  await expect(page.getByTestId("diff-unit-title")).toHaveText("Define the retry contract");
   await expect(page.getByTestId("submit-review-button")).toContainText("Generate Prompt");
-  await expect(page.getByTestId("diff-file-header")).toHaveText(selectedFile, {
-    useInnerText: true,
-  });
+
+  const note = "Honor Retry-After when it exceeds the configured delay cap.";
+  async function addRetryNote() {
+    await units.getByTestId("review-unit-2").click();
+    await overlay.focus();
+    await page.keyboard.press("c");
+    await page.keyboard.press("Enter");
+    await page.getByTestId("comment-composer-input").fill(note);
+    await page.getByTestId("comment-composer-save").click();
+    await page.keyboard.press("Escape");
+  }
+
+  await addRetryNote();
+  await page.getByTestId("submit-review-button").click();
+  await expect(page.getByTestId("generate-prompt-text")).toContainText(note);
+  await expect(page.getByTestId("generate-prompt-copy")).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("generate-prompt-modal")).toHaveCount(0);
+  await expect(page.getByTestId("submit-review-button")).toBeFocused();
 
   await page.getByTestId("open-settings").click();
   await expect(page.getByTestId("preview-unsupported-notice")).toContainText(
     "isn’t available in the live preview",
   );
-  await page.getByTestId("preview-notice-dismiss").click();
-
   await page.getByTestId("preview-mode-chrome").click();
+  await expect(page.getByTestId("preview-unsupported-notice")).toHaveCount(0);
   await expect(page.getByTestId("preview-mode-chrome")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("submit-review-button")).toContainText("Submit Review");
-  await page.getByTestId("navigation-tab-units").click();
-  await expect(page.getByTestId("review-summary")).toHaveAttribute("aria-current", "true");
-  await page.getByTestId("generate-review-plan").click();
+  await expect(page.getByTestId("navigation-tab-units")).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByTestId("diff-unit-title")).toHaveText("Define the retry contract");
   await expect(units.getByTestId(/review-unit-/)).toHaveCount(5);
+  await expectTokenUsage();
+  await page.getByTestId("review-summary").click();
   await overlay.focus();
 
   // Every fixture file and hunk must be represented by the prepared structure.
@@ -56,16 +75,8 @@ test("sample review switches between the CLI and extension flows", async ({ page
 
   await page.keyboard.press("ArrowRight");
   await expect(page.getByTestId("diff-unit-title")).toHaveText("Define the retry contract");
-  await units.getByTestId("review-unit-2").click();
+  await addRetryNote();
   await page.screenshot({ path: testInfo.outputPath("preview-desktop.png") });
-  await overlay.focus();
-  await page.keyboard.press("c");
-  await page.keyboard.press("Enter");
-  await page
-    .getByTestId("comment-composer-input")
-    .fill("Honor Retry-After when it exceeds the configured delay cap.");
-  await page.getByTestId("comment-composer-save").click();
-  await page.keyboard.press("Escape");
 
   await page.getByTestId("submit-review-button").click();
   await expect(page.getByTestId("submit-review-modal")).toContainText(
@@ -93,7 +104,24 @@ test("sample review switches between the CLI and extension flows", async ({ page
   const mobileNotice = page.getByTestId("live-preview-mobile-notice");
   await expect(mobileNotice).toContainText("available on larger screens");
   await expect(overlay).toHaveCount(0);
-  await page.getByTestId("live-preview-mobile-dismiss").click();
+  expect(await trigger.evaluate((node) => Boolean(node.closest("[inert]")))).toBe(true);
+  expect(await page.evaluate(() => document.body.style.overflow)).toBe("hidden");
+  await page.keyboard.press("Tab");
+  await expect(page.getByTestId("live-preview-mobile-dismiss")).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(page.getByTestId("live-preview-mobile-dismiss")).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(mobileNotice).toHaveCount(0);
   await expect(trigger).toBeFocused();
+  expect(await trigger.evaluate((node) => Boolean(node.closest("[inert]")))).toBe(false);
+  expect(await page.evaluate(() => document.body.style.overflow)).toBe("");
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.keyboard.press("Control+p");
+  await expect(overlay).toBeFocused();
+  await expect(page.getByTestId("preview-mode-cli")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("navigation-tab-units")).toHaveAttribute("aria-selected", "true");
+  await expect(units.getByTestId(/review-unit-/)).toHaveCount(5);
+  await expectTokenUsage();
   expect(externalRequests).toEqual([]);
 });

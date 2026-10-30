@@ -119,7 +119,13 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     table: ({ children, ...props }: HTMLAttributes<HTMLTableElement>) => {
       const validChildren = Children.toArray(children).filter(isValidElement);
       return (
-        <div className="my-4 overflow-x-auto">
+        <div
+          className="my-4 overflow-x-auto rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+          role="region"
+          aria-label="Scrollable table"
+          tabIndex={0}
+          data-testid="article-table-scroll"
+        >
           <table {...props}>{validChildren}</table>
         </div>
       );

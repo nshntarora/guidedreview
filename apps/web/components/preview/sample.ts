@@ -1,4 +1,16 @@
-import { parseDiff, type ReviewContext, type ReviewPlan } from "@guided-review/core";
+import {
+  parseDiff,
+  type ReviewContext,
+  type ReviewPlan,
+  type ReviewTokenUsage,
+} from "@guided-review/core";
+
+export const sampleTokenUsage: ReviewTokenUsage = {
+  inputTokens: 8420,
+  outputTokens: 1260,
+  inputEstimated: false,
+  outputEstimated: false,
+};
 
 // Frozen source for a fictional package. The review plan never supplies rendered code.
 const changes = [
@@ -55,7 +67,7 @@ describe("retry options", () => {
 `,
   },
   {
-    path: "src/retry-policy.ts",
+    path: "src/retry/retry-policy.ts",
     after: `const RETRYABLE_STATUS = new Set([408, 429, 502, 503, 504]);
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
@@ -73,9 +85,9 @@ export function retryAfterMs(value: string | null, now = Date.now()): number | n
 `,
   },
   {
-    path: "test/retry-policy.test.ts",
+    path: "test/retry/retry-policy.test.ts",
     after: `import { expect, it } from "vitest";
-import { canRetry, retryAfterMs } from "../src/retry-policy";
+import { canRetry, retryAfterMs } from "../../src/retry/retry-policy";
 
 it("retries transient failures only for safe methods", () => {
   expect(canRetry("get", 503)).toBe(true);
@@ -91,8 +103,8 @@ it("accepts Retry-After seconds and HTTP dates", () => {
 `,
   },
   {
-    path: "src/backoff.ts",
-    after: `import type { RetryOptions } from "./options";
+    path: "src/retry/backoff.ts",
+    after: `import type { RetryOptions } from "../options";
 
 export function backoffMs(
   attempt: number,
@@ -107,9 +119,9 @@ export function backoffMs(
 `,
   },
   {
-    path: "test/backoff.test.ts",
+    path: "test/retry/backoff.test.ts",
     after: `import { expect, it } from "vitest";
-import { backoffMs } from "../src/backoff";
+import { backoffMs } from "../../src/retry/backoff";
 
 const options = { maxAttempts: 3, baseDelayMs: 200, maxDelayMs: 5000 };
 
@@ -125,7 +137,7 @@ it("waits at least as long as a short Retry-After", () => {
 `,
   },
   {
-    path: "src/sleep.ts",
+    path: "src/retry/sleep.ts",
     after: `export function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     if (signal?.aborted) return reject(signal.reason);
@@ -145,9 +157,9 @@ it("waits at least as long as a short Retry-After", () => {
 `,
   },
   {
-    path: "test/sleep.test.ts",
+    path: "test/retry/sleep.test.ts",
     after: `import { expect, it, vi } from "vitest";
-import { sleep } from "../src/sleep";
+import { sleep } from "../../src/retry/sleep";
 
 it("cancels a pending wait and removes its timer", async () => {
   vi.useFakeTimers();
@@ -173,9 +185,9 @@ export async function request(url: string, options: RequestOptions = {}): Promis
 }
 `,
     after: `import { resolveRetry, type RequestOptions } from "./options";
-import { canRetry, retryAfterMs } from "./retry-policy";
-import { backoffMs } from "./backoff";
-import { sleep } from "./sleep";
+import { canRetry, retryAfterMs } from "./retry/retry-policy";
+import { backoffMs } from "./retry/backoff";
+import { sleep } from "./retry/sleep";
 
 export async function request(url: string, options: RequestOptions = {}): Promise<Response> {
   const retry = resolveRetry(options.retry);
@@ -315,19 +327,19 @@ const units = [
     "policy",
     "Decide which responses can be retried",
     "Eligibility is limited to safe methods and selected transient HTTP statuses. Retry-After accepts seconds or an HTTP date. Check malformed and negative header values; the current tests cover the common inputs only.",
-    ["src/retry-policy.ts", "test/retry-policy.test.ts"],
+    ["src/retry/retry-policy.ts", "test/retry/retry-policy.test.ts"],
   ],
   [
     "backoff",
     "Schedule retries with jitter",
     "Backoff grows exponentially and adds jitter to spread concurrent clients. Review the final Math.min carefully: a Retry-After longer than maxDelayMs is shortened, despite the README promising to honor it. The short-header test does not exercise that boundary.",
-    ["src/backoff.ts", "test/backoff.test.ts"],
+    ["src/retry/backoff.ts", "test/retry/backoff.test.ts"],
   ],
   [
     "cancel",
     "Make pending waits cancellable",
     "The wait helper removes its abort listener on completion and clears the timer on cancellation. Follow both cleanup paths and the already-aborted fast path. The shared deadline is connected by the client in the next unit.",
-    ["src/sleep.ts", "test/sleep.test.ts"],
+    ["src/retry/sleep.ts", "test/retry/sleep.test.ts"],
   ],
   [
     "integration",

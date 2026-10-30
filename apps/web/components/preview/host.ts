@@ -1,7 +1,13 @@
 import { DEFAULT_DIFF_VIEW_MODE } from "@guided-review/ui/review/diffView";
 import { useReviewStore } from "@guided-review/ui/review/store";
 import type { ReviewHost } from "@guided-review/ui/review";
-import { sampleContext, sampleDiff, sampleLocalContext, samplePlan } from "./sample";
+import {
+  sampleContext,
+  sampleDiff,
+  sampleLocalContext,
+  samplePlan,
+  sampleTokenUsage,
+} from "./sample";
 
 export type PreviewMode = "cli" | "chrome";
 
@@ -20,13 +26,20 @@ export function createPreviewHost(
     generatePlan: () => {
       const state = useReviewStore.getState();
       const generation = state.beginRetry();
-      queueMicrotask(() => useReviewStore.getState().setReady(sampleDiff, samplePlan, generation));
+      queueMicrotask(() => {
+        const state = useReviewStore.getState();
+        state.setReady(sampleDiff, samplePlan, generation);
+        state.setTokenUsage(sampleTokenUsage, generation);
+      });
     },
     connectProvider: () => onUnsupported("Provider settings"),
     streamPlan: (_diff, _context, handlers) => {
       let cancelled = false;
       queueMicrotask(() => {
-        if (!cancelled) handlers.onDone(samplePlan);
+        if (!cancelled) {
+          handlers.onUsage?.(sampleTokenUsage);
+          handlers.onDone(samplePlan);
+        }
       });
       return {
         cancel: () => {
@@ -50,5 +63,6 @@ export function loadPreviewReview(mode: PreviewMode) {
     context: mode === "cli" ? sampleLocalContext : sampleContext,
     diff: sampleDiff,
     plan: samplePlan,
+    tokenUsage: sampleTokenUsage,
   };
 }

@@ -13,7 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const staticEntries: MetadataRoute.Sitemap = [
     {
       url: SITE_URL,
-      lastModified: "2026-10-22",
+      lastModified: "2026-10-28",
       changeFrequency: "weekly",
       priority: 1,
     },
@@ -58,7 +58,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }));
   const collections: MetadataRoute.Sitemap = ["/guides", "/compare"].map((path) => ({
     url: `${SITE_URL}${path}`,
-    lastModified: "2026-10-22",
+    lastModified: path === "/guides" ? "2026-10-28" : "2026-10-22",
     changeFrequency: "monthly",
     priority: 0.8,
   }));

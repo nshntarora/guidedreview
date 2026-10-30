@@ -77,7 +77,7 @@ export const DOCS_PAGES: DocsPage[] = [
     seoTitle: "Review a local branch before you open the PR | Guided Review CLI",
     description:
       "npx @guided-review/cli walks a branch, commit, or working tree as review units. Node 22+. No Guided Review backend.",
-    lastModified: "2026-10-08",
+    lastModified: "2026-10-28",
     blurb: "npx @guided-review/cli for local branch, commit, or working-tree diffs",
     load: () => import("@web/content/help/cli.mdx"),
   },
@@ -87,7 +87,7 @@ export const DOCS_PAGES: DocsPage[] = [
     title: "Configure AI provider",
     description:
       "Configure Anthropic, OpenAI, or Grok for Guided Review, add your API key in the extension or CLI, choose a model, and understand usage costs.",
-    lastModified: "2026-09-06",
+    lastModified: "2026-10-28",
     blurb: "API keys for extension and CLI, models, and usage cost",
     load: () => import("@web/content/help/configure-provider.mdx"),
   },
@@ -117,7 +117,7 @@ export const DOCS_PAGES: DocsPage[] = [
     title: "Reading the overlay",
     description:
       "Learn the Guided Review overlay: review units sidebar, context panel, real diff pane, change summary, PR description, and header actions.",
-    lastModified: "2026-09-06",
+    lastModified: "2026-10-28",
     blurb: "layout of the review UI for extension and CLI",
     load: () => import("@web/content/help/reading-the-overlay.mdx"),
   },
@@ -157,7 +157,7 @@ export const DOCS_PAGES: DocsPage[] = [
     title: "Generate Prompt",
     description:
       "Turn local Guided Review notes into a focused coding-agent prompt, copy it from the CLI, and keep review decisions in human hands.",
-    lastModified: "2026-09-06",
+    lastModified: "2026-10-28",
     blurb: "clipboard prompt from local notes for a coding agent",
     load: () => import("@web/content/help/generate-prompt.mdx"),
   },
@@ -177,7 +177,7 @@ export const DOCS_PAGES: DocsPage[] = [
     title: "Keyboard shortcuts",
     description:
       "Keyboard-first shortcuts for review navigation, diff search, unified/split view, comments, submit, and the local CLI UI.",
-    lastModified: "2026-09-06",
+    lastModified: "2026-10-28",
     blurb: "navigate, search, comment, submit, and CLI extras",
     load: () => import("@web/content/help/keyboard-shortcuts.mdx"),
   },
@@ -187,7 +187,7 @@ export const DOCS_PAGES: DocsPage[] = [
     title: "Troubleshooting",
     description:
       "Fix missing Guided Review buttons, provider and API-key errors, failed plans, GitHub connection problems, and local CLI issues.",
-    lastModified: "2026-09-06",
+    lastModified: "2026-10-28",
     blurb: "common failures and fixes for extension and CLI",
     load: () => import("@web/content/help/troubleshooting.mdx"),
   },
@@ -208,7 +208,7 @@ export const DOCS_PAGES: DocsPage[] = [
     seoTitle: "Code review tool that does not upload your diff | Guided Review",
     description:
       "No product backend. Diffs and keys go to your AI provider and, for the extension, GitHub. Not stored by Guided Review.",
-    lastModified: "2026-10-21",
+    lastModified: "2026-10-28",
     blurb: "what leaves your machine, what stays, and how to clear it",
     load: () => import("@web/content/help/privacy-and-data.mdx"),
   },

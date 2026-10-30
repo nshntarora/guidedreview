@@ -4,6 +4,9 @@ import { Install } from "@web/components/Install";
 import { FeatureGrid } from "@web/components/FeatureGrid";
 import { TrustBand } from "@web/components/TrustBand";
 import { InstallCta } from "@web/components/InstallCta";
+import { AgentHandoff } from "@web/components/AgentHandoff";
+import { ReviewWalkthrough } from "@web/components/ReviewWalkthrough";
+import { sampleDiff, samplePlan } from "@web/components/preview/sample";
 import { JsonLd } from "@web/components/JsonLd";
 import { CHROME_WEB_STORE_URL, NPM_PACKAGE_URL } from "@web/lib/links";
 import { HOME_DESCRIPTION, openGraphSite, SITE_NAME, SITE_URL } from "@web/lib/site";
@@ -83,8 +86,20 @@ export default function HomePage() {
     <>
       <JsonLd data={homeSchema} />
       <Hero />
+      <ReviewWalkthrough
+        files={sampleDiff.files.map((file) => file.path).sort()}
+        units={samplePlan.units.map((unit) => ({
+          title: unit.title,
+        }))}
+        lines={sampleDiff.files
+          .find((file) => file.path === "src/retry/backoff.ts")!
+          .hunks.flatMap((hunk) => hunk.lines)
+          .filter((line) => line.newLine !== undefined && line.newLine >= 9 && line.newLine <= 11)
+          .map((line) => ({ number: line.newLine!, content: line.content }))}
+      />
       <Install />
       <FeatureGrid />
+      <AgentHandoff />
       <TrustBand />
       <InstallCta />
     </>

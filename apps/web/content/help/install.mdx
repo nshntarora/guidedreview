@@ -3,16 +3,16 @@ import { SITE_URL } from "@web/lib/site";
 import { CHROME_WEB_STORE_URL } from "@web/lib/links";
 
 export const toc = [
-  { id: "pick-a-host", label: "Pick a host", level: 2 },
+  { id: "choose-cli-or-chrome-extension", label: "Choose CLI or Chrome extension", level: 2 },
   { id: "detailed-docs", label: "Detailed docs", level: 2 },
   { id: "after-you-install", label: "After you install", level: 2 },
 ];
 
 # Install
 
-Guided Review is one review engine with two hosts. Install the surface that matches the change you’re reviewing — or both; they share providers, units, and keyboard habits.
+Choose the CLI for local changes or the Chrome extension for GitHub pull requests. Both use the same review engine.
 
-| Host                 | Use it when…                                      |
+| App                  | Use it when…                                      |
 | -------------------- | ------------------------------------------------- |
 | **CLI**              | You’re on a local branch, commit, or working tree |
 | **Chrome extension** | The change is already a PR on `github.com`        |
@@ -21,7 +21,9 @@ Same clustering pipeline either way. The extension can [submit to GitHub](/docs/
 
 <TocCard toc={toc} />
 
-## Pick a host
+<span id="pick-a-host" />
+
+## Choose CLI or Chrome extension
 
 **CLI** — Node.js 22+, then:
 

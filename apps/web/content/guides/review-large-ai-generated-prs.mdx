@@ -1,3 +1,51 @@
+export const toc = [
+  {
+    id: "decide-what-belongs-in-the-pr",
+    label: "PR scope",
+    level: 2,
+  },
+  {
+    id: "trace-a-contract-across-the-diff",
+    label: "Trace the contract",
+    level: 2,
+  },
+  {
+    id: "know-what-the-model-saw",
+    label: "Model context",
+    level: 2,
+  },
+  {
+    id: "make-a-behavior-map-before-reading-every-hunk",
+    label: "Behavior map",
+    level: 2,
+  },
+  {
+    id: "review-compatibility-in-deployment-order",
+    label: "Deployment compatibility",
+    level: 2,
+  },
+  {
+    id: "give-generated-and-mechanical-changes-a-separate-pass",
+    label: "Mechanical changes",
+    level: 2,
+  },
+  {
+    id: "keep-an-uncertainty-list-as-you-read",
+    label: "Unresolved questions",
+    level: 2,
+  },
+  {
+    id: "test-a-failure-you-can-name",
+    label: "Test failure cases",
+    level: 2,
+  },
+  {
+    id: "ask-for-a-split-when-you-cant-review-the-change",
+    label: "When to split the PR",
+    level: 2,
+  },
+];
+
 # How to review a large AI-generated PR
 
 <img
@@ -13,6 +61,15 @@
 A 40-file PR changes a request schema, updates its callers, and replaces several tests. You start at the top of the file list. By the time you reach the implementation, you're holding half the patch in your head.
 
 I'd start with one behavior instead. Write down what's supposed to change, then follow a value through the contract, callers, and tests. File order can wait.
+
+Before you read every hunk:
+
+- Establish the intended behavior.
+- Trace it through the contract, callers, and tests.
+- Record unresolved questions with a path and a consequence.
+- Verify failure cases before choosing an outcome.
+
+<TocCard toc={toc} collapsible />
 
 ## Decide what belongs in the PR
 

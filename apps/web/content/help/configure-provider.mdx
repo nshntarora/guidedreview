@@ -1,7 +1,7 @@
 export const toc = [
-  { id: "supported-providers", label: "Supported providers", level: 2 },
   { id: "chrome-extension", label: "Chrome extension", level: 2 },
   { id: "cli", label: "CLI", level: 2 },
+  { id: "supported-providers", label: "Supported providers", level: 2 },
   { id: "pick-a-model", label: "Pick a model", level: 2 },
   { id: "test-connection", label: "Test Connection", level: 2 },
   { id: "cost-and-usage", label: "Cost and usage", level: 2 },
@@ -10,11 +10,41 @@ export const toc = [
 
 # Configure AI provider
 
-Guided Review calls **your** LLM account. There is no Guided Review cloud that holds your key or rewrites diffs for you. That design is spelled out in [Privacy & data](/docs/privacy-and-data).
+Connect Anthropic, OpenAI, or Grok to group related changes into review units with summaries. Guided Review uses your provider account and API key; there is no product backend.
 
-A provider unlocks AI clustering and unit summaries on both the [Chrome extension](/docs/chrome-extension) and the [CLI](/docs/cli). You can still [open a review without a key](/docs/how-it-works#without-a-provider) (file-by-file walk). GitHub auth is separate and only required to [submit a review](/docs/submit-review) from the extension — see [Connect GitHub](/docs/connect-github).
+Choose your setup below. You can also [read changed files without a key](/docs/reading-the-overlay#files-sidebar).
 
 <TocCard toc={toc} />
+
+## Chrome extension
+
+1. Open the extension **Options** page (after you [install the extension](/docs/chrome-extension#options)).
+2. In the **AI Provider** card, choose a provider and model.
+3. Paste an API key from that provider’s console.
+4. Click **Save**, then **Test Connection** if you want a cheap health check before a real review.
+
+The same Options page also has **GitHub** (optional, for [submit](/docs/submit-review)) and **Review → Automatically Open on Files Changed**. Full Options map: [Chrome Extension → Options](/docs/chrome-extension#options).
+
+## CLI
+
+1. Run `npx @guided-review/cli` in your repository.
+2. Open **Settings** (`⌘/Ctrl` + `,`, or **Connect AI Provider** when no key is set).
+3. Choose a provider and model, paste your API key, and save.
+4. Generate review units to use the provider on your diff.
+
+You can also turn on **Use My Subscription** to use a coding agent already logged in on this machine. Subscription reuse is unofficial and can break; use a provider API key for a more reliable setup.
+
+### Key precedence
+
+For each run, the CLI checks:
+
+1. Flags and environment variables: `--provider` / `--model` / `--agent` and `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `XAI_API_KEY` or `GROK_API_KEY`.
+2. A saved key in `~/.config/guided-review/config.json` (or `$XDG_CONFIG_HOME` / `GUIDED_REVIEW_CONFIG_DIR`).
+3. A coding agent already on this machine (Claude Code, Codex, or Grok).
+
+A saved API key takes precedence over subscription reuse. Flags and environment variables take precedence for the current run.
+
+When the CLI borrows an agent key, it reads that agent’s store at review time and does not copy the secret into Guided Review config. Details and scopes: [CLI → API keys](/docs/cli#api-keys).
 
 ## Supported providers
 
@@ -28,29 +58,6 @@ OpenAI and Grok share the same client shape; Anthropic uses its own streaming en
 
 We’ll keep adding more providers — [request one on the repo](https://github.com/nshntarora/guidedreview), or open a PR that adds yours. Also covered in the [FAQ](/docs/faq#which-ai-providers).
 
-## Chrome extension
-
-1. Open the extension **Options** page (after you [install the extension](/docs/chrome-extension#options)).
-2. In the **AI Provider** card, choose a provider and model.
-3. Paste an API key from that provider’s console.
-4. Click **Save**, then **Test Connection** if you want a cheap health check before a real review.
-
-The same Options page also has **GitHub** (optional, for [submit](/docs/submit-review)) and **Review → Automatically Open on Files Changed**. Full Options map: [Chrome Extension → Options](/docs/chrome-extension#options).
-
-Keys are stored in `chrome.storage.local` and are only used from the **background service worker** when annotating a review or testing the connection. Content scripts never hold the key for outbound LLM calls. To remove a key later: [Privacy & data → Clear data](/docs/privacy-and-data#clear-data-and-disconnect).
-
-## CLI
-
-Same providers. Keys resolve in order for each run:
-
-1. `--provider` / `--model` / `--agent` and env (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `XAI_API_KEY` or `GROK_API_KEY`)
-2. A key saved in `~/.config/guided-review/config.json` (or `$XDG_CONFIG_HOME` / `GUIDED_REVIEW_CONFIG_DIR`)
-3. A coding agent already on this machine (Claude Code, Codex, or Grok)
-
-In the local UI, open **Settings** (`⌘/Ctrl` + `,`, or **Connect AI Provider** when no key is set). Paste an API key, or turn on **Use My Subscription** to borrow an agent already logged in on the machine. A saved API key always wins for that machine; flags and env still win for the current run. Subscription reuse is unofficial and can break — a console key is the better option.
-
-When the CLI borrows an agent key, it reads that agent’s store at review time and does not copy the secret into Guided Review config. Details and scopes: [CLI → API keys](/docs/cli#api-keys).
-
 ## Pick a model
 
 Select a model available on your account. Prefer a model that handles long contexts well if you review large diffs — Guided Review [chunks oversized diffs by file](/docs/how-it-works#chunking-large-diffs) (~60k characters per chunk) so no single call is expected to swallow an entire monorepo change set, but each chunk still benefits from a capable model.
@@ -63,25 +70,29 @@ Models currently listed in the extension Options (ids can change as providers sh
 | OpenAI    | GPT-6 Astra, GPT-6.1 Sol, GPT-6 Luna; GPT-5, GPT-5 Mini, GPT-4.1, GPT-4.1 Mini, GPT-4o, o3, o4 Mini    |
 | Grok      | Grok 4.7, Grok 4.3; Grok 4.6, Grok 4.5, Grok 4, Grok 3, Grok 3 Mini                                    |
 
-Newer models appear first. Older models remain available while their provider supports them, and saved selections are preserved. If a provider retires a model and it is removed from the catalog, Options falls back to that provider’s default. The CLI accepts `--model <id>` for any model id your account can call.
+Newer models appear first. The CLI accepts `--model <id>` for any model ID your account can call, including custom IDs. If a request fails because the model is unavailable, choose an accessible replacement in Settings or pass `--model <id>` and retry.
+
+The extension currently requires a model in its catalog. Both the extension and CLI normalize saved model IDs against that catalog when loading settings, so a custom or removed ID can resolve to the provider’s default. In the CLI, an explicit `--model <id>` takes precedence for that run. Check the active model after restarting or updating. If your chosen model is unavailable, select a replacement deliberately and use **Test Connection** before retrying.
 
 ## Test Connection
 
 Use **Test Connection** on the extension options page. That runs the same provider path as a lightweight health check and surfaces user-safe error messages if the key, model, or network path fails.
 
-In the CLI, structuring the walkthrough with **Structure With AI** (or fixing Settings and retrying) is the practical check — there is no separate Test button in the local UI.
+In the CLI, structuring the walkthrough with **Generate review units** (or fixing Settings and retrying) is the practical check — there is no separate Test button in the local UI.
 
 If the test fails, step through [Troubleshooting → Provider and API key](/docs/troubleshooting#provider-and-api-key).
 
 ## Cost and usage
 
-- **Annotate / Structure With AI** — one provider call per [diff chunk](/docs/how-it-works#chunking-large-diffs). Small diffs usually cost one call; large ones cost one call per chunk. On the CLI this only runs when you opt in.
+- **Annotate / Generate review units** — one provider call per [diff chunk](/docs/how-it-works#chunking-large-diffs). Small diffs usually cost one call; large ones cost one call per chunk. On the CLI this only runs when you opt in.
 - **Not billed to the model** — stepping units, [searching](/docs/keyboard-shortcuts#diff-search), drafting comments / notes, [submitting to GitHub](/docs/submit-review), or **Generate Prompt**.
 - **Test Connection** — a cheap health-check request when you run it from extension Options.
 
 Token usage and cost are entirely between you and your provider. Guided Review does not meter or resell LLM usage. Short version: [FAQ → Will this run up my API bill?](/docs/faq#will-this-run-up-my-api-bill).
 
 ## Where settings live
+
+Keys are stored in `chrome.storage.local` and are only used from the **background service worker** when annotating a review or testing the connection. Content scripts never hold the key for outbound LLM calls. To remove a key later: [Privacy & data → Clear data](/docs/privacy-and-data#clear-data-and-disconnect).
 
 | Setting                             | Storage                               | Used by                     |
 | ----------------------------------- | ------------------------------------- | --------------------------- |
@@ -90,7 +101,9 @@ Token usage and cost are entirely between you and your provider. Guided Review d
 | Diff view (unified / split)         | `chrome.storage.local`                | Overlay (default: unified)  |
 | Active review session               | `chrome.storage.session`              | Extension overlay           |
 | Provider, model, API key, agent     | `~/.config/guided-review/config.json` | CLI                         |
-| Active local session                | In-memory for the running CLI server  | Local browser UI            |
+| Local diff snapshot                 | In-memory for the running CLI server  | CLI server                  |
+| Local walkthrough and notes         | Browser tab `sessionStorage`          | Local browser UI            |
+| Local diff view (unified / split)   | Browser `localStorage`                | Local browser UI            |
 
 Extension session resume: [Your first review → Resume later](/docs/first-review#resume-later) and [Troubleshooting](/docs/troubleshooting#session-and-resume).
 

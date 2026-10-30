@@ -16,9 +16,13 @@ export default function Preview({ onClose }: { onClose: () => void }) {
   const [mode, setMode] = useState<PreviewMode>("cli");
   const [unsupportedFeature, setUnsupportedFeature] = useState<string | null>(null);
   const showUnsupported = useCallback((feature: string) => setUnsupportedFeature(feature), []);
+  const changeMode = useCallback((nextMode: PreviewMode) => {
+    setUnsupportedFeature(null);
+    setMode(nextMode);
+  }, []);
   const host = useMemo(
-    () => createPreviewHost(mode, setMode, showUnsupported),
-    [mode, showUnsupported],
+    () => createPreviewHost(mode, changeMode, showUnsupported),
+    [mode, changeMode, showUnsupported],
   );
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -43,13 +47,16 @@ export default function Preview({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     setActiveReviewHost(host);
-    const { context, diff } = loadPreviewReview(mode);
+    const { context, diff, plan, tokenUsage } = loadPreviewReview(mode);
     const state = useReviewStore.getState();
     const generation = state.bootReady({
       sessionKey: "preview:parcel-http",
       diff,
     });
     state.setPRContext(context);
+    state.setReady(diff, plan, generation);
+    state.setTokenUsage(tokenUsage, generation);
+    state.setNavigationMode("units");
     state.setDiffViewMode(window.matchMedia("(min-width: 768px)").matches ? "split" : "unified");
     state.open();
     return () => {

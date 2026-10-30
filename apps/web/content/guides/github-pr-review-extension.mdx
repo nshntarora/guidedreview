@@ -1,3 +1,56 @@
+export const toc = [
+  {
+    id: "set-up-the-github-pr-review-extension",
+    label: "Set up the GitHub PR review extension",
+    level: 2,
+  },
+  {
+    id: "follow-the-option-from-type-to-caller",
+    label: "Follow the option from type to caller",
+    level: 2,
+  },
+  {
+    id: "establish-the-review-question-before-navigating",
+    label: "Set a review question",
+    level: 2,
+  },
+  {
+    id: "check-the-commentary-against-the-real-diff",
+    label: "Verify the commentary",
+    level: 2,
+  },
+  {
+    id: "choose-a-reading-layout-for-the-question",
+    label: "Choose a diff layout",
+    level: 2,
+  },
+  {
+    id: "draft-comments-before-choosing-the-outcome",
+    label: "Draft comments",
+    level: 2,
+  },
+  {
+    id: "make-each-comment-carry-the-investigation",
+    label: "Write actionable comments",
+    level: 2,
+  },
+  {
+    id: "recover-from-setup-and-provider-failures",
+    label: "Resolve setup failures",
+    level: 2,
+  },
+  {
+    id: "when-the-normal-github-diff-is-enough",
+    label: "When the normal GitHub diff is enough",
+    level: 2,
+  },
+  {
+    id: "faq",
+    label: "FAQ",
+    level: 2,
+  },
+];
+
 import { JsonLd } from "@web/components/JsonLd";
 
 export const faqs = [
@@ -33,6 +86,15 @@ export const faqs = [
 A new request option touches a type, a builder, two callers, and a test. GitHub gives you the files. You still have to work out which order explains the change.
 
 I built Guided Review to help with that reading. Its Chrome extension opens an overlay on a github.com PR and groups related hunks into review units. You read the real diff, draft comments, and choose the review outcome.
+
+A quick review path:
+
+- Install the extension and open a GitHub PR.
+- Follow related changes through the real diff.
+- Check the commentary against the code.
+- Draft comments, then choose and submit your review outcome.
+
+<TocCard toc={toc} collapsible />
 
 ## Set up the GitHub PR review extension
 

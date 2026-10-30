@@ -1,5 +1,48 @@
 import { JsonLd } from "@web/components/JsonLd";
 
+export const toc = [
+  {
+    id: "when-guided-review-is-the-worse-choice",
+    label: "When to keep your current tool",
+    level: 2,
+  },
+  {
+    id: "at-a-glance",
+    label: "At a glance",
+    level: 2,
+  },
+  {
+    id: "workflow-decide-what-you-want-to-receive",
+    label: "Workflow",
+    level: 2,
+  },
+  {
+    id: "pricing-compare-the-work-then-the-bill",
+    label: "Pricing",
+    level: 2,
+  },
+  {
+    id: "data-follow-the-code-to-its-destination",
+    label: "Data",
+    level: 2,
+  },
+  {
+    id: "sources",
+    label: "Sources",
+    level: 2,
+  },
+  {
+    id: "faq",
+    label: "FAQ",
+    level: 2,
+  },
+  {
+    id: "read-the-docs",
+    label: "Get started",
+    level: 2,
+  },
+];
+
 export const faqs = [
   {
     question: "What does CodeRabbit do better than Guided Review?",
@@ -25,9 +68,15 @@ export const faqs = [
 
 # CodeRabbit alternative for reading the diff yourself
 
-Pick Guided Review if you're an engineer who wants to follow a change across files before approving it. Pick CodeRabbit if you want automated PR findings and suggested fixes. The deciding question is what you need next: help reading the implementation, or feedback generated for you? CodeRabbit also offers Change Stack for reading large diffs, so this isn't a claim that only Guided Review helps with context. If your current CodeRabbit workflow answers your questions, keep it. The case for Guided Review starts when you want a walkthrough with your own provider account.
+Pick Guided Review if you're an engineer who wants to follow a change across files before approving it.
+
+Pick CodeRabbit if you want automated PR findings and suggested fixes.
+
+The deciding question is what you need next: help reading the implementation, or feedback generated for you? CodeRabbit also offers Change Stack for reading large diffs, so this isn't a claim that only Guided Review helps with context. If your current CodeRabbit workflow answers your questions, keep it. The case for Guided Review starts when you want a walkthrough with your own provider account.
 
 I built Guided Review, and Guided Review publishes this page. Yes, it's biased. Product claims below link to sources checked in **October, 2026**; features can change.
+
+<TocCard toc={toc} collapsible />
 
 ## When Guided Review is the worse choice
 
@@ -175,4 +224,4 @@ Checked October, 2026.
 
 ## Read the docs
 
-[Read the docs](/docs/install) to pick a host and see what setup involves.
+[Read the docs](/docs/install) to choose the CLI or Chrome extension and see what setup involves.

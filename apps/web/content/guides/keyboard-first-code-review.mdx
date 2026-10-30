@@ -1,3 +1,51 @@
+export const toc = [
+  {
+    id: "move-between-review-units",
+    label: "Move between review units",
+    level: 2,
+  },
+  {
+    id: "learn-the-route-with-one-real-question",
+    label: "Start with a review question",
+    level: 2,
+  },
+  {
+    id: "search-the-diff-when-the-plan-misses-something",
+    label: "Search the diff",
+    level: 2,
+  },
+  {
+    id: "use-search-to-follow-a-dependency-then-return-to-the-question",
+    label: "Follow a dependency",
+    level: 2,
+  },
+  {
+    id: "switch-unified-and-split-diff-views",
+    label: "Switch diff views",
+    level: 2,
+  },
+  {
+    id: "draft-a-line-comment-from-the-keyboard",
+    label: "Draft a line comment",
+    level: 2,
+  },
+  {
+    id: "check-focus-before-using-a-shortcut",
+    label: "Check keyboard focus",
+    level: 2,
+  },
+  {
+    id: "saving-a-draft-and-submitting-a-review-are-separate-actions",
+    label: "Drafts and submission",
+    level: 2,
+  },
+  {
+    id: "practice-one-complete-reading-and-comment-loop",
+    label: "Practice the workflow",
+    level: 2,
+  },
+];
+
 # A keyboard-first code review workflow
 
 <img
@@ -15,6 +63,15 @@ You're tracing a field from a schema to a caller. You open the file tree, find t
 I want to spend that attention on the field. Guided Review's keyboard-first workflow lets you move through related review units, search the diff, switch views, and leave a comment without repeatedly returning to the file tree.
 
 The GitHub extension and local CLI share the review UI and most navigation keys. GitHub submission belongs to the extension. Local notes and Generate Prompt belong to the CLI.
+
+A quick review path:
+
+- Learn the shortcuts for moving between review units.
+- Use search to follow a value across files.
+- Switch diff layouts when the comparison calls for it.
+- Leave specific comments before choosing a review outcome.
+
+<TocCard toc={toc} collapsible />
 
 ## Move between review units
 

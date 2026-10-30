@@ -1,3 +1,56 @@
+export const toc = [
+  {
+    id: "start-with-intent-not-the-pr-summary",
+    label: "Start with intent, not the PR summary",
+    level: 2,
+  },
+  {
+    id: "follow-the-value-across-files",
+    label: "Follow the value across files",
+    level: 2,
+  },
+  {
+    id: "turn-the-request-into-observable-examples",
+    label: "Define observable examples",
+    level: 2,
+  },
+  {
+    id: "inspect-the-boundaries-the-patch-did-not-change",
+    label: "Check unchanged boundaries",
+    level: 2,
+  },
+  {
+    id: "read-production-code-before-tests",
+    label: "Read production code before tests",
+    level: 2,
+  },
+  {
+    id: "check-whether-the-test-could-disagree-with-the-implementation",
+    label: "Challenge the tests",
+    level: 2,
+  },
+  {
+    id: "review-the-agents-extra-changes-on-their-own-merits",
+    label: "Review extra changes",
+    level: 2,
+  },
+  {
+    id: "use-review-units-to-keep-related-hunks-together",
+    label: "Use review units",
+    level: 2,
+  },
+  {
+    id: "leave-a-question-someone-can-answer",
+    label: "Leave a question someone can answer",
+    level: 2,
+  },
+  {
+    id: "faq",
+    label: "FAQ",
+    level: 2,
+  },
+];
+
 import { JsonLd } from "@web/components/JsonLd";
 
 export const faqs = [
@@ -33,6 +86,15 @@ export const faqs = [
 I start an AI-generated PR review with the contract. What was supposed to change? Then I follow that behavior through the production code and read the tests after it.
 
 An agent can update a type, parser, two callers, and a test in one pass. All five files agree. That still leaves a question: do they agree on the right thing?
+
+A quick review path:
+
+- Establish the intended behavior before reading the summary.
+- Follow a value across production code and tests.
+- Check unchanged boundaries and extra changes.
+- Leave questions that name the missing evidence.
+
+<TocCard toc={toc} collapsible />
 
 ## Start with intent, not the PR summary
 

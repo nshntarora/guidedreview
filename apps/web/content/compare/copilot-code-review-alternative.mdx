@@ -1,5 +1,48 @@
 import { JsonLd } from "@web/components/JsonLd";
 
+export const toc = [
+  {
+    id: "when-guided-review-is-the-worse-choice",
+    label: "When to keep your current tool",
+    level: 2,
+  },
+  {
+    id: "at-a-glance",
+    label: "At a glance",
+    level: 2,
+  },
+  {
+    id: "workflow-do-you-want-to-read-or-receive-feedback",
+    label: "Workflow",
+    level: 2,
+  },
+  {
+    id: "pricing-a-subscription-is-only-part-of-the-cost",
+    label: "Pricing",
+    level: 2,
+  },
+  {
+    id: "approval-check-what-the-tool-is-allowed-to-submit",
+    label: "Approval",
+    level: 2,
+  },
+  {
+    id: "sources",
+    label: "Sources",
+    level: 2,
+  },
+  {
+    id: "faq",
+    label: "FAQ",
+    level: 2,
+  },
+  {
+    id: "read-the-docs",
+    label: "Get started",
+    level: 2,
+  },
+];
+
 export const faqs = [
   {
     question: "What does GitHub Copilot do better than Guided Review?",
@@ -25,9 +68,15 @@ export const faqs = [
 
 # Copilot code review alternative for a reviewer-driven walkthrough
 
-Pick Guided Review if you're an engineer who wants an ordered walkthrough of a PR or local diff using your own provider account. Pick GitHub Copilot if you want review comments and suggested changes within your existing GitHub workflow. The deciding difference is whether you want help reading the implementation or feedback generated for you. Guided Review never chooses an approval; Copilot has an optional approval feature in public preview. If Copilot already supplies the feedback you need, keep it. The choice flips when your missing tool is a reading interface rather than another reviewer.
+Pick Guided Review if you're an engineer who wants an ordered walkthrough of a PR or local diff using your own provider account.
+
+Pick GitHub Copilot if you want review comments and suggested changes within your existing GitHub workflow.
+
+The deciding difference is whether you want help reading the implementation or feedback generated for you. Guided Review never chooses an approval; Copilot has an optional approval feature in public preview. If Copilot already supplies the feedback you need, keep it. The choice flips when your missing tool is a reading interface rather than another reviewer.
 
 I built Guided Review, and Guided Review publishes this page. Yes, it's biased. Product claims below link to sources checked in **October, 2026**; features can change.
+
+<TocCard toc={toc} collapsible />
 
 ## When Guided Review is the worse choice
 
@@ -160,4 +209,4 @@ Checked October, 2026.
 
 ## Read the docs
 
-[Read the docs](/docs/install) to pick a host and see what setup involves.
+[Read the docs](/docs/install) to choose the CLI or Chrome extension and see what setup involves.

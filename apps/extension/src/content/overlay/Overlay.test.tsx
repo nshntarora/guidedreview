@@ -392,9 +392,13 @@ describe("Overlay", () => {
     });
     fireEvent.keyDown(window, { key: "ArrowDown" });
     fireEvent.keyDown(window, { key: "ArrowDown", repeat: true });
-    await waitFor(() => expect(codeColumn.scrollTop).toBeCloseTo(480, 0));
+    // Easing settles within one pixel; its final position depends on frame timing.
+    await waitFor(() => expect(Math.abs(codeColumn.scrollTop - 480)).toBeLessThan(1));
+    const positionBeforeArrowUp = codeColumn.scrollTop;
     fireEvent.keyDown(window, { key: "ArrowUp" });
-    await waitFor(() => expect(codeColumn.scrollTop).toBeCloseTo(240, 0));
+    await waitFor(() =>
+      expect(Math.abs(codeColumn.scrollTop - (positionBeforeArrowUp - 240))).toBeLessThan(1),
+    );
     fireEvent.keyDown(window, { key: "v" });
     fireEvent.keyDown(window, { key: "u" });
     expect(useReviewStore.getState().diffViewMode).toBe("unified");

@@ -13,8 +13,20 @@ function MobilePreviewNotice({ onClose }: { onClose: () => void }) {
   const titleId = useId();
   const bodyId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const { overflow } = document.body.style;
+    const background = Array.from(document.body.children)
+      .filter(
+        (node): node is HTMLElement =>
+          node instanceof HTMLElement && !node.contains(panelRef.current),
+      )
+      .map((node) => ({ node, inert: node.inert }));
+    background.forEach(({ node }) => {
+      node.inert = true;
+    });
+    document.body.style.overflow = "hidden";
     closeRef.current?.focus();
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -29,7 +41,13 @@ function MobilePreviewNotice({ onClose }: { onClose: () => void }) {
       }
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = overflow;
+      background.forEach(({ node, inert }) => {
+        node.inert = inert;
+      });
+    };
   }, [onClose]);
 
   return createPortal(
@@ -39,12 +57,14 @@ function MobilePreviewNotice({ onClose }: { onClose: () => void }) {
       scrimTestId="live-preview-mobile-notice-scrim"
       onScrimDismiss={onClose}
       maxWidthClassName="max-w-[420px]"
+      panelRef={panelRef}
       panelProps={{
         role: "dialog",
         "aria-modal": "true",
         "aria-labelledby": titleId,
         "aria-describedby": bodyId,
         "data-testid": "live-preview-mobile-notice",
+        "data-review-preview": true,
       }}
     >
       <div className="flex flex-col gap-2 px-4 py-4">
@@ -85,6 +105,7 @@ export function ProductPreview() {
       setMobileNoticeOpen(true);
       return;
     }
+    setMobileNoticeOpen(false);
     setLoading(true);
     setError(false);
     try {
@@ -126,10 +147,9 @@ export function ProductPreview() {
             alt="Guided Review CLI showing a local code diff and ordered review units"
             width={1600}
             height={1000}
-            className="block h-auto min-h-96 w-full scale-[1.01] object-cover blur-[1px] sm:min-h-0"
+            className="block h-auto w-full"
           />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-background via-background/75 to-transparent backdrop-blur-xl [mask-image:linear-gradient(to_top,black_55%,transparent)]" />
-          <div className="absolute inset-x-0 bottom-0 grid items-center gap-5 px-5 py-5 text-left sm:px-8 sm:py-7 md:grid-cols-[1fr_auto] md:gap-8">
+          <div className="grid items-center gap-5 border-t border-border px-5 py-5 text-left sm:px-8 sm:py-7 md:grid-cols-[1fr_auto] md:gap-8">
             <div>
               <p className="m-0 text-xl font-semibold tracking-tight text-foreground font-brand sm:text-2xl">
                 Try it out without installing anything

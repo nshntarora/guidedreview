@@ -13,7 +13,7 @@ export const toc = [
 
 Move through a guided review without leaving the keyboard. Most navigation keys need focus outside an editable field. In the comment composer, typing goes to the text field; actions, search, Esc, and ⌘/Ctrl+Enter still work.
 
-The Guided Review sidebar always lists the same shortcuts as this page. Most chords work in both the [Chrome extension](/docs/first-review) and the [CLI](/docs/cli); [Local review](#local-review) adds CLI-only keys. Submit chords apply to the extension only.
+Open Actions (`⌘/Ctrl` + `K`) and choose **View keyboard shortcuts** for the in-app reference. Most chords work in both the [Chrome extension](/docs/first-review) and the [CLI](/docs/cli); [Local review](#local-review) adds CLI-only keys. Submit chords apply to the extension only.
 
 <TocCard toc={toc} />
 
@@ -41,7 +41,7 @@ In the file list, `↑` / `↓` move focus, `←` / `→` collapse or expand fol
 
 ## Actions
 
-Press `⌘/Ctrl` + `K` or click **Actions** in the review header. Type to find an action, move with `↑` / `↓`, and select with `Enter`.
+Press `⌘/Ctrl` + `K` to open Actions. The header’s **Search** button opens the search step of the same palette; use its back arrow to return to actions. Type to find an action, move with `↑` / `↓`, and select with `Enter`.
 
 Open settings, view keyboard shortcuts, choose unified or split view, search files and code, or generate a prompt from your review notes. Generate prompt needs at least one note. GitHub reviews also offer Submit review.
 
@@ -56,7 +56,7 @@ Search and view mode open a second step in the same palette. Click the back arro
 
 Type `v`, then `u` or `s` within about a second. You can also toggle unified / split from the toolbar while [following the walkthrough](/docs/first-review#walk-the-plan).
 
-**Default is split.** In the extension, your choice is remembered in `chrome.storage.local` for the next review on this browser.
+**Default is unified.** A saved choice takes precedence. The extension remembers it in `chrome.storage.local`; the CLI remembers it in browser `localStorage` for the local URL.
 
 ## Diff search
 
@@ -65,11 +65,13 @@ Search **every** file path and line in the parsed diff — not only the active u
 1. Press `⌘/Ctrl` + `F` while the overlay is open. This opens the action palette with **Search files and code** selected.
 2. Type a path fragment or code snippet. Results are fuzzy-ranked (paths rank above line hits).
 3. Move with `↑` / `↓`, open a hit with `Enter`, or close with `Esc`.
-4. Selecting a result jumps to the unit that owns that file (or hunk) and scrolls the match into view.
+4. In Review units, selecting a result jumps to the unit that owns the match when one exists. In Files, or when no unit owns the match, it opens the file. The matching line scrolls into view.
 
 Press `⌘/Ctrl` + `F` again while the palette is open to re-focus and select the query. Renames match on the old or new path. Binary / elided files contribute path hits only.
 
 This is Guided Review’s own search palette. On a PR page, GitHub’s find does not run while the overlay owns the keyboard.
+
+[![Diff search for retryAfter showing highlighted code matches across the sample PR, with arrow-key navigation and Enter to open a result.](/docs/screenshots/diff-search.png)](/docs/screenshots/diff-search.png)
 
 ## Comment mode
 
@@ -97,7 +99,7 @@ Full submit flow: [Submit a review](/docs/submit-review). Auth gate: [Connect Gi
 
 ## Local review
 
-The [CLI](/docs/cli) uses the same navigation, diff view, search, and comment-mode keys as the extension. Submit (`⌘/Ctrl` + `Enter` for a GitHub review) does not apply — use [Generate Prompt](/docs/generate-prompt) from the UI instead (needs at least one note). Extra in the local UI:
+The [CLI](/docs/cli) uses the same navigation, diff view, search, and comment-mode keys as the extension. Outside the composer, `⌘/Ctrl` + `Enter` opens [Generate Prompt](/docs/generate-prompt) when at least one note exists. Inside that dialog it copies the prompt; inside the composer it saves the draft. The CLI has no Exit button; Ctrl+C in the terminal stops the server. Extra in the local UI:
 
 | Shortcut       | Action                       |
 | -------------- | ---------------------------- |

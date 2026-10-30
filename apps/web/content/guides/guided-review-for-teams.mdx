@@ -1,3 +1,46 @@
+export const toc = [
+  {
+    id: "agree-on-where-repository-code-can-go",
+    label: "Agree on data access",
+    level: 2,
+  },
+  {
+    id: "have-the-author-read-the-local-diff",
+    label: "Have the author read the local diff",
+    level: 2,
+  },
+  {
+    id: "make-the-handoff-specific-enough-to-review-independently",
+    label: "Prepare the handoff",
+    level: 2,
+  },
+  {
+    id: "let-the-reviewer-form-a-separate-view",
+    label: "Let the reviewer form a separate view",
+    level: 2,
+  },
+  {
+    id: "divide-a-large-review-by-behavior-and-ownership",
+    label: "Divide a large review",
+    level: 2,
+  },
+  {
+    id: "turn-comments-into-decisions-the-author-can-act-on",
+    label: "Make comments actionable",
+    level: 2,
+  },
+  {
+    id: "recheck-the-assumptions-after-an-update",
+    label: "Recheck after updates",
+    level: 2,
+  },
+  {
+    id: "keep-decisions-where-the-team-can-find-them",
+    label: "Record decisions",
+    level: 2,
+  },
+];
+
 # Using Guided Review in a team review workflow
 
 <img
@@ -15,6 +58,15 @@ You ask an agent to update an API and its callers. It finishes the patch and wri
 Who has checked that the description matches the code?
 
 I'd put an author reading pass before that handoff. Guided Review supports it locally through the CLI, then supports the reviewer's pass through a Chrome overlay on the GitHub PR. Both people still need their own understanding of the change.
+
+A quick review path:
+
+- Agree on which providers may receive repository code.
+- Have the author review the local diff before handing it over.
+- Give reviewers concrete behavior and evidence to check.
+- Revisit affected assumptions after an update.
+
+<TocCard toc={toc} collapsible />
 
 ## Agree on where repository code can go
 

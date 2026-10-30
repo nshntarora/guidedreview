@@ -15,24 +15,17 @@ From a normal GitHub PR page to a structured walkthrough in a few clicks. This p
 
 ## Open a pull request
 
-Navigate to any pull request on `github.com` (Conversation, Files changed, or Commits). The content script is injected on `https://github.com/*` so SPA navigation from the PR list still shows the button when you land on a PR.
+Open a pull request on `github.com`. You can start from Conversation, Files changed, or Commits.
 
-No button? See [Troubleshooting](/docs/troubleshooting#no-start-guided-review-button). Some PR sub-pages (for example conflict resolution) are intentionally ignored — same troubleshooting page.
+If the button is missing, see [Troubleshooting](/docs/troubleshooting#no-start-guided-review-button).
 
 ## Start Guided Review
 
-You can open the overlay any of these ways:
+Click **Start Guided Review** on the PR page. The overlay opens and loads the diff.
 
-1. Click **Start Guided Review** on the PR page.
-2. Click the **Guided Review toolbar icon** while a PR tab is active (pin it from Chrome’s puzzle-piece menu so it stays visible — [Chrome Extension](/docs/chrome-extension#after-install)).
-3. Optionally enable **Automatically Open on Files Changed** in Options so the review starts (or resumes) when you open that tab (classic `/files` or the newer `/changes` path). Off by default.
+With an [AI provider configured](/docs/configure-provider), review units appear as your model organizes related changes. Without a key, you can read one unit per changed file, in diff order.
 
-Then:
-
-1. The overlay opens in a Shadow DOM host so its styles don’t fight GitHub’s CSS.
-2. The extension fetches the PR diff.
-3. With a [provider configured](/docs/configure-provider), it streams an ordered walkthrough from your model. Review units appear progressively as each chunk finishes; the final walkthrough is what you step through.
-4. **Without a provider key**, you still get a walkthrough: **one unit per changed file**, in diff order. The context panel prompts you to connect Claude, OpenAI, or Grok so related changes can be clustered and summarized. See [How a review plan works → Without a provider](/docs/how-it-works#without-a-provider).
+You can also start from the **Guided Review toolbar icon** while a PR tab is active. For pinning the icon or opening reviews automatically on Files changed, see [Chrome Extension](/docs/chrome-extension#after-install).
 
 Connection failures after a key is set: [Troubleshooting](/docs/troubleshooting#provider-and-api-key).
 
@@ -40,7 +33,7 @@ Connection failures after a key is set: [Troubleshooting](/docs/troubleshooting#
 
 ## Follow the Walkthrough
 
-The overlay shows each step in order: a synthetic PR description first, then the review units. UI map (sidebar, context, header): [Reading the overlay](/docs/reading-the-overlay). How units are built and validated: [How a review plan works](/docs/how-it-works).
+Start with the change summary, then follow the review units. Each unit brings related changes together. See [Reading the overlay](/docs/reading-the-overlay) for a map of the controls.
 
 For each unit you can:
 
@@ -48,7 +41,11 @@ For each unit you can:
 - See the linked hunks from the real diff (default **unified** view; switch with `v u` / `v s`, or the toolbar — choice is remembered). [Images and binary files](/docs/images-and-binaries) use a preview or empty state instead of a line patch.
 - Move next / previous with the footer or [keyboard shortcuts](/docs/keyboard-shortcuts)
 
-With AI, the model chooses order and commentary; it does **not** supply the code lines you see. Hunk ids that don’t match the parsed diff are dropped. Without AI, order is file order and commentary is empty until you connect a provider.
+The model chooses the order and writes guidance. The code you read comes from the real diff. Check the guidance against the code; you decide whether the change is correct. [How a review plan works](/docs/how-it-works) explains how units are built and validated.
+
+[![The third review unit in a sample PR, showing the retry implementation, its tests, and guidance about the Retry-After boundary.](/docs/screenshots/reading-the-overlay.png)](/docs/screenshots/reading-the-overlay.png)
+
+_Sample PR: review the code beside the unit’s commentary. Select the screenshot for full size._
 
 ## Search the diff
 
@@ -65,7 +62,7 @@ Submit needs [GitHub connected](/docs/connect-github). Following the walkthrough
 
 ## Resume later
 
-Sessions (diff, plan, PR context, current step, drafts) are stored in `chrome.storage.session`, keyed by **owner/repo#number** — not the full URL — so you can switch between Conversation and Files changed tabs and resume the same plan until the browser session ends. Limits and clears: [Troubleshooting](/docs/troubleshooting#session-and-resume).
+You can switch between a PR’s Conversation and Files changed tabs and resume the same review. Your progress and drafts remain available until the browser session ends. For storage limits and clearing a session, see [Troubleshooting](/docs/troubleshooting#session-and-resume).
 
 If something fails mid-flight, see [Troubleshooting](/docs/troubleshooting).
 
