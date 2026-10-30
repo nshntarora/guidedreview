@@ -277,7 +277,9 @@ describe("Overlay", () => {
 
     const button = screen.getByTestId("submit-review-button");
     expect(button).toBeEnabled();
-    fireEvent.click(button);
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+    expect(screen.queryByTestId("command-action-submit-review")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("command-action-generate-prompt"));
 
     expect(await screen.findByTestId("generate-prompt-modal")).toBeInTheDocument();
     const prompt = screen.getByTestId("generate-prompt-text");
@@ -365,7 +367,7 @@ describe("Overlay", () => {
     expect(screen.getByTestId("generate-prompt-modal")).toBeInTheDocument();
   });
 
-  it("keeps navigation and view shortcuts available around a restored unfinished composer", () => {
+  it("keeps navigation and view shortcuts available around a restored unfinished composer", async () => {
     seedReadyReview(1);
     render(<Overlay />);
     fireEvent.keyDown(window, { key: "c" });
@@ -380,8 +382,19 @@ describe("Overlay", () => {
     );
     expect(screen.getByTestId("comment-composer-input")).not.toHaveFocus();
 
+    const codeColumn = screen.getByTestId("code-col");
+    Object.defineProperties(codeColumn, {
+      scrollHeight: { value: 5000 },
+      clientHeight: { value: 500 },
+    });
+    codeColumn.scrollBy = vi.fn((options: ScrollToOptions) => {
+      codeColumn.scrollTop += options.top ?? 0;
+    });
     fireEvent.keyDown(window, { key: "ArrowDown" });
-    expect(Element.prototype.scrollBy).toHaveBeenCalled();
+    fireEvent.keyDown(window, { key: "ArrowDown", repeat: true });
+    await waitFor(() => expect(codeColumn.scrollTop).toBeCloseTo(480, 0));
+    fireEvent.keyDown(window, { key: "ArrowUp" });
+    await waitFor(() => expect(codeColumn.scrollTop).toBeCloseTo(240, 0));
     fireEvent.keyDown(window, { key: "v" });
     fireEvent.keyDown(window, { key: "u" });
     expect(useReviewStore.getState().diffViewMode).toBe("unified");
@@ -708,12 +721,13 @@ describe("Overlay", () => {
       selection: { kind: "summary" },
     });
     const onRetry = vi.fn();
+    useReviewStore.setState({ navigationMode: "units" });
     render(<Overlay onRetry={onRetry} />);
     expect(screen.getByText(/^error$/i)).toBeInTheDocument();
     expect(screen.getByTestId("error-message")).toHaveTextContent("Invalid API key");
     expect(screen.getByTestId("error-status-code")).toHaveTextContent("401");
     expect(screen.getByTestId("error-code")).toHaveTextContent("authentication_error");
-    expect(screen.getByTestId("review-summary")).toHaveTextContent("PR Details");
+    expect(screen.getByTestId("review-summary")).toHaveTextContent("PR Description");
     expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
 
     screen.getByRole("button", { name: /^retry$/i }).click();
@@ -747,8 +761,9 @@ describe("Overlay", () => {
       prContext: prContextFixture(),
       selection: { kind: "summary" },
     });
+    useReviewStore.setState({ navigationMode: "units" });
     render(<Overlay />);
-    expect(screen.getByTestId("review-summary")).toHaveTextContent("PR Details");
+    expect(screen.getByTestId("review-summary")).toHaveTextContent("PR Description");
     expect(screen.queryByText(/no review units were generated/i)).not.toBeInTheDocument();
   });
 
@@ -763,9 +778,24 @@ describe("Overlay", () => {
       navigationMode: "units",
     });
     render(<Overlay />);
-    expect(screen.getByTestId("review-summary")).toHaveTextContent("PR Details");
+    expect(screen.getByTestId("review-summary")).toHaveTextContent("PR Description");
+    const summary = screen.getByTestId("review-summary");
+    expect(screen.getByTestId("review-units").firstElementChild).toBe(summary);
+    fireEvent.click(summary);
+    expect(screen.getByTestId("description-pane")).toBeInTheDocument();
+    expect(summary).toHaveAttribute("aria-current", "true");
+    fireEvent.click(screen.getByTestId("review-unit-1"));
     expect(screen.getByTestId("diff-unit-title")).toHaveTextContent("Update foo");
     expect(screen.getByText("because it needed updating")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("review-pr-title"));
+    expect(screen.getByTestId("description-pane")).toBeInTheDocument();
+    expect(summary).toHaveAttribute("aria-current", "true");
+    expect(screen.getByTestId("code-col")).toHaveFocus();
+
+    act(() => useReviewStore.getState().goToFile("src/foo.ts"));
+    fireEvent.click(screen.getByTestId("review-pr-title"));
+    expect(screen.getByTestId("description-pane")).toBeInTheDocument();
+    expect(useReviewStore.getState().navigationMode).toBe("files");
   });
 
   it("does not show the PR description in the header", () => {
@@ -778,7 +808,7 @@ describe("Overlay", () => {
       selection: { kind: "summary" },
     });
     render(<Overlay />);
-    // Description lives in the left pane, not a header <details>.
+    expect(screen.getByRole("banner")).not.toHaveTextContent("PR Description");
     expect(screen.queryByRole("heading", { name: /pr description/i })).toBeInTheDocument();
     expect(screen.getByTestId("description-pane")).toBeInTheDocument();
   });
@@ -793,6 +823,11 @@ describe("Overlay", () => {
       selection: { kind: "summary" },
     });
     render(<Overlay />);
+    const descriptionButton = screen.getByTestId("context-pr-description");
+    expect(descriptionButton).not.toHaveAttribute("aria-current");
+    act(() => useReviewStore.setState({ selection: { kind: "file", path: "src/foo.ts" } }));
+    fireEvent.click(descriptionButton);
+    expect(screen.getByTestId("description-pane")).toBeInTheDocument();
     expect(screen.getByText(/author's summary of intent/i)).toBeInTheDocument();
   });
 
@@ -815,10 +850,41 @@ describe("Overlay", () => {
     expect(screen.queryByText(/author's summary of intent/i)).not.toBeInTheDocument();
   });
 
-  it("explains missing title and description together", () => {
+  it("shows skeletons across all panes until the diff loads, preserving available description", () => {
     useReviewStore.setState({
       isOpen: true,
       status: "loading",
+      prContext: prContextFixture({ description: "", descriptionHtml: "" }),
+      selection: { kind: "summary" },
+    });
+    render(<Overlay />);
+
+    expect(screen.getByTestId("description-pane-loading")).toBeInTheDocument();
+    expect(screen.getByTestId("description-changes-loading")).toBeInTheDocument();
+    expect(screen.getByTestId("sidebar-loading")).toBeInTheDocument();
+    expect(screen.getByTestId("context-panel-skeleton")).toHaveAttribute("aria-busy", "true");
+    expect(screen.queryByTestId("description-pane-empty")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("navigation-tab-units"));
+    expect(screen.getByTestId("sidebar-loading")).toBeInTheDocument();
+
+    act(() => useReviewStore.getState().setPRContext(prContextFixture()));
+    expect(screen.queryByTestId("description-pane-loading")).not.toBeInTheDocument();
+    expect(screen.getByText("This PR adds a feature.")).toBeInTheDocument();
+    expect(screen.getByTestId("description-changes-loading")).toBeInTheDocument();
+
+    act(() => useReviewStore.setState({ status: "ready", diff: diffFixture() }));
+    expect(screen.queryByTestId("sidebar-loading")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("context-panel-skeleton")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("description-changes-loading")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Diff summary")).toHaveTextContent("1 file");
+    expect(screen.getByTestId("description-pane")).toHaveAttribute("aria-busy", "false");
+  });
+
+  it("explains missing title and description together", () => {
+    useReviewStore.setState({
+      isOpen: true,
+      status: "ready",
       prContext: prContextFixture({ title: "", description: "", descriptionHtml: "" }),
       selection: { kind: "summary" },
     });
@@ -1026,6 +1092,13 @@ describe("Overlay", () => {
     it("opens from the header Submit Review button when authenticated", async () => {
       seedReadyReview(0);
       render(<Overlay />);
+
+      expect(screen.getByTestId("submit-review-button")).toHaveTextContent("Submit Review");
+      expect(screen.queryByTestId("generate-prompt-button")).not.toBeInTheDocument();
+      fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+      expect(screen.getByTestId("command-action-submit-review")).toBeInTheDocument();
+      expect(screen.queryByTestId("command-action-generate-prompt")).not.toBeInTheDocument();
+      fireEvent.keyDown(window, { key: "Escape" });
 
       expect(screen.queryByTestId("submit-review-modal")).not.toBeInTheDocument();
       await openSubmitReviewModal();
@@ -1455,6 +1528,7 @@ describe("Overlay", () => {
   describe("view mode keyboard chords", () => {
     it("v then u switches to unified view", () => {
       seedReadyReview(1);
+      useReviewStore.setState({ diffViewMode: "split" });
       render(<Overlay />);
 
       expect(useReviewStore.getState().diffViewMode).toBe("split");
@@ -1482,6 +1556,7 @@ describe("Overlay", () => {
 
     it("disarms a pending v when an unrelated key lands inside the chord window", () => {
       seedReadyReview(1);
+      useReviewStore.setState({ diffViewMode: "split" });
       render(<Overlay />);
 
       fireEvent.keyDown(window, { key: "v" });
@@ -1498,6 +1573,7 @@ describe("Overlay", () => {
       try {
         vi.setSystemTime(new Date("2020-01-01T00:00:00.000Z"));
         seedReadyReview(1);
+        useReviewStore.setState({ diffViewMode: "split" });
         render(<Overlay />);
 
         fireEvent.keyDown(window, { key: "v" });
@@ -1514,6 +1590,7 @@ describe("Overlay", () => {
 
     it("works in comment mode", () => {
       seedReadyReview(1);
+      useReviewStore.setState({ diffViewMode: "split" });
       render(<Overlay />);
 
       fireEvent.keyDown(window, { key: "c" });
@@ -1528,6 +1605,7 @@ describe("Overlay", () => {
 
     it("does not change view mode while the composer is open", () => {
       seedReadyReview(1);
+      useReviewStore.setState({ diffViewMode: "split" });
       render(<Overlay />);
 
       fireEvent.keyDown(window, { key: "c" });

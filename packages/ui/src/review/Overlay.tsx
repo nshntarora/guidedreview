@@ -34,7 +34,7 @@ import { GeneratePromptModal } from "@guided-review/ui/review/components/Generat
 import { SubmitReviewModal } from "@guided-review/ui/review/components/SubmitReviewModal";
 import { ReviewSubmittedModal } from "@guided-review/ui/review/components/ReviewSubmittedModal";
 import { ReviewUnitsIllustration } from "@guided-review/ui/review/components/ReviewUnitsEmptyState";
-import { BUILD_PLAN_PRIMARY, buildPhaseDetail } from "./overlayCopy";
+import { BUILD_PLAN_PRIMARY, buildPhaseDetail, GENERATE_REVIEW_UNITS } from "./overlayCopy";
 import { useReviewHost } from "./host";
 import type { LocalDiffControls } from "./localReview";
 
@@ -138,7 +138,6 @@ function ReviewLayout({
   const generatePromptCopyActionRef = useRef<(() => void) | null>(null);
   const codeColRef = useRef<HTMLElement>(null);
   const contextPaneRef = useRef<HTMLDivElement>(null);
-  const reviewContentRef = useRef<HTMLDivElement>(null);
   /** Element focused before the overlay opened (for restore if start button gone). */
   const previousFocusRef = useRef<Element | null>(null);
   /** Pending `v` leader for view-mode chords (`v+u` / `v+s`). */
@@ -153,6 +152,16 @@ function ReviewLayout({
   const generatePlan = host.generatePlan;
 
   const contentKey = selectionKey(selection);
+  const pendingScrollRestore = useRef<{ key: string; top: number; initial: number } | null>(null);
+  const restoreAfterFilesRendered = useCallback(() => {
+    const pending = pendingScrollRestore.current;
+    const column = codeColRef.current;
+    if (!pending || pending.key !== contentKey || !column) return;
+    pendingScrollRestore.current = null;
+    // Later cards may have clamped the initial restore. Don't override user scrolling.
+    if (column.scrollTop === pending.initial && column.scrollTop !== pending.top)
+      column.scrollTo({ top: pending.top });
+  }, [contentKey]);
   const flushScrollPosition = useReviewScroll(codeColRef, contentKey, sessionKey, isOpen);
 
   function closeNavigation() {
@@ -343,24 +352,18 @@ function ReviewLayout({
 
   useLayoutEffect(() => {
     if (!isOpen) return;
+    pendingScrollRestore.current = null;
     if (skipCodeScrollOnUnitChange.current) skipCodeScrollOnUnitChange.current = false;
-    else
-      codeColRef.current?.scrollTo({
-        top: useReviewStore.getState().scrollPositions[contentKey] ?? 0,
-      });
+    else if (codeColRef.current) {
+      const top = useReviewStore.getState().scrollPositions[contentKey] ?? 0;
+      codeColRef.current.scrollTo({ top });
+      pendingScrollRestore.current = {
+        key: contentKey,
+        top,
+        initial: codeColRef.current.scrollTop,
+      };
+    }
     contextPaneRef.current?.scrollTo({ top: 0 });
-
-    // Animate the existing content so focus, composers, and scroll restoration survive.
-    // Cancel on the next selection so rapid keyboard navigation never queues motion.
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    const animations = [reviewContentRef.current, contextPaneRef.current?.firstElementChild].map(
-      (element) =>
-        element?.animate?.([{ opacity: 0.65 }, { opacity: 1 }], {
-          duration: 120,
-          easing: "ease-out",
-        }),
-    );
-    return () => animations.forEach((animation) => animation?.cancel());
   }, [isOpen, contentKey]);
 
   useEffect(() => {
@@ -533,6 +536,10 @@ function ReviewLayout({
         diff={diff}
         titleId={titleId}
         title={dialogTitle}
+        onShowDescription={() => {
+          useReviewStore.getState().selectContent({ kind: "summary" });
+          focusReviewContent();
+        }}
         onExit={requestExit}
         allowExit={allowExit}
         localDiff={localDiff}
@@ -540,10 +547,6 @@ function ReviewLayout({
         notesCount={draftComments.length}
         onSubmitReview={handlePrimaryReviewAction}
         onGeneratePrompt={openGeneratePrompt}
-        onSelectSummary={() => {
-          useReviewStore.getState().selectContent({ kind: "summary" });
-          focusReviewContent();
-        }}
       />
 
       <div className="border-b border-border px-3 py-2 lg:hidden">
@@ -570,11 +573,16 @@ function ReviewLayout({
           data-testid="code-col"
           tabIndex={-1}
         >
-          <div ref={reviewContentRef} className="px-4 py-4 md:px-8 md:py-6">
+          <div className="px-4 py-4 md:px-8 md:py-6">
             {isDescriptionUnit ? (
-              <DescriptionPane prContext={prContext} diff={diff} />
+              <DescriptionPane
+                prContext={prContext}
+                diff={diff}
+                loading={status === "loading" && !diff}
+              />
             ) : (
               <DiffPane
+                onFilesRendered={restoreAfterFilesRendered}
                 files={resolvedFiles}
                 unitTitle={selectedFile?.path ?? currentReviewUnit?.title ?? ""}
                 unitTitleTooltip={currentReviewUnit?.title}
@@ -624,7 +632,7 @@ function ReviewLayout({
                         size="sm"
                         data-testid="large-diff-prompt-action"
                         aria-keyshortcuts="Meta+i Control+i"
-                        title="Walk through with AI (⌘/Ctrl+I)"
+                        title={`${GENERATE_REVIEW_UNITS} (⌘/Ctrl+I)`}
                         onClick={() => {
                           useReviewStore.getState().setNavigationMode("units");
                           focusReviewContent();
@@ -632,7 +640,7 @@ function ReviewLayout({
                           else generatePlan?.();
                         }}
                       >
-                        Walk through with AI
+                        {GENERATE_REVIEW_UNITS}
                         <ShortcutKeys keys={["mod", "I"]} join="chord" />
                       </Button>
                     </div>
@@ -652,6 +660,7 @@ function ReviewLayout({
                   </div>
                 )}
               <ContextPanel
+                loadingDiff={status === "loading" && !diff}
                 commits={navigationMode === "files" ? localDiff?.commits : undefined}
                 totalCommits={navigationMode === "files" ? localDiff?.totalCommits : undefined}
                 uncommitted={

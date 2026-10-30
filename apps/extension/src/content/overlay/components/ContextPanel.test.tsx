@@ -56,11 +56,11 @@ describe("ContextPanel loading state", () => {
     );
 
     expect(screen.getByTestId("context-panel-loading")).toBeInTheDocument();
-    expect(screen.getByText("Building the walkthrough")).toBeInTheDocument();
+    expect(screen.getByText("Building review units")).toBeInTheDocument();
     expect(screen.getByTestId("context-panel-loading-detail")).toHaveTextContent(
       "Extracting the diff…",
     );
-    expect(screen.getByRole("status", { name: /building the walkthrough/i })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: /building review units/i })).toBeInTheDocument();
   });
 });
 

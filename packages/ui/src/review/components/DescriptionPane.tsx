@@ -6,10 +6,12 @@ import { missingMetadataHint } from "@guided-review/ui/review/overlayCopy";
 import { summaryUnitTitle } from "@guided-review/ui/review/store";
 import { useReviewHost } from "@guided-review/ui/review/host";
 import { MiddleEllipsisText } from "./MiddleEllipsisText";
+import { SkeletonBar } from "./SkeletonBar";
 
 interface DescriptionPaneProps {
   prContext: ReviewContext | null;
   diff: ParsedDiff | null;
+  loading?: boolean;
 }
 
 function hasNonEmpty(value: string | undefined | null): boolean {
@@ -36,12 +38,14 @@ const STATUS_BADGE_CLASS: Record<FileChangeStatus, string> = {
  * state when the PR has no description (and notes a missing title too).
  * When a parsed diff is available, also shows a summary of file changes.
  */
-export function DescriptionPane({ prContext, diff }: DescriptionPaneProps) {
+export function DescriptionPane({ prContext, diff, loading = false }: DescriptionPaneProps) {
   const host = useReviewHost();
   const description = prContext?.description ?? "";
   const descriptionHtml = prContext?.descriptionHtml ?? "";
   const hasTitle = hasNonEmpty(prContext?.title);
   const summary = diff && diff.files.length > 0 ? summarizeDiff(diff) : null;
+  const loadingDescription = loading && !hasNonEmpty(descriptionHtml) && !hasNonEmpty(description);
+  const loadingChanges = loading && !diff;
 
   return (
     <div
@@ -49,22 +53,59 @@ export function DescriptionPane({ prContext, diff }: DescriptionPaneProps) {
         "w-full max-w-full",
         // Keep Changes to the right of the description; shrink the description
         // before wrapping so the side-by-side layout holds in typical pane widths.
-        summary && "flex flex-nowrap items-start justify-start gap-x-8",
+        (summary || loadingChanges) && "flex flex-nowrap items-start justify-start gap-x-8",
       )}
       data-testid="description-pane"
+      aria-busy={loading}
     >
       <div className="min-w-0 max-w-[720px] flex-1">
         <h2 className="mb-5 text-[1.375rem] font-semibold leading-snug tracking-[-0.01em] text-foreground">
           {summaryUnitTitle(host.kind)}
         </h2>
-        <SummaryCopy
-          descriptionHtml={descriptionHtml}
-          description={description}
-          hasTitle={hasTitle}
-        />
+        {loadingDescription ? (
+          <div aria-label="Loading PR description" data-testid="description-pane-loading">
+            <div aria-hidden="true" className="space-y-3">
+              <SkeletonBar className="w-5/6" />
+              <SkeletonBar className="w-full" />
+              <SkeletonBar className="w-2/3" />
+              <div className="pt-5 space-y-3">
+                <SkeletonBar className="w-full" />
+                <SkeletonBar className="w-4/5" />
+                <SkeletonBar className="w-1/2" />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <SummaryCopy
+            descriptionHtml={descriptionHtml}
+            description={description}
+            hasTitle={hasTitle}
+          />
+        )}
       </div>
 
-      {summary ? <ChangesSummary summary={summary} /> : null}
+      {summary ? (
+        <ChangesSummary summary={summary} />
+      ) : loadingChanges ? (
+        <section
+          className="w-[min(100%,360px)] shrink-0 max-w-[400px] border-l border-border pl-6"
+          aria-label="Loading diff summary"
+          data-testid="description-changes-loading"
+        >
+          <h3 className="mb-2.5 text-lg font-semibold text-foreground">Changes</h3>
+          <div aria-hidden="true">
+            <SkeletonBar className="mb-5 w-1/2" />
+            <div className="space-y-4">
+              {["w-4/5", "w-full", "w-2/3", "w-5/6"].map((width) => (
+                <div key={width} className="flex items-center gap-2">
+                  <SkeletonBar className="h-5 w-5 shrink-0" />
+                  <SkeletonBar className={width} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

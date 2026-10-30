@@ -2,8 +2,7 @@ import type { Ref } from "react";
 import type { ParsedDiff } from "@guided-review/ui/review/types";
 import type { ReviewContext } from "@guided-review/core";
 import { summarizeDiff } from "@guided-review/core";
-import { Button, cn, Kbd, Select, type SelectHandle, type SelectOption } from "@guided-review/ui";
-import { useReviewStore } from "@guided-review/ui/review/store";
+import { Button, Kbd, Select, type SelectHandle, type SelectOption } from "@guided-review/ui";
 import { useReviewHost } from "@guided-review/ui/review/host";
 import { useCommandAction, useCommandPalette } from "@guided-review/ui/review/commandPalette";
 import {
@@ -24,13 +23,13 @@ interface ProgressHeaderProps {
   titleId: string;
   /** Accessible / visible title text. */
   title: string;
+  onShowDescription: () => void;
   onExit: () => void;
   /** When false, hide Exit (local CLI — the process owns the window). */
   allowExit?: boolean;
   /** Opens the Submit Review modal or Generate Prompt (local). */
   onSubmitReview: () => void;
   onGeneratePrompt?: () => void;
-  onSelectSummary: () => void;
   /** When set, the primary action is generate-prompt (no GitHub submit). */
   notesCount?: number;
   localDiff?: LocalDiffControls;
@@ -179,18 +178,28 @@ function GitHubTitleCluster({
   prContext,
   showPrNumber,
   stats,
+  onShowDescription,
 }: {
   titleId: string;
   title: string;
   prContext: ReviewContext | null;
   showPrNumber: boolean;
   stats: { files: number; additions: number; deletions: number } | null;
+  onShowDescription: () => void;
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-1">
       <div className="flex min-w-0 items-baseline gap-2">
-        <h1 id={titleId} className="m-0 truncate text-lg font-semibold leading-snug">
-          {title}
+        <h1 id={titleId} className="m-0 min-w-0 text-lg font-semibold leading-snug">
+          <Button
+            variant="ghost"
+            className="max-w-full justify-start border-0 p-0! text-left text-lg! font-semibold! leading-snug text-inherit! not-disabled:hover:bg-transparent! not-disabled:hover:text-primary!"
+            onClick={onShowDescription}
+            title="Show PR description"
+            data-testid="review-pr-title"
+          >
+            <span className="truncate">{title}</span>
+          </Button>
         </h1>
         {showPrNumber && (
           <span className="shrink-0 text-base text-muted">#{prContext!.number}</span>
@@ -216,17 +225,16 @@ export function ProgressHeader({
   diff,
   titleId,
   title,
+  onShowDescription,
   onExit,
   allowExit = true,
   onSubmitReview,
   onGeneratePrompt,
-  onSelectSummary,
   notesCount,
   localDiff,
   scopeSelectRef,
 }: ProgressHeaderProps) {
   const host = useReviewHost();
-  const isSummary = useReviewStore((state) => state.selection.kind === "summary");
   const stats = diff ? summarizeDiff(diff) : null;
   const logomarkUrl = host.assetUrl("logomark.svg");
   const showPrNumber = host.kind === "github" && prContext?.number != null;
@@ -234,17 +242,21 @@ export function ProgressHeader({
   const primaryDisabled = primaryIsExport && (notesCount ?? 0) === 0;
   const isLocal = host.kind === "local";
   const openCommands = useCommandPalette((state) => state.open);
-  useCommandAction({
-    id: "generate-prompt",
-    label: "Generate prompt",
-    description:
-      (notesCount ?? 0) === 0
-        ? "Add a review note first."
-        : "Build a coding-agent prompt from your review notes.",
-    keywords: "copy export notes agent",
-    disabled: (notesCount ?? 0) === 0,
-    onSelect: onGeneratePrompt,
-  });
+  useCommandAction(
+    host.exportNotes
+      ? {
+          id: "generate-prompt",
+          label: "Generate prompt",
+          description:
+            (notesCount ?? 0) === 0
+              ? "Add a review note first."
+              : "Build a coding-agent prompt from your review notes.",
+          keywords: "copy export notes agent",
+          disabled: (notesCount ?? 0) === 0,
+          onSelect: onGeneratePrompt,
+        }
+      : null,
+  );
   useCommandAction(
     host.submit
       ? {
@@ -336,22 +348,8 @@ export function ProgressHeader({
               prContext={prContext}
               showPrNumber={showPrNumber}
               stats={stats}
+              onShowDescription={onShowDescription}
             />
-          )}
-          {!isLocal && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "shrink-0",
-                isSummary && "border-primary/30! bg-primary-muted! text-primary!",
-              )}
-              aria-current={isSummary ? "true" : undefined}
-              data-testid="review-summary"
-              onClick={onSelectSummary}
-            >
-              PR Details
-            </Button>
           )}
         </div>
         <div className="flex max-w-full flex-wrap items-center gap-2 sm:gap-3">

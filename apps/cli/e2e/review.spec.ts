@@ -1,6 +1,158 @@
 import { commitInRepo, expect, reviewUrl, test } from "./fixtures";
 
 test.describe("CLI review overlay", () => {
+  test("progressive multi-file units preserve reading position and search into later cards", async ({
+    page,
+    reviewServer,
+  }) => {
+    let sessionKey = "";
+    const files = ["one.ts", "two.ts", "three.ts", "four.ts"].map((path) => ({
+      path,
+      status: "added",
+      isBinaryOrElided: false,
+      hunks: [
+        {
+          id: `${path}#0`,
+          header: "@@ -0,0 +1,100 @@",
+          oldStart: 0,
+          oldLines: 0,
+          newStart: 1,
+          newLines: 100,
+          lines: Array.from({ length: 100 }, (_, i) => ({
+            type: "add",
+            newLine: i + 1,
+            content: `export const value${i} = ${i};`,
+          })),
+        },
+      ],
+    }));
+    const plan = {
+      units: [
+        {
+          id: "multi",
+          title: "Three files",
+          kind: "change",
+          context: "Related changes",
+          files: ["two.ts", "one.ts", "three.ts"].map((fileId) => ({
+            fileId,
+            hunkIds: [],
+            role: "core_logic",
+          })),
+        },
+        {
+          id: "single",
+          title: "Fourth file",
+          kind: "change",
+          context: "Separate change",
+          files: [{ fileId: "four.ts", hunkIds: [], role: "core_logic" }],
+        },
+      ],
+    };
+    await page.route("**/api/session", async (route) => {
+      const session = await (await route.fetch()).json();
+      sessionKey = session.sessionKey;
+      await route.fulfill({
+        json: { ...session, diff: { files }, settings: { ...session.settings, hasKey: true } },
+      });
+    });
+    await page.route("**/api/plan", (route) =>
+      route.fulfill({
+        contentType: "text/event-stream",
+        body: `data: ${JSON.stringify({ type: "DONE", plan })}\n\n`,
+      }),
+    );
+    await page.goto(reviewUrl(reviewServer));
+    await page.getByTestId("navigation-tab-units").click();
+    await page.getByTestId("generate-review-plan").click();
+    await expect(page.getByTestId("review-unit-1")).toBeVisible();
+
+    const mounts: { names: string[]; frame: number; highlighted: boolean }[] = [];
+    page.on("console", (message) => {
+      if (message.text().startsWith("card-mount:"))
+        mounts.push(JSON.parse(message.text().slice(11)));
+    });
+    await page.evaluate(() => {
+      let frame = 0;
+      let raf = 0;
+      let count = 0;
+      const tick = () => {
+        frame++;
+        raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+      const observer = new MutationObserver(() => {
+        const column = document.querySelector('[data-testid="code-col"]')!;
+        if (column.querySelector('[data-testid="diff-unit-title"]')?.textContent !== "Three files")
+          return;
+        const cards = [...column.querySelectorAll('[data-testid="diff-file-header"]')];
+        if (cards.length === count) return;
+        count = cards.length;
+        console.debug(
+          "card-mount:" +
+            JSON.stringify({
+              names: cards.map((card) => card.textContent?.match(/\w+\.ts/)?.[0]),
+              frame,
+              highlighted: [...column.querySelectorAll('[data-testid="diff-view-unified"]')].some(
+                (hunk) => hunk.getAttribute("data-highlight-state") === "ready",
+              ),
+            }),
+        );
+        if (count === 3) {
+          observer.disconnect();
+          cancelAnimationFrame(raf);
+        }
+      });
+      observer.observe(document.querySelector('[data-testid="code-col"]')!, {
+        childList: true,
+        subtree: true,
+      });
+    });
+    await page.getByTestId("review-unit-1").click();
+    await expect(page.getByTestId("diff-file-header")).toHaveCount(3);
+    await expect.poll(() => mounts.length).toBe(3);
+    expect(mounts.map((mount) => mount.names)).toEqual([
+      ["two.ts"],
+      ["two.ts", "one.ts"],
+      ["two.ts", "one.ts", "three.ts"],
+    ]);
+    expect(mounts.every((mount) => !mount.highlighted)).toBe(true);
+    expect(mounts[1].frame).toBeGreaterThan(mounts[0].frame);
+    expect(mounts[2].frame).toBeGreaterThan(mounts[1].frame);
+    await expect(page.getByTestId("diff-view-unified").last()).toHaveAttribute(
+      "data-highlight-state",
+      "ready",
+    );
+
+    await page.getByTestId("code-col").evaluate((column) => {
+      column.scrollTop = column.scrollHeight;
+    });
+    await expect
+      .poll(() =>
+        page.evaluate(
+          (key) =>
+            JSON.parse(sessionStorage.getItem(`guidedReview.session.${key}`) ?? "{}")
+              .scrollPositions?.["unit:multi"] ?? 0,
+          sessionKey,
+        ),
+      )
+      .toBeGreaterThan(4000);
+    const savedTop = await page.getByTestId("code-col").evaluate((column) => column.scrollTop);
+    await page.getByTestId("review-unit-2").click();
+    await page.getByTestId("review-unit-1").click();
+    await expect
+      .poll(() => page.getByTestId("code-col").evaluate((column) => column.scrollTop))
+      .toBeCloseTo(savedTop, 0);
+
+    await page.getByTestId("review-unit-2").click();
+    await page.keyboard.press("Control+f");
+    await page.getByTestId("diff-search-input").fill("three.ts");
+    await page.getByTestId("diff-search-result-file").first().click();
+    await expect(
+      page.getByTestId("diff-file-search-highlight").getByTestId("diff-file-header"),
+    ).toContainText("three.ts");
+    await expect(page.getByTestId("code-col")).toBeFocused();
+  });
+
   test("command palette and search preserve an unfinished line note", async ({
     page,
     reviewServer,

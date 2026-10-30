@@ -155,7 +155,7 @@ async function startReviewOnCodeUnit(page: Page): Promise<void> {
   await page.getByTestId("review-unit-1").click();
   await page.getByTestId("code-col").focus();
   await expect(page.getByTestId("context-panel-body")).toBeVisible();
-  await expect(page.getByTestId("diff-view-split")).toBeVisible();
+  await expect(page.getByTestId("diff-view-unified")).toBeVisible();
 }
 
 test.describe("Guided review overlay", () => {
@@ -573,14 +573,18 @@ test.describe("Guided review overlay", () => {
     const page = await context.newPage();
     await startReviewOnCodeUnit(page);
 
+    await expect(page.getByTestId("diff-view-unified")).toBeVisible();
+    await expect(page.getByTestId("diff-view-split")).toHaveCount(0);
+
+    // v then s → split; v then u → unified (1s chord window).
+    await page.keyboard.press("v");
+    await page.keyboard.press("s");
     await expect(page.getByTestId("diff-view-split")).toBeVisible();
     await expect(page.getByTestId("diff-view-unified")).toHaveCount(0);
 
-    // v then u → unified; v then s → split (1s chord window).
     await page.keyboard.press("v");
     await page.keyboard.press("u");
     await expect(page.getByTestId("diff-view-unified")).toBeVisible();
-    await expect(page.getByTestId("diff-view-split")).toHaveCount(0);
 
     await page.keyboard.press("v");
     await page.keyboard.press("s");
@@ -710,11 +714,11 @@ test.describe("Guided review overlay", () => {
     await page.getByTestId("diff-search-input").fill("const b = 3");
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("diff-file-header")).toContainText("foo.ts");
-    await expect(page.getByTestId("diff-view-split")).toBeVisible();
-    await page.keyboard.press("v");
-    await page.keyboard.press("u");
     await expect(page.getByTestId("diff-view-unified")).toBeVisible();
-    await page.screenshot({ path: testInfo.outputPath("workspace-narrow-unified.png") });
+    await page.keyboard.press("v");
+    await page.keyboard.press("s");
+    await expect(page.getByTestId("diff-view-split")).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath("workspace-narrow-split.png") });
   });
 
   test("file path header stays pinned while scrolling a long diff", async ({ context }) => {
@@ -732,7 +736,7 @@ test.describe("Guided review overlay", () => {
     const header = page.getByTestId("diff-file-header");
     await expect(header).toBeVisible();
     await expect(header).toContainText("long.ts");
-    await expect(page.getByTestId("diff-view-split")).toBeVisible();
+    await expect(page.getByTestId("diff-view-unified")).toBeVisible();
 
     const didScroll = await codeCol.evaluate((el) => {
       el.scrollTop = el.scrollHeight;
@@ -751,6 +755,6 @@ test.describe("Guided review overlay", () => {
       })
       .toBeLessThan(2);
 
-    await expect(page.getByTestId("diff-view-split")).toBeVisible();
+    await expect(page.getByTestId("diff-view-unified")).toBeVisible();
   });
 });

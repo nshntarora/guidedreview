@@ -21,7 +21,7 @@ import type {
   SubmitReviewResponse,
 } from "@guided-review/ui/review/types";
 import type { ReviewCommentInput, ReviewEvent } from "@guided-review/ui/review/types";
-import type { DiffViewMode } from "./diffView";
+import { DEFAULT_DIFF_VIEW_MODE, type DiffViewMode } from "./diffView";
 import type { DraftComment } from "./commentTypes";
 
 export interface StreamPlanHandlers {
@@ -130,7 +130,7 @@ export function useReviewHost(): ReviewHost {
 /** In-memory host for unit tests. */
 export function createMemoryReviewHost(overrides: Partial<ReviewHost> = {}): ReviewHost {
   const sessions = new Map<string, unknown>();
-  let diffViewMode: DiffViewMode = "split";
+  let diffViewMode: DiffViewMode = DEFAULT_DIFF_VIEW_MODE;
   return {
     kind: "github",
     assetUrl: (path) => path,

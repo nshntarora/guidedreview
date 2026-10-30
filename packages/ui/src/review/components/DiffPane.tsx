@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@guided-review/ui";
 
 import { isImagePath, summarizeDiff, type ResolvedUnitFile } from "@guided-review/core";
 import { languageForPath } from "@guided-review/ui/review/highlight";
+import { afterPaint } from "@guided-review/ui/review/afterPaint";
 import {
   displayLineNumber,
   linesInSelection,
@@ -55,6 +56,7 @@ interface DiffPaneProps {
   /** One-shot scroll/highlight target after picking a diff search result. */
   searchScrollTarget?: SearchScrollTarget | null;
   onSearchScrollTargetConsumed?: () => void;
+  onFilesRendered?: () => void;
 }
 
 /**
@@ -93,10 +95,12 @@ interface DiffFileCardProps {
   composerRange: ComposerRange;
   unitId?: string;
   searchHighlight: SearchScrollTarget | null;
+  highlightEnabled: boolean;
 }
 
 /** One file's path header + hunks (or binary empty state) inside the unit pane. */
-function DiffFileCard({
+// Appending the next file must not re-render every previously mounted hunk.
+const DiffFileCard = memo(function DiffFileCard({
   resolved,
   diffViewMode,
   selectedIds,
@@ -106,6 +110,7 @@ function DiffFileCard({
   composerRange,
   unitId,
   searchHighlight,
+  highlightEnabled,
 }: DiffFileCardProps) {
   const { file, hunks } = resolved;
   const language = languageForPath(file.path);
@@ -178,7 +183,7 @@ function DiffFileCard({
             return diffViewMode === "split" ? (
               <SplitHunk
                 hunk={hunk}
-                language={language}
+                language={highlightEnabled ? language : undefined}
                 key={hunk.id}
                 selectedIds={selectedIds}
                 focusId={effectiveFocusId}
@@ -190,7 +195,7 @@ function DiffFileCard({
             ) : (
               <UnifiedHunk
                 hunk={hunk}
-                language={language}
+                language={highlightEnabled ? language : undefined}
                 key={hunk.id}
                 selectedIds={selectedIds}
                 focusId={effectiveFocusId}
@@ -205,7 +210,7 @@ function DiffFileCard({
       </div>
     </div>
   );
-}
+});
 
 export function DiffPane({
   files,
@@ -216,6 +221,7 @@ export function DiffPane({
   selectableForUnit,
   searchScrollTarget = null,
   onSearchScrollTargetConsumed,
+  onFilesRendered,
 }: DiffPaneProps) {
   const diffViewMode = useReviewStore((s) => s.diffViewMode);
   const setDiffViewMode = useReviewStore((s) => s.setDiffViewMode);
@@ -227,6 +233,17 @@ export function DiffPane({
   const enterCommentMode = useReviewStore((s) => s.enterCommentMode);
   const rootRef = useRef<HTMLDivElement>(null);
   const [searchHighlight, setSearchHighlight] = useState<SearchScrollTarget | null>(null);
+  const [renderProgress, setRenderProgress] = useState({ files, count: 1 });
+  const visibleFileCount = renderProgress.files === files ? renderProgress.count : 1;
+  const filesRendered = visibleFileCount >= files.length;
+
+  useEffect(() => {
+    if (filesRendered) {
+      onFilesRendered?.();
+      return;
+    }
+    return afterPaint(() => setRenderProgress({ files, count: visibleFileCount + 1 }));
+  }, [files, visibleFileCount, filesRendered, onFilesRendered]);
 
   useEffect(() => {
     void hydrateDiffViewMode();
@@ -234,14 +251,17 @@ export function DiffPane({
 
   const filePaths = useMemo(() => new Set(files.map((f) => f.file.path)), [files]);
 
-  const { selectedIds, focusId, composerPlacementId, composerRange, draftsByEndLineId } =
-    deriveSelection(
-      uiMode === "comment" ? selectableLines : [],
-      uiMode === "comment" ? lineSelection : null,
-      composerOpen,
-      draftComments,
-      filePaths,
-    );
+  const { selectedIds, focusId, composerPlacementId, composerRange, draftsByEndLineId } = useMemo(
+    () =>
+      deriveSelection(
+        uiMode === "comment" ? selectableLines : [],
+        uiMode === "comment" ? lineSelection : null,
+        composerOpen,
+        draftComments,
+        filePaths,
+      ),
+    [uiMode, selectableLines, lineSelection, composerOpen, draftComments, filePaths],
+  );
 
   // Scroll the focused line into view when the cursor moves.
   useEffect(() => {
@@ -252,12 +272,17 @@ export function DiffPane({
       return;
     const el = rootRef.current.querySelector(`[data-line-id="${CSS.escape(focusId)}"]`);
     el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [uiMode, focusId, lineSelection?.focusIndex]);
+  }, [uiMode, focusId, lineSelection?.focusIndex, visibleFileCount]);
 
   // Jump to a search match: scroll into view, flash highlight, then clear.
   // Double rAF waits for the unit's hunks to paint after goToUnit.
   useEffect(() => {
     if (!searchScrollTarget) return;
+    // A search can point to a card that has not mounted yet.
+    if (
+      files.findIndex(({ file }) => file.path === searchScrollTarget.filePath) >= visibleFileCount
+    )
+      return;
 
     let clearTimer = 0;
     const frame = requestAnimationFrame(() => {
@@ -294,7 +319,7 @@ export function DiffPane({
       cancelAnimationFrame(frame);
       if (clearTimer) window.clearTimeout(clearTimer);
     };
-  }, [searchScrollTarget, onSearchScrollTargetConsumed, files]);
+  }, [searchScrollTarget, onSearchScrollTargetConsumed, files, visibleFileCount]);
 
   const commentModeActive = uiMode === "comment";
   const commentModeDisabled = selectableForUnit.length === 0;
@@ -349,20 +374,23 @@ export function DiffPane({
           <DiffViewToggle mode={diffViewMode} onChange={setDiffViewMode} />
         </div>
       </div>
-      {files.map((resolved) => (
-        <DiffFileCard
-          key={resolved.file.path}
-          resolved={resolved}
-          diffViewMode={diffViewMode}
-          selectedIds={selectedIds}
-          focusId={focusId}
-          draftsByEndLineId={draftsByEndLineId}
-          composerPlacementId={composerPlacementId}
-          composerRange={composerRange}
-          unitId={unitId}
-          searchHighlight={searchHighlight}
-        />
-      ))}
+      <div aria-busy={!filesRendered} data-testid="diff-file-cards">
+        {files.slice(0, visibleFileCount).map((resolved) => (
+          <DiffFileCard
+            key={resolved.file.path}
+            resolved={resolved}
+            diffViewMode={diffViewMode}
+            selectedIds={selectedIds}
+            focusId={focusId}
+            draftsByEndLineId={draftsByEndLineId}
+            composerPlacementId={composerPlacementId}
+            composerRange={composerRange}
+            unitId={unitId}
+            searchHighlight={searchHighlight}
+            highlightEnabled={filesRendered}
+          />
+        ))}
+      </div>
     </div>
   );
 }

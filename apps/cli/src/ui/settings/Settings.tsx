@@ -256,7 +256,8 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
           fetch("/api/settings"),
           fetch("/api/agents"),
         ]);
-        if (!settingsRes.ok) throw new Error("Could not load settings.");
+        if (!settingsRes.ok)
+          throw new Error("Couldn’t load settings. Reload this page to try again.");
         const data = (await settingsRes.json()) as PublicSettings;
         const listed = agentsRes.ok
           ? ((await agentsRes.json()) as { agents: PublicAgent[] }).agents
@@ -274,7 +275,10 @@ export function Settings({ onSaved, onDirtyChange }: SettingsProps) {
         setLoaded(true);
       } catch (error) {
         if (cancelled) return;
-        const message = error instanceof Error ? error.message : "Could not load settings.";
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Couldn’t load settings. Reload this page to try again.";
         setSaveStatus({ kind: "error", message });
         setLoaded(true);
       }

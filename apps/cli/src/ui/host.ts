@@ -1,6 +1,6 @@
 import type { AnnotateReviewStreamEvent, ParsedDiff, ReviewContext } from "@guided-review/core";
 import type { ReviewHost, StreamPlanHandlers } from "@guided-review/ui/review/host";
-import type { DiffViewMode } from "@guided-review/ui/review/diffView";
+import { DEFAULT_DIFF_VIEW_MODE, type DiffViewMode } from "@guided-review/ui/review/diffView";
 
 export function createLocalReviewHost(options: {
   onConnectProvider: () => void;
@@ -69,7 +69,7 @@ export function createLocalReviewHost(options: {
     },
     readDiffViewMode: async () => {
       const raw = localStorage.getItem("guidedReview.diffViewMode");
-      return raw === "unified" || raw === "split" ? raw : "split";
+      return raw === "unified" || raw === "split" ? raw : DEFAULT_DIFF_VIEW_MODE;
     },
     filePreviewUrl: async ({ path, side }) => {
       const params = new URLSearchParams({ path, side });

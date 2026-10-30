@@ -6,10 +6,12 @@ import {
   missingMetadataHint,
   PR_DESCRIPTION_HINT,
 } from "@guided-review/ui/review/overlayCopy";
+import { useReviewStore } from "@guided-review/ui/review/store";
 import { useReviewHost } from "@guided-review/ui/review/host";
 import type { DiffSummary } from "@guided-review/core";
 import type { LocalCommitCard, LocalDiffScopeOption } from "@guided-review/ui/review/localReview";
 import { LocalCommitList } from "./LocalCommitList";
+import { SkeletonBar } from "./SkeletonBar";
 
 interface ContextPanelProps {
   commits?: LocalCommitCard[];
@@ -24,6 +26,7 @@ interface ContextPanelProps {
   /** Whether the PR has a non-empty description. Used when the description unit is active. */
   hasDescription?: boolean;
   error?: ReviewErrorInfo | null;
+  loadingDiff?: boolean;
   loading?: boolean;
   /** Pipeline phase detail shown under the primary loading line. */
   loadingDetail?: string | null;
@@ -102,6 +105,30 @@ function SummaryUnitPanel({
           {hint}
         </div>
       )}
+      {host.kind === "github" && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mt-3"
+          data-testid="context-pr-description"
+          onClick={() => useReviewStore.getState().selectContent({ kind: "summary" })}
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="size-4 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+            <path d="M14 2v6h6M8 13h8M8 17h6" />
+          </svg>
+          View PR Description
+        </Button>
+      )}
       {loading ? (
         <div
           className="mt-4 flex items-center gap-2.5 border-t border-border-strong pt-3"
@@ -143,11 +170,34 @@ export function ContextPanel({
   hasTitle = true,
   hasDescription = true,
   error,
+  loadingDiff = false,
   loading,
   loadingDetail,
   onRetry,
 }: ContextPanelProps) {
   const host = useReviewHost();
+  if (loadingDiff && !error) {
+    return (
+      <div
+        aria-label="Loading review context"
+        aria-busy="true"
+        data-testid="context-panel-skeleton"
+      >
+        <div aria-hidden="true" className="space-y-3">
+          <SkeletonBar className="w-5/6" />
+          <SkeletonBar className="w-full" />
+          <SkeletonBar className="w-2/3" />
+          <div className="space-y-4 border-t border-border pt-5 mt-6">
+            <SkeletonBar className="mb-5 w-1/2" />
+            <SkeletonBar className="w-full" />
+            <SkeletonBar className="w-4/5" />
+            <SkeletonBar className="w-5/6" />
+            <SkeletonBar className="w-2/3" />
+          </div>
+        </div>
+      </div>
+    );
+  }
   const unitSummary = unit ? (
     <div>
       {unit.context.trim() && (
