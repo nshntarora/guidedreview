@@ -423,7 +423,9 @@ export function ProgressHeader({
         >
           <p className="m-0 flex min-w-0 items-center gap-2.5 text-sm leading-snug text-warning">
             <RefreshIcon />
-            <span>The diff on disk has changed. Refresh the page to get the latest changes.</span>
+            <span>
+              The diff on disk differs from this review. Notes refer to the code shown here.
+            </span>
           </p>
           <Button
             variant="secondary"

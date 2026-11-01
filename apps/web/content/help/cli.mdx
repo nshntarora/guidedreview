@@ -56,7 +56,7 @@ The review starts in **Files**, where you can inspect every changed file. Open *
 
 Press `d` to open the scope dropdown, `⌘/Ctrl` + `I` to structure, or `⌘/Ctrl` + `,` for Settings — same keys as [Keyboard shortcuts → Local review](/docs/keyboard-shortcuts#local-review). Navigation, diff search, and comment mode share the extension shortcuts where they apply.
 
-Unlike the extension, there is no GitHub submit from the CLI UI. Line notes are saved in the browser tab’s session storage. [Generate Prompt](#notes) copies them without removing them.
+Unlike the extension, there is no GitHub submit from the CLI UI. Line notes are saved locally in the repository’s Git directory. [Generate Prompt](#notes) copies them without removing them.
 
 [![Local CLI review with Branch changes selected, ordered review units, and Generate Prompt in the header.](/docs/screenshots/cli-review.png)](/docs/screenshots/cli-review.png)
 
@@ -111,17 +111,15 @@ Line comments stay in the session. There is no GitHub submit from the CLI. **Gen
 
 ## Session and refresh
 
-The browser saves the diff, walkthrough, current selection, and notes in the tab’s `sessionStorage`. Reloading the same local URL restores that state when the repository, base, branch, scope, and diff still match. Stopping the server with Ctrl+C does not clear the browser’s saved state. Resume requires the server running at the same local URL and the same matching diff.
+The CLI saves the diff, AI structure (when requested), navigation, scroll positions, saved notes, and unfinished composers in `<git-dir>/guided-review/sessions/`. Find the actual Git directory with `git rev-parse --absolute-git-dir`; linked worktrees have separate storage. Sessions use private file permissions and atomic writes. Provider credentials stay in their separate settings storage.
 
-When files on disk change, a banner asks you to refresh:
+Restarting the CLI against the same repository, base, branch, and scope restores the saved review, even on a different local port or in a new tab. Notes written before requesting AI structure are saved too. Staged-only and untracked-file options have separate session identities. A matching legacy tab session migrates when no disk session exists.
 
-1. Copy any notes you want to keep with [Generate Prompt](/docs/generate-prompt).
-2. Use the banner’s refresh control or reload the page to load the current diff.
-3. Read the updated files and request AI structure again if needed.
+When files change, the saved review keeps its original diff and notes and shows a stale banner. Notes are not automatically moved onto changed lines. Reloading resumes the saved snapshot; it does not discard feedback. Switching scope saves the current review and restores that scope’s saved review, or opens its Files view if none exists.
 
-A changed diff gets a different session key, so the previous walkthrough and notes are not carried onto new lines. Switching scope also loads a fresh Files view. Copy notes before switching if you need them.
+Saves happen while you work. A save error appears in the UI; notes remain in the tab, and scope switching waits for a successful save. Closing the tab before a failed save succeeds can lose those unsaved changes. Unload flushing is best effort.
 
-Closing the tab normally clears its session storage; browser session recovery may restore it. To explicitly remove saved review data, clear session storage for the local URL through browser developer tools. Saved provider settings live separately in the [config file](#config-file), and the diff view preference lives in browser `localStorage`.
+Storage keeps up to 20 sessions for 30 days; pruning runs on successful saves and is best effort. To explicitly remove saved review data, stop the CLI, remove `<git-dir>/guided-review/sessions/`, and clear `sessionStorage` for any open local review tabs. To review changed code from scratch, first copy notes with [Generate Prompt](/docs/generate-prompt), then clear saved review data and restart. Provider settings live separately in the [config file](#config-file), and the diff view preference lives in browser `localStorage`.
 
 ## Flags
 

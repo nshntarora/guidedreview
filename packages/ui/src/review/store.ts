@@ -846,7 +846,10 @@ export async function persistSession(): Promise<void> {
   }
 }
 
-export async function restoreSession(sessionKey: string): Promise<boolean> {
+export async function restoreSession(
+  sessionKey: string,
+  isCurrent: () => boolean = () => true,
+): Promise<boolean> {
   const host = getActiveReviewHost();
   if (!host) return false;
   const generation = useReviewStore.getState().streamGeneration;
@@ -857,7 +860,11 @@ export async function restoreSession(sessionKey: string): Promise<boolean> {
     console.warn("Guided Review: failed to restore session", error);
     return false;
   }
-  if (!saved?.diff?.files || generation !== useReviewStore.getState().streamGeneration)
+  if (
+    !isCurrent() ||
+    !saved?.diff?.files ||
+    generation !== useReviewStore.getState().streamGeneration
+  )
     return false;
   useReviewStore.setState(normalizeSession(saved, sessionKey));
   return true;
