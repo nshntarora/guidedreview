@@ -43,6 +43,7 @@ export interface DiffScopeOption {
 
 export interface LocalRepoState {
   repoRoot: string;
+  gitDir: string;
   baseRef: string;
   headRef: string;
   mergeBase: string;
@@ -409,8 +410,15 @@ export async function currentDiffHash(repo: LocalRepoState, scope: DiffScopeId):
   return hashDiff(await rawDiffForScope(repo, scope, untracked));
 }
 
-function sessionKeyFor(repo: LocalRepoState, scope: DiffScopeId, raw: string): string {
-  return `${path.basename(repo.repoRoot)}:${repo.baseRef}:${repo.headRef}:${scope}:${hashDiff(raw).slice(0, 12)}`;
+export function sessionKeyFor(repo: LocalRepoState, scope: DiffScopeId): string {
+  return JSON.stringify([
+    path.basename(repo.repoRoot),
+    repo.baseRef,
+    repo.headRef,
+    scope,
+    repo.staged,
+    repo.includeUntracked,
+  ]);
 }
 
 function contextFor(
@@ -442,6 +450,7 @@ async function inspectLocalRepo(options: LocalDiffOptions): Promise<LocalRepoSta
 
   return {
     repoRoot,
+    gitDir: (await runGit(["rev-parse", "--absolute-git-dir"], repoRoot)).trim(),
     baseRef,
     headRef,
     mergeBase,
@@ -472,7 +481,7 @@ async function snapshotFrom(
     context: contextFor(repo, commits.slice(0, MAX_RECENT_COMMITS), selected),
     diff,
     raw,
-    sessionKey: sessionKeyFor(repo, selected, raw),
+    sessionKey: sessionKeyFor(repo, selected),
     empty: diff.files.length === 0,
   };
 }

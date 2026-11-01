@@ -75,6 +75,7 @@ export interface ReviewHost {
   };
   assetUrl(path: string): string;
   persistSession(key: string, data: unknown): Promise<void>;
+  clearSession?(key: string): Promise<void>;
   restoreSession(key: string): Promise<unknown | null>;
   streamPlan(
     diff: ParsedDiff,
