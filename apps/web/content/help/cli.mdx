@@ -115,11 +115,15 @@ The CLI saves the diff, AI structure (when requested), navigation, scroll positi
 
 Restarting the CLI against the same repository, base, branch, and scope restores the saved review, even on a different local port or in a new tab. Notes written before requesting AI structure are saved too. Staged-only and untracked-file options have separate session identities. A matching legacy tab session migrates when no disk session exists.
 
-When files change, the saved review keeps its original diff and notes and shows a stale banner. Notes are not automatically moved onto changed lines. Reloading resumes the saved snapshot; it does not discard feedback. Switching scope saves the current review and restores that scope’s saved review, or opens its Files view if none exists.
+When files change, the saved review keeps its original diff and notes and shows a stale banner. Reloading resumes that saved snapshot. **Refresh** fetches the current real diff and clears the old AI structure while keeping feedback. A line note stays attached only when its path, side, range, and captured source still match. Other notes, including unfinished comments on changed or removed lines, appear in **Unresolved notes** with their original source. Recreate them on the current code, then remove the originals. Preserving feedback does not guarantee automatic reanchoring. Generate Prompt includes unresolved notes and labels them as coming from an earlier diff.
+
+**Rebuild Structure** replaces the AI plan for the displayed diff using your configured provider; saved notes and unfinished comments stay. Refresh stale code first. **Start Over** asks for confirmation, deletes this scope’s saved review and all its feedback, and opens a clean Files view of the current diff. Other scopes keep their saved reviews.
+
+Switching scope saves the current review and restores that scope’s saved review, or opens its Files view if none exists.
 
 Saves happen while you work. A save error appears in the UI; notes remain in the tab, and scope switching waits for a successful save. Closing the tab before a failed save succeeds can lose those unsaved changes. Unload flushing is best effort.
 
-Storage keeps up to 20 sessions for 30 days; pruning runs on successful saves and is best effort. To explicitly remove saved review data, stop the CLI, remove `<git-dir>/guided-review/sessions/`, and clear `sessionStorage` for any open local review tabs. To review changed code from scratch, first copy notes with [Generate Prompt](/docs/generate-prompt), then clear saved review data and restart. Provider settings live separately in the [config file](#config-file), and the diff view preference lives in browser `localStorage`.
+Storage keeps up to 20 sessions for 30 days; pruning runs on successful saves and is best effort. Use **Start Over** to remove the current scope’s saved review. To remove all saved review data, stop the CLI, remove `<git-dir>/guided-review/sessions/`, and clear `sessionStorage` for any open local review tabs. Provider settings live separately in the [config file](#config-file), and the diff view preference lives in browser `localStorage`.
 
 ## Flags
 

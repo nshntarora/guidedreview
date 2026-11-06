@@ -508,9 +508,9 @@ describe("Overlay", () => {
     renderLocalOverlay({ stale: true, onRefresh });
 
     expect(screen.getByTestId("stale-diff-banner")).toHaveTextContent(
-      "The diff on disk has changed.",
+      "Notes refer to the code shown here.",
     );
-    fireEvent.click(screen.getByRole("button", { name: /^refresh$/i }));
+    fireEvent.click(screen.getByTestId("stale-diff-refresh"));
     expect(onRefresh).toHaveBeenCalledTimes(1);
   });
 

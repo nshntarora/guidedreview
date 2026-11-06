@@ -52,3 +52,57 @@ it("retains failed saves, reports them, and retries before allowing a scope tran
   await host.flushSessions();
   expect(sessionStorage.getItem(`guidedReview.session.${session.sessionKey}`)).toBeNull();
 });
+
+it("deletes after an in-flight save and suppresses autosave and unload during reset", async () => {
+  let finishSave!: (response: Response) => void;
+  const fetcher = vi
+    .fn()
+    .mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          finishSave = resolve;
+        }),
+    )
+    .mockResolvedValue(Response.json({ ok: true }));
+  vi.stubGlobal("fetch", fetcher);
+  const beacon = vi.fn();
+  vi.stubGlobal("navigator", { sendBeacon: beacon });
+  const host = createLocalReviewHost({ onConnectProvider() {} });
+  host.configureSession(session);
+  const saving = host.persistSession(session.sessionKey, data);
+  await vi.waitFor(() => expect(fetcher).toHaveBeenCalledOnce());
+  // Coalesced old writes must not run after the delete, even on unload.
+  const queued = host.persistSession(session.sessionKey, { ...data, planComplete: false });
+  const resume = host.pausePersistence();
+  const deleting = host.clearSession!(session.sessionKey);
+  await host.persistSession(session.sessionKey, data);
+  host.flushOnUnload();
+  expect(beacon).not.toHaveBeenCalled();
+  finishSave(Response.json({ ok: true }));
+  await Promise.all([saving, queued, deleting]);
+  resume();
+  expect(fetcher.mock.calls.map((call) => call[1].method)).toEqual(["PUT", "DELETE"]);
+  expect(sessionStorage.getItem(`guidedReview.session.${session.sessionKey}`)).toBeNull();
+  await host.flushSessions();
+});
+
+it("ignores stale metadata from a restore completed after configuring a different scope", async () => {
+  let finishRestore!: (response: Response) => void;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          finishRestore = resolve;
+        }),
+    ),
+  );
+  const onStale = vi.fn();
+  const host = createLocalReviewHost({ onConnectProvider() {}, onStale });
+  host.configureSession(session);
+  const restoring = host.restoreSession(session.sessionKey);
+  host.configureSession({ ...session, sessionKey: "another-scope" });
+  finishRestore(Response.json({ data, diffHash: "b".repeat(64) }));
+  expect(await restoring).toBeNull();
+  expect(onStale).not.toHaveBeenCalled();
+});

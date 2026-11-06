@@ -16,6 +16,7 @@ const UI_DIR = path.resolve(__dirname, "../dist/ui");
 export interface ReviewServer {
   baseURL: string;
   repoDir: string;
+  restart(): Promise<void>;
 }
 
 async function git(cwd: string, args: string[]): Promise<void> {
@@ -53,24 +54,36 @@ export const test = base.extend<{ reviewServer: ReviewServer }>({
     process.env.GUIDED_REVIEW_CONFIG_DIR = configDir;
 
     await createReviewRepo(repoDir);
-    const snapshot = await buildLocalReview({ cwd: repoDir });
-    const server = createReviewServer({
-      snapshot,
-      settings: { provider: "anthropic", model: "claude-opus-4-8", apiKey: "" },
-      staticDir: UI_DIR,
-      detectAgents: async () => [],
-      testConnection: async () => {},
-      log: () => {},
-    });
-    const port = await listen(server);
-    const baseURL = `http://127.0.0.1:${port}`;
-
-    await use({ baseURL, repoDir });
-
-    await new Promise<void>((resolve, reject) => {
-      server.closeAllConnections();
-      server.close((err) => (err ? reject(err) : resolve()));
-    });
+    async function start() {
+      const snapshot = await buildLocalReview({ cwd: repoDir! });
+      const server = createReviewServer({
+        snapshot,
+        settings: { provider: "anthropic", model: "claude-opus-4-8", apiKey: "" },
+        staticDir: UI_DIR,
+        detectAgents: async () => [],
+        testConnection: async () => {},
+      });
+      const port = await listen(server);
+      return { server, baseURL: `http://127.0.0.1:${port}` };
+    }
+    let running = await start();
+    async function stop() {
+      running.server.closeAllConnections();
+      await new Promise<void>((resolve, reject) =>
+        running.server.close((err) => (err ? reject(err) : resolve())),
+      );
+    }
+    const fixture: ReviewServer = {
+      baseURL: running.baseURL,
+      repoDir,
+      async restart() {
+        await stop();
+        running = await start();
+        fixture.baseURL = running.baseURL;
+      },
+    };
+    await use(fixture);
+    await stop();
     if (prevConfigDir === undefined) delete process.env.GUIDED_REVIEW_CONFIG_DIR;
     else process.env.GUIDED_REVIEW_CONFIG_DIR = prevConfigDir;
     await rm(repoDir, { recursive: true, force: true });

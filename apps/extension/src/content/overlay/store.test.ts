@@ -223,6 +223,72 @@ describe("review workspace state", () => {
     expect(useReviewStore.getState().pendingComposers).toEqual({});
   });
 
+  it("refreshes real source, preserves matching feedback and recovers changed and removed anchors despite late plan/restore responses", async () => {
+    const state = useReviewStore.getState();
+    const diff = populatedDiff();
+    state.bootReady({ sessionKey: SESSION_KEY, diff });
+    state.goToFile("src/renamed.ts");
+    const file = diff.files[1];
+    state.enterCommentMode(buildSelectableLines([{ file, hunks: file.hunks }], "unified"));
+    state.saveDraftComment("Matching source stays attached");
+    state.moveLineCursor(1, false);
+    state.saveDraftComment("Changed source becomes unresolved");
+    state.openComposer();
+    state.setComposerText("Keep this unfinished text too");
+    state.saveScrollPosition("file:src/renamed.ts", 200);
+    const removed = diff.files[2];
+    state.goToFile(removed.path);
+    state.enterCommentMode(
+      buildSelectableLines([{ file: removed, hunks: removed.hunks }], "unified"),
+    );
+    state.saveDraftComment("Keep feedback for a removed file");
+    state.goToFile(file.path);
+    const generation = state.beginRetry();
+    let resolve!: (saved: unknown) => void;
+    setActiveReviewHost(
+      createMemoryReviewHost({
+        restoreSession: () =>
+          new Promise((done) => {
+            resolve = done;
+          }),
+      }),
+    );
+    const restoration = restoreSession(SESSION_KEY);
+    const refreshed = structuredClone(diff);
+    refreshed.files = refreshed.files.filter((f) => f.path !== removed.path);
+    refreshed.files[1].hunks[1].lines[0].content = "changed source";
+    // Hunk ids can change while the actual line anchor remains valid.
+    refreshed.files[1].hunks[0].id = "replacement-hunk";
+    state.refreshDiff(refreshed);
+    state.appendUnit(scopedPlan().units[0], generation);
+    state.setReady(diff, scopedPlan(), generation);
+    resolve({ diff, plan: scopedPlan() });
+    expect(await restoration).toBe(false);
+    expect(useReviewStore.getState()).toMatchObject({
+      diff: refreshed,
+      plan: null,
+      navigationMode: "files",
+      selection: { kind: "file", path: file.path },
+      scrollPositions: {},
+      pendingComposers: {},
+    });
+    const notes = useReviewStore.getState().draftComments;
+    expect(notes[0]).toMatchObject({ unresolved: false, lineIds: ["replacement-hunk:0:RIGHT"] });
+    expect(notes.slice(1).map((note) => [note.body, note.unresolved, note.lineIds])).toEqual([
+      ["Changed source becomes unresolved", true, []],
+      ["Keep feedback for a removed file", true, []],
+      ["Keep this unfinished text too", true, []],
+    ]);
+    const retry = state.beginRetry();
+    state.setReady(refreshed, scopedPlan(), retry);
+    expect(useReviewStore.getState().draftComments).toEqual(notes);
+    setActiveReviewHost(createMemoryReviewHost());
+    await persistSession();
+    resetStore();
+    expect(await restoreSession(SESSION_KEY)).toBe(true);
+    expect(useReviewStore.getState().draftComments).toEqual(notes);
+  });
+
   it("persists file-only navigation, folder expansion, drafts and composer text without a synthetic plan", async () => {
     const diff = populatedDiff();
     const state = useReviewStore.getState();

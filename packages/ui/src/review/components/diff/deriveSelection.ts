@@ -52,7 +52,7 @@ export function deriveSelection(
 
   const draftsByEndLineId = new Map<string, DraftComment[]>();
   for (const draft of draftComments) {
-    if (!filePaths.has(draft.filePath)) continue;
+    if (draft.unresolved || !filePaths.has(draft.filePath)) continue;
     const endId = draft.lineIds[draft.lineIds.length - 1];
     if (!endId) continue;
     const list = draftsByEndLineId.get(endId) ?? [];

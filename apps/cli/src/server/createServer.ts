@@ -417,7 +417,7 @@ export function createReviewServer(options: CreateReviewServerOptions) {
       sendJson(res, 400, { error: "Request body must be JSON." });
       return;
     }
-    const body = parsed.value as { scope?: string };
+    const body = parsed.value as { scope?: string; refresh?: boolean };
     const scope = body.scope;
     if (!scope || !isDiffScopeId(scope)) {
       sendJson(res, 400, { error: "Unknown diff scope." });
@@ -426,7 +426,7 @@ export function createReviewServer(options: CreateReviewServerOptions) {
     const revision = ++snapshotRevision;
     try {
       const next = await rebuildLocalReview(snapshot.repo, scope);
-      if (next.empty) {
+      if (next.empty && body.refresh !== true) {
         sendJson(res, 400, { error: "That scope has no changes." });
         return;
       }

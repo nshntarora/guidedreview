@@ -3,7 +3,12 @@ import { getProvider, type ProviderId } from "@guided-review/core";
 import type { ReviewSessionPayload } from "../server/createServer";
 import { Overlay } from "@guided-review/ui/review/Overlay";
 import { ReviewHostProvider } from "@guided-review/ui/review/host";
-import { persistSession, restoreSession, useReviewStore } from "@guided-review/ui/review/store";
+import {
+  pauseSessionPersistence,
+  persistSession,
+  restoreSession,
+  useReviewStore,
+} from "@guided-review/ui/review/store";
 import type { LocalDiffControls } from "@guided-review/ui/review/localReview";
 import { createLocalReviewHost } from "./host";
 import { codingAgentLabel } from "./codingAgentLabel";
@@ -35,14 +40,18 @@ function useHashRoute(): AppRoute {
 export function App() {
   const route = useHashRoute();
   const [persistenceError, setPersistenceError] = useState<string | null>(null);
+  const [transitionError, setTransitionError] = useState<string | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
   const [commits, setCommits] = useState<ReviewSessionPayload["commits"]>([]);
   const [totalCommits, setTotalCommits] = useState(0);
   const [scopes, setScopes] = useState<ReviewSessionPayload["scopes"]>([]);
   const [selectedScope, setSelectedScope] = useState("");
-  const [scopeBusy, setScopeBusy] = useState(false);
+  const [scopeBusy, setScopeBusy] = useState(true);
   const [stale, setStale] = useState(false);
   const requestGeneration = useRef(0);
+  const transitionBusy = useRef(true);
+  const staleRef = useRef(false);
+  staleRef.current = stale;
   const cancelStreamRef = useRef<(() => void) | undefined>(undefined);
   const hasKeyRef = useRef(false);
   const startStructureRef = useRef<() => void>(() => {});
@@ -99,7 +108,7 @@ export function App() {
 
   const startStructure = useCallback(() => {
     const { diff, prContext } = useReviewStore.getState();
-    if (!diff?.files.length || !prContext) return;
+    if (transitionBusy.current || staleRef.current || !diff?.files.length || !prContext) return;
     if (!hasKeyRef.current) {
       host.connectProvider();
       return;
@@ -128,6 +137,10 @@ export function App() {
   useEffect(() => {
     let cancelled = false;
     const request = ++requestGeneration.current;
+    const resume = pauseSessionPersistence();
+    const invalidateRequests = () => {
+      requestGeneration.current++;
+    };
 
     async function boot() {
       const res = await fetch("/api/session");
@@ -153,51 +166,101 @@ export function App() {
       installDiff(session);
     }
 
-    void boot().catch((error: unknown) => {
-      if (cancelled || request !== requestGeneration.current) return;
-      const message = error instanceof Error ? error.message : "Failed to start the review.";
-      setBootError(message);
-      useReviewStore.getState().setError(message);
-      useReviewStore.getState().open();
-    });
+    void boot()
+      .catch((error: unknown) => {
+        if (cancelled || request !== requestGeneration.current) return;
+        const message = error instanceof Error ? error.message : "Failed to start the review.";
+        setBootError(message);
+        useReviewStore.getState().setError(message);
+        useReviewStore.getState().open();
+      })
+      .finally(() => {
+        resume();
+        if (!cancelled && request === requestGeneration.current) {
+          transitionBusy.current = false;
+          setScopeBusy(false);
+        }
+      });
 
     return () => {
       cancelled = true;
+      invalidateRequests();
       cancelStreamRef.current?.();
     };
   }, [applyMeta, applyPublishedSettings, installDiff, host]);
 
-  async function selectScope(scope: string) {
-    if (scope === selectedScope || scopeBusy) return;
+  async function changeDiff(action: "scope" | "refresh" | "reset", scope = selectedScope) {
+    if (transitionBusy.current || (action === "scope" && scope === selectedScope)) return;
+    transitionBusy.current = true;
+    setTransitionError(null);
     const request = ++requestGeneration.current;
     setScopeBusy(true);
     cancelStreamRef.current?.();
     cancelStreamRef.current = undefined;
-    useReviewStore.setState((state) => ({ streamGeneration: state.streamGeneration + 1 }));
+    useReviewStore.setState((state) => ({
+      streamGeneration: state.streamGeneration + 1,
+      ...(state.diff ? { status: "ready", buildPhase: null } : {}),
+    }));
+    const originalKey = useReviewStore.getState().sessionKey;
+    // Capture the outgoing review before pausing autosaves during I/O.
+    const save = action === "reset" ? Promise.resolve() : persistSession();
+    const resumeStore = pauseSessionPersistence();
+    const resumeHost = host.pausePersistence();
+    let installed = false;
     try {
-      await persistSession();
-      await host.flushSessions();
-      const res = await fetch("/api/diff", {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ scope }),
-      });
+      await save;
+      if (action !== "reset") await host.flushSessions();
+      const res = await fetch(
+        scope ? "/api/diff" : "/api/session",
+        scope
+          ? {
+              method: "PUT",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ scope, refresh: action !== "scope" }),
+            }
+          : undefined,
+      );
       const body = (await res.json().catch(() => ({}))) as ReviewSessionPayload & {
         error?: string;
       };
-      if (!res.ok) {
-        throw new Error(body.error ?? `Could not load that diff (${res.status}).`);
+      if (request !== requestGeneration.current) return;
+      if (!res.ok) throw new Error(body.error ?? `Could not load that diff (${res.status}).`);
+      if (action === "reset" && originalKey) {
+        await host.clearSession!(originalKey);
+        if (request !== requestGeneration.current) return;
       }
-      host.configureSession(body);
       setStale(false);
-      if (await restoreSession(body.sessionKey, () => request === requestGeneration.current))
+      if (action === "refresh" && originalKey === body.sessionKey) {
+        host.configureSession(body);
+        useReviewStore.getState().refreshDiff(body.diff);
         applyMeta(body);
-      else installDiff(body);
+      } else if (action === "reset" && originalKey === body.sessionKey) {
+        installDiff(body);
+      } else {
+        host.configureSession(body);
+        const restored = await restoreSession(
+          body.sessionKey,
+          () => request === requestGeneration.current,
+        );
+        if (request !== requestGeneration.current) return;
+        if (restored) applyMeta(body);
+        else installDiff(body);
+      }
+      useReviewStore.getState().setProviderReady(hasKeyRef.current);
+      installed = true;
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Could not load that diff.";
-      setPersistenceError(message);
+      if (request !== requestGeneration.current) return;
+      setTransitionError(
+        error instanceof Error ? error.message : "Could not update the review. Try again.",
+      );
     } finally {
-      setScopeBusy(false);
+      resumeStore();
+      resumeHost();
+      if (installed) void persistSession();
+      if (request === requestGeneration.current) {
+        transitionBusy.current = false;
+        setScopeBusy(false);
+      }
     }
   }
 
@@ -246,12 +309,15 @@ export function App() {
     commits,
     totalCommits,
     onSelectScope: (id) => {
-      void selectScope(id);
+      void changeDiff("scope", id);
     },
     scopeBusy,
     stale,
     onRefresh: () => {
-      window.location.reload();
+      void changeDiff("refresh");
+    },
+    onStartOver: () => {
+      void changeDiff("reset");
     },
   };
 
@@ -267,23 +333,23 @@ export function App() {
 
   return (
     <ReviewHostProvider host={host}>
-      {persistenceError && (
+      {(transitionError || persistenceError) && (
         <p
           role="alert"
-          data-testid="session-save-error"
+          data-testid={transitionError ? "review-transition-error" : "session-save-error"}
           className="fixed inset-x-0 top-0 z-[2147483647] bg-background p-3 text-warning"
         >
-          {persistenceError}
+          {transitionError || persistenceError}
         </p>
       )}
       <Overlay
         allowExit={false}
-        inert={settingsOpen}
+        inert={settingsOpen || scopeBusy}
         localDiff={localDiff}
         onRetry={() => {
           const { diff, prContext } = useReviewStore.getState();
           if (!diff || !prContext) {
-            window.location.reload();
+            void changeDiff("refresh");
             return;
           }
           startStructure();

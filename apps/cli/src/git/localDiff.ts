@@ -486,11 +486,17 @@ async function snapshotFrom(
   };
 }
 
-export function rebuildLocalReview(
+export async function rebuildLocalReview(
   repo: LocalRepoState,
   scope: DiffScopeId,
 ): Promise<LocalReviewSnapshot> {
-  return snapshotFrom(repo, scope);
+  const current = await inspectLocalRepo({
+    cwd: repo.repoRoot,
+    base: repo.baseRef,
+    staged: repo.staged,
+    includeUntracked: repo.includeUntracked,
+  });
+  return snapshotFrom(current, scope);
 }
 
 export async function buildLocalReview(options: LocalDiffOptions): Promise<LocalReviewSnapshot> {
