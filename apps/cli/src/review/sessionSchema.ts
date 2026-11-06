@@ -142,6 +142,7 @@ export const validSession: Check = shape({
         endLine: num,
         lineIds: array(str),
         selectedCode: optional(str),
+        unresolved: optional(bool),
         body: str,
         unitId: optional(str),
       }),

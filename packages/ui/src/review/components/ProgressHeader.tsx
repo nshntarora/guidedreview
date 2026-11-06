@@ -432,6 +432,7 @@ export function ProgressHeader({
             size="sm"
             className="shrink-0 bg-surface font-medium hover:bg-background"
             onClick={() => localDiff.onRefresh?.()}
+            disabled={localDiff.scopeBusy}
             data-testid="stale-diff-refresh"
           >
             Refresh

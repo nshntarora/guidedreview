@@ -1,6 +1,6 @@
 import type { ReviewErrorInfo, ReviewUnit } from "@guided-review/ui/review/types";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
-import { Button, Spinner } from "@guided-review/ui";
+import { Button, Spinner, confirm } from "@guided-review/ui";
 import {
   BUILD_PLAN_PRIMARY,
   missingMetadataHint,
@@ -12,8 +12,11 @@ import type { DiffSummary } from "@guided-review/core";
 import type { LocalCommitCard, LocalDiffScopeOption } from "@guided-review/ui/review/localReview";
 import { LocalCommitList } from "./LocalCommitList";
 import { SkeletonBar } from "./SkeletonBar";
+import { UnresolvedNotes } from "./UnresolvedNotes";
+import type { LocalDiffControls } from "@guided-review/ui/review/localReview";
 
 interface ContextPanelProps {
+  localDiff?: LocalDiffControls;
   commits?: LocalCommitCard[];
   totalCommits?: number;
   uncommitted?: LocalDiffScopeOption;
@@ -161,6 +164,7 @@ function SummaryUnitPanel({
 }
 
 export function ContextPanel({
+  localDiff,
   commits,
   totalCommits,
   uncommitted,
@@ -176,6 +180,10 @@ export function ContextPanel({
   onRetry,
 }: ContextPanelProps) {
   const host = useReviewHost();
+  const plan = useReviewStore((state) => state.plan);
+  const status = useReviewStore((state) => state.status);
+  const needsProvider = useReviewStore((state) => state.needsProvider);
+  const hasFiles = useReviewStore((state) => Boolean(state.diff?.files.length));
   if (loadingDiff && !error) {
     return (
       <div
@@ -231,6 +239,66 @@ export function ContextPanel({
       <div className="flex flex-col gap-4">
         {error ? <ContextError error={error} onRetry={onRetry} /> : unitSummary}
         <LocalCommitList commits={commits} totalCommits={totalCommits} uncommitted={uncommitted} />
+        {localDiff && (
+          <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+            {localDiff.onRefresh && (
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={localDiff.scopeBusy}
+                onClick={localDiff.onRefresh}
+                data-testid="review-refresh"
+              >
+                Refresh
+              </Button>
+            )}
+            {plan && host.generatePlan && (
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={
+                  localDiff.scopeBusy ||
+                  localDiff.stale ||
+                  !hasFiles ||
+                  status === "streaming" ||
+                  status === "loading"
+                }
+                title={
+                  localDiff.stale
+                    ? "Refresh changed code before rebuilding the structure."
+                    : "Replace the AI structure and keep your notes."
+                }
+                onClick={() => {
+                  if (needsProvider) host.connectProvider();
+                  else host.generatePlan?.();
+                }}
+                data-testid="review-rebuild-structure"
+              >
+                Rebuild Structure
+              </Button>
+            )}
+            {localDiff.onStartOver && (
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={localDiff.scopeBusy}
+                data-testid="review-start-over"
+                onClick={() =>
+                  confirm({
+                    title: "Start over?",
+                    body: "Delete the saved review, notes, and unfinished comments for this scope, then open the current files. Other scopes keep their saved reviews.",
+                    variant: "destructive",
+                    okButtonText: "Start Over",
+                    okButtonHandler: () => localDiff.onStartOver?.(),
+                  })
+                }
+              >
+                Start Over
+              </Button>
+            )}
+          </div>
+        )}
+        <UnresolvedNotes />
         <KeyboardShortcuts allowExit={false} showSettings showScopePicker />
       </div>
     );

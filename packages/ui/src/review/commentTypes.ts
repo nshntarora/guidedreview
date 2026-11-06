@@ -58,6 +58,8 @@ export interface DraftComment {
   lineIds: string[];
   /** Selected source lines joined with newlines (captured at save time). */
   selectedCode: string;
+  /** Source no longer matches the refreshed diff; never place or submit this anchor. */
+  unresolved?: boolean;
   body: string;
   /** Review unit id active when the comment was saved, if any. */
   unitId?: string;

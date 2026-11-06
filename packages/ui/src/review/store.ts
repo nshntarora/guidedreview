@@ -10,6 +10,7 @@ import type { ReviewContext } from "@guided-review/core";
 import { NO_API_KEY_ERROR_CODE } from "@guided-review/ui/review/types";
 import type { PRIdentity } from "@guided-review/ui/review/types";
 import { orderedFiles } from "./fileNavigation";
+import { reconcileFeedback } from "./reconcileFeedback";
 import {
   displayLineNumber,
   linesInSelection,
@@ -113,7 +114,7 @@ export function reviewNavigation(
   };
 }
 
-interface PendingComposer {
+export interface PendingComposer {
   lines: SelectableLine[];
   body: string;
 }
@@ -225,6 +226,7 @@ interface ReviewState {
    * or an annotation stream. Bumps streamGeneration so a late SSE is ignored.
    */
   bootReady: (args: { sessionKey: string; diff: ParsedDiff }) => number;
+  refreshDiff: (diff: ParsedDiff) => void;
   setPRContext: (prContext: ReviewContext) => void;
   setDiff: (diff: ParsedDiff) => void;
   setFileReady: (diff: ParsedDiff, generation?: number) => void;
@@ -353,6 +355,50 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       ...COMMENT_UI_RESET,
     });
     return streamGeneration;
+  },
+
+  refreshDiff: (diff) => {
+    const state = get();
+    const feedback = reconcileFeedback(diff, state.draftComments, state.pendingComposers);
+    const selectedPath =
+      state.selection.kind === "file"
+        ? state.selection.path
+        : state.plan?.units.find(
+            (unit) => state.selection.kind === "unit" && unit.id === state.selection.id,
+          )?.files[0]?.fileId;
+    const fileSelection =
+      selectedPath && diff.files.some((file) => file.path === selectedPath)
+        ? { kind: "file" as const, path: selectedPath }
+        : { kind: "summary" as const };
+    // Scroll coordinates are only meaningful for files whose source did not change.
+    const unchanged = new Set(
+      diff.files
+        .filter(
+          (file) =>
+            JSON.stringify(file) ===
+            JSON.stringify(state.diff?.files.find((old) => old.path === file.path)),
+        )
+        .map((file) => `file:${file.path}`),
+    );
+    set({
+      ...COMMENT_UI_RESET,
+      ...feedback,
+      diff,
+      plan: null,
+      planComplete: false,
+      tokenUsage: null,
+      status: "ready",
+      error: null,
+      buildPhase: null,
+      streamGeneration: state.streamGeneration + 1,
+      selection: fileSelection,
+      navigationMode: "files",
+      lastFileSelection: fileSelection.kind === "file" ? fileSelection : null,
+      lastUnitSelection: null,
+      scrollPositions: Object.fromEntries(
+        Object.entries(state.scrollPositions).filter(([key]) => unchanged.has(key)),
+      ),
+    });
   },
 
   setPRContext: (prContext) => set({ prContext }),
@@ -819,7 +865,17 @@ export function resetDiffViewModeHydrationForTests(): void {
  * the access grant hasn't propagated yet), we log and move on rather than breaking the
  * review flow.
  */
+let persistencePauses = 0;
+/** Keep autosave/unload callbacks from writing an outgoing or discarded snapshot. */
+export function pauseSessionPersistence(): () => void {
+  persistencePauses++;
+  return () => {
+    persistencePauses--;
+  };
+}
+
 export async function persistSession(): Promise<void> {
+  if (persistencePauses > 0) return;
   const state = useReviewStore.getState();
   if (!state.diff || !state.sessionKey) return;
   const host = getActiveReviewHost();

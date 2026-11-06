@@ -62,11 +62,14 @@ export function DraftCommentCard({ comment, onRemove, onUpdate }: DraftCommentCa
     >
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <span className="font-mono text-xs text-muted">
-          Draft · {formatLineRangeLabel(comment.filePath, comment.startLine, comment.endLine)}
+          {comment.unresolved ? "Unresolved" : "Draft"} ·{" "}
+          {formatLineRangeLabel(comment.filePath, comment.startLine, comment.endLine)}
         </span>
         <div className="flex items-center gap-1">
           {!editing && (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               type="button"
               className="cursor-pointer rounded px-1.5 py-0.5 text-sm text-muted hover:bg-surface-muted hover:text-foreground"
               onClick={() => setEditing(true)}
@@ -74,9 +77,11 @@ export function DraftCommentCard({ comment, onRemove, onUpdate }: DraftCommentCa
               data-testid="draft-comment-edit"
             >
               Edit
-            </button>
+            </Button>
           )}
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             type="button"
             className="cursor-pointer rounded px-1.5 py-0.5 text-sm text-muted hover:bg-surface-muted hover:text-foreground"
             onClick={() => onRemove(comment.id)}
@@ -84,7 +89,7 @@ export function DraftCommentCard({ comment, onRemove, onUpdate }: DraftCommentCa
             data-testid="draft-comment-remove"
           >
             Remove
-          </button>
+          </Button>
         </div>
       </div>
       {editing ? (

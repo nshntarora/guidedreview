@@ -62,4 +62,5 @@ export interface LocalDiffControls {
   /** Working-tree diff no longer matches the snapshot this review is showing. */
   stale?: boolean;
   onRefresh?: () => void;
+  onStartOver?: () => void;
 }
