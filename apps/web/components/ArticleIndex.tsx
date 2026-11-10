@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { formatArticleMonthYear, type Article } from "@web/config/articles";
 import { JsonLd } from "@web/components/JsonLd";
 import { SITE_URL } from "@web/lib/site";
@@ -8,11 +9,13 @@ export function ArticleIndex({
   description,
   path,
   articles,
+  children,
 }: {
   title: string;
   description: string;
   path: string;
   articles: Article[];
+  children?: ReactNode;
 }) {
   return (
     <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-24">
@@ -58,6 +61,7 @@ export function ArticleIndex({
         </h1>
         <p className="mt-5 text-lg leading-relaxed text-muted">{description}</p>
       </header>
+      {children && <div className="article-content mb-12 min-w-0">{children}</div>}
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-surface-raised px-5 py-3 font-mono text-xs text-muted sm:px-8">
           <span>{path === "/compare" ? "compare / tools" : "guides / code review"}</span>

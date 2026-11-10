@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { Button, cn } from "@guided-review/ui";
+import { useAnalytics } from "@web/components/analytics/AnalyticsProvider";
+import { AnalyticsEvents, type CtaLocation } from "@web/lib/analytics";
 
 type CopyButtonProps = {
   text: string;
   className?: string;
+  cliLocation?: CtaLocation;
 };
 
-export function CopyButton({ text, className }: CopyButtonProps) {
+export function CopyButton({ text, className, cliLocation }: CopyButtonProps) {
+  const analytics = useAnalytics();
   const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
 
   useEffect(() => {
@@ -21,6 +25,12 @@ export function CopyButton({ text, className }: CopyButtonProps) {
     try {
       await navigator.clipboard.writeText(text);
       setStatus("copied");
+      if (cliLocation) {
+        analytics.capture(AnalyticsEvents.INSTALL_CLI_CLICK, {
+          location: cliLocation,
+          method: "copy",
+        });
+      }
     } catch {
       setStatus("error");
     }

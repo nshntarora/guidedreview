@@ -64,7 +64,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         ? GUIDES.map((guide) => guide.lastModified)
             .sort()
             .at(-1)!
-        : "2026-10-22",
+        : "2026-11-10",
     changeFrequency: "monthly",
     priority: 0.8,
   }));

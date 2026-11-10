@@ -57,9 +57,10 @@ export const GUIDES: Article[] = [
     coverImage: "/assets/guides/review-local-changes-before-pr/cover.webp",
     path: "/guides/review-local-changes-before-pr",
     title: "Review local git changes before opening a PR",
+    seoTitle: "Review local Git changes before a PR | Guided Review",
     description:
       "A branch diff can miss the test still in your working tree. Pick the right local scope, read the change, and check what you are about to publish.",
-    lastModified: "2026-10-27",
+    lastModified: "2026-11-10",
     load: () => import("@web/content/guides/review-local-changes-before-pr.mdx"),
   },
   {
@@ -69,7 +70,7 @@ export const GUIDES: Article[] = [
     title: "A Chrome extension to review GitHub pull requests",
     description:
       "Follow a GitHub PR across types, callers, and tests in a Chrome overlay. Your provider key, the real diff, and comments you choose to submit.",
-    lastModified: "2026-10-27",
+    lastModified: "2026-11-10",
     load: () => import("@web/content/guides/github-pr-review-extension.mdx"),
   },
   {

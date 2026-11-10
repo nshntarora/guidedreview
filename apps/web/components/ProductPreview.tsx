@@ -141,7 +141,7 @@ export function ProductPreview() {
         className="mt-12"
         bodyClassName="p-0 sm:p-0 md:p-0"
       >
-        <div className="relative overflow-hidden bg-surface">
+        <div id="live-preview" className="relative scroll-mt-28 overflow-hidden bg-surface">
           <img
             src="/product-preview/thumbnail.webp"
             alt="Guided Review CLI showing a local code diff and ordered review units"
