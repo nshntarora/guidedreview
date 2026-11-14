@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { execFile } from "node:child_process";
@@ -17,6 +17,7 @@ import {
   type ReviewSessionPayload,
 } from "./createServer";
 
+import { SessionStore } from "../review/sessionStore";
 import * as localDiff from "../git/localDiff";
 
 const execFileAsync = promisify(execFile);
@@ -25,6 +26,7 @@ const snapshot: LocalReviewSnapshot = {
   totalCommits: 1,
   repo: {
     repoRoot: "/tmp/repo",
+    gitDir: "/tmp/repo/.git",
     baseRef: "main",
     headRef: "feat",
     mergeBase: "abc",
@@ -231,6 +233,105 @@ describe("createReviewServer", () => {
     await new Promise<void>((resolve, reject) =>
       server.close((err) => (err ? reject(err) : resolve())),
     );
+  });
+
+  it("durably restores unfinished reviews across restart, validates storage, and isolates worktrees", async () => {
+    const cwd = await mkdtemp(path.join(os.tmpdir(), "gr-durable-"));
+    const worktree = `${cwd}-linked`;
+    const git = (args: string[]) => execFileAsync("git", args, { cwd });
+    const settings = { provider: "anthropic" as const, model: "custom-model", apiKey: "secret" };
+    let server: ReturnType<typeof createReviewServer> | undefined;
+    const stop = async () => {
+      if (server) await new Promise<void>((resolve) => server!.close(() => resolve()));
+      server = undefined;
+    };
+    try {
+      await git(["init", "-b", "main"]);
+      await git(["config", "user.email", "test@example.com"]);
+      await git(["config", "user.name", "Test"]);
+      await writeFile(path.join(cwd, "a.ts"), "before\n");
+      await git(["add", "."]);
+      await git(["commit", "-m", "initial"]);
+      await writeFile(path.join(cwd, "a.ts"), "after\n");
+      let live = await buildLocalReview({ cwd, scope: "uncommitted" });
+      const key = live.sessionKey;
+      const data = {
+        diff: live.diff,
+        plan: null,
+        prContext: live.context,
+        selection: { kind: "file", path: "a.ts" },
+        navigationMode: "files",
+        scrollPositions: { "a.ts": 120 },
+        pendingComposers: {
+          "a.ts": {
+            body: "Unfinished note",
+            lines: [
+              {
+                id: "a.ts#0:1:RIGHT",
+                filePath: "a.ts",
+                hunkId: "a.ts#0",
+                lineIndex: 1,
+                side: "RIGHT",
+                type: "add",
+                content: "after",
+                newLine: 1,
+              },
+            ],
+          },
+        },
+      };
+      server = createReviewServer({ snapshot: live, settings });
+      let base = `http://127.0.0.1:${await listen(server)}`;
+      const endpoint = () => `${base}/api/review-state?${new URLSearchParams({ key })}`;
+      const put = (body: unknown, method = "PUT", target = endpoint()) =>
+        fetch(target, {
+          method,
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+        });
+      const diffHash = localDiff.hashDiff(live.raw);
+      const writes = await Promise.all(Array.from({ length: 8 }, () => put({ data, diffHash })));
+      expect(writes.map((r) => r.status)).toEqual(Array(8).fill(200));
+      expect((await put({ data: { ...data, apiKey: "secret" }, diffHash })).status).toBe(400);
+      expect(
+        (await put({ data, diffHash }, "PUT", `${base}/api/review-state?key=outside`)).status,
+      ).toBe(400);
+      const store = new SessionStore(live.repo.gitDir);
+      const [filename] = await readdir(store.directory);
+      const disk = path.join(store.directory, filename!);
+      expect((await stat(disk)).mode & 0o777).toBe(0o600);
+      expect(await readFile(disk, "utf8")).not.toContain("secret");
+      await stop();
+      await writeFile(path.join(cwd, "a.ts"), "newer\n");
+      live = await buildLocalReview({ cwd, scope: "uncommitted" });
+      expect(live.sessionKey).toBe(key);
+      expect(localDiff.hashDiff(live.raw)).not.toBe(diffHash);
+      server = createReviewServer({ snapshot: live, settings });
+      base = `http://127.0.0.1:${await listen(server)}`;
+      expect(await fetch(endpoint()).then((r) => r.json())).toMatchObject({
+        version: 1,
+        data: JSON.parse(JSON.stringify(data)),
+        diffHash,
+      });
+      await git(["worktree", "add", "-b", "linked", worktree, "main"]);
+      const linked = await buildLocalReview({ cwd: worktree, scope: "uncommitted" });
+      expect(linked.repo.gitDir).not.toBe(live.repo.gitDir);
+      expect(await new SessionStore(linked.repo.gitDir).read(key)).toBeNull();
+      await writeFile(disk, "{corrupt");
+      expect(await fetch(endpoint()).then((r) => r.json())).toBeNull();
+      await writeFile(
+        disk,
+        JSON.stringify({ version: 99, key, diffHash, data, savedAt: Date.now() }),
+      );
+      expect(await fetch(endpoint()).then((r) => r.json())).toBeNull();
+      expect((await put({ data, diffHash }, "POST")).status).toBe(200);
+      expect((await fetch(endpoint(), { method: "DELETE" })).status).toBe(200);
+      expect(await fetch(endpoint()).then((r) => r.json())).toBeNull();
+    } finally {
+      await stop();
+      await rm(worktree, { recursive: true, force: true });
+      await rm(cwd, { recursive: true, force: true });
+    }
   });
 
   it("rejects an unknown scope and swaps the session on a real repo", async () => {

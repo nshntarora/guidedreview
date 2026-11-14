@@ -39,7 +39,7 @@ Closing the browser session clears session storage; local settings remain until 
 
 - Provider / model / agent prefs in `~/.config/guided-review/config.json` (or `$XDG_CONFIG_HOME` / `GUIDED_REVIEW_CONFIG_DIR`)
 - Diff snapshot in memory in the running server
-- Diff, walkthrough, selection, and line notes in the browser tab’s `sessionStorage` — stopping the server does not clear them
+- Diff, structure, navigation, line notes, and unfinished composers in `<git-dir>/guided-review/sessions/` (up to 20 sessions / 30 days, best-effort pruning). Linked worktrees use their own Git directory. A tab recovery copy is retained when saving fails.
 - Diff view preference in browser `localStorage` for the local URL
 - Coding-agent keys stay in that agent’s own store when you use **Use My Subscription**; Guided Review does not copy them into its config file
 
@@ -58,14 +58,14 @@ Revoking the OAuth grant on GitHub’s side (Settings → Applications) also inv
 
 **CLI**
 
-| Goal                           | How                                                                                                                                                  |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Clear a saved API key          | Settings → clear the key and save, or delete `apiKey` from the [config file](/docs/cli#config-file)                                                  |
-| Stop using a coding agent      | Turn off **Use My Subscription** in Settings, or remove `codingAgent` from the config file                                                           |
-| Stop the server                | Ctrl+C ends the server process; browser review data remains                                                                                          |
-| Clear saved review data        | Clear `sessionStorage` for the local URL in browser developer tools. Closing the tab normally clears it, but browser session recovery may restore it |
-| Clear the diff view preference | Clear `guidedReview.diffViewMode` from `localStorage` for the local URL in browser developer tools                                                   |
-| Wipe saved prefs               | Delete `~/.config/guided-review/config.json` (or the path under `$XDG_CONFIG_HOME` / `GUIDED_REVIEW_CONFIG_DIR`)                                     |
+| Goal                           | How                                                                                                                                                                       |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Clear a saved API key          | Settings → clear the key and save, or delete `apiKey` from the [config file](/docs/cli#config-file)                                                                       |
+| Stop using a coding agent      | Turn off **Use My Subscription** in Settings, or remove `codingAgent` from the config file                                                                                |
+| Stop the server                | Ctrl+C ends the server process; browser review data remains                                                                                                               |
+| Clear saved review data        | Stop the CLI, remove `<git-dir>/guided-review/sessions/`, and clear `sessionStorage` for open local review tabs. Find `<git-dir>` with `git rev-parse --absolute-git-dir` |
+| Clear the diff view preference | Clear `guidedReview.diffViewMode` from `localStorage` for the local URL in browser developer tools                                                                        |
+| Wipe saved prefs               | Delete `~/.config/guided-review/config.json` (or the path under `$XDG_CONFIG_HOME` / `GUIDED_REVIEW_CONFIG_DIR`)                                                          |
 
 Guided Review never held a cloud copy of these secrets to delete on a server — clearing local storage / the config file is the full wipe for product data.
 

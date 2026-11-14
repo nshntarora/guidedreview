@@ -26,6 +26,7 @@ import {
   type DetectedAgent,
 } from "../codingAgents";
 import {
+  sessionKeyFor,
   currentDiffHash,
   hashDiff,
   isDiffScopeId,
@@ -39,6 +40,8 @@ import { GitError } from "../git/run";
 import type { CliStatus } from "../banner";
 import { createLogger, labeled } from "../log";
 import type { Logger } from "winston";
+
+import { SessionStore, MAX_SESSION_BYTES, validSession } from "../review/sessionStore";
 
 function describePlanEvent(event: AnnotateReviewStreamEvent): string | null {
   switch (event.type) {
@@ -65,6 +68,7 @@ export interface ReviewSessionPayload {
   context: LocalReviewSnapshot["context"];
   diff: LocalReviewSnapshot["diff"];
   sessionKey: string;
+  legacySessionKey: string;
   diffHash: string;
   settings: ReturnType<typeof publicSettings>;
   commits: LocalCommit[];
@@ -112,6 +116,7 @@ function sessionPayload(
     context: snapshot.context,
     diff: snapshot.diff,
     sessionKey: snapshot.sessionKey,
+    legacySessionKey: `${path.basename(snapshot.repo.repoRoot)}:${snapshot.repo.baseRef}:${snapshot.repo.headRef}:${snapshot.selectedScope}:${hashDiff(snapshot.raw).slice(0, 12)}`,
     diffHash: hashDiff(snapshot.raw),
     settings,
     commits: snapshot.commits,
@@ -220,10 +225,23 @@ export function createReviewServer(options: CreateReviewServerOptions) {
     return { ok: true, published: publicSettings(settings, codingAgent) };
   }
 
+  const sessionStore = new SessionStore(snapshot.repo.gitDir);
+  const allowedKeys = new Set(
+    snapshot.scopes.map((scope) => sessionKeyFor(snapshot.repo, scope.id)),
+  );
   const app = express();
+  app.use("/api/review-state", (req, res, next) => {
+    const origin = req.get("origin");
+    if (origin && origin !== `http://${req.get("host")}`) {
+      sendJson(res, 403, { error: "Review state requests must come from this local server." });
+      return;
+    }
+    next();
+  });
   app.disable("x-powered-by");
   app.use(
     express.json({
+      limit: MAX_SESSION_BYTES,
       verify: (req, _res, buf) => {
         (req as RequestWithRaw).rawBody = buf;
       },
@@ -242,6 +260,42 @@ export function createReviewServer(options: CreateReviewServerOptions) {
       else httpLog.debug(line);
     });
     next();
+  });
+
+  app.all("/api/review-state", async (req, res) => {
+    const key = queryString(req.query.key);
+    if (!key || !allowedKeys.has(key)) {
+      sendJson(res, 400, { error: "Unknown review session for this repository." });
+      return;
+    }
+    try {
+      if (req.method === "GET") {
+        sendJson(res, 200, await sessionStore.read(key));
+      } else if (req.method === "DELETE") {
+        await sessionStore.delete(key);
+        sendJson(res, 200, { ok: true });
+      } else if (req.method === "PUT" || req.method === "POST") {
+        const body = req.body as { data?: unknown; diffHash?: unknown } | undefined;
+        if (
+          !body ||
+          typeof body.diffHash !== "string" ||
+          !/^[a-f0-9]{64}$/.test(body.diffHash) ||
+          !validSession(body.data)
+        ) {
+          sendJson(res, 400, { error: "Invalid review session." });
+          return;
+        }
+        await sessionStore.write(key, body.diffHash, body.data);
+        sendJson(res, 200, { ok: true });
+      } else {
+        sendJson(res, 405, { error: "Method not allowed." });
+      }
+    } catch {
+      sendJson(res, 500, {
+        error:
+          "Could not access saved review state. Check Git directory permissions and disk space, then retry.",
+      });
+    }
   });
 
   app.get("/api/session", async (_req, res) => {
@@ -477,6 +531,10 @@ export function createReviewServer(options: CreateReviewServerOptions) {
   });
 
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    if (err && typeof err === "object" && "type" in err && err.type === "entity.too.large") {
+      sendJson(res, 413, { error: "Review session exceeds the 32 MiB request limit." });
+      return;
+    }
     if (err instanceof SyntaxError) {
       sendJson(res, 400, { error: "Request body must be JSON." });
       return;

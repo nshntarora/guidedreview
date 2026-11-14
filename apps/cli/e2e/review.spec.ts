@@ -128,12 +128,12 @@ test.describe("CLI review overlay", () => {
     );
     await expect
       .poll(() =>
-        page.evaluate(
-          (key) =>
-            JSON.parse(sessionStorage.getItem(`guidedReview.session.${key}`) ?? "{}")
-              .scrollPositions?.["unit:multi"] ?? 0,
-          sessionKey,
-        ),
+        page.request
+          .get(
+            `${reviewServer.baseURL}/api/review-state?${new URLSearchParams({ key: sessionKey })}`,
+          )
+          .then((r) => r.json())
+          .then((saved) => saved?.data?.scrollPositions?.["unit:multi"] ?? 0),
       )
       .toBeGreaterThan(4000);
     const savedTop = await page.getByTestId("code-col").evaluate((column) => column.scrollTop);
@@ -162,7 +162,21 @@ test.describe("CLI review overlay", () => {
     await page.keyboard.press("c");
     await page.keyboard.press("Enter");
     const composer = page.getByTestId("comment-composer-input");
+    await page.route("**/api/review-state?*", (route) =>
+      route.request().method() === "PUT"
+        ? route.fulfill({ status: 500, json: { error: "Disk unavailable" } })
+        : route.continue(),
+    );
     await composer.fill("Check the boundary before shipping");
+
+    await expect(page.getByTestId("session-save-error")).toBeVisible();
+    await expect(composer).toHaveValue("Check the boundary before shipping");
+    await page.unroute("**/api/review-state?*");
+    await page.reload();
+    await page.getByTestId("review-file-feat.ts").click();
+    await page.keyboard.press("c");
+    await page.keyboard.press("Enter");
+    await expect(composer).toHaveValue("Check the boundary before shipping");
 
     await page.keyboard.press("Control+k");
     await expect(page.getByTestId("command-palette-input")).toBeFocused();
@@ -184,6 +198,25 @@ test.describe("CLI review overlay", () => {
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("command-palette")).toHaveCount(0);
     await expect(composer).toBeFocused();
+    await expect(composer).toHaveValue("Check the boundary before shipping");
+
+    await expect
+      .poll(async () => {
+        const session = await page.request
+          .get(`${reviewServer.baseURL}/api/session`)
+          .then((r) => r.json());
+        const saved = await page.request
+          .get(
+            `${reviewServer.baseURL}/api/review-state?${new URLSearchParams({ key: session.sessionKey })}`,
+          )
+          .then((r) => r.json());
+        return JSON.stringify(saved?.data?.pendingComposers);
+      })
+      .toContain("Check the boundary before shipping");
+    await page.reload();
+    await page.getByTestId("review-file-feat.ts").click();
+    await page.keyboard.press("c");
+    await page.keyboard.press("Enter");
     await expect(composer).toHaveValue("Check the boundary before shipping");
 
     await page.getByTestId("comment-composer-save").click();
@@ -402,7 +435,10 @@ test.describe("CLI review overlay", () => {
     await expect(page.getByTestId("review-file-feat.ts")).toHaveCount(0);
   });
 
-  test("stale banner appears and Refresh reloads", async ({ page, reviewServer }) => {
+  test("reloading preserves the saved snapshot and its stale warning", async ({
+    page,
+    reviewServer,
+  }) => {
     await page.goto(reviewUrl(reviewServer), { waitUntil: "domcontentloaded" });
     await expect(page.getByTestId("navigation-tab-units")).toBeVisible();
     await expect(page.getByTestId("stale-diff-banner")).toHaveCount(0);
@@ -413,6 +449,6 @@ test.describe("CLI review overlay", () => {
     await page.getByTestId("stale-diff-refresh").click();
 
     await expect(page.getByTestId("navigation-tab-units")).toBeVisible();
-    await expect(page.getByTestId("stale-diff-banner")).toHaveCount(0);
+    await expect(page.getByTestId("stale-diff-banner")).toBeVisible();
   });
 });
