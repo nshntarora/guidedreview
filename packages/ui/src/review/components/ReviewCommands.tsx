@@ -1,6 +1,7 @@
 import { useCommandAction } from "@guided-review/ui/review/commandPalette";
 import { useReviewHost } from "@guided-review/ui/review/host";
 import { useReviewStore } from "@guided-review/ui/review/store";
+import { UnresolvedNotes } from "./UnresolvedNotes";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
 
 /** Defaults owned by the layout, available regardless of the selected review content. */
@@ -12,6 +13,15 @@ export function ReviewCommands({
   showScopePicker: boolean;
 }) {
   const host = useReviewHost();
+  const unresolvedCount = useReviewStore(
+    (state) => state.draftComments.filter((note) => note.unresolved).length,
+  );
+  useCommandAction({
+    id: "unresolved-notes",
+    label: `View unresolved notes (${unresolvedCount})`,
+    keywords: "feedback drafts captured source recover",
+    content: <UnresolvedNotes />,
+  });
   const mode = useReviewStore((state) => state.diffViewMode);
   const setMode = useReviewStore((state) => state.setDiffViewMode);
   useCommandAction({

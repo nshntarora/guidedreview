@@ -462,6 +462,26 @@ describe("createReviewServer", () => {
     );
     expect(after.changed).toBe(false);
 
+    // A refresh may legitimately leave no changed files. Scope selection still
+    // rejects empty scopes; refresh must let the UI recover notes from the old diff.
+    await git(["checkout", "main"]);
+    const emptySelection = await fetch(`${base}/api/diff`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ scope: "branch" }),
+    });
+    expect(emptySelection.status).toBe(400);
+    const emptyRefresh = await fetch(`${base}/api/diff`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ scope: "branch", refresh: true }),
+    });
+    expect(emptyRefresh.status).toBe(200);
+    const refreshed = (await emptyRefresh.json()) as ReviewSessionPayload;
+    expect(refreshed.diff.files).toEqual([]);
+    expect(refreshed.context.headRef).toBe("main");
+    expect(refreshed.sessionKey).not.toBe(live.sessionKey);
+
     await new Promise<void>((resolve, reject) =>
       server.close((err) => (err ? reject(err) : resolve())),
     );

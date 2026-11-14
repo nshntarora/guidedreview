@@ -227,7 +227,9 @@ function ReviewLayout({
         filePath: draft.filePath,
         startLine: draft.startLine,
         endLine: draft.endLine,
-        body: draft.body,
+        body: draft.unresolved
+          ? `Unresolved note from an earlier diff. Verify its location against the captured source.\n\n${draft.body}`
+          : draft.body,
         unitId: draft.unitId,
         selectedCode: draft.selectedCode,
       })),
@@ -372,7 +374,7 @@ function ReviewLayout({
       };
     }
     contextPaneRef.current?.scrollTo({ top: 0 });
-  }, [isOpen, contentKey]);
+  }, [isOpen, contentKey, diff]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -384,9 +386,9 @@ function ReviewLayout({
     };
   }, [isOpen]);
 
-  // Focus the dialog, not the first control (the CLI scope picker would eat arrows).
+  // Focus once the dialog can receive focus (including after a CLI transition).
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || inert) return;
 
     previousFocusRef.current = document.activeElement;
     const frame = requestAnimationFrame(() => {
@@ -397,7 +399,7 @@ function ReviewLayout({
       cancelAnimationFrame(frame);
       restoreFocusAfterOverlay(previousFocusRef.current);
     };
-  }, [isOpen]);
+  }, [isOpen, inert]);
 
   const files = useMemo(() => orderedFiles(diff), [diff]);
   const navigation = useMemo(
@@ -668,6 +670,7 @@ function ReviewLayout({
                   </div>
                 )}
               <ContextPanel
+                localDiff={localDiff}
                 loadingDiff={status === "loading" && !diff}
                 commits={navigationMode === "files" ? localDiff?.commits : undefined}
                 totalCommits={navigationMode === "files" ? localDiff?.totalCommits : undefined}

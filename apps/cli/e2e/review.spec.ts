@@ -435,20 +435,115 @@ test.describe("CLI review overlay", () => {
     await expect(page.getByTestId("review-file-feat.ts")).toHaveCount(0);
   });
 
-  test("reloading preserves the saved snapshot and its stale warning", async ({
+  test("refresh keeps feedback recoverable through rebuilding, restart and a confirmed reset", async ({
     page,
     reviewServer,
   }) => {
-    await page.goto(reviewUrl(reviewServer), { waitUntil: "domcontentloaded" });
-    await expect(page.getByTestId("navigation-tab-units")).toBeVisible();
-    await expect(page.getByTestId("stale-diff-banner")).toHaveCount(0);
+    test.setTimeout(60_000);
+    let sessionKey = "";
+    await page.route("**/api/session", async (route) => {
+      const session = await (await route.fetch()).json();
+      sessionKey = session.sessionKey;
+      await route.fulfill({
+        json: { ...session, settings: { ...session.settings, hasKey: true } },
+      });
+    });
+    let generations = 0;
+    await page.route("**/api/plan", (route) => {
+      generations++;
+      return route.fulfill({
+        contentType: "text/event-stream",
+        body: `data: ${JSON.stringify({ type: "DONE", plan: { units: [{ id: `unit-${generations}`, title: "Feature", kind: "change", context: "Feature context", files: [{ fileId: "feat.ts", hunkIds: [], role: "core_logic" }] }] } })}\n\n`,
+      });
+    });
+    await page.goto(reviewUrl(reviewServer));
+    await page.getByTestId("review-file-feat.ts").click();
+    await page.keyboard.press("c");
+    await page.keyboard.press("Enter");
+    await page.getByTestId("comment-composer-input").fill("Preserve the saved feedback");
+    await page.getByTestId("comment-composer-save").click();
+    await page.keyboard.press("Enter");
+    await page.getByTestId("comment-composer-input").fill("Preserve this unfinished feedback too");
+    await page.getByTestId("navigation-tab-units").click();
+    await page.getByTestId("generate-review-plan").click();
+    await expect(page.getByTestId("review-unit-1")).toBeVisible();
+    await expect
+      .poll(async () => {
+        const saved = await (
+          await page.request.get(
+            `${reviewServer.baseURL}/api/review-state?key=${encodeURIComponent(sessionKey)}`,
+          )
+        ).json();
+        return [
+          saved?.data.draftComments.length,
+          Object.keys(saved?.data.pendingComposers ?? {}).length,
+        ];
+      })
+      .toEqual([1, 1]);
 
     await commitInRepo(reviewServer.repoDir, "feat.ts", "export const n = 2;\n");
-
-    await expect(page.getByTestId("stale-diff-banner")).toBeVisible({ timeout: 15_000 });
-    await page.getByTestId("stale-diff-refresh").click();
-
-    await expect(page.getByTestId("navigation-tab-units")).toBeVisible();
+    // Reload must still restore the reviewed source and warn that it is stale.
+    await page.reload();
     await expect(page.getByTestId("stale-diff-banner")).toBeVisible();
+    await page.route("**/api/diff", (route) =>
+      route.fulfill({ status: 500, json: { error: "Could not refresh the diff. Try again." } }),
+    );
+    await page.getByTestId("stale-diff-refresh").click();
+    await expect(page.getByTestId("review-transition-error")).toBeVisible();
+    await expect(page.getByTestId("stale-diff-banner")).toBeVisible();
+    await page.unroute("**/api/diff");
+    await page.getByTestId("stale-diff-refresh").click();
+    await expect(page.getByTestId("stale-diff-banner")).toHaveCount(0);
+    await expect(page.getByTestId("navigation-tab-files")).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByTestId("review-unit-1")).toHaveCount(0);
+    await expect(page.getByTestId("unresolved-note")).toHaveCount(2);
+    await expect(page.getByTestId("unresolved-note-source").first()).toHaveText(
+      "export const n = 1;",
+    );
+    await expect(page.getByTestId("diff-view-unified")).toContainText("export const n = 2;");
+    await page.getByTestId("submit-review-button").click();
+    await expect(page.getByTestId("generate-prompt-text")).toContainText(
+      "Preserve the saved feedback",
+    );
+    await expect(page.getByTestId("generate-prompt-text")).toContainText(
+      "Preserve this unfinished feedback too",
+    );
+    await page.keyboard.press("Escape");
+
+    await page.getByTestId("navigation-tab-units").click();
+    await page.getByTestId("generate-review-plan").click();
+    await expect(page.getByTestId("review-unit-1")).toBeVisible();
+    await page.getByTestId("review-rebuild-structure").click();
+    await expect.poll(() => generations).toBe(3);
+    await expect(page.getByTestId("unresolved-note")).toHaveCount(2);
+    await expect
+      .poll(async () => {
+        const saved = await (
+          await page.request.get(
+            `${reviewServer.baseURL}/api/review-state?key=${encodeURIComponent(sessionKey)}`,
+          )
+        ).json();
+        return saved?.data.plan?.units[0]?.id;
+      })
+      .toBe("unit-3");
+    await reviewServer.restart();
+    await page.goto(reviewUrl(reviewServer));
+    await expect(page.getByTestId("unresolved-note")).toHaveCount(2);
+    await expect(page.getByTestId("stale-diff-banner")).toHaveCount(0);
+    await expect(page.getByTestId("review-unit-1")).toBeVisible();
+
+    // Dismissing the confirmation keeps everything; confirming removes persisted feedback.
+    await page.getByTestId("review-start-over").click();
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("unresolved-note")).toHaveCount(2);
+    await page.getByTestId("review-start-over").click();
+    await page.getByTestId("confirmation-ok").click();
+    await expect(page.getByTestId("unresolved-notes")).toHaveCount(0);
+    await expect(page.getByTestId("review-unit-1")).toHaveCount(0);
+    await expect(page.getByTestId("diff-file-header")).toContainText("feat.ts");
+    await page.reload();
+    await expect(page.getByTestId("diff-file-header")).toContainText("feat.ts");
+    await expect(page.getByTestId("draft-comment")).toHaveCount(0);
+    await expect(page.getByTestId("review-unit-1")).toHaveCount(0);
   });
 });

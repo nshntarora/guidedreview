@@ -58,14 +58,14 @@ Revoking the OAuth grant on GitHub’s side (Settings → Applications) also inv
 
 **CLI**
 
-| Goal                           | How                                                                                                                                                                       |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Clear a saved API key          | Settings → clear the key and save, or delete `apiKey` from the [config file](/docs/cli#config-file)                                                                       |
-| Stop using a coding agent      | Turn off **Use My Subscription** in Settings, or remove `codingAgent` from the config file                                                                                |
-| Stop the server                | Ctrl+C ends the server process; browser review data remains                                                                                                               |
-| Clear saved review data        | Stop the CLI, remove `<git-dir>/guided-review/sessions/`, and clear `sessionStorage` for open local review tabs. Find `<git-dir>` with `git rev-parse --absolute-git-dir` |
-| Clear the diff view preference | Clear `guidedReview.diffViewMode` from `localStorage` for the local URL in browser developer tools                                                                        |
-| Wipe saved prefs               | Delete `~/.config/guided-review/config.json` (or the path under `$XDG_CONFIG_HOME` / `GUIDED_REVIEW_CONFIG_DIR`)                                                          |
+| Goal                           | How                                                                                                                                                                                                                                 |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Clear a saved API key          | Settings → clear the key and save, or delete `apiKey` from the [config file](/docs/cli#config-file)                                                                                                                                 |
+| Stop using a coding agent      | Turn off **Use My Subscription** in Settings, or remove `codingAgent` from the config file                                                                                                                                          |
+| Stop the server                | Ctrl+C ends the server process; browser review data remains                                                                                                                                                                         |
+| Clear saved review data        | Use **Start Over** for the current scope. For all scopes, stop the CLI, remove `<git-dir>/guided-review/sessions/`, and clear `sessionStorage` for open local review tabs. Find `<git-dir>` with `git rev-parse --absolute-git-dir` |
+| Clear the diff view preference | Clear `guidedReview.diffViewMode` from `localStorage` for the local URL in browser developer tools                                                                                                                                  |
+| Wipe saved prefs               | Delete `~/.config/guided-review/config.json` (or the path under `$XDG_CONFIG_HOME` / `GUIDED_REVIEW_CONFIG_DIR`)                                                                                                                    |
 
 Guided Review never held a cloud copy of these secrets to delete on a server — clearing local storage / the config file is the full wipe for product data.
 

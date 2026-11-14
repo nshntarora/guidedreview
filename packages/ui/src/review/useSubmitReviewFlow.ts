@@ -136,6 +136,12 @@ export function useSubmitReviewFlow({
   async function handleSubmitReview(submission: ReviewSubmission): Promise<void> {
     if (submittingReview) return;
 
+    if (draftComments.some((draft) => draft.unresolved)) {
+      setSubmitReviewError(
+        "Some notes no longer match the diff. Recreate them on the current code and remove the unresolved originals before submitting.",
+      );
+      return;
+    }
     const trimmedBody = submission.body.trim();
     if (
       (submission.event === "COMMENT" || submission.event === "REQUEST_CHANGES") &&

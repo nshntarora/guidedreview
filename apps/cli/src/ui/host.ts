@@ -11,6 +11,9 @@ export function createLocalReviewHost(options: {
 }) {
   const { onConnectProvider } = options;
 
+  let sessionRevision = 0;
+  let transitions = 0;
+  const clearing = new Set<string>();
   const unreadable = new Set<string>();
   const metadata = new Map<string, { diffHash: string; legacySessionKey: string }>();
   const pending = new Map<string, string>();
@@ -46,7 +49,7 @@ export function createLocalReviewHost(options: {
     assetUrl: (path) => `/${path.replace(/^\/+/, "")}`,
     persistSession: async (key, data) => {
       const meta = metadata.get(key);
-      if (!meta) return;
+      if (!meta || clearing.has(key) || transitions > 0) return;
       if (unreadable.has(key))
         throw new Error("Saved review state could not be read. Reload to retry before saving.");
       const body = JSON.stringify({ data, diffHash: meta.diffHash });
@@ -71,6 +74,7 @@ export function createLocalReviewHost(options: {
       }
     },
     restoreSession: async (key) => {
+      const revision = sessionRevision;
       unreadable.add(key);
       let res: Response;
       try {
@@ -88,14 +92,15 @@ export function createLocalReviewHost(options: {
         );
         throw new Error("Could not load saved review state.");
       }
-      unreadable.delete(key);
       const saved = (await res.json()) as { data: unknown; diffHash: string } | null;
+      if (revision !== sessionRevision) return null;
+      unreadable.delete(key);
       const meta = metadata.get(key);
       if (!meta) return null;
       let recovery: { data: unknown; diffHash: string } | null = null;
       try {
         const raw = sessionStorage.getItem(browserKey(key));
-        if (raw) recovery = JSON.parse(raw) as typeof recovery;
+        if (raw) recovery = JSON.parse(raw) as { data: unknown; diffHash: string };
       } catch {
         /* Try the disk session or legacy key. */
       }
@@ -119,13 +124,25 @@ export function createLocalReviewHost(options: {
       return data;
     },
     clearSession: async (key) => {
+      clearing.add(key);
       pending.delete(key);
-      await queues.get(key)?.catch(() => {});
-      const res = await fetch(url(key), { method: "DELETE" });
-      if (!res.ok) throw new Error("Could not delete saved review state.");
-      sessionStorage.removeItem(browserKey(key));
-      const legacy = metadata.get(key)?.legacySessionKey;
-      if (legacy) sessionStorage.removeItem(browserKey(legacy));
+      try {
+        // A request already on the wire must finish before deletion. Queued writes
+        // see an empty pending slot; autosave/unload are paused by the transition.
+        await queues.get(key)?.catch(() => {});
+        const res = await fetch(url(key), { method: "DELETE" });
+        if (!res.ok)
+          throw new Error(
+            "Could not delete this review. Check the local server and try Start Over again. Notes remain in this tab.",
+          );
+        unreadable.delete(key);
+        queues.delete(key);
+        sessionStorage.removeItem(browserKey(key));
+        const legacy = metadata.get(key)?.legacySessionKey;
+        if (legacy) sessionStorage.removeItem(browserKey(legacy));
+      } finally {
+        clearing.delete(key);
+      }
     },
     streamPlan: (_diff: ParsedDiff, _context: ReviewContext, handlers: StreamPlanHandlers) => {
       const source = new EventSource("/api/plan");
@@ -189,15 +206,23 @@ export function createLocalReviewHost(options: {
   return {
     ...host,
     configureSession(session: { sessionKey: string; diffHash: string; legacySessionKey: string }) {
+      sessionRevision++;
       metadata.set(session.sessionKey, {
         diffHash: session.diffHash,
         legacySessionKey: session.legacySessionKey,
       });
     },
+    pausePersistence() {
+      transitions++;
+      return () => {
+        transitions--;
+      };
+    },
     async flushSessions() {
       await Promise.all([...queues.values()]);
     },
     flushOnUnload() {
+      if (transitions > 0) return;
       for (const [key, body] of pending) {
         navigator.sendBeacon(url(key), new Blob([body], { type: "application/json" }));
       }
