@@ -5,6 +5,11 @@ export const toc = [
     level: 2,
   },
   {
+    id: "try-a-branch-with-an-uncommitted-test",
+    label: "Try a runnable example",
+    level: 2,
+  },
+  {
     id: "read-the-retry-contract-before-its-test",
     label: "Read the retry contract before its test",
     level: 2,
@@ -42,6 +47,7 @@ export const toc = [
 ];
 
 import { JsonLd } from "@web/components/JsonLd";
+import { CliCommand } from "@web/components/CliCommand";
 
 export const faqs = [
   {
@@ -90,11 +96,9 @@ A quick review path:
 
 ## Choose the local diff you actually mean to review
 
-Guided Review's CLI opens a browser walkthrough from a git repository. It needs Node.js 22 or newer:
+Guided Review's CLI opens a browser walkthrough from a git repository. It needs Node.js 22 or newer. Copy this command and run it in your repository:
 
-```bash
-npx @guided-review/cli
-```
+<CliCommand location="local-review-guide" />
 
 The package is `@guided-review/cli`; the binary is `guidedreview`. `npx guided-review` is a different tool.
 
@@ -110,6 +114,73 @@ The [CLI reference](/docs/cli) covers the flags. Check untracked files too. A ne
 Uncommitted scope includes untracked files by default; `--no-untracked` excludes them. Branch scope contains committed work only. `--staged` starts an index-only review, which is useful when one file contains both changes you intend to commit and unfinished edits you want to keep local.
 
 The initial walkthrough has one review unit per file and makes no model call. **Structure With AI** is an explicit action that sends a diff prompt to your configured provider for grouping and commentary.
+
+## Try a branch with an uncommitted test
+
+This example creates a new temporary Git repository. It commits a change from one attempt to three, then leaves its test untracked. It uses Git and Node's built-in test runner; no project dependencies or provider key are needed.
+
+Copy the whole block into a POSIX shell such as Bash or Zsh. The Git identity applies only to this example repository.
+
+```bash
+(
+set -eu
+example_dir=$(mktemp -d "${TMPDIR:-/tmp}/guided-review-example.XXXXXX")
+cd "$example_dir"
+git init -b main
+git config user.name "Review Example"
+git config user.email "review@example.invalid"
+mkdir src test
+printf 'export const maxAttempts = 1;\n' > src/options.mjs
+git add src/options.mjs
+git commit -m "Set the initial attempt limit"
+git switch -c add-retries
+printf 'export const maxAttempts = 3;\n' > src/options.mjs
+git add src/options.mjs
+git commit -m "Allow three attempts"
+cat > test/options.test.mjs <<'TEST'
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { maxAttempts } from '../src/options.mjs';
+
+test('the default allows three attempts', () => {
+  assert.equal(maxAttempts, 3);
+});
+TEST
+node --test test/options.test.mjs
+git status --short
+printf 'Example repository: %s\n' "$PWD"
+npx @guided-review/cli --base main
+)
+```
+
+The test passes, but `git status --short` still lists `?? test/`. In the browser, compare these two scopes:
+
+| Scope          | What you should see                        | What it proves                                                     |
+| -------------- | ------------------------------------------ | ------------------------------------------------------------------ |
+| Branch vs base | `src/options.mjs` changes from `1` to `3`. | This is the committed change a PR would contain.                   |
+| Uncommitted    | The new `test/options.test.mjs` file.      | The test exists on disk but isn't in the branch's committed patch. |
+
+The test checks the default value, not a retry loop. A real implementation also needs evidence for attempt counting, exhausted retries, and cancellation where those behaviors apply.
+
+<figure className="my-8">
+  <img
+    src="/assets/guides/review-local-changes-before-pr/branch-review.png"
+    alt="Guided Review showing the example branch's committed maxAttempts change from one to three; the untracked test is absent from this scope."
+    width="1440"
+    height="1000"
+    loading="lazy"
+    decoding="async"
+    className="h-auto w-full rounded-xl border border-border"
+  />
+  <figcaption className="mt-3 text-sm leading-relaxed text-muted">
+    Branch vs base contains the committed option change. Switch to Uncommitted to read the test
+    still on disk.
+  </figcaption>
+</figure>
+
+In a second terminal, enter the path printed after **Example repository**. Run `git add test/options.test.mjs` and `git commit -m "Test the default attempt limit"`. Refresh the diff in Guided Review. Branch vs base now includes both files, and Uncommitted is empty. Stop the local server with Ctrl+C when finished.
+
+You can do this entire scope check without AI. If you request **Generate review units**, the diff goes to your configured provider for grouping and commentary.
 
 ## Read the retry contract before its test
 
@@ -168,6 +239,8 @@ The local server binds `127.0.0.1:7182` by default. AI structuring still sends c
 This is a local reading tool. There's no hosted team dashboard, automated findings, or merge gate. For an existing GitHub PR, I'd use the extension instead.
 
 Before publishing the retry change, I'd check that the zero-retries test made it into the branch.
+
+Already using an automated PR reviewer? Keep that feedback and do your own reading pass. The [CodeRabbit comparison](/compare/coderabbit-alternative#try-a-real-public-pull-request) includes a public PR trial; the [tool-selection guide](/compare) explains which workflows each tool covers.
 
 ## Write a handoff someone else can verify
 

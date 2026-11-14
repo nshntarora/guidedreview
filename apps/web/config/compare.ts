@@ -10,7 +10,7 @@ export const COMPARISONS: Article[] = [
     seoTitle: "CodeRabbit alternative for reading the diff yourself | Guided Review",
     description:
       "A CodeRabbit alternative for engineers who want to read the diff themselves. Compare walkthroughs, automated feedback, data paths, and worse fits.",
-    lastModified: "2026-10-21",
+    lastModified: "2026-11-10",
     load: () => import("@web/content/compare/coderabbit-alternative.mdx"),
   },
   {

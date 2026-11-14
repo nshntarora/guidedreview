@@ -1,4 +1,6 @@
 import { JsonLd } from "@web/components/JsonLd";
+import { CliCommand } from "@web/components/CliCommand";
+import { InstallExtensionButton } from "@web/components/CtaButtons";
 
 export const toc = [
   {
@@ -14,6 +16,11 @@ export const toc = [
   {
     id: "workflow-decide-what-you-want-to-receive",
     label: "Workflow",
+    level: 2,
+  },
+  {
+    id: "try-a-real-public-pull-request",
+    label: "Try a public PR",
     level: 2,
   },
   {
@@ -37,7 +44,7 @@ export const toc = [
     level: 2,
   },
   {
-    id: "read-the-docs",
+    id: "start-guided-review",
     label: "Get started",
     level: 2,
   },
@@ -121,6 +128,49 @@ CodeRabbit's Change Stack also addresses reading context [C2](#source-c2). I wou
     Guided Review organizes the reading. The findings and final decision are yours.
   </figcaption>
 </figure>
+
+## Try a real public pull request
+
+Use [Guided Review PR #139](https://github.com/nshntarora/guidedreview/pull/139/files), a small change to sitemap dates and canonical-URL assertions. The question is concrete: does the guide collection's modification date follow the newest guide, while the comparison collection keeps its own date?
+
+For a local trial, run this in a directory where you want a separate checkout. Git and Node.js 22 or newer are required. The commit pins the example even after the repository moves on:
+
+```bash
+git clone https://github.com/nshntarora/guidedreview.git guided-review-trial &&
+cd guided-review-trial &&
+git checkout --detach 8f23e027705f435644189e21dcb7a7e1b8c3a9f6 &&
+npx @guided-review/cli --base "HEAD^"
+```
+
+No dependency install for the cloned project is needed to read its diff. The CLI opens in Files; requesting AI structure is a separate action that uses your provider.
+
+1. Read `apps/web/app/sitemap.ts`. Follow the `/guides` branch of the conditional through the date sort and final value. Then check the `/compare` branch.
+2. Read `apps/web/e2e/seo.spec.ts`. The new assertions check production canonical URLs. They do **not** test the guide-date calculation. That is a gap to notice, not a reason to assume the dates are wrong.
+3. Leave a note with the missing evidence: “Please cover the guide collection's newest-date calculation with unsorted guide dates, and verify that the comparison date stays independent.”
+
+<figure className="my-8">
+  <img
+    src="/assets/compare/public-pr-review.png"
+    alt="Guided Review displaying the sitemap and canonical-URL test changes from public PR 139 in a local file-by-file review."
+    width="1440"
+    height="1000"
+    loading="lazy"
+    decoding="async"
+    className="h-auto w-full rounded-xl border border-border"
+  />
+  <figcaption className="mt-3 text-sm leading-relaxed text-muted">
+    The pinned PR in the local CLI, before requesting AI structure. The displayed code comes from
+    its Git diff.
+  </figcaption>
+</figure>
+
+For the AI path, configure your provider and choose **Generate review units**. Inspect the proposed reading order against those same two files. Unit titles and commentary depend on your model; the review question stays the same. In the CLI, **Generate Prompt** copies your notes for a coding agent. It doesn't submit them to GitHub.
+
+Want to inspect the review-unit interface before adding a key? The [homepage live preview](/#live-preview) uses a fictional retry patch and a prepared plan. It makes no provider call and doesn't post reviews.
+
+On GitHub, open the linked PR after installing the extension and choose **Start Guided Review**. It can also read a merged PR. Keep trial notes as drafts: submitting would post a real review to this public repository. Reading the PR doesn't require submitting anything.
+
+Use your own representative PR for a CodeRabbit trial. If it is already installed, compare its findings and walkthrough with your reading pass on the same change. This example doesn't claim a measured speed or bug-detection winner.
 
 ## Pricing: compare the work, then the bill
 
@@ -222,6 +272,14 @@ Checked October, 2026.
   </section>
 ))}
 
-## Read the docs
+## Start Guided Review
 
-[Read the docs](/docs/install) to choose the CLI or Chrome extension and see what setup involves.
+In your own local repository, run:
+
+<CliCommand location="coderabbit-comparison" />
+
+For GitHub pull requests:
+
+<InstallExtensionButton location="coderabbit-comparison" size="md" />
+
+The [CLI docs](/docs/cli) and [extension setup](/docs/chrome-extension) cover provider keys and the controls. For other workflows, start with the [tool-selection guide](/compare).

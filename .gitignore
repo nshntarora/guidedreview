@@ -19,3 +19,4 @@ blob-report/
 coverage/
 .env
 plans/
+/review-artifacts/
