@@ -16,28 +16,32 @@ export function reconcileFeedback(
   function match(
     note: Pick<DraftComment, "filePath" | "side" | "startLine" | "endLine" | "selectedCode">,
   ): SelectableLine[] | null {
-    const range = lines.filter(
-      (line) =>
-        line.filePath === note.filePath &&
-        line.side === note.side &&
-        displayLineNumber(line)! >= note.startLine &&
-        displayLineNumber(line)! <= note.endLine,
-    );
-    range.sort((a, b) => displayLineNumber(a)! - displayLineNumber(b)!);
-    if (
-      range.length !== note.endLine - note.startLine + 1 ||
-      range.some((line, i) => displayLineNumber(line) !== note.startLine + i) ||
-      range.map((line) => line.content).join("\n") !== note.selectedCode
-    )
-      return null;
-    return range;
+    const candidates = lines
+      .filter((line) => line.filePath === note.filePath && line.side === note.side)
+      .sort((a, b) => displayLineNumber(a)! - displayLineNumber(b)!);
+    const length = note.endLine - note.startLine + 1;
+    if (length < 1 || !note.selectedCode.trim()) return null;
+    const matches: SelectableLine[][] = [];
+    for (let index = 0; index <= candidates.length - length; index++) {
+      const range = candidates.slice(index, index + length);
+      const start = displayLineNumber(range[0])!;
+      if (
+        range.some((line, offset) => displayLineNumber(line) !== start + offset) ||
+        range.map((line) => line.content).join("\n") !== note.selectedCode
+      )
+        continue;
+      if (start === note.startLine) return range;
+      matches.push(range);
+    }
+    return matches.length === 1 ? matches[0] : null;
   }
   const draftComments: DraftComment[] = drafts.map((draft) => {
-    // An unresolved note stays unresolved until the user recreates it deliberately.
-    const range = draft.unresolved ? null : match(draft);
+    const range = match(draft);
     return {
       ...draft,
       unitId: undefined,
+      startLine: range ? displayLineNumber(range[0])! : draft.startLine,
+      endLine: range ? displayLineNumber(range.at(-1)!)! : draft.endLine,
       lineIds: range?.map((line) => line.id) ?? [],
       unresolved: !range,
     };

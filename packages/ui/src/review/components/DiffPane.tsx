@@ -1,3 +1,4 @@
+import { UnresolvedNotes } from "./UnresolvedNotes";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@guided-review/ui";
 
@@ -138,6 +139,7 @@ const DiffFileCard = memo(function DiffFileCard({
       data-file-path={file.path}
       data-testid={fileSearchHit ? "diff-file-search-highlight" : undefined}
     >
+      <UnresolvedNotes filePath={file.path} />
       <div
         className="sticky top-0 z-10 flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 rounded-t-lg border-b border-border bg-background px-3 py-2 font-mono text-sm"
         data-testid="diff-file-header"

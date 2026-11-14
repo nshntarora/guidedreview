@@ -12,7 +12,6 @@ import type { DiffSummary } from "@guided-review/core";
 import type { LocalCommitCard, LocalDiffScopeOption } from "@guided-review/ui/review/localReview";
 import { LocalCommitList } from "./LocalCommitList";
 import { SkeletonBar } from "./SkeletonBar";
-import { UnresolvedNotes } from "./UnresolvedNotes";
 import type { LocalDiffControls } from "@guided-review/ui/review/localReview";
 
 interface ContextPanelProps {
@@ -298,7 +297,6 @@ export function ContextPanel({
             )}
           </div>
         )}
-        <UnresolvedNotes />
         <KeyboardShortcuts allowExit={false} showSettings showScopePicker />
       </div>
     );
