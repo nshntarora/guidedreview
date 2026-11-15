@@ -2,13 +2,23 @@ import type { Article } from "@web/config/articles";
 
 export const GUIDES: Article[] = [
   {
+    slug: "code-review-checklist",
+    path: "/guides/code-review-checklist",
+    title: "Code review checklist for pull requests",
+    seoTitle: "Code review checklist for pull requests | Guided Review",
+    description:
+      "A copyable pull request review checklist for correctness, tests, maintainability, security, and rollout, with examples of the evidence to check before approving.",
+    lastModified: "2026-11-16",
+    load: () => import("@web/content/guides/code-review-checklist.mdx"),
+  },
+  {
     slug: "code-review-checklist-security-best-practices",
     coverImage: "/assets/guides/code-review-checklist-security-best-practices/cover.webp",
     path: "/guides/code-review-checklist-security-best-practices",
     title: "Code review checklist: security best practices for pull requests",
     description:
       "A secure code review checklist for pull requests. Trace permissions, inputs, secrets, and failure paths, with practical examples and links to OWASP guidance.",
-    lastModified: "2026-10-28",
+    lastModified: "2026-11-16",
     load: () => import("@web/content/guides/code-review-checklist-security-best-practices.mdx"),
   },
   {
