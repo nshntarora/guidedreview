@@ -1,0 +1,93 @@
+export const toc = [
+  { id: "copy-the-pull-request-checklist", label: "Copy the checklist", level: 2 },
+  { id: "check-the-contract-and-its-callers", label: "Correctness and design", level: 2 },
+  { id: "ask-which-mistake-the-test-would-catch", label: "Test evidence", level: 2 },
+  { id: "check-security-performance-and-user-impact", label: "Risk-specific checks", level: 2 },
+  { id: "review-the-release-as-well-as-the-code", label: "Rollout and handoff", level: 2 },
+  { id: "use-the-checklist-with-guided-review", label: "Use with Guided Review", level: 2 },
+];
+
+# Code review checklist for pull requests
+
+A green test run tells you which checks passed. It doesn't tell you whether the change implements the right contract, whether the test could catch the mistake, or whether an older caller still works.
+
+Use this code review checklist for an author self-review or a teammate's pull request. Start with the template, then investigate the questions that fit the change. Record evidence or explain why an item doesn't apply. A checked box isn't an approval rule.
+
+For a permission, authentication, or sensitive-data change, use the more detailed [secure code review checklist](/guides/code-review-checklist-security-best-practices) alongside it.
+
+<TocCard toc={toc} collapsible />
+
+## Copy the pull request checklist
+
+Paste this Markdown into the PR description or your review notes. Fill in the revision so someone reading later knows which code you checked.
+
+```markdown
+## Code review
+
+Revision reviewed:
+Intended behavior and acceptance criteria:
+Files or areas reviewed:
+
+- [ ] The diff matches the intended scope; unrelated work is explained or split out.
+- [ ] The implementation, callers, and data types agree on the contract.
+- [ ] Empty, boundary, invalid, and failure cases have deliberate behavior.
+- [ ] Tests distinguish the intended behavior from a plausible mistake.
+- [ ] Names and control flow make the change understandable without the author.
+- [ ] Permissions, external input, secrets, and sensitive data were checked where relevant.
+- [ ] Changed queries, loops, retries, and concurrency have reasonable limits.
+- [ ] User-facing changes were tried, including keyboard and error paths where relevant.
+- [ ] Existing callers, configuration, and persisted data remain compatible or have a migration.
+- [ ] Documentation, deployment order, and recovery steps match the change.
+
+Checks run and results:
+Items that do not apply, and why:
+Blocking questions:
+Follow-up work and owner:
+```
+
+## Check the contract and its callers
+
+Read the PR's purpose before the summary of its implementation. What input should produce what result? Which existing behavior must survive? If that isn't clear, ask before deciding whether the patch is correct.
+
+Suppose a patch renames `timeout` to `timeoutMs`. A caller still supplies `5`, expecting seconds. The new name is clearer, and the types still compile, but the operation may now time out after five milliseconds.
+
+Trace one value from its caller through the conversion to the operation that consumes it. Check persisted settings and API inputs too. A rename in one file doesn't establish a unit change everywhere. The [AI-generated PR walkthrough](/guides/review-ai-generated-pull-request) follows this example in more detail.
+
+For design and maintainability, ask what a second engineer needs to know to change this safely. Check whether a new abstraction has more than one real responsibility, whether failure handling is visible, and whether unrelated cleanup obscures the behavior change. Prefer a concrete review comment over a request to make the code “cleaner.”
+
+## Ask which mistake the test would catch
+
+Read the assertion, setup, and exercised path. For the timeout change, a test that only checks the renamed property exists won't catch a missing conversion. A useful check would observe the value passed to the timing boundary and distinguish `5` from `5000` when the input contract is seconds.
+
+Choose cases from the contract: zero, an exact limit, an empty collection, a rejected request, or a dependency failure. Don't add all of them mechanically. Ask which wrong implementation each case would reject. If the expected behavior at zero is unclear, settle that question before writing the assertion.
+
+Check that the tests belong to the revision under review. Before opening a PR, a passing test still untracked on disk won't travel with the committed branch. The [local review guide](/guides/review-local-changes-before-pr) shows how to check that boundary.
+
+## Check security, performance, and user impact
+
+Use the changed behavior to choose the depth of review:
+
+| Change                               | Evidence to look for                                                                                                                |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Resource access or an external input | The permission check and validation run before the read or side effect. A rejection test checks that the operation did not occur.   |
+| Query or collection processing       | Read the query count, bounds, and pagination behavior. An example with two rows doesn't establish behavior with a large collection. |
+| Retry or background job              | Check attempt limits, cancellation, duplicate delivery, and whether repeating the operation repeats a side effect.                  |
+| Form or other interactive UI         | Try success and failure, keyboard access, focus after an action, and whether the error gives the user a next step.                  |
+
+A changed label doesn't require a load test. A new unbounded query deserves more than “the endpoint works locally.” Record what you verified and what remains unknown. For security-specific questions, follow the [security checklist and its OWASP references](/guides/code-review-checklist-security-best-practices).
+
+## Review the release as well as the code
+
+Consider versions that may coexist during deployment. If a migration removes a column, can the old application still run while new instances start? If configuration changes, do existing saved values survive? Ask for deployment order and a recovery path when those details affect correctness.
+
+Check documentation against the actual command, flag, or setting a user will encounter. Separate a blocking defect from a preference or follow-up. “This caller still supplies seconds; which revision converts it?” gives the author a decision to resolve.
+
+After a fix, inspect the updated diff and relevant test evidence. State any limits on your review, such as files you didn't assess or an integration check you couldn't run. The checklist records your investigation; you still choose whether to approve.
+
+## Use the checklist with Guided Review
+
+Guided Review organizes a real diff into ordered review units with commentary. It doesn't complete this checklist or choose an approval for you. You'll still need repository context for unchanged callers and configuration outside the diff.
+
+For an existing GitHub PR, [install the Chrome extension](/docs/chrome-extension) and choose **Start Guided Review**. For an author pass before a PR exists, [run the local CLI](/docs/cli). File-by-file reading needs no provider key; AI structuring sends a diff prompt to your configured provider. There's no Guided Review product backend receiving it.
+
+Keep the completed checklist and decisions in the PR so another reviewer can assess the evidence. For further reading, [Google's engineering practices](https://google.github.io/eng-practices/review/reviewer/looking-for.html) cover design, functionality, complexity, tests, naming, comments, style, and documentation. Use your repository's conventions to make those review areas concrete.
