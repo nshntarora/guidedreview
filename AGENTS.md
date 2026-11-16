@@ -65,6 +65,8 @@ Sessions: `chrome.storage.session`, key `owner/repo#number` (`buildSessionKey`).
 
 ## Voice
 
+Every new blog post must include a corresponding cover image that matches the app's design language: restrained composition, dark surfaces, muted borders, monospace details, and the shared accent palette. Save the optimized asset under `apps/web/public/assets/`, display it in the post with descriptive alt text and explicit dimensions, and register its `coverImage` in the article configuration.
+
 Match `apps/web` landing copy — peer engineer, specific, dry.
 
 - AI **structures** the review; humans decide. Never auto-approve / "reviews for you."

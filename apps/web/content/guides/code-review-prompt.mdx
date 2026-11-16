@@ -8,6 +8,17 @@ export const toc = [
 
 # Code review prompt for AI-assisted pull request reviews
 
+<img
+  src="/assets/guides/code-review-prompt/cover.webp"
+  alt="Three connected panels show context feeding a structured review prompt, followed by verification against the code diff."
+  width="1536"
+  height="1024"
+  loading="eager"
+  fetchPriority="high"
+  decoding="async"
+  className="my-6 h-auto w-full rounded-xl border border-border"
+/>
+
 “Review this code” leaves the model to guess the contract, scope, and evidence you need. Use this code review prompt to ask for concrete failure cases and questions you can investigate in the real diff. You still decide whether the change is ready.
 
 The template is plain text for a chat model or coding assistant that accepts code as context. It isn't a Guided Review setting. Fill in the placeholders and supply only code your repository's policy allows you to send to that provider.

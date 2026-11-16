@@ -3,6 +3,7 @@ import type { Article } from "@web/config/articles";
 export const GUIDES: Article[] = [
   {
     slug: "code-review-prompt",
+    coverImage: "/assets/guides/code-review-prompt/cover.webp",
     path: "/guides/code-review-prompt",
     title: "Code review prompt for AI-assisted pull request reviews",
     seoTitle: "Code review prompt with a worked example | Guided Review",
@@ -13,6 +14,7 @@ export const GUIDES: Article[] = [
   },
   {
     slug: "code-review-checklist",
+    coverImage: "/assets/guides/code-review-checklist/cover.webp",
     path: "/guides/code-review-checklist",
     title: "Code review checklist for pull requests",
     seoTitle: "Code review checklist for pull requests | Guided Review",

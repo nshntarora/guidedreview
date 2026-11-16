@@ -1,13 +1,30 @@
 export const toc = [
+  { id: "choose-a-reading-order-before-checking-boxes", label: "Review sequence", level: 2 },
   { id: "copy-the-pull-request-checklist", label: "Copy the checklist", level: 2 },
   { id: "check-the-contract-and-its-callers", label: "Correctness and design", level: 2 },
   { id: "ask-which-mistake-the-test-would-catch", label: "Test evidence", level: 2 },
   { id: "check-security-performance-and-user-impact", label: "Risk-specific checks", level: 2 },
   { id: "review-the-release-as-well-as-the-code", label: "Rollout and handoff", level: 2 },
+  {
+    id: "keep-dr-michaela-greiler-s-checklist-as-a-broader-reference",
+    label: "Broader review checklist",
+    level: 2,
+  },
   { id: "use-the-checklist-with-guided-review", label: "Use with Guided Review", level: 2 },
 ];
 
 # Code review checklist for pull requests
+
+<img
+  src="/assets/guides/code-review-checklist/cover.webp"
+  alt="Trace the contract, check the evidence, then record a human review decision."
+  width="1536"
+  height="1024"
+  loading="eager"
+  fetchPriority="high"
+  decoding="async"
+  className="my-6 h-auto w-full rounded-xl border border-border"
+/>
 
 A green test run tells you which checks passed. It doesn't tell you whether the change implements the right contract, whether the test could catch the mistake, or whether an older caller still works.
 
@@ -16,6 +33,12 @@ Use this code review checklist for an author self-review or a teammate's pull re
 For a permission, authentication, or sensitive-data change, use the more detailed [secure code review checklist](/guides/code-review-checklist-security-best-practices) alongside it.
 
 <TocCard toc={toc} collapsible />
+
+## Choose a reading order before checking boxes
+
+Start with the intended behavior and the revision you're reviewing. Find the changed contract, follow its callers into the implementation, then read the tests as evidence for that behavior. Finish with compatibility and rollout. This gives each checklist item a place in the investigation.
+
+For a wide diff, keep a short list of unanswered questions: which caller still sends the old format, what happens when a dependency fails, or which test would catch a missing conversion. Resolve each question with code or a check you can reproduce. If the answer lives outside the diff, open the surrounding source before marking the item complete.
 
 ## Copy the pull request checklist
 
@@ -83,6 +106,12 @@ Consider versions that may coexist during deployment. If a migration removes a c
 Check documentation against the actual command, flag, or setting a user will encounter. Separate a blocking defect from a preference or follow-up. “This caller still supplies seconds; which revision converts it?” gives the author a decision to resolve.
 
 After a fix, inspect the updated diff and relevant test evidence. State any limits on your review, such as files you didn't assess or an integration check you couldn't run. The checklist records your investigation; you still choose whether to approve.
+
+## Keep Dr Michaela Greiler’s checklist as a broader reference
+
+[Dr Michaela Greiler’s code review checklist](https://github.com/mgreiler/code-review-checklist) is a useful reference when adapting this short template to your team. It covers implementation, logic errors, error handling, dependencies, security, performance, usability, testing, and readability. It also asks about ethical consequences and when another team or a specialist should review the change.
+
+Use it to find questions the PR template misses. A change to ranking or recommendations may need a discussion of bias or exclusion; a shared API change may need another team's review. Choose the questions that fit the change, turn them into concrete checks, and record the evidence. Keep the [secure code review checklist](/guides/code-review-checklist-security-best-practices) alongside it when the change crosses a trust boundary.
 
 ## Use the checklist with Guided Review
 
