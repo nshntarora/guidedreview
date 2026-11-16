@@ -2,6 +2,16 @@ import type { Article } from "@web/config/articles";
 
 export const GUIDES: Article[] = [
   {
+    slug: "code-review-prompt",
+    path: "/guides/code-review-prompt",
+    title: "Code review prompt for AI-assisted pull request reviews",
+    seoTitle: "Code review prompt with a worked example | Guided Review",
+    description:
+      "A copyable AI code review prompt with context fields, evidence requirements, a worked retry example, and checks for verifying the response before acting.",
+    lastModified: "2026-11-16",
+    load: () => import("@web/content/guides/code-review-prompt.mdx"),
+  },
+  {
     slug: "code-review-checklist",
     path: "/guides/code-review-checklist",
     title: "Code review checklist for pull requests",
@@ -59,7 +69,7 @@ export const GUIDES: Article[] = [
     title: "How to review an AI-generated pull request",
     description:
       "An agent renames timeout to timeoutMs. Is it a rename, a conversion, or a compatibility change? Follow the value before approving the PR.",
-    lastModified: "2026-10-27",
+    lastModified: "2026-11-16",
     load: () => import("@web/content/guides/review-ai-generated-pull-request.mdx"),
   },
   {
