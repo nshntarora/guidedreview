@@ -52,7 +52,7 @@
     "@guided-review/core": "workspace:*",
     "@guided-review/ui": "workspace:*",
     "@playwright/test": "^1.64.1",
-    "@tailwindcss/vite": "^4.3.3",
+    "@tailwindcss/vite": "^4.3.5",
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.8",
