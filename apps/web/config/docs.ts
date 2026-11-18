@@ -165,9 +165,10 @@ export const DOCS_PAGES: DocsPage[] = [
     slug: "submit-review",
     section: "Product",
     title: "Submit a review",
+    seoTitle: "Approve or request changes on GitHub | Guided Review",
     description:
-      "Submit drafted line comments and a Comment, Approve, or Request Changes decision from Guided Review through the GitHub API.",
-    lastModified: "2026-09-06",
+      "How to approve a GitHub pull request, request changes, or comment. Includes Guided Review submission steps and why a review may not unblock merging.",
+    lastModified: "2026-11-18",
     blurb: "Comment / Approve / Request Changes from the extension",
     load: () => import("@web/content/help/submit-review.mdx"),
   },

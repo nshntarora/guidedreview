@@ -1,20 +1,34 @@
 export const toc = [
+  { id: "approve-or-request-changes-on-github", label: "Review on GitHub", level: 2 },
   { id: "before-you-submit", label: "Before you submit", level: 2 },
   { id: "open-submit-review", label: "Open Submit Review", level: 2 },
   { id: "choose-a-review-type", label: "Choose a review type", level: 2 },
+  {
+    id: "why-a-pull-request-is-still-blocked-after-review",
+    label: "Merge restrictions",
+    level: 2,
+  },
   { id: "summary-and-send", label: "Summary and send", level: 2 },
   { id: "after-submit", label: "After submit", level: 2 },
 ];
 
-# Submit a review
+# Approve or request changes on a GitHub pull request
 
-Post [drafted line comments](/docs/leave-comments) and an overall decision to the pull request through the GitHub API — without leaving Guided Review. This is a **Chrome extension** feature; the [CLI](/docs/cli) keeps notes local and offers [Generate Prompt](/docs/generate-prompt) instead.
+Use **Approve** when the change is ready, **Request Changes** when a correction is needed before merge, and **Comment** for feedback without either decision. You can submit these reviews on GitHub or through Guided Review. Approval records a review decision; it does not merge the PR.
+
+In Guided Review, post [drafted line comments](/docs/leave-comments) and an overall decision to the pull request through the GitHub API — without leaving Guided Review. This is a **Chrome extension** feature; the [CLI](/docs/cli) keeps notes local and offers [Generate Prompt](/docs/generate-prompt) instead.
 
 This path requires [GitHub connected](/docs/connect-github). Generating and walking a plan does **not** — see [Your first review](/docs/first-review) and the [FAQ](/docs/faq#do-i-need-github-auth).
 
 The model never submits for you ([FAQ](/docs/faq#does-the-ai-approve-prs)).
 
 <TocCard toc={toc} />
+
+## Approve or request changes on GitHub
+
+Without the extension, open the PR's **Files changed** tab, inspect the diff, and choose **Review changes**. Write your summary, select **Comment**, **Approve**, or **Request changes**, then choose **Submit review**. These are the [steps documented by GitHub](https://docs.github.com/en/pull-requests/how-tos/review-pull-requests/reviewing-proposed-changes-in-a-pull-request?tool=webui#submitting-your-review).
+
+If you drafted comments inside Guided Review, submit them from the overlay using the steps below. Local extension drafts are not GitHub's pending review comments.
 
 ## Before you submit
 
@@ -33,11 +47,15 @@ If GitHub isn’t connected, the **Connect GitHub** modal opens first. Complete 
 
 The dialog mirrors GitHub’s review events:
 
-| Type                | Effect                                                              |
-| ------------------- | ------------------------------------------------------------------- |
-| **Comment**         | General feedback — no approve / request-changes. Summary optional.  |
-| **Approve**         | Approve the PR for merge. Summary optional.                         |
-| **Request Changes** | Block merge until addressed (per repo rules). Summary **required**. |
+| Type                | Use it when                                                                   | Summary in Guided Review |
+| ------------------- | ----------------------------------------------------------------------------- | ------------------------ |
+| **Comment**         | You have a question or nonblocking feedback without an approval decision.     | Required.                |
+| **Approve**         | You have verified the change and have no outstanding merge-blocking concerns. | Optional.                |
+| **Request Changes** | A specific correction is needed before merge.                                 | Required.                |
+
+For example, if a retry change ignores the server's delay, request changes with the input, observed behavior, and expected result: “A 429 with Retry-After: 30 retries immediately. Please preserve the delay and add a test for that response.” If you only suggest renaming a helper, label it as optional and use Comment if you are not making an approval decision.
+
+After the author fixes the retry path, inspect the updated code and test before approving. Explain what you checked in the summary. The [code review checklist](/guides/code-review-checklist) gives you a compact final pass.
 
 Use `↑` / `↓` to highlight a type and `Enter` to continue, or click.
 
@@ -45,9 +63,20 @@ Use `↑` / `↓` to highlight a type and `Enter` to continue, or click.
 
 _Captured with the sample PR. The live preview simulates submission; an installed extension posts when you confirm._
 
+## Why a pull request is still blocked after review
+
+GitHub's [review rules](https://docs.github.com/en/pull-requests/how-tos/review-pull-requests/reviewing-proposed-changes-in-a-pull-request?tool=webui#submitting-your-review) distinguish a review from permission to merge:
+
+- Request Changes blocks merging only when repository rules enforce it for the reviewer's permission level.
+- An approval can still leave required checks or other review requirements unsatisfied.
+- New commits can dismiss an approval when stale-review dismissal is enabled.
+- You cannot approve your own PR.
+
+If a corrected PR still shows changes requested, the original reviewer should re-review and approve it. Resolving a conversation alone is not an approval. Check the PR's merge requirements on GitHub before assuming the review has cleared the restriction.
+
 ## Summary and send
 
-1. Optionally write a top-level review summary (required for Request Changes).
+1. Write a top-level review summary for Comment or Request Changes; it is optional for Approve.
 2. Press `⌘/Ctrl` + `Enter` or click submit.
 3. The extension posts the review and all current drafts as line comments via your stored token. What leaves the browser: [Privacy & data](/docs/privacy-and-data#what-leaves-your-machine).
 
