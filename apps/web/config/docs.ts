@@ -105,9 +105,10 @@ export const DOCS_PAGES: DocsPage[] = [
     slug: "first-review",
     section: "Product",
     title: "Your first review",
+    seoTitle: "How to review a GitHub pull request | Guided Review",
     description:
-      "Start your first Guided Review on a GitHub pull request, walk ordered review units, search the diff, leave comments, and resume later.",
-    lastModified: "2026-09-06",
+      "Review a GitHub pull request: inspect Files changed, verify behavior, then use Guided Review’s overlay to follow review units, draft comments, and submit.",
+    lastModified: "2026-11-19",
     blurb: "from a PR page to walking and searching units",
     load: () => import("@web/content/help/first-review.mdx"),
   },

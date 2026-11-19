@@ -1,5 +1,6 @@
 export const toc = [
   { id: "open-a-pull-request", label: "Open a pull request", level: 2 },
+  { id: "inspect-the-diff-in-github", label: "Inspect the diff in GitHub", level: 2 },
   { id: "start-guided-review", label: "Start Guided Review", level: 2 },
   { id: "walk-the-plan", label: "Follow the Walkthrough", level: 2 },
   { id: "search-the-diff", label: "Search the diff", level: 2 },
@@ -7,17 +8,34 @@ export const toc = [
   { id: "resume-later", label: "Resume later", level: 2 },
 ];
 
-# Your first review
+# How to review a GitHub pull request
 
-From a normal GitHub PR page to a structured walkthrough in a few clicks. This page is the **Chrome extension** path. For a local branch, commit, or working tree, use the [CLI](/docs/cli) instead. If the extension isn’t installed yet, start with [Chrome Extension](/docs/chrome-extension).
+Read the PR description, inspect the changed code, verify the behavior, then leave feedback and choose a review outcome. Start with GitHub’s own diff; the steps below also show how to continue in Guided Review’s **Chrome extension** overlay.
+
+For a local branch, commit, or working tree, use the [CLI](/docs/cli) instead. To use the overlay, [install the Chrome extension](/docs/chrome-extension).
 
 <TocCard toc={toc} />
 
 ## Open a pull request
 
-Open a pull request on `github.com`. You can start from Conversation, Files changed, or Commits.
+Open the repository’s **Pull requests** tab and select the PR. Read its description and linked issue before opening the diff. Identify the intended behavior, compatibility constraints, and the evidence the author supplied. If the expected outcome is unclear, ask before judging the implementation.
+
+You can start Guided Review from Conversation, Files changed, or Commits.
 
 If the button is missing, see [Troubleshooting](/docs/troubleshooting#no-start-guided-review-button).
+
+## Inspect the diff in GitHub
+
+You can review a PR without installing an extension:
+
+1. Open **Files changed**. Choose unified view for edits in sequence or split view to compare old and new code side by side.
+2. Use the file tree or filters to focus on related files. Keep track of what you filtered out so it gets a separate pass.
+3. Read the implementation with its callers and tests. Expand context or open the full file when a changed line depends on code outside the patch.
+4. Mark a file **Viewed** after inspecting it. That tracks reading progress; it does not establish that the change works.
+
+GitHub’s [reviewing proposed changes documentation](https://docs.github.com/en/pull-requests/how-tos/review-pull-requests/reviewing-proposed-changes-in-a-pull-request) covers its native diff controls. For a short, self-contained change, you may finish the reading there. The same GitHub documentation covers commenting and submitting a review. Use the overlay below when related changes are spread across files.
+
+Before choosing an outcome, verify one concrete behavior. For example, if a retry change should stop after the configured limit, trace the loop condition and find a test that asserts the final attempt count. Run the relevant repository checks when possible; a green check on an unrelated path does not answer that question. The [code review checklist](/guides/code-review-checklist) gives a broader set of checks.
 
 ## Start Guided Review
 
