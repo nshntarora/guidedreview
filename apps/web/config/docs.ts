@@ -178,10 +178,11 @@ export const DOCS_PAGES: DocsPage[] = [
     slug: "keyboard-shortcuts",
     section: "Product",
     title: "Keyboard shortcuts",
+    seoTitle: "GitHub PR keyboard shortcuts | Guided Review",
     description:
-      "Keyboard-first shortcuts for review navigation, diff search, unified/split view, comments, submit, and the local CLI UI.",
-    lastModified: "2026-10-28",
-    blurb: "navigate, search, comment, submit, and CLI extras",
+      "GitHub pull request keyboard shortcuts for finding PRs and filtering diffs, plus Guided Review keys for review units, search, comments, and the local CLI.",
+    lastModified: "2026-11-20",
+    blurb: "native GitHub PR keys, overlay controls, and CLI extras",
     load: () => import("@web/content/help/keyboard-shortcuts.mdx"),
   },
   {

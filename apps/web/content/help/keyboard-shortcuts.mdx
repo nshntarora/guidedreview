@@ -1,4 +1,5 @@
 export const toc = [
+  { id: "github-pull-request-shortcuts", label: "GitHub PR shortcuts", level: 2 },
   { id: "review-navigation", label: "Review navigation", level: 2 },
   { id: "actions", label: "Actions", level: 2 },
   { id: "diff-view", label: "Diff view", level: 2 },
@@ -9,13 +10,33 @@ export const toc = [
   { id: "marketing-site", label: "Marketing site", level: 2 },
 ];
 
-# Keyboard shortcuts
+# GitHub PR and Guided Review keyboard shortcuts
 
-Move through a guided review without leaving the keyboard. Most navigation keys need focus outside an editable field. In the comment composer, typing goes to the text field; actions, search, Esc, and ⌘/Ctrl+Enter still work.
+Use GitHub’s native shortcuts to find a pull request and filter its diff. Once you open Guided Review, use the overlay’s keys to move through review units, search code, and draft comments. The two interfaces handle keys differently: `c` opens GitHub’s commit filter on **Files changed**, but enters comment mode in Guided Review.
+
+Most Guided Review navigation keys need focus outside an editable field. In the comment composer, typing goes to the text field; actions, search, Esc, and ⌘/Ctrl+Enter still work.
 
 Open Actions (`⌘/Ctrl` + `K`) and choose **View keyboard shortcuts** for the in-app reference. Most chords work in both the [Chrome extension](/docs/first-review) and the [CLI](/docs/cli); [Local review](#local-review) adds CLI-only keys. Submit chords apply to the extension only.
 
 <TocCard toc={toc} />
+
+## GitHub pull request shortcuts
+
+These keys apply on github.com with the Guided Review overlay closed. For a sequence such as `g` then `p`, press and release each key in order.
+
+| Shortcut       | Where             | Action                                    |
+| -------------- | ----------------- | ----------------------------------------- |
+| `?`            | GitHub page       | Show the shortcuts available on that page |
+| `g` then `p`   | Repository        | Open the Pull requests tab                |
+| `⌘/Ctrl` + `/` | Pull request list | Focus the list’s search field             |
+| `t`            | Files changed     | Focus Filter changed files                |
+| `c`            | Files changed     | Open the commit filter                    |
+
+Start in the repository, press `g` then `p`, and focus search with `⌘/Ctrl` + `/` to narrow the list. Open a PR and select **Files changed**; press `t` to filter for a path or `c` to inspect selected commits.
+
+If character shortcuts do not respond, leave the text field and check whether they are disabled in GitHub’s accessibility settings. Use `?` for the current page’s reference. See [GitHub’s keyboard shortcut documentation](https://docs.github.com/en/get-started/accessibility/keyboard-shortcuts), checked November 20, 2026.
+
+For the full reading and verification flow, follow [how to review a GitHub pull request](/docs/first-review). Choose **Start Guided Review** when you want to follow related changes as review units. The remaining tables cover its overlay and local CLI.
 
 ## Review navigation
 
