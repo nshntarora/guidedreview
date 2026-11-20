@@ -2,11 +2,15 @@ export const toc = [
   { id: "enter-comment-mode", label: "Enter comment mode", level: 2 },
   { id: "select-lines", label: "Select lines", level: 2 },
   { id: "write-a-draft", label: "Write a draft", level: 2 },
+  { id: "code-review-comment-examples", label: "Comment examples", level: 2 },
+  { id: "copy-a-code-review-comment-template", label: "Comment template", level: 2 },
   { id: "edit-or-remove-drafts", label: "Edit or remove drafts", level: 2 },
   { id: "what-gets-posted", label: "What gets posted", level: 2 },
 ];
 
-# Leave line comments
+# Code review comments: examples and drafting
+
+A useful code review comment names the behavior, explains its consequence, and asks for a specific change or decision. Use the examples and template below to turn a finding into feedback, then draft it beside the relevant lines in Guided Review.
 
 Draft GitHub-style line comments in Guided Review while you [follow the walkthrough](/docs/first-review). On the **Chrome extension**, comments stay local until you [submit a review](/docs/submit-review). On the **CLI**, the same comment mode leaves notes in the local session — there is no GitHub submit; use [Generate Prompt](/docs/generate-prompt) to copy them for a coding agent instead.
 
@@ -45,6 +49,77 @@ Selection is limited to lines Guided Review can map on the current diff (on the 
 _A draft on the line that caps the server’s delay. Select the screenshot for full size._
 
 Drafts appear under the line range as **Draft** cards. They are stored with the active [review session](/docs/first-review#resume-later) until you submit or discard them — they do not leave the browser until submit ([Privacy & data](/docs/privacy-and-data#what-stays-local)).
+
+## Code review comment examples
+
+These examples are illustrative. Check the actual code and agreed behavior before using one. The labels are plain text you can type into a comment; Guided Review does not assign severity or enforce them.
+
+### Correctness: show the input that exposes the defect
+
+Instead of “This retry loop is wrong,” describe the boundary:
+
+```text
+Issue (blocking): With retries = 0, this condition skips the initial
+request. The option is documented as additional retries, so the request
+should still run once. Please preserve that initial attempt and add a
+regression check for zero retries.
+```
+
+Attach this to the condition, after tracing how the caller supplies the option. If the contract does not define whether the number counts retries or total attempts, ask that question first. A plausible interpretation is not yet a confirmed bug.
+
+### Tests: identify the mistake the assertion would miss
+
+Instead of “Add more tests,” explain the missing evidence:
+
+```text
+Issue (blocking): This test checks that timeoutMs exists, but would
+still pass if the caller's 5 seconds reached the timer as 5 milliseconds.
+Please check the value passed to the timer for that legacy input;
+the compatibility contract requires 5000 milliseconds.
+```
+
+Read the test setup and the exercised path before posting. If another test already proves the conversion, point to it and remove the duplicate request. The [review checklist](/guides/code-review-checklist#ask-which-mistake-the-test-would-catch) explains how to choose evidence for a specific failure.
+
+### Questions: state what you have and have not established
+
+Instead of “Why is this optional?”, make the uncertainty explicit:
+
+```text
+Question: This type permits an omitted pageSize, and the builder sends
+the request without it. Should omission preserve the server default?
+I couldn't find that requirement in the PR description. Please confirm
+the intended behavior before we decide whether this needs a change.
+```
+
+A question can still block approval when its answer determines correctness. Say so if that is the case. Do not present a model's explanation as proof of the requirement; follow the real diff and inspect unchanged callers when needed.
+
+### Suggestions: distinguish a preference from a required fix
+
+Instead of “Rename this,” explain the reading cost and whether it blocks:
+
+```text
+Suggestion (non-blocking): Could count be named totalAttempts here?
+The loop includes the initial request, so that name would distinguish
+it from the additional retries option. The current behavior looks right;
+this is a readability preference.
+```
+
+Use the repository's naming rules when they exist. Do not make a personal preference a merge requirement without explaining the constraint. For feedback on tone and reasoning, [Google's guide to writing review comments](https://google.github.io/eng-practices/review/reviewer/comments.html) is a useful reference.
+
+## Copy a code review comment template
+
+Paste this into a draft and replace the fields. Keep only the parts needed to explain one finding. For a question, state the missing decision instead of assuming an expected result.
+
+```text
+[Issue / Question / Suggestion] [blocking or non-blocking, and why]:
+With [input or condition], [code path] does [observed behavior].
+The expected behavior is [contract or requirement], because [consequence].
+Please [specific change or decision]. Verify with [reproduction or check].
+```
+
+Before sending, check that the line range still matches the current revision, the observation is supported by code or a reproduction, and the request has not already been answered elsewhere. Remove duplicate or resolved drafts. Keep feedback about the code and its consequences, rather than the person who wrote it.
+
+In the extension, the label “blocking” does not select **Request Changes**. You choose the overall outcome separately in [Submit Review](/docs/submit-review). In the CLI, the same draft is a local note you can include in [Generate Prompt](/docs/generate-prompt); it is not posted to GitHub.
 
 ## Edit or remove drafts
 
