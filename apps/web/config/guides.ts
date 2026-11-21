@@ -2,6 +2,17 @@ import type { Article } from "@web/config/articles";
 
 export const GUIDES: Article[] = [
   {
+    slug: "pull-request-description",
+    coverImage: "/assets/guides/pull-request-description/cover.svg",
+    path: "/guides/pull-request-description",
+    title: "Pull request description: template and example",
+    seoTitle: "Pull request description template | Guided Review",
+    description:
+      "Copy a pull request description template, adapt a worked example, and add it to GitHub. Give reviewers intent, test evidence, and specific questions to check.",
+    lastModified: "2026-11-21",
+    load: () => import("@web/content/guides/pull-request-description.mdx"),
+  },
+  {
     slug: "code-review-prompt",
     coverImage: "/assets/guides/code-review-prompt/cover.webp",
     path: "/guides/code-review-prompt",
@@ -50,7 +61,7 @@ export const GUIDES: Article[] = [
     title: "Using Guided Review in a team review workflow",
     description:
       "Use Guided Review for a local author pass and a GitHub reviewer pass. Keep provider policy, review evidence, and approval decisions explicit.",
-    lastModified: "2026-10-27",
+    lastModified: "2026-11-21",
     load: () => import("@web/content/guides/guided-review-for-teams.mdx"),
   },
   {
