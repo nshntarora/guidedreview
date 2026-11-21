@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1536" height="1024" viewBox="0 0 1536 1024" fill="none">
+  <rect width="1536" height="1024" fill="#0d0806"/>
+  <g stroke="#312d29" stroke-width="2">
+    <path d="M112 176H1424M112 848H1424"/>
+    <rect x="112" y="328" width="400" height="368" rx="16" fill="#110e0b"/>
+    <rect x="568" y="328" width="400" height="368" rx="16" fill="#110e0b"/>
+    <rect x="1024" y="328" width="400" height="368" rx="16" fill="#110e0b"/>
+  </g>
+  <g font-family="ui-monospace, SFMono-Regular, Consolas, monospace">
+    <text x="112" y="136" fill="#caff57" font-size="24" letter-spacing="3">GUIDED REVIEW / AUTHOR HANDOFF</text>
+    <text x="112" y="264" fill="#fefefe" font-size="44">Give the reviewer something to verify.</text>
+    <g fill="#caff57" font-size="22">
+      <text x="148" y="384">01 / INTENT</text>
+      <text x="604" y="384">02 / EVIDENCE</text>
+      <text x="1060" y="384">03 / REVIEW</text>
+    </g>
+    <g fill="#fefefe" font-size="28">
+      <text x="148" y="456">Before → after</text>
+      <text x="604" y="456">What you checked</text>
+      <text x="1060" y="456">Open questions</text>
+    </g>
+    <g fill="#a5a3a2" font-size="21">
+      <text x="148" y="514">Input and outcome</text>
+      <text x="148" y="554">Compatibility</text>
+      <text x="148" y="594">Scope boundaries</text>
+      <text x="604" y="514">Command + revision</text>
+      <text x="604" y="554">Observed result</text>
+      <text x="604" y="594">Unverified behavior</text>
+      <text x="1060" y="514">Path and contract</text>
+      <text x="1060" y="554">Risk to inspect</text>
+      <text x="1060" y="594">Independent reading</text>
+    </g>
+    <text x="112" y="906" fill="#a5a3a2" font-size="22">PR DESCRIPTION / THE CLAIMS STILL NEED CHECKING</text>
+  </g>
+  <g stroke="#caff57" stroke-width="2">
+    <path d="M520 512H560M548 502L560 512L548 522M976 512H1016M1004 502L1016 512L1004 522"/>
+  </g>
+</svg>
