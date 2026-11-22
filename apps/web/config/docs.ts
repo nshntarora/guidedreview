@@ -136,10 +136,11 @@ export const DOCS_PAGES: DocsPage[] = [
     slug: "images-and-binaries",
     section: "Product",
     title: "Images & binary files",
+    seoTitle: "GitHub image diffs and binary file reviews | Guided Review",
     description:
-      "See how Guided Review handles image previews, binary files, and elided diffs across the Chrome extension and local review CLI.",
-    lastModified: "2026-09-06",
-    blurb: "image previews, binary empty state, comments and search",
+      "Compare image changes on GitHub with 2-up, swipe, and onion skin, then review assets, previews, and binary files in Guided Review.",
+    lastModified: "2026-11-22",
+    blurb: "GitHub image comparison, overlay previews, and binary file review",
     load: () => import("@web/content/help/images-and-binaries.mdx"),
   },
   {
