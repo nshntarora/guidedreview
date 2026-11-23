@@ -5,6 +5,16 @@ export const toc = [
     level: 2,
   },
   {
+    id: "compare-git-diffs-between-branches",
+    label: "Compare branches with git diff",
+    level: 2,
+  },
+  {
+    id: "two-dots-or-three-dots",
+    label: "Two dots or three dots?",
+    level: 3,
+  },
+  {
     id: "try-a-branch-with-an-uncommitted-test",
     label: "Try a runnable example",
     level: 2,
@@ -114,6 +124,28 @@ The [CLI reference](/docs/cli) covers the flags. Check untracked files too. A ne
 Uncommitted scope includes untracked files by default; `--no-untracked` excludes them. Branch scope contains committed work only. `--staged` starts an index-only review, which is useful when one file contains both changes you intend to commit and unfinished edits you want to keep local.
 
 The initial walkthrough has one review unit per file and makes no model call. **Structure With AI** is an explicit action that sends a diff prompt to your configured provider for grouping and commentary.
+
+## Compare Git diffs between branches
+
+For a pre-PR review, compare your committed branch from its shared ancestor with the target branch. From your feature branch, with `main` as the intended target:
+
+```bash
+git diff --stat main...HEAD
+git diff main...HEAD
+```
+
+The first command summarizes changed files; the second shows the patch. Replace `main` with your actual target. To use the remote target's latest fetched state, run `git fetch origin` and use `origin/main...HEAD` instead. Fetch updates remote-tracking refs; it does not merge them into your branch.
+
+### Two dots or three dots?
+
+| Command                | Comparison                                         | Review question                                |
+| ---------------------- | -------------------------------------------------- | ---------------------------------------------- |
+| `git diff main HEAD`   | The two committed tips; `main..HEAD` is equivalent | How do these snapshots differ now?             |
+| `git diff main...HEAD` | Their merge base to `HEAD`                         | What did this branch change since it diverged? |
+
+Suppose both branches started with `maxAttempts = 1`. Your branch changes it to `3`, while `main` adds an unrelated `README.md`. The three-dot diff shows the attempt-limit change. The two-tip diff also shows the README as removed on your branch, because your snapshot doesn't contain it. That isn't a deletion introduced by your feature.
+
+The [Git diff reference](https://git-scm.com/docs/git-diff) defines these comparisons. For the same branch scope in Guided Review, run `npx @guided-review/cli --base main` and select **Branch vs base**. Neither committed comparison includes staged, unstaged, or untracked work; inspect those separately before publishing.
 
 ## Try a branch with an uncommitted test
 
