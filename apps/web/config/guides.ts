@@ -92,8 +92,8 @@ export const GUIDES: Article[] = [
     title: "Review local git changes before opening a PR",
     seoTitle: "Review local Git changes before a PR | Guided Review",
     description:
-      "A branch diff can miss the test still in your working tree. Pick the right local scope, read the change, and check what you are about to publish.",
-    lastModified: "2026-11-10",
+      "Compare Git diffs between branches with two dots or three, inspect staged and uncommitted changes, and review the right scope before opening a PR.",
+    lastModified: "2026-11-23",
     load: () => import("@web/content/guides/review-local-changes-before-pr.mdx"),
   },
   {
