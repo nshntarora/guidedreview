@@ -1,0 +1,141 @@
+export const toc = [
+  { id: "copy-the-pull-request-description-template", label: "Copy the template", level: 2 },
+  { id: "write-the-behavior-before-the-file-list", label: "Explain the behavior", level: 2 },
+  { id: "example-preserve-a-saved-setting", label: "Filled example", level: 2 },
+  { id: "add-the-template-to-github", label: "GitHub setup", level: 2 },
+  { id: "check-an-ai-generated-description", label: "Check an AI draft", level: 2 },
+  { id: "review-the-change-behind-the-description", label: "Read the real diff", level: 2 },
+];
+
+# Pull request description: template and example
+
+<img
+  src="/assets/guides/pull-request-description/cover.svg"
+  alt="A pull request handoff connects intended behavior, verification evidence, and questions for the reviewer."
+  width="1536"
+  height="1024"
+  loading="eager"
+  fetchPriority="high"
+  decoding="async"
+  className="my-6 h-auto w-full rounded-xl border border-border"
+/>
+
+A useful pull request description explains why the change exists, what behavior changes, and what evidence the author checked. It gives the reviewer a starting point and names what remains uncertain.
+
+“Update settings and tests” describes activity. “Keep a saved theme when loading an older config that lacks the new preference” gives someone a contract to inspect.
+
+Use the Markdown template below in a PR body or save it as your repository's GitHub pull request template. Shorten it for small changes. Keep your repository's required fields when adapting it.
+
+<TocCard toc={toc} collapsible />
+
+## Copy the pull request description template
+
+```markdown
+## Why
+
+[Problem, triggering input, and related issue or decision.]
+
+## Behavior
+
+- Before: [What happens today.]
+- After: [What should happen with this change.]
+- Preserved: [Existing callers, saved data, or other compatibility constraints.]
+
+## Verification
+
+- [Command or manual steps actually run, revision checked, and observed result.]
+- Not checked: [Relevant gap, why it remains, and what would verify it.]
+
+## Review focus
+
+- [Path or symbol]: [Specific contract, risk, or question to inspect.]
+
+## Rollout and scope
+
+[Migration, deployment order, or recovery steps if relevant.]
+[Deliberately excluded work and any follow-up needed.]
+```
+
+Replace the placeholders with facts from this change. Remove sections that add no useful information. A one-line documentation fix usually doesn't need a rollout plan. A data migration probably does.
+
+The verification section records observed evidence. A test added to the diff is not a test run. If you couldn't run a check, say what blocked it and which behavior remains unverified. A checklist tick or “CI green” without the relevant check's scope tells the reviewer less than a named command and result.
+
+## Write the behavior before the file list
+
+Start with the input that motivates the PR and the outcome someone should expect. For a bug fix, explain how to trigger the old behavior. For a feature, state the new contract and any existing behavior that must survive.
+
+Then name the important boundaries. If a settings loader changes, the question might be whether saving an unrelated field preserves an existing preference. If a request gains a new field, identify the callers that still send the old one. A list of changed filenames doesn't establish those constraints.
+
+Use the review-focus section for a small number of questions that need independent attention. “Check everything” adds nothing. “Check that the save path preserves unknown model IDs loaded from disk” identifies a path and a failure to look for. The [code review checklist](/guides/code-review-checklist) covers the reviewer's broader inspection; the description supplies the facts specific to this PR.
+
+GitHub's [guidance for helping others review your changes](https://docs.github.com/en/pull-requests/concepts/helping-others-review-your-changes) also recommends clear context, focused changes, and a self-review before asking for feedback.
+
+## Example: preserve a saved setting
+
+This is an illustrative draft for a fictional application's settings change. The paths are examples, and the verification is deliberately recorded as incomplete. It is not a claim about a shipped Guided Review fix.
+
+```markdown
+Title: Preserve the saved theme when adding compact mode
+
+## Why
+
+Opening a config created before compact mode was introduced resets its
+saved theme. Adding one missing preference should not replace another.
+
+## Behavior
+
+- Before: loading a config without compactMode replaces saved preferences
+  with the default settings object, including the theme.
+- After: apply the compactMode default only when that field is absent.
+- Preserved: an explicit compactMode=false and any saved theme value.
+
+## Verification
+
+- Traced the fallback in src/config.ts against a config containing
+  theme="dark" and no compactMode. The fallback replaces the theme.
+- Not run: regression tests; the local dependency install is blocked.
+  Still need to verify load followed by an unrelated settings save,
+  an explicit false value, and a fresh config receiving defaults.
+
+## Review focus
+
+- src/config.ts: check missing-field handling versus explicit false.
+- src/save-settings.ts: check the load/save round trip retains the theme.
+
+## Rollout and scope
+
+No on-disk field removal is intended. Theme-picker changes are excluded.
+Keep this as a draft until the regression checks can run.
+```
+
+The description makes a falsifiable claim and separates a code trace from an executed check. Once the author can run the regression checks, replace the gap with the actual command, revision, and result. If the implementation changes during review, update the description to match the current patch.
+
+## Add the template to GitHub
+
+To prefill new PR descriptions in a repository:
+
+1. Create `.github/pull_request_template.md` in that repository. Check for an existing template before adding another.
+2. Paste the template above and adapt it to the team's review requirements.
+3. Commit the file through the repository's normal process and merge it into the **default branch**.
+4. Open a new PR on GitHub and check that the description starts with your template.
+
+GitHub also supports a template in the repository root or `docs/`. For multiple templates, use a `PULL_REQUEST_TEMPLATE` subdirectory in a supported location and select a file with the `template` query parameter. Follow GitHub's [template setup instructions](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/creating-a-pull-request-template-for-your-repository) for those options.
+
+If the template doesn't appear, first check that the file reached the default branch and that the path and filename match the documented layout. A template only present on the feature branch isn't available to collaborators yet. The file supplies starting text for the PR body; it doesn't enforce completed fields or replace review requirements.
+
+## Check an AI-generated description
+
+An agent can draft the body, but the author still owns its claims. Compare the draft with the actual diff and the check output before sending it to a reviewer.
+
+- Replace vague summaries with the intended behavior and compatibility constraint.
+- Remove claims that tests passed unless you can point to the run and revision.
+- Check paths and symbols against the current patch. Remove references to abandoned approaches.
+- Keep unresolved questions visible, including behavior the agent could not inspect.
+
+Keep the description free of credentials, private logs, and context that doesn't belong in the repository. A generated summary is an account to verify. It doesn't establish that the implementation meets the requirement.
+
+## Review the change behind the description
+
+Before handing off a local change, [review the branch and working-tree scope](/guides/review-local-changes-before-pr) with `npx @guided-review/cli`. Guided Review can organize real diff hunks into ordered review units with AI commentary; you read the implementation and decide which claims belong in the PR description.
+
+On the GitHub PR, a reviewer can choose **Start Guided Review** in the [Chrome extension](/docs/chrome-extension) and inspect the code behind the author's account. Guided Review doesn't create the PR, install this template, or verify the author's test results. The [team workflow guide](/guides/guided-review-for-teams) explains how to keep the author pass and reviewer pass independent.
