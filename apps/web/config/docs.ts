@@ -116,9 +116,10 @@ export const DOCS_PAGES: DocsPage[] = [
     slug: "reading-the-overlay",
     section: "Product",
     title: "Reading the overlay",
+    seoTitle: "How to read a unified diff and split view | Guided Review",
     description:
-      "Learn the Guided Review overlay: review units sidebar, context panel, real diff pane, change summary, PR description, and header actions.",
-    lastModified: "2026-10-28",
+      "Read a unified diff with a worked Git patch example, understand hunk headers and line numbers, and choose unified or split view in Guided Review.",
+    lastModified: "2026-11-24",
     blurb: "layout of the review UI for extension and CLI",
     load: () => import("@web/content/help/reading-the-overlay.mdx"),
   },
