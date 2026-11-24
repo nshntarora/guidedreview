@@ -5,6 +5,8 @@ export const toc = [
   { id: "review-units-sidebar", label: "Review units sidebar", level: 2 },
   { id: "context-panel", label: "Context panel", level: 2 },
   { id: "diff-pane", label: "Diff pane", level: 2 },
+  { id: "how-to-read-a-unified-diff", label: "Read a unified diff", level: 2 },
+  { id: "unified-vs-split-view", label: "Unified vs split view", level: 2 },
   { id: "header-actions", label: "Header actions", level: 2 },
 ];
 
@@ -74,6 +76,54 @@ The selected file or unit resolves to the **real** parsed diff. The model suppli
 - The default view is **unified**. A saved preference takes precedence. Use `v` then `u` / `s`, or the toolbar, to choose unified / split view. Both hosts remember the choice locally.
 - **Search** (`⌘/Ctrl` + `F`) finds paths and code across the parsed diff. In Review units, a hit opens its owning unit when available; otherwise it opens the file.
 - [Comment mode](/docs/leave-comments) (`c`) selects diff lines for a draft comment or local note.
+
+## How to read a unified diff
+
+A unified diff shows removed and added lines in one sequence, with unchanged lines for context. A **hunk** is one region of changes in a file. The overlay renders those regions from the parsed patch; the example below shows the underlying Git patch format.
+
+Suppose a file changes from a five-second default to a five-millisecond default:
+
+```diff
+diff --git a/src/timeout.ts b/src/timeout.ts
+--- a/src/timeout.ts
++++ b/src/timeout.ts
+@@ -1,3 +1,4 @@
+ export function timeoutMs() {
+-  return 5000;
++  // Default in milliseconds.
++  return 5;
+ }
+```
+
+Read the markers before judging the change:
+
+| Marker                 | Meaning in this example                                                                                                                 |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `--- a/src/timeout.ts` | Old file path. This header is not a removed code line.                                                                                  |
+| `+++ b/src/timeout.ts` | New file path. This header is not an added code line.                                                                                   |
+| `@@ -1,3 +1,4 @@`      | The hunk starts at old line 1 and covers 3 old lines; it starts at new line 1 and covers 4 new lines. Counts include unchanged context. |
+| `-` before code        | A line removed from the old version.                                                                                                    |
+| `+` before code        | A line added in the new version.                                                                                                        |
+| A leading space        | An unchanged context line, present in both versions.                                                                                    |
+
+In the overlay's unified view, the two number columns track old and new line numbers. A deletion has only an old number; an addition has only a new number. Context has both. Here, old line 2 is removed, new lines 2 and 3 are added, and the closing brace moves from old line 3 to new line 4.
+
+The function still returns milliseconds, but the value changes by a factor of 1,000. Check the caller and expected timeout before accepting that as a documentation edit. A diff describes what changed; it does not establish that the new behavior is correct.
+
+For format details, see the [GNU unified diff reference](https://www.gnu.org/software/diffutils/manual/html_node/Detailed-Unified.html) and [Git's patch format documentation](https://git-scm.com/docs/diff-format#_generating_patch_text_with_p).
+
+## Unified vs split view
+
+| View    | Layout                                             | Useful when                                                       |
+| ------- | -------------------------------------------------- | ----------------------------------------------------------------- |
+| Unified | Removals and additions share one code column.      | Following a short edit in sequence or reading on a narrow screen. |
+| Split   | Old code is on the left; new code is on the right. | Comparing a condition, value, or block with its replacement.      |
+
+For the timeout example, unified view puts the removed `5000` immediately before the new comment and `5`. Split view separates the old and new versions so you can compare them side by side. An empty cell means there is no corresponding displayed line on that side.
+
+Use the toolbar or type `v`, then `u` for unified, or `v`, then `s` for split. These are Guided Review shortcuts; they apply inside the overlay or local UI. Both views show the same parsed code, and switching makes no provider request.
+
+The patch contains only the context supplied with the diff. Open the repository when you need unchanged callers or more surrounding code. Select **Files** to read a changed file's complete set of hunks rather than only the hunks in one review unit.
 
 ## Header actions
 
