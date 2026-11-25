@@ -1,6 +1,7 @@
 export const toc = [
   { id: "run-it", label: "Run it", level: 2 },
   { id: "what-it-compares", label: "What it compares", level: 2 },
+  { id: "show-changes-in-a-commit", label: "Show changes in a commit", level: 2 },
   { id: "walk-the-plan", label: "Follow the Walkthrough", level: 2 },
   { id: "api-keys", label: "API keys", level: 2 },
   { id: "config-file", label: "Config file", level: 2 },
@@ -47,6 +48,49 @@ Default selected scope: the first non-empty of branch, uncommitted, unstaged, th
 Base resolution, in order: `--base` → `origin/HEAD` → `main` → `master`.
 
 If every scope is empty: `Nothing to review against <base>.` and exit 0. Not a git repo: an error that says what failed.
+
+## Show changes in a commit
+
+Use `git show HEAD` to inspect the latest commit's message and patch. To inspect another commit, find its hash with `git log --oneline -10`, then replace `HEAD` below with that hash. These commands read committed history without checking out the commit or changing your working files.
+
+```bash
+# Message and changed lines in the latest commit
+git show HEAD
+
+# Changed file paths, without the message or patch
+git show --format= --name-only HEAD
+
+# Per-file change counts
+git show --stat HEAD
+
+# Patch for one file in that commit
+git show HEAD -- src/retry.ts
+```
+
+The `--` separates the revision from the file path. For help reading the patch's `+`, `-`, and hunk headers, see [How to read a unified diff](/docs/reading-the-overlay#how-to-read-a-unified-diff).
+
+### Check the implementation and its test
+
+Suppose a fictional commit changes a retry loop and adds a zero-retries test. Its file list is:
+
+```text
+src/retry.test.ts
+src/retry.ts
+```
+
+Read the implementation patch, then run `git show HEAD -- src/retry.test.ts` to inspect the test patch. Does zero retries still allow the initial attempt? A file appearing in the list only establishes that it changed, not that it tests this contract. Run the relevant test against the code you intend to ship; inspecting an older commit does not put its files into your working tree.
+
+### Commits, working files, and merges
+
+`git show HEAD` reads a committed change. Plain `git diff` reads unstaged changes; `git diff --staged` reads staged changes. Neither is a substitute for inspecting that commit. For branch and working-tree scopes, use the [local review guide](/guides/review-local-changes-before-pr).
+
+Merge commits need an explicit comparison: Git's default combined diff can omit files that were not modified from every parent. For a merge at `HEAD`, inspect the result against its first parent with `git diff HEAD^1 HEAD`, or its second parent with `git diff HEAD^2 HEAD`. A root commit has no parent; use `git show` for its patch. See the [Git show manual](https://git-scm.com/docs/git-show) and [Git diff manual](https://git-scm.com/docs/git-diff) for the command semantics.
+
+### Open the commit in Guided Review
+
+Run `npx @guided-review/cli` in the repository. Press `d` and select the commit by subject and short hash from the scope dropdown. It lists recent commits on the current branch since the merge base; it is not an arbitrary history browser, and there is no `--commit` flag.
+
+For a selected commit with a parent, the CLI displays its patch against the first parent, including for merges. Start in **Files**, then optionally generate **Review units** to organize the reading. Leave a note on the retry condition and use [Generate Prompt](#notes) to carry the question to your coding agent. AI structuring is optional; you still verify the behavior and tests.
 
 <span id="walk-the-plan" />
 

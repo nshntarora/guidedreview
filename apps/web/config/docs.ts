@@ -74,10 +74,10 @@ export const DOCS_PAGES: DocsPage[] = [
     slug: "cli",
     section: "Apps",
     title: "CLI",
-    seoTitle: "Review a local branch before you open the PR | Guided Review CLI",
+    seoTitle: "Review Git branches and commit changes | Guided Review CLI",
     description:
-      "npx @guided-review/cli walks a branch, commit, or working tree as review units. Node 22+. No Guided Review backend.",
-    lastModified: "2026-10-28",
+      "Show changes and changed files in a Git commit with git show, then review the patch in Guided Review CLI. Branch and working-tree scopes, setup, and flags.",
+    lastModified: "2026-11-25",
     blurb: "npx @guided-review/cli for local branch, commit, or working-tree diffs",
     load: () => import("@web/content/help/cli.mdx"),
   },
