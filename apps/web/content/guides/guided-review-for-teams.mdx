@@ -15,6 +15,11 @@ export const toc = [
     level: 2,
   },
   {
+    id: "draft-pull-request-or-ready-for-review",
+    label: "Draft or ready for review?",
+    level: 2,
+  },
+  {
     id: "let-the-reviewer-form-a-separate-view",
     label: "Let the reviewer form a separate view",
     level: 2,
@@ -105,6 +110,27 @@ Use the [pull request description template](/guides/pull-request-description) fo
   decoding="async"
   className="my-6 h-auto w-full rounded-xl border border-border"
 />
+
+## Draft pull request or ready for review?
+
+A GitHub draft pull request lets you share work in progress before requesting a full review. It still has a diff and discussion. The practical differences are merge eligibility and automatic code-owner review requests, as [GitHub documents for draft pull requests](https://docs.github.com/en/pull-requests/reference/pull-requests#draft-pull-requests).
+
+| Stage            | Merge eligibility                                     | Code-owner review requests               | Useful handoff                                                     |
+| ---------------- | ----------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------ |
+| Draft            | Cannot merge.                                         | Not automatically requested.             | Name the unfinished work and the specific feedback you need now.   |
+| Ready for review | Can merge once repository requirements are satisfied. | Requested when you mark the draft ready. | State what changed, what you verified, and what remains uncertain. |
+
+For the API migration, I'd keep the PR in draft while the legacy-client test is missing. A teammate can still discuss the proposed compatibility contract. Ask that narrow question explicitly so they know whether you want design feedback or a complete reading pass.
+
+After adding the test, read the updated local diff and replace the unfinished-work note with the command and result. Then change the stage on GitHub. The PR author or someone with write permission can follow [GitHub's stage-change steps](https://docs.github.com/en/pull-requests/how-tos/create-pull-requests/changing-the-stage-of-a-pull-request):
+
+1. Open the pull request on GitHub.
+2. In the merge box, choose **Ready for review**.
+3. Check the requested reviewers and give them the behavior and evidence to inspect.
+
+If substantial work remains after feedback, use **Convert to draft** under **Reviewers** in the right sidebar, then confirm. Existing subscribers keep receiving notifications; returning to draft does not recall feedback already sent.
+
+Change this stage on GitHub. Guided Review provides the reading and commenting workflow below. Marking a PR ready records the author's handoff; the reviewer still decides whether the change is correct and whether to [approve or request changes](/docs/submit-review).
 
 ## Let the reviewer form a separate view
 
