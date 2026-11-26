@@ -59,9 +59,10 @@ export const GUIDES: Article[] = [
     coverImage: "/assets/guides/guided-review-for-teams/cover.webp",
     path: "/guides/guided-review-for-teams",
     title: "Using Guided Review in a team review workflow",
+    seoTitle: "Team code review: draft PR to approval | Guided Review",
     description:
-      "Use Guided Review for a local author pass and a GitHub reviewer pass. Keep provider policy, review evidence, and approval decisions explicit.",
-    lastModified: "2026-11-21",
+      "Move from a GitHub draft pull request to ready for review, then an independent reviewer pass. Keep test evidence and human approval decisions explicit.",
+    lastModified: "2026-11-26",
     load: () => import("@web/content/guides/guided-review-for-teams.mdx"),
   },
   {
