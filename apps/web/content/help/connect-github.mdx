@@ -4,9 +4,10 @@ export const toc = [
   { id: "what-we-request", label: "What we request", level: 2 },
   { id: "private-repos-and-org-sso", label: "Private repos and org SSO", level: 2 },
   { id: "disconnect", label: "Disconnect", level: 2 },
+  { id: "revoke-access-on-github", label: "Revoke access on GitHub", level: 3 },
 ];
 
-# Connect GitHub
+# Connect GitHub and understand OAuth permissions
 
 Connecting GitHub is **optional** for reading a PR and generating a guided plan in the **Chrome extension**. It is required if you want to **[submit a review](/docs/submit-review)** (line comments, approve, request changes) from the overlay. The [CLI](/docs/cli) does not use GitHub OAuth — local notes stay on your machine.
 
@@ -40,12 +41,18 @@ Stuck mid-flow? [Troubleshooting → GitHub connect and submit](/docs/troublesho
 
 ## What we request
 
+GitHub OAuth scopes are named permissions an app requests to act on your behalf. Guided Review requests `repo` and `read:user` through device flow:
+
 | Scope       | Why                                                                                             |
 | ----------- | ----------------------------------------------------------------------------------------------- |
 | `repo`      | Read PR context and write review comments on public **and** private repositories you can access |
 | `read:user` | Show who’s connected in the UI                                                                  |
 
 Classic OAuth has no finer “only review private PRs” slice, so `repo` is intentionally broad. Tokens stay in extension storage. They are not sent to Guided Review servers — there are none for the product path. Full data picture: [Privacy & data](/docs/privacy-and-data).
+
+**The scope allows more than the review actions listed above.** GitHub defines `repo` as broad repository access, including code writes and managing collaborators and webhooks. `read:user` permits reading profile details. A scope cannot give the app rights your account lacks. See GitHub’s [OAuth scope reference](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps) for the full permissions.
+
+For example, connecting to submit a review on one private PR does not limit the OAuth grant to that PR. Review the authorization screen and your organization’s policy before granting access. If the broad scope is unsuitable, leave GitHub disconnected and submit your review on github.com. You can still use the extension’s local drafts and walkthrough without this OAuth connection.
 
 > **Org policies.** Some organizations require approving third-party OAuth apps. If device flow fails with an org restriction, approve the app in GitHub settings or complete the review on github.com itself.
 
@@ -60,5 +67,17 @@ Step-by-step recovery: [Troubleshooting → Private repos and SSO](/docs/trouble
 ## Disconnect
 
 Use **Disconnect** / sign-out in Options to clear stored GitHub credentials. You can still [generate guided plans](/docs/first-review) and [draft comments](/docs/leave-comments); only [submit from Guided Review](/docs/submit-review) stops working until you connect again.
+
+Disconnect removes the token from this extension’s storage. It does not revoke the app’s authorization on GitHub.
+
+### Revoke access on GitHub
+
+To withdraw the OAuth grant as well:
+
+1. Open GitHub **Settings → Applications → Authorized OAuth Apps**.
+2. Find the Guided Review authorization and choose **Revoke** for that app. Avoid **Revoke all** if you want to keep other apps connected.
+3. Use **Disconnect** in the extension’s Options to clear its saved credentials too.
+
+GitHub’s [authorized-app instructions](https://docs.github.com/en/apps/oauth-apps/using-oauth-apps/reviewing-your-authorized-oauth-apps) show where to find the controls. [Revoking the authorization invalidates its associated tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/token-expiration-and-revocation), so submitting through Guided Review will require connecting again. Reviews already posted remain on GitHub; local drafts are not submitted by revoking access. Your AI provider key is separate and is unchanged.
 
 **Next.** [Leave line comments](/docs/leave-comments) · [Submit a review](/docs/submit-review) · [Privacy & data](/docs/privacy-and-data)

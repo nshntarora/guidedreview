@@ -95,10 +95,11 @@ export const DOCS_PAGES: DocsPage[] = [
     slug: "connect-github",
     section: "Setup",
     title: "Connect GitHub",
+    seoTitle: "GitHub OAuth permissions and connection | Guided Review",
     description:
-      "Connect Guided Review to GitHub with device flow so you can submit reviews and line comments from the Chrome extension when you choose.",
-    lastModified: "2026-09-06",
-    blurb: "optional auth for submitting reviews from the extension",
+      "Connect Guided Review to GitHub, understand repo and read:user OAuth scopes, and learn how Disconnect differs from revoking access on GitHub.",
+    lastModified: "2026-11-27",
+    blurb: "optional GitHub auth, OAuth permissions, and revoking access",
     load: () => import("@web/content/help/connect-github.mdx"),
   },
   {
