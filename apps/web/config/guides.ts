@@ -50,8 +50,8 @@ export const GUIDES: Article[] = [
     path: "/guides/review-large-ai-generated-prs",
     title: "How to review a large AI-generated PR",
     description:
-      "Trace a large AI-generated PR across contracts, callers, and tests. Use review units to organize the reading, then verify what the summary leaves out.",
-    lastModified: "2026-10-27",
+      "Review a large AI-generated PR across contracts, callers, and tests. Use git diff to ignore whitespace for one pass, then verify the full patch.",
+    lastModified: "2026-11-28",
     load: () => import("@web/content/guides/review-large-ai-generated-prs.mdx"),
   },
   {
