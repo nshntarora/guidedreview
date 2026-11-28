@@ -30,6 +30,11 @@ export const toc = [
     level: 2,
   },
   {
+    id: "use-git-diff-to-ignore-whitespace-for-one-pass",
+    label: "Ignore whitespace for one pass",
+    level: 2,
+  },
+  {
     id: "keep-an-uncertainty-list-as-you-read",
     label: "Unresolved questions",
     level: 2,
@@ -128,6 +133,32 @@ Group lockfile updates, generated clients, snapshots, and formatting changes so 
 For a mechanical move, compare the old and new location closely enough to establish that behavior stayed the same. Check imports and exports around the move; a moved function can gain a different caller even if its body is unchanged. Watch for changed defaults tucked inside broad formatting edits.
 
 If generated output dominates the patch, ask the author to explain how they verified it. A reproducible generation step and a focused contract test can give stronger evidence than reading thousands of repetitive lines with equal attention. Record any part you could not verify instead of letting the file count imply completeness.
+
+## Use git diff to ignore whitespace for one pass
+
+When formatting buries a behavior change, use `git diff -w` for a focused reading pass, then read the full patch. From the repository root, compare your branch with its merge base:
+
+```bash
+# Replace origin/main with the PR's base branch; fetch it first.
+git fetch origin
+git diff -w origin/main...HEAD -- src/
+# Repeat the same comparison without hiding whitespace.
+git diff origin/main...HEAD -- src/
+```
+
+Replace `src/` with the path you need, or omit `-- src/` to inspect all paths. These commands compare committed branch changes; plain `git diff -w` inspects unstaged tracked changes, and `git diff --cached -w` inspects staged changes. The [local review guide](/guides/review-local-changes-before-pr) explains the branch comparison.
+
+Choose the narrowest filter that removes the noise. [Git documents three different whitespace options](https://git-scm.com/docs/git-diff):
+
+- `--ignore-space-at-eol` ignores whitespace differences at the end of a line.
+- `-b` / `--ignore-space-change` also treats runs of whitespace as equivalent, but still distinguishes a space from no space.
+- `-w` / `--ignore-all-space` ignores whitespace differences within a line, including spaces added or removed entirely. It does not collapse line breaks.
+
+Suppose a fictional formatter pass changes `const timeoutMs = 5000;` to `const timeoutMs=5;`. A `-w` diff still shows the changed value. But changing `const label = "a b";` to `const label = "ab";` disappears from that filtered comparison even though the string's value changed. Git compares text; it does not know which spaces matter to the language. Python indentation is another reason to return to the unfiltered patch before approving.
+
+On GitHub's **Files changed** page, open **Settings → Whitespace changes → Hide for this diff only**. To restore the full view, select the **X** on the active **Hide whitespace** filter. GitHub also offers saved preferences across PRs; see its [whitespace settings announcement](https://github.blog/changelog/2026-10-22-pull-requests-saved-whitespace-preferences-and-improved-split-view/).
+
+Those controls belong to Git and GitHub. Guided Review has no whitespace-filter control in its overlay or CLI UI. Use the filtered view alongside the [real diff walkthrough](/docs/reading-the-overlay), then verify the changes that the filter hid. A smaller displayed diff does not establish a smaller behavioral change.
 
 ## Keep an uncertainty list as you read
 
